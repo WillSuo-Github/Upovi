@@ -14,7 +14,7 @@ struct CommunityView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Toggle("启用公网 P2P 自动发现", isOn: $store.networkEnabled)
                         Toggle("公开共享选中应用的版本", isOn: $store.sharingEnabled)
-                            .disabled(!store.networkEnabled || store.syncing)
+                            .disabled(!store.sharingEnabled && (!store.networkEnabled || store.syncing))
                         Text("公开共享默认关闭。开启后，任何人都可以读取选中应用的标识、版本、构建号、分发渠道和自报 Team ID。不会发布路径、用户名、设备名称或安装包。网络节点仍可看到你的 IP，这不是匿名网络。")
                             .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         Divider()

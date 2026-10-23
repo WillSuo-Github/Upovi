@@ -46,7 +46,7 @@ struct SettingsView: View {
             Form {
                 Section("公网 DHT") {
                     Toggle("启用 P2P 检测", isOn: $store.networkEnabled)
-                    Toggle("公开共享选中应用的版本", isOn: $store.sharingEnabled).disabled(!store.networkEnabled || store.syncing)
+                    Toggle("公开共享选中应用的版本", isOn: $store.sharingEnabled).disabled(!store.sharingEnabled && (!store.networkEnabled || store.syncing))
                     Text("按应用主题自动发现公网共享节点，无需交换邀请。公开共享默认关闭，开启后选中的版本信息可被任何人读取。")
                         .foregroundStyle(.secondary)
                     Text("检测范围：\(store.selectedBundles.count) 个应用；验签节点：\(store.discoveredPublishers.count) 个")
