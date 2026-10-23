@@ -15,5 +15,48 @@
   "sourceRemovalReturnsUpdateCountToZero": true,
   "fixture": "Synthetic reports 999.0 and two keys reporting 2.0 build 200; synthetic developer source supplies only 2.0 build 200",
   "boundary": "Compiled current production AppStore, core and views with synthetic entry point; only AppPreferences storage URL changed in local copy. Scheduler, scanning and networking suppressed. No real inventory published or real notification posted.",
-  "visualInspection": "Scoped native window screenshot inspected: source 2.0 remains primary, sidebar/footer count one, invented 999.0 separately marked unverified with no update notification or install action."
+  "visualInspection": "Scoped native window screenshot inspected: source 2.0 remains primary, sidebar/footer count one, invented 999.0 separately marked unverified with no update notification or install action.",
+  "productSourceRevision": "525314febbcbe08e87c5ed78ccd22fc262d6b504",
+  "tests": {
+    "passed": 50,
+    "failed": 0,
+    "newTrustRegressions": 10
+  },
+  "distribution": {
+    "version": "0.3.2",
+    "build": "5",
+    "zipSHA256": "42624477445afd7cc4df4c9cdd60743c39b80e3ffe48f671ddd025db9c1ee13c",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "teamID": "NT9VR9C9HY",
+    "hardenedRuntime": true,
+    "trustedTimestamp": true,
+    "strictOriginalAndExtractedBundleVerification": true,
+    "notarization": "deferred by owner"
+  },
+  "existingLongObservation": {
+    "version": "0.3.1",
+    "sourceRevision": "3a71874706417e14eeee2559dcf65ecd87f83b26",
+    "replaced": false,
+    "boundary": "Does not validate 0.3.2 long-run behavior"
+  },
+  "ci": {
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/39978142697",
+    "sourceRevision": "525314febbcbe08e87c5ed78ccd22fc262d6b504",
+    "result": "passed",
+    "systems": [
+      "macOS 14 ARM",
+      "macOS 15 Intel",
+      "macOS 26 ARM"
+    ],
+    "checks": [
+      "50 unit tests",
+      "isolated automatic discovery",
+      "legacy private exchange",
+      "native acceptance-tool compilation",
+      "native bundle build"
+    ]
+  }
 }

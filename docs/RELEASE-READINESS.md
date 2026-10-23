@@ -1,3 +1,22 @@
+# Upovi 0.3.2 release readiness
+
+| Area | State | Boundary |
+| --- | --- | --- |
+| Community false-claim policy | Implemented; local 50-test suite and native synthetic UI passed | Peer signatures and counts still do not prove truthful installs; source compromise and wrong custom-source configuration remain possible |
+| Update counts and list | Source candidates only | Community-only 999.0 stays visible as an unverified lead, but count remains zero; source 2.0 yields one update independently |
+| Notifications | Source-only planning and deduplication, tested against injected peer claims | No new actual OS notification sent; previous real Notification Center delivery acceptance belongs to 0.3.1 |
+| Confidence labels | Single unverified, multiple keys unverified, source matches | Matching version/build grants no peer authority; custom/catalog sources are not developer signatures |
+| Native UI | Actual store/core/views, isolated synthetic entry point and settings, scoped screenshot inspected | Fixture suppresses networking/scanning/scheduled tasks; real public P2P path was accepted separately on 0.3.1 |
+| Compatibility | Final product CI passed on macOS 14 ARM, macOS 15 Intel and macOS 26 ARM | [CI run](https://github.com/WillSuo-Github/Upovi/actions/runs/39978142697): 50 tests, both isolated protocol regressions, native tool compilation and native bundle build per system |
+| Signed preview | [0.3.2 beta 1](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1), universal Developer ID | Strict original/extracted signature and ZIP checksum passed; notarization deferred |
+| 24-hour observation | Previous 0.3.1 process remains running without replacement | Planned review 2026-10-24 21:55:17 Asia/Shanghai; does not establish 0.3.2 long-run acceptance |
+
+Artifact: `dist/0.3.2/Upovi-0.3.2.zip`; SHA-256 `42624477445afd7cc4df4c9cdd60743c39b80e3ffe48f671ddd025db9c1ee13c`; embedded revision `525314febbcbe08e87c5ed78ccd22fc262d6b504`, build 5. Signing Team `NT9VR9C9HY`, x86_64 + arm64, hardened runtime, trusted timestamp 2026-10-23 23:25:57 Asia/Shanghai. The package was created in a separate output directory. The running 0.3.1 binary hash and PID were verified unchanged.
+
+See [community trust policy](COMMUNITY-TRUST.md), [aggregate 0.3.2 evidence](evidence/0.3.2-community-trust.json) and [validation](VALIDATION.md). The earlier physical-device, installation, notification and long-observation evidence below is explicitly scoped to 0.3.1. Physical sleep and notarization remain deferred; actual interface switching, direct energy measurement and a real consenting user cohort remain open.
+
+---
+
 # Upovi 0.3.1 release readiness
 
 This is an experimental signed preview. Implementation, observed behavior and acceptance are separate facts.
