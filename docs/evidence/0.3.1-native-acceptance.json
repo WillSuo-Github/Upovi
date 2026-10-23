@@ -1,0 +1,133 @@
+{
+  "appVersion": "0.3.1",
+  "finalProductSourceRevision": "3a71874706417e14eeee2559dcf65ecd87f83b26",
+  "recordedAt": "2026-10-23T14:03:25.038304+00:00",
+  "persistence": {
+    "normalQuitColdRelaunch": true,
+    "restored": [
+      "navigation",
+      "discovery consent",
+      "synthetic scope",
+      "scheduled checks",
+      "notification preference",
+      "installation history"
+    ],
+    "fileMode": "0600",
+    "parentMode": "0700",
+    "corruptStartup": {
+      "visibleLoadError": true,
+      "publicDiscoveryDisabled": true,
+      "corruptFilePreserved": true,
+      "at": "2026-10-23T13:35:03.129449+00:00"
+    },
+    "remotePhysicalMac": "Navigation write and cold-relaunch window restore passed on daecddc; remote page-interior AX remains unavailable."
+  },
+  "publicP2P": {
+    "nativeReadRemoteVersion": "8.4.2",
+    "communityInstallControlAbsent": true,
+    "selectedSyntheticBundles": 1,
+    "nativePublication": {
+      "publisher": "c5dd2e6547f6",
+      "version": "1.0",
+      "build": "1",
+      "announcementAcknowledgements": 8,
+      "directoryAcknowledgements": 8,
+      "recordStorageAcknowledgements": 5,
+      "independentReaderVerified": true,
+      "dhtPublishers": 2,
+      "directPublishers": 0
+    },
+    "stopWhileSynchronizing": {
+      "at": "2026-10-23T13:49:17.346910+00:00",
+      "toggleEnabledWhileSyncing": true,
+      "stopActionCompleted": true,
+      "sharingDisabled": true,
+      "cachedRecordWarningVisible": true
+    },
+    "finalSharingEnabled": false
+  },
+  "installer": {
+    "isolatedOfficialFixture": "Rectangle",
+    "initialVersion": "2.0.3",
+    "cancelPreservedInitialVersion": true,
+    "confirmedInstalledVersion": "2.0.4",
+    "restoreConfirmedVersion": "2.0.3",
+    "recoveryHistoryVisible": true,
+    "normalUserApplicationsReplaced": false
+  },
+  "notifications": {
+    "deniedPathKeepsSwitchOff": true,
+    "permissionChangeExplicitlyAuthorized": true,
+    "nativeTestActionSubmitted": true,
+    "notificationCenterDeliveredQuery": true,
+    "deliveryLogAt": "2026-10-23T13:32:28.944Z",
+    "nativeSuccessMessageVisible": true,
+    "bannerVisuallyConfirmed": false,
+    "finalAppNotificationSwitch": false,
+    "osPermissionLeftAllowed": true,
+    "persistedDeduplicationObserved": true
+  },
+  "menuBar": {
+    "at": "2026-10-23T14:00:52.680133+00:00",
+    "mainWindowClosed": true,
+    "statusMenuOpenItemReopenedMainWindow": true,
+    "sameProcessID": 46674,
+    "statusItemAXPressReturnedError": true,
+    "boundary": "Status menu item action works; direct AXPress on menu-bar icon failed. Physical pointer opening was not retested."
+  },
+  "sourceEditor": {
+    "httpURLRejectedInActualSheet": true,
+    "errorVisible": true,
+    "cancelledWithoutSaving": true
+  },
+  "schedulers": {
+    "tenMinutePublicSyncObserved": [
+      "2026-10-23 20:49 Asia/Shanghai",
+      "2026-10-23 20:59 Asia/Shanghai"
+    ],
+    "fifteenMinuteSourceCheckCompletedAt": "2026-10-23 21:04:31 Asia/Shanghai",
+    "scannedIncludingTwoFixtures": 71,
+    "appsWithSourceUpdates": 11,
+    "sourceFailures": 0
+  },
+  "longObservation": {
+    "status": "running_not_accepted",
+    "startedAt": "2026-10-23T13:55:17.121185Z",
+    "plannedReviewAfter": "2026-10-24T13:55:17.121185Z",
+    "durationSeconds": 86400,
+    "samplingSeconds": 60,
+    "discoveryEnabled": true,
+    "sharingEnabled": false,
+    "syntheticScopeCount": 1,
+    "sleepPrevented": false,
+    "autoRestartEnabled": false,
+    "metrics": [
+      "CPU time",
+      "RSS",
+      "UI response",
+      "per-process traffic",
+      "native runtime events"
+    ],
+    "boundary": "Actual samples, gaps, collector health and failures require later review. CPU/RSS/traffic do not measure energy directly."
+  },
+  "remaining": [
+    "Full 24-hour observation and review",
+    "Physical sleep/wake deferred by owner",
+    "Actual interface-change acceptance",
+    "Real consenting community cohort",
+    "Direct energy measurement"
+  ],
+  "distribution": {
+    "universalArchitectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "teamID": "NT9VR9C9HY",
+    "hardenedRuntime": true,
+    "trustedTimestamp": true,
+    "strictSignatureAndExtractedBundleVerified": true,
+    "zipSHA256": "0c07eafee2964327d344f105c8c62c5c67c06f69f185abc644fbe08362942a75",
+    "notarization": "deferred by owner"
+  },
+  "boundary": "Aggregate evidence only; raw AX snapshots, installed inventory, settings files and private identities stay local. Native installer and notification tests preceded final presentation-only sharing fixes; final build was rechecked for stop-sharing and signed packaging."
+}

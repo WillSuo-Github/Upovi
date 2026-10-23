@@ -1,6 +1,6 @@
 # Two-Mac public discovery acceptance
 
-Status: not yet executed on two physical Macs. A local physical Mac → independent GitHub macOS VM run passed on 2026-10-23; see `evidence/0.3.0-cross-host.json`. This procedure still defines the remaining physical-device acceptance.
+Status: bidirectional synthetic discovery passed on two physical Macs on user-confirmed independent networks on 2026-10-23. See [0.3.1 physical evidence](evidence/0.3.1-two-physical-macs.json): matching signed reports in both directions, `dhtPublishers=1`, `directPublishers=0`, and three same-client routing reset cycles. No invitation/key/endpoint transfer or allow-local option was used. Both Macs also have Tailscale; default filtering excludes its CGNAT contact addresses, but this test does not attest absence of VPN exit routing. Physical sleep/wake and actual interface-switch acceptance remain open; a 24-hour native observation is running. The earlier physical-Mac → independent VM result is retained in `evidence/0.3.0-cross-host.json`. The procedure below is for reproducible fresh runs.
 
 ## Setup
 
@@ -56,4 +56,4 @@ Pass requires the report version and publisher ID in the JSON to match Mac A. `d
 
 Observe at least 24 hours of the native application's ten-minute synchronization before claiming sustained background reliability. Record failures as well as successes. Do not keep a test publisher alive merely to improve a reported success rate.
 
-Evidence JSON contains synthetic reports, public short publisher IDs, timestamps, and path counts. It omits private identity material and endpoint IPs. Attach only the intended evidence files when reporting results; never upload the entire `.local` directory. The build-and-run development app is ad-hoc signed. The 0.3.0 test distribution is Developer ID signed; Apple notarization is deferred.
+Evidence JSON contains synthetic reports, public short publisher IDs, timestamps, and path counts. It omits private identity material and endpoint IPs. Attach only the intended evidence files when reporting results; never upload the entire `.local` directory. The build-and-run development app is ad-hoc signed. The 0.3.1 test distribution is Developer ID signed; Apple notarization is deferred.

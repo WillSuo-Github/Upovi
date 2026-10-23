@@ -40,6 +40,7 @@ def main():
     parser.add_argument('--probe', type=pathlib.Path, required=True)
     parser.add_argument('--app', type=pathlib.Path, required=True)
     parser.add_argument('--output', type=pathlib.Path, required=True)
+    parser.add_argument('--expected-scope-count', type=int, default=1)
     parser.add_argument('--duration-seconds', type=int, default=86400)
     parser.add_argument('--interval-seconds', type=int, default=60)
     options = parser.parse_args()
@@ -56,7 +57,7 @@ def main():
     summary = {'status': 'running', 'startedAt': utc(), 'requestedDurationSeconds': options.duration_seconds,
                'sourceRevision': info.get('UpoviSourceRevision'), 'version': info.get('CFBundleShortVersionString'),
                'binarySHA256': hashlib.sha256((options.app / 'Contents/MacOS/Upovi').read_bytes()).hexdigest(),
-               'processID': options.pid, 'samples': 0, 'uiErrors': 0, 'coverageGapsSeconds': [],
+               'processID': options.pid, 'expectedScopeCount': options.expected_scope_count, 'samples': 0, 'uiErrors': 0, 'coverageGapsSeconds': [],
                'observedSyncTimes': [], 'rssKBMin': None, 'rssKBMax': None,
                'boundary': 'Real elapsed observation; gaps, exit, source checks and DHT failures require review. CPU/RSS are not direct energy measurements.'}
     save(options.output / 'summary.json', summary)
@@ -99,6 +100,8 @@ def main():
                 sample['visibleWindows'] = len([node for node in nodes if node['role'] == 'AXWindow'])
                 for value in sample['syncTimes']:
                     if value not in summary['observedSyncTimes']: summary['observedSyncTimes'].append(value)
+                if sample['scope'] and any(value != '范围：'+str(options.expected_scope_count)+' 个应用' for value in sample['scope']):
+                    summary['status'] = 'scope_configuration_changed'; summary['failureSample'] = sample; break
                 if any(value != '0' for value in sample['sharingControls']):
                     summary['status'] = 'sharing_configuration_changed'; break
             except (subprocess.SubprocessError, ValueError, KeyError):

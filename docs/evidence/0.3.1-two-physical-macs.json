@@ -1,0 +1,105 @@
+{
+  "protocolSourceRevision": "47c51c9bf5fca61fde81893d370e52c156925557",
+  "network": "Public BitTorrent DHT; two physical Macs on user-confirmed independent networks",
+  "localDevice": {
+    "model": "Mac16,10",
+    "cpu": "Apple M4",
+    "os": "macOS 27.0.1"
+  },
+  "remoteDevice": {
+    "model": "Mac16,8 MacBook Pro",
+    "cpu": "Apple M4 Pro",
+    "os": "macOS 27.0.1"
+  },
+  "forwardColdRead": {
+    "bundleID": "app.upovi.synthetic.physical.20261023a8431",
+    "dhtPublishers": 1,
+    "directPublishers": 0,
+    "failedRecords": 0,
+    "observations": [
+      {
+        "publisherID": "5f997aa96bc4",
+        "report": {
+          "build": "",
+          "bundleID": "app.upovi.synthetic.physical.20261023a8431",
+          "channel": "developer",
+          "expiresAt": "2026-10-24T12:38:38Z",
+          "observedAt": "2026-10-23T12:38:38Z",
+          "teamID": "NT9VR9C9HY",
+          "version": "8.4.1"
+        }
+      }
+    ],
+    "recordedAt": "2026-10-23T12:42:01Z",
+    "rejectedReports": 0,
+    "unreachableEndpoints": 2
+  },
+  "remoteRoutingResetCycles": [
+    {
+      "automatic_publishers": 1,
+      "discovered_endpoints": 1,
+      "unreachable": 1,
+      "directory_candidates": 1,
+      "failed_records": 0,
+      "rejected_reports": 0,
+      "dht_publishers": 1,
+      "direct_publishers": 0,
+      "dht_responders": 144
+    },
+    {
+      "automatic_publishers": 1,
+      "discovered_endpoints": 1,
+      "unreachable": 1,
+      "directory_candidates": 1,
+      "failed_records": 0,
+      "rejected_reports": 0,
+      "dht_publishers": 1,
+      "direct_publishers": 0,
+      "dht_responders": 156
+    },
+    {
+      "automatic_publishers": 1,
+      "discovered_endpoints": 1,
+      "unreachable": 1,
+      "directory_candidates": 1,
+      "failed_records": 0,
+      "rejected_reports": 0,
+      "dht_publishers": 1,
+      "direct_publishers": 0,
+      "dht_responders": 139
+    }
+  ],
+  "reverseColdRead": {
+    "bundleID": "app.upovi.synthetic.physical.20261023b8431",
+    "dhtPublishers": 1,
+    "directPublishers": 0,
+    "failedRecords": 0,
+    "observations": [
+      {
+        "publisherID": "ec41c585b973",
+        "report": {
+          "build": "",
+          "bundleID": "app.upovi.synthetic.physical.20261023b8431",
+          "channel": "developer",
+          "expiresAt": "2026-10-24T12:41:08Z",
+          "observedAt": "2026-10-23T12:41:08Z",
+          "teamID": "NT9VR9C9HY",
+          "version": "8.4.2"
+        }
+      }
+    ],
+    "recordedAt": "2026-10-23T12:43:59Z",
+    "rejectedReports": 0,
+    "unreachableEndpoints": 1
+  },
+  "nativeClient": {
+    "expectedPublisher": "ec41c585b973",
+    "expectedVersion": "8.4.2",
+    "peerVisibleOnP2PPage": true,
+    "communityLeadVisibleInDetail": true,
+    "communityDownloadButtonAbsent": true,
+    "selectedScope": "one signed synthetic fixture only",
+    "sharingEnabled": false
+  },
+  "boundary": "Successful signed DHT records, directPublishers=0. No invitations, keys, endpoint addresses, custom bootstrap or allow-local options transferred. CGNAT/Tailscale contact range is filtered by default. This does not attest that system VPN exit routing is absent, establish truthful community installs, or validate physical sleep/wake."
+}
