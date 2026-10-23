@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-10-23T15:20:53.515647+00:00",
+  "checks": {
+    "zeroUpdateFooter": true,
+    "fake999Visible": true,
+    "singleUnverifiedVisible": true,
+    "multipleUnverifiedVisible": true,
+    "noInstallButton": true,
+    "oneUpdateAfterSource": true,
+    "source2Visible": true,
+    "matchLabelVisible": true,
+    "fakeStillUnverified": true,
+    "p2pLeadsRemainDiscoverable": true
+  },
+  "sourceRemovalReturnsUpdateCountToZero": true,
+  "fixture": "Synthetic reports 999.0 and two keys reporting 2.0 build 200; synthetic developer source supplies only 2.0 build 200",
+  "boundary": "Compiled current production AppStore, core and views with synthetic entry point; only AppPreferences storage URL changed in local copy. Scheduler, scanning and networking suppressed. No real inventory published or real notification posted.",
+  "visualInspection": "Scoped native window screenshot inspected: source 2.0 remains primary, sidebar/footer count one, invented 999.0 separately marked unverified with no update notification or install action."
+}

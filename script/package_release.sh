@@ -2,13 +2,14 @@
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
-VERSION="0.3.1"
-BUILD="4"
+VERSION="0.3.2"
+BUILD="5"
 SOURCE_REVISION="$(git rev-parse HEAD 2>/dev/null || echo source-archive)"
 if [[ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]]; then SOURCE_REVISION="$SOURCE_REVISION-dirty"; fi
 CONFIGURATION="${CONFIGURATION:-release}"
 SIGNING_IDENTITY="${UPOVI_SIGNING_IDENTITY:--}"
-APP_BUNDLE="$ROOT_DIR/dist/Upovi.app"
+OUTPUT_DIR="${UPOVI_OUTPUT_DIR:-$ROOT_DIR/dist}"
+APP_BUNDLE="$OUTPUT_DIR/Upovi.app"
 if [[ -f "$APP_BUNDLE/Contents/MacOS/Upovi" ]] && /usr/sbin/lsof -t "$APP_BUNDLE/Contents/MacOS/Upovi" >/dev/null 2>&1; then
   echo "Quit the running Upovi build before replacing its signed bundle." >&2
   exit 2
@@ -49,16 +50,16 @@ else
 fi
 codesign --verify --strict --all-architectures "$APP_BUNDLE"
 if [[ "${UPOVI_STAGE_ONLY:-0}" == "1" ]]; then echo "Staged: $APP_BUNDLE"; exit 0; fi
-ARCHIVE="$ROOT_DIR/dist/Upovi-$VERSION.zip"
+ARCHIVE="$OUTPUT_DIR/Upovi-$VERSION.zip"
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ARCHIVE"
 if [[ -n "${UPOVI_NOTARY_PROFILE:-}" ]]; then
   if [[ "$SIGNING_IDENTITY" == "-" ]]; then echo "Notarization requires a Developer ID signature." >&2; exit 2; fi
-  xcrun notarytool submit "$ARCHIVE" --keychain-profile "$UPOVI_NOTARY_PROFILE" --wait --output-format json > dist/notarization.json
-  python3 -c 'import json; assert json.load(open("dist/notarization.json"))["status"] == "Accepted"'
+  xcrun notarytool submit "$ARCHIVE" --keychain-profile "$UPOVI_NOTARY_PROFILE" --wait --output-format json > "$OUTPUT_DIR/notarization.json"
+  python3 -c 'import json,sys; assert json.load(open(sys.argv[1]))["status"] == "Accepted"' "$OUTPUT_DIR/notarization.json"
   xcrun stapler staple "$APP_BUNDLE"
   xcrun stapler validate "$APP_BUNDLE"
   spctl --assess --type execute -vv "$APP_BUNDLE"
   /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ARCHIVE"
 fi
-(cd "$ROOT_DIR/dist" && shasum -a 256 "Upovi-$VERSION.zip" > "Upovi-$VERSION.zip.sha256")
+(cd "$OUTPUT_DIR" && shasum -a 256 "Upovi-$VERSION.zip" > "Upovi-$VERSION.zip.sha256")
 echo "Packaged: $ARCHIVE"

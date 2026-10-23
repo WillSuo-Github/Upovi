@@ -39,14 +39,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
     }
     func announce(_ apps: [InstalledApp], results: [String: SourceResult], ignored: Set<String>) async {
-        let updates = apps.filter { app in
-            guard !ignored.contains(app.bundleID) else { return false }
-            return (results[app.id]?.candidates ?? []).contains { !seen.contains(app.bundleID + ":" + $0.version + ":" + $0.build) }
-        }
+        let updates = UpdateAssessment.notificationBatch(apps: apps, results: results, ignored: ignored, seen: seen)
         guard !updates.isEmpty else { return }
         let content = UNMutableNotificationContent()
         content.title = "发现 \(updates.count) 个应用更新"
-        content.body = updates.prefix(3).map(\.name).joined(separator: "、")
+        content.body = updates.prefix(3).map(\.app.name).joined(separator: "、")
         content.sound = .default
         do {
             let id = UUID().uuidString
@@ -58,7 +55,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
                 let delivered = await wasDelivered(id)
                 logger.info("update notification delivery observed delivered=\(delivered)")
             }
-            for app in updates { for candidate in results[app.id]?.candidates ?? [] { seen.insert(app.bundleID + ":" + candidate.version + ":" + candidate.build) } }
+            for update in updates { seen.formUnion(update.deduplicationKeys) }
             if seen.count > 1000 { seen = Set(seen.sorted().suffix(1000)) }
             AppPreferences.shared.set(Array(seen), forKey: "notifiedUpdatesV1")
         } catch { logger.error("update notification scheduling failed") }

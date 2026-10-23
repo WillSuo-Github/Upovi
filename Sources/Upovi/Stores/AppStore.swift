@@ -116,23 +116,19 @@ final class AppStore {
             let matches = search.isEmpty || app.name.localizedCaseInsensitiveContains(search) || app.bundleID.localizedCaseInsensitiveContains(search)
             guard matches else { return false }
             switch section {
-            case .updates: return !ignored.contains(app.bundleID) && !candidates(for: app).isEmpty
+            case .updates: return !ignored.contains(app.bundleID) && assessment(for: app).hasUpdate
             case .ignored: return ignored.contains(app.bundleID)
             default: return true
             }
         }
     }
     var selectedApp: InstalledApp? { apps.first { $0.id == selection } }
-    var updateCount: Int { apps.filter { !ignored.contains($0.bundleID) && !candidates(for: $0).isEmpty }.count }
-    var communityCount: Int { communityResults.values.filter { !$0.isEmpty }.count }
+    var updateCount: Int { apps.filter { !ignored.contains($0.bundleID) && assessment(for: $0).hasUpdate }.count }
+    var communityApps: [InstalledApp] { apps.filter { !assessment(for: $0).communityLeads.isEmpty } }
 
-    func candidates(for app: InstalledApp) -> [UpdateCandidate] {
-        ((sourceResults[app.id]?.candidates ?? []) + (networkEnabled ? communityResults[app.id] ?? [] : []))
-            .filter { !$0.isCommunity || ($0.expiresAt ?? $0.observedAt.addingTimeInterval(24 * 3600)) > Date() }
-            .sorted { a, b in
-                if a.isCommunity != b.isCommunity { return !a.isCommunity }
-                return VersionOrder.compare(a.version, b.version) == .orderedDescending
-            }
+    func assessment(for app: InstalledApp) -> UpdateAssessment {
+        UpdateAssessment(app: app, sourceResult: sourceResults[app.id],
+            reports: networkEnabled ? communityResults[app.id] ?? [] : [])
     }
 
     func scan() async {
@@ -168,7 +164,7 @@ final class AppStore {
         guard !Task.isCancelled else { logger.info("source check cancelled"); return }
         lastChecked = Date()
         let failures = sourceResults.values.filter { [.failed, .partial].contains($0.status) }.count
-        let updates = sourceResults.values.filter { !$0.candidates.isEmpty }.count
+        let updates = snapshot.filter { assessment(for: $0).hasUpdate }.count
         checkHistory.insert(.init(date: Date(), applications: snapshot.count, updates: updates, failed: failures), at: 0)
         checkHistory = Array(checkHistory.prefix(100))
         if let data = try? JSONEncoder().encode(checkHistory) { AppPreferences.shared.set(data, forKey: "checkHistoryV1") }

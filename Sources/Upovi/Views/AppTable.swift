@@ -22,10 +22,15 @@ struct AppTable: View {
             TableColumn("状态") { app in
                 if store.ignored.contains(app.bundleID) {
                     Text("已忽略").foregroundStyle(.secondary)
-                } else if let candidate = store.candidates(for: app).first {
+                } else if let candidate = store.assessment(for: app).sourceUpdates.first {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(candidate.version).font(.callout.monospacedDigit()).foregroundStyle(candidate.isCommunity ? Color.orange : Color.accentColor)
-                        Text(candidate.isCommunity ? "社区线索" : "来源有更新").font(.caption).foregroundStyle(.secondary)
+                        Text(candidate.version).font(.callout.monospacedDigit()).foregroundStyle(Color.accentColor)
+                        Text("来源有更新").font(.caption).foregroundStyle(.secondary)
+                    }
+                } else if let lead = store.assessment(for: app).communityLeads.first {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(lead.report.version).font(.callout.monospacedDigit()).foregroundStyle(.orange)
+                        Text("社区未核实").font(.caption).foregroundStyle(.secondary)
                     }
                 } else {
                     Text(status(app)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -45,7 +50,7 @@ struct AppTable: View {
         }
         .overlay {
             if store.visibleApps.isEmpty && !store.scanning {
-                ContentUnavailableView(store.section == .updates ? "暂无更新线索" : "没有匹配的应用", systemImage: "checkmark.circle", description: Text("点击“检查更新”，或调整搜索条件。"))
+                ContentUnavailableView(store.section == .updates ? "暂无来源更新" : "没有匹配的应用", systemImage: "checkmark.circle", description: Text("点击“检查更新”，或调整搜索条件。社区报告不代表已确认更新。"))
             }
         }
     }

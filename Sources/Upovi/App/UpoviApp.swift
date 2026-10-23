@@ -45,7 +45,7 @@ private struct MenuBarContent: View {
     let store: AppStore
     @Environment(\.openWindow) private var openWindow
     var body: some View {
-        Text("\(store.updateCount) 个应用有更新或线索")
+        Text("\(store.updateCount) 个应用有来源更新")
         Button("打开 Upovi") { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
         Button(store.checking ? "正在检查…" : "检查更新") { store.beginChecking() }.disabled(store.checking || store.scanning || store.installing)
         Divider()

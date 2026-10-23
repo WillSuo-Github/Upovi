@@ -1,3 +1,14 @@
+# Validation: Upovi 0.3.2 community-claim policy, 2026-10-23
+
+- Local full suite: **50 tests, 0 failures**, including ten new trust-policy regressions. A real Ed25519-signed invented 999.0 report passes protocol decoding but cannot become a source update or notification. One hundred publisher identities cannot grant update authority. Tests also cover version/build mismatches, missing/duplicate/expired identities, source removal/failure, wrong application identity, partial-source success and notification deduplication.
+- Local production build passed. Native synthetic acceptance compiled the actual AppStore/core/views with a synthetic entry point and isolated preferences URL. Public networking, scanning, scheduled checks and actual notification submission were suppressed in the fixture. The normal running app and its preferences were not used by this fixture.
+- Actual UI checks: only community 999.0 / repeated 2.0 gives **zero** available updates and an empty available-updates page; supplying a synthetic source 2.0 build 200 gives **one** update and a source-match label for 2.0, while 999.0 remains unverified; removing the source returns to **zero**. Community reports remain visible on P2P/all-app details with no installation button. A scoped window screenshot was visually checked for source/lead separation, count and text layout. [Aggregate evidence](evidence/0.3.2-community-trust.json).
+- Notification submission uses the same tested source-only planning policy and cannot add peer candidates to notification content or persisted deduplication state. Existing real macOS Notification Center delivery acceptance belongs to 0.3.1; no new system notification was sent for this synthetic policy test.
+
+The real 24-hour observer remains pinned to **0.3.1 / 3a71874706417e14eeee2559dcf65ecd87f83b26**. It was not restarted or replaced, and cannot establish long-run acceptance of 0.3.2. Source matches refer to existing independently fetched developer/configured/catalog sources, not cryptographic developer endorsement. [Policy details](COMMUNITY-TRUST.md).
+
+---
+
 # Validation: Upovi 0.3.1, 2026-10-23
 
 Product revision: `3a71874706417e14eeee2559dcf65ecd87f83b26`. [Final CI](https://github.com/WillSuo-Github/Upovi/actions/runs/39963985467) passed on macOS 14 ARM, macOS 15 Intel and macOS 26 ARM: **40 unit tests, 0 failures**, independent automatic discovery, legacy private exchange, native acceptance-controller compilation and native bundle build on each. The five added persistence tests cover fresh-reader restoration, private permissions, failed replacement preserving old data, corrupt/oversized input, symlink rejection and blocked writes. Public-contact filtering includes the CGNAT/Tailscale address range.

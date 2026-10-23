@@ -98,7 +98,7 @@ struct ContentView: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(store.section?.rawValue ?? "全部应用").font(.title2.bold())
-                Text(store.section == .updates ? "来源更新与社区线索分别标记" : "扫描本机应用，选择需要关注的更新")
+                Text(store.section == .updates ? "仅显示更新来源已提供的版本，社区报告不计入" : "扫描本机应用，选择需要关注的更新")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Spacer()
@@ -109,7 +109,7 @@ struct ContentView: View {
     private var footer: some View {
         HStack {
             if store.scanning || store.checking || store.installing { ProgressView().controlSize(.small) }
-            Text(store.scanning ? "正在扫描应用…" : store.checking ? "检查中 \(store.completedChecks)/\(store.apps.count)" : "\(store.apps.count) 个本机应用 · \(store.updateCount) 个有更新或线索")
+            Text(store.scanning ? "正在扫描应用…" : store.checking ? "检查中 \(store.completedChecks)/\(store.apps.count)" : "\(store.apps.count) 个本机应用 · \(store.updateCount) 个有来源更新")
             if store.checking { Button("取消检测") { store.cancelChecking() }.buttonStyle(.link) }
             if store.installing {
                 Text(store.installationProgress)

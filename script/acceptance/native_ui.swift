@@ -16,7 +16,7 @@ func option(_ name: String) -> String? {
 func fail(_ message: String) -> Never { fputs(message+"\n",stderr); exit(1) }
 guard AXIsProcessTrusted() else { fail("Accessibility access is unavailable; no permissions were changed.") }
 guard let pidText = option("--pid"), let pid = Int32(pidText), let application = NSRunningApplication(processIdentifier:pid),
-      ["app.upovi.Upovi", "com.apple.notificationcenterui", "com.apple.UserNotificationCenter", "com.apple.systempreferences"].contains(application.bundleIdentifier ?? "") else { fail("Select only Upovi, its notification UI, or the Upovi notification settings pane.") }
+      ["app.upovi.Upovi", "app.upovi.TrustAcceptance", "com.apple.notificationcenterui", "com.apple.UserNotificationCenter", "com.apple.systempreferences"].contains(application.bundleIdentifier ?? "") else { fail("Select only Upovi, its synthetic trust fixture, its notification UI, or the Upovi notification settings pane.") }
 let root = AXUIElementCreateApplication(pid)
 AXUIElementSetMessagingTimeout(root,2)
 let action = option("--action") ?? "snapshot"
@@ -28,7 +28,7 @@ if application.bundleIdentifier == "com.apple.systempreferences", !["snapshot", 
         (action == "close-window" && wantedRole == "AXWindow" && label == "Upovi")
     guard allowed else { fail("System Settings actions are restricted to Upovi notification controls.") }
 }
-if action == "type", application.bundleIdentifier != "app.upovi.Upovi" { fail("Text input is restricted to Upovi.") }
+if action == "type", !["app.upovi.Upovi", "app.upovi.TrustAcceptance"].contains(application.bundleIdentifier ?? "") { fail("Text input is restricted to Upovi.") }
 var queue: [(AXUIElement,Int)] = (attribute(root,kAXWindowsAttribute) as? [AXUIElement] ?? []).map { ($0,0) }
 if wantedRole == "AXMenuItem" || wantedRole == "AXMenuBarItem" {
     for name in [kAXMenuBarAttribute, "AXExtrasMenuBar"] {

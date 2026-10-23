@@ -30,6 +30,25 @@ struct CommunityView: View {
                         if let date = store.lastSynced { Text("最近发现：\(date.formatted())").font(.caption).foregroundStyle(.secondary) }
                     }.padding(10)
                 }
+                if !store.communityApps.isEmpty {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("社区版本线索").font(.title3.bold())
+                        Text("未经来源确认的报告不计入可用更新，也不发送通知。多个节点一致仍不能证明版本真实。")
+                            .font(.callout).foregroundStyle(.secondary)
+                        Button("核对更新来源") { store.beginChecking() }
+                            .disabled(store.checking || store.scanning || store.installing)
+                        ForEach(store.communityApps) { app in
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    Text(app.name).font(.headline)
+                                    Spacer()
+                                    Button("查看应用") { store.section = .all; store.selection = app.id }
+                                }
+                                ForEach(store.assessment(for: app).communityLeads) { CommunityLeadView(lead: $0) }
+                            }
+                        }
+                    }
+                }
                 VStack(alignment: .leading, spacing: 14) {
                     Text("自动发现的共享节点").font(.title3.bold())
                     if store.discoveredPublishers.isEmpty {
@@ -55,7 +74,7 @@ struct CommunityView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Label("自动查找公开发布者索引，读取 DHT 记录并独立验签", systemImage: "checkmark.shield")
                         Label("应用运行时每 10 分钟尝试发现与续期", systemImage: "clock")
-                        Label("社区高版本只作为线索，仍需到官方渠道核实", systemImage: "checkmark.seal")
+                        Label("社区报告不增加更新数量，不触发更新通知", systemImage: "checkmark.seal")
                         Text("公开索引只是可被篡改、挤占的发现线索，不是可信目录。版本报告必须由发布者独立签名，但仍不能证明真实安装或开发者背书。关闭共享会停止服务与后续登记，已缓存的记录无法立即撤回。DHT 存取可绕过入站端口限制；UDP 网络不可用或索引受干扰时仍可能失败。")
                             .font(.caption).foregroundStyle(.secondary)
                     }.font(.callout).frame(maxWidth: .infinity, alignment: .leading).padding(10)

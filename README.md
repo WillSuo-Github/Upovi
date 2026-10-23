@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with opt-in public P2P version discovery and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.3.1**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.3.2**
 
-[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.1-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
+[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
 ## What it does
 
@@ -30,7 +30,10 @@ This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex R
 1. Select up to twenty applications with the table's P2P checkboxes.
 2. Enable public discovery on the P2P page.
 3. Separately opt into publicly sharing those selected versions if desired. **Discovery and sharing both default off.**
-4. Higher community versions appear as advisory leads; verify them with the developer. They never supply download URLs or authorize installation.
+4. Higher community versions appear as unverified advisory leads on the P2P page and in application details. They never increase the available-update count, enter the available-updates list, send update notifications, supply download URLs, or authorize installation.
+5. Use **Check update sources** to check the configured sources. Only a matching version (and matching build when a report claims one) receives a **Source matches** label. Independent source candidates drive counts and notifications once per application; the peer report itself never gains authority.
+
+Single-key reports and repeated reports from multiple distinct publisher keys are labeled separately. Duplicate keys do not increase corroboration; multiple keys are not proof of independent users. Source matches are recomputed from current check results, so removing a source or a failed recheck removes the match. Homebrew is a catalog and custom sources are user-configured; a source match is not cryptographic developer endorsement. See [community trust policy](docs/COMMUNITY-TRUST.md).
 
 Public records contain bundle ID, version/build, channel, self-reported Team ID, observation time, and expiry. They exclude paths, usernames, device names, app display names, and binaries. Records are unencrypted and readable by anyone. Topic hashes are predictable; node identities and traffic can be correlated across applications, and peers can see IP addresses. This is not an anonymous network.
 
@@ -83,7 +86,7 @@ App preferences are stored atomically with private permissions in `~/Library/App
 UPOVI_UNIVERSAL=1 UPOVI_SIGNING_IDENTITY='Developer ID Application: …' ./script/package_release.sh
 ```
 
-This produces a signed universal app and ZIP. Add `UPOVI_NOTARY_PROFILE=<existing-keychain-profile>` to submit the app to Apple, require an Accepted result, staple its ticket, and verify Gatekeeper. Credentials remain in Keychain. A signed-only artifact is not a notarized release; do not bypass macOS security warnings to run it.
+This produces a signed universal app and ZIP. Set `UPOVI_OUTPUT_DIR` to an absolute alternative output directory to stage another version without replacing a running test bundle. Add `UPOVI_NOTARY_PROFILE=<existing-keychain-profile>` to submit the app to Apple, require an Accepted result, staple its ticket, and verify Gatekeeper. Credentials remain in Keychain. A signed-only artifact is not a notarized release; do not bypass macOS security warnings to run it.
 
 ## Contributing
 

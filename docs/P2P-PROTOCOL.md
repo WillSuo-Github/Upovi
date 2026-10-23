@@ -83,7 +83,7 @@ sig = Ed25519.sign(bencode("salt") || bencode(salt)
 
 `v` is a byte string whose bencoded length is at most 1000 bytes. A subscriber rejects a sequence more than five minutes ahead of its local clock and verifies the node signature, expected topic, report field lengths, bundle ID, channel, Team ID, timestamps, and expiry. Version comparison rejects unparseable values and does not recommend prerelease versions over a stable installation.
 
-A valid signature proves possession of the publisher's node key, not that the application developer released the version or that the publisher really installed it. One publisher can create multiple identities. Community reports remain advisory and have no installation URL or automatic execution path.
+A valid signature proves possession of the publisher's node key, not that the application developer released the version or that the publisher really installed it. One publisher can create multiple identities. Community reports remain advisory and have no installation URL or automatic execution path. They do not enter update counts, the available-updates list or notification/deduplication batches. The native client groups identical version/build claims, counts distinct publisher keys for descriptive labels only, and annotates exact matches against independently fetched source candidates. A claimed build must be present and identical in the source; build-only appcasts cannot confirm a marketing version. Source matching grants the report no update authority. See [COMMUNITY-TRUST.md](COMMUNITY-TRUST.md).
 
 ## Caching and operation
 

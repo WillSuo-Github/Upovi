@@ -25,30 +25,30 @@ struct AppDetailView: View {
                     if app.isAppStore {
                         Button("打开 App Store 更新") { store.open(URL(string: "macappstore://showUpdatesPage")) }
                     }
-                    let candidates = store.candidates(for: app)
-                    if !candidates.isEmpty {
+                    let assessment = store.assessment(for: app)
+                    if !assessment.sourceUpdates.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("更新与线索").font(.headline)
-                            ForEach(Array(candidates.enumerated()), id: \.offset) { _, candidate in
+                            Text("来源更新").font(.headline)
+                            ForEach(Array(assessment.sourceUpdates.enumerated()), id: \.offset) { _, candidate in
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Label(candidate.isCommunity ? "社区发现 \(candidate.version)" : "来源提供 \(candidate.version)", systemImage: candidate.isCommunity ? "person.2" : "arrow.down.circle")
-                                        .font(.headline).foregroundStyle(candidate.isCommunity ? Color.orange : Color.accentColor)
+                                    Label("来源提供 \(candidate.version)", systemImage: "arrow.down.circle")
+                                        .font(.headline).foregroundStyle(Color.accentColor)
                                     Text(candidate.source).font(.caption).foregroundStyle(.secondary)
-                                    if candidate.isCommunity {
-                                        Text("节点签名证明记录来源，不代表开发者认可。请到官方渠道核实，Upovi 不使用 P2P 分发安装包。")
-                                            .font(.caption).foregroundStyle(.secondary)
-                                        Text(candidate.observedAt, style: .relative).font(.caption).foregroundStyle(.secondary)
+                                    if candidate.url != nil { Button("查看更新来源") { store.open(candidate.url) } }
+                                    if candidate.download?.hasIntegrityProof == true, app.teamID != nil, app.bundleID != "app.upovi.Upovi" {
+                                        Button("下载并验证更新") { store.prepareInstallation(candidate, app: app) }
+                                            .buttonStyle(.borderedProminent).disabled(store.installing || store.checking || store.scanning)
                                     } else {
-                                        if candidate.url != nil { Button("查看更新来源") { store.open(candidate.url) } }
-                                        if candidate.download?.hasIntegrityProof == true, app.teamID != nil, app.bundleID != "app.upovi.Upovi" {
-                                            Button("下载并验证更新") { store.prepareInstallation(candidate, app: app) }
-                                                .buttonStyle(.borderedProminent).disabled(store.installing || store.checking || store.scanning)
-                                        } else {
-                                            Text("此更新请使用官方来源或应用内更新。").font(.caption).foregroundStyle(.secondary)
-                                        }
+                                        Text("此更新请使用官方来源或应用内更新。").font(.caption).foregroundStyle(.secondary)
                                     }
                                 }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
                             }
+                        }
+                    }
+                    if !assessment.communityLeads.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("社区版本线索").font(.headline)
+                            ForEach(assessment.communityLeads) { CommunityLeadView(lead: $0) }
                         }
                     }
                     VStack(alignment: .leading, spacing: 10) {
