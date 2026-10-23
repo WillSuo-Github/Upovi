@@ -1,3 +1,25 @@
+# Validation: Upovi 0.3.0, 2026-10-23
+
+## Current iteration
+
+- Local final unit/regression run at **20:12 Asia/Shanghai**: **35 tests passed, 0 failures**. Coverage includes source identity and asset selection, appcast delta exclusion, community download exclusion, bounded ZIP extraction and traversal/link rejection, native Mach-O CPU/OS checks, transactional installation, injected interruption recovery, and refusal to overwrite an externally changed application during restore.
+- Independent-process automatic discovery passed, including **ten same-client routing resets**, two signed publishers, offline-publisher DHT storage, wrong-Team isolation, partial/omitted index fallback, directory CAS contention, and replay rejection after reader restart. Legacy encrypted exchange also passed. The reset test exercises socket/routing recreation; it is not physical sleep/wake acceptance.
+- Public DHT retest at **19:59 Asia/Shanghai**: six announcement acknowledgements, six signed-record storage acknowledgements, seven directory acknowledgements; fresh reader found one valid synthetic 2.5.0 report. Direct publisher count was zero; 150 routing/index responses are not 150 distinct users.
+- **Independent-network result at 20:04 Asia/Shanghai**: a fresh GitHub-hosted macOS 26 runner automatically discovered local publisher `518bdccc3d1f` and verified synthetic version **9.8.7**, without an invitation or transferred publisher key. `dhtPublishers=1`, `directPublishers=0`, `failedRecords=0`, `rejectedReports=0`. This is one physical Mac and a remote macOS VM, not two physical Macs. The successful path used signed cached DHT records; three advertised endpoints were unreachable. Public, synthetic-only evidence is retained in [evidence/0.3.0-cross-host.json](evidence/0.3.0-cross-host.json). The macOS 26 job passed; other jobs in that historical run exposed compatibility issues addressed afterward.
+- Real official signed **Rectangle 2.0.3 → 2.0.4 → 2.0.3** acceptance passed in an isolated application directory. Production download, SHA-256, matching developer/bundle identity, nested signatures, native executable compatibility, quarantine and Gatekeeper assessment all passed; replacement retained the original and restore succeeded. The user's normal applications were not replaced or launched. Download SHA-256: `9f820a2e56bd2c27cdda4fb4556de3cbcfcbac052d9eeb2179d49e2dae277abc`.
+- Live local source coverage: 69 apps scanned, including 22 App Store apps; among 47 direct-distribution apps, 26 had supported source checks and 21 were unsupported. Status counts: 16 current, 10 apps with updates, 22 App Store, 21 unsupported. Eleven source candidates existed across those ten update apps. No installed inventory was published to P2P or committed.
+- Native main table, General settings, P2P settings, and empty history/recovery UI were inspected. P2P-main-page input still crashes **SkyComputerUseService**, including the final attempt at 20:12; Upovi remains running. Full P2P-page and installation-confirmation click acceptance is pending. Core installation success does not establish that UI acceptance.
+
+Local detailed logs: `.build/final-tests.log`, `.build/final-discovery.log`, `.build/final-private.log`, `.build/iteration-public.log`, `.build/installer-acceptance.log`, and `.build/source-coverage.json`. Inventory-bearing logs stay ignored. See [RELEASE-READINESS.md](RELEASE-READINESS.md) for final CI and distribution state.
+
+## Current acceptance boundaries
+
+Two physical Macs, reverse-network roles, physical sleep/wake, notification delivery, twenty-four-hour native synchronization, traffic/energy measurements, and a real consenting user cohort remain unvalidated. IPv6, coordinated NAT hole punching, relay fallback, PKG/elevation, self-replacement, and universal source coverage are not implemented. The public index cannot establish truthful installation or Sybil resistance. Apple notarization is explicitly deferred by the owner; the requested artifact is a Developer ID signed test package.
+
+The results below are historical snapshots. Current evidence above and release readiness supersede earlier feature and distribution limitations.
+
+---
+
 # Validation: Upovi 0.2.0, 2026-10-23
 
 ## Reliability follow-up: 2026-10-23 18:40–18:45 Asia/Shanghai

@@ -1,0 +1,33 @@
+{
+  "bundleID": "app.upovi.synthetic.crosshost.3cb451ddf9b2",
+  "dhtPublishers": 1,
+  "directPublishers": 0,
+  "failedRecords": 0,
+  "observations": [
+    {
+      "publisherID": "518bdccc3d1f",
+      "report": {
+        "build": "",
+        "bundleID": "app.upovi.synthetic.crosshost.3cb451ddf9b2",
+        "channel": "developer",
+        "expiresAt": "2026-10-24T12:00:14Z",
+        "observedAt": "2026-10-23T12:00:14Z",
+        "teamID": "SYNTHETIC",
+        "version": "9.8.7"
+      }
+    }
+  ],
+  "recordedAt": "2026-10-23T12:04:54Z",
+  "rejectedReports": 0,
+  "unreachableEndpoints": 3,
+  "validationContext": {
+    "publisher": "local Apple Silicon Mac on independent network",
+    "reader": "GitHub-hosted macos-26 runner",
+    "sourceRevision": "e7bb23c5e92e6927c959f9bc95d5989781509d4d",
+    "workflowRun": "https://github.com/WillSuo-Github/Upovi/actions/runs/39950339067",
+    "publisherShortID": "518bdccc3d1f",
+    "expectedVersion": "9.8.7",
+    "metadata": "synthetic only",
+    "boundary": "One physical Mac to one remote macOS VM; successful signed DHT storage path, not direct NAT traversal or two physical Macs."
+  }
+}

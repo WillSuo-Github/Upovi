@@ -35,7 +35,7 @@ struct CommunityView: View {
                     if store.discoveredPublishers.isEmpty {
                         Label("尚未收到共享节点的有效记录", systemImage: "network")
                             .font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 18)
-                        Text("选择检测范围并启用自动发现即可。网络里需要有其他用户主动共享同一应用，端点也需要可达；没有记录不代表应用已经最新。")
+                        Text("选择检测范围并启用自动发现即可。需要其他用户主动共享同一应用，并且公网 DHT 中仍有可用记录；没有记录不代表应用已经最新。")
                             .font(.callout).foregroundStyle(.secondary)
                     } else {
                         ForEach(store.discoveredPublishers.values.sorted { $0.shortID < $1.shortID }) { peer in
