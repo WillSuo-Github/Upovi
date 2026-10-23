@@ -113,7 +113,7 @@ struct ContentView: View {
             if store.checking { Button("取消检测") { store.cancelChecking() }.buttonStyle(.link) }
             if store.installing {
                 Text(store.installationProgress)
-                Button("取消") { store.cancelInstallation() }.buttonStyle(.link)
+                if store.canCancelInstallation { Button("取消下载") { store.cancelInstallation() }.buttonStyle(.link) }
             }
             Spacer()
             if let date = store.lastChecked { Text(date, style: .time) }

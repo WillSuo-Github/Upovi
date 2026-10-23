@@ -19,6 +19,7 @@ final class AppStore {
     var installationReceipts: [InstallationReceipt] = []
     var installationProgress = ""
     var installing = false
+    var canCancelInstallation = false
     var installationConfirmation = false
     var restoreConfirmation: InstallationReceipt?
     var checkHistory: [CheckHistoryEntry] = []
@@ -36,6 +37,8 @@ final class AppStore {
     var communityResults: [String: [UpdateCandidate]] = [:]
     var errorMessage: String?
     var networkStatus = "尚未连接公网 DHT"
+    var lastCheckAttempt: Date?
+    var lastSyncAttempt: Date?
     var lastChecked: Date?
     var lastSynced: Date?
     var completedChecks = 0
@@ -138,12 +141,12 @@ final class AppStore {
 
     func beginChecking() {
         guard !checking, !scanning, !installing else { return }
+        checking = true; lastCheckAttempt = Date()
         checkTask = Task { await checkUpdates() }
     }
     func cancelChecking() { checkTask?.cancel() }
     private func checkUpdates() async {
-        guard !checking, !scanning, !installing else { return }
-        checking = true; completedChecks = 0; sourceResults = [:]
+        completedChecks = 0; sourceResults = [:]
         defer { checking = false }
         let overrides = sourceOverrides
         let snapshot = apps
@@ -180,6 +183,7 @@ final class AppStore {
 
     func beginSync() {
         guard !syncing, !scanning, networkEnabled else { return }
+        syncing = true; lastSyncAttempt = Date()
         syncTask = Task { await syncCommunity() }
     }
 

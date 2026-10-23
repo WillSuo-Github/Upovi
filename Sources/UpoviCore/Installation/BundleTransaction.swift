@@ -26,7 +26,7 @@ struct BundleTransaction {
     }
     func commit(prepared: URL, replacing app: InstalledApp, newVersion: String, newBuild: String) throws -> InstallationReceipt {
         let target = URL(fileURLWithPath: app.path).standardizedFileURL
-        guard target.pathExtension == "app", target.resolvingSymlinksInPath() == target,
+        guard target.pathExtension == "app", target.resolvingSymlinksInPath().path == target.path,
               let current = AppScanner.read(target), current.bundleID == app.bundleID, current.version == app.version,
               current.build == app.build, current.teamID == app.teamID,
               files.isWritableFile(atPath: target.deletingLastPathComponent().path) else {
@@ -68,7 +68,7 @@ struct BundleTransaction {
         let parent = target.deletingLastPathComponent()
         let backup = parent.appending(path: ".upovi-backup-\(receipt.id).app")
         guard backup.path == receipt.backupPath, UUID(uuidString: receipt.id) != nil,
-              target.resolvingSymlinksInPath() == target, backup.resolvingSymlinksInPath() == backup,
+              target.resolvingSymlinksInPath().path == target.path, backup.resolvingSymlinksInPath().path == backup.path,
               let old = AppScanner.read(backup), old.bundleID == receipt.application.bundleID,
               old.version == receipt.application.version, old.build == receipt.application.build,
               old.teamID == receipt.application.teamID else { throw PeerError.invalid("Backup identity mismatch or backup unavailable") }

@@ -32,7 +32,7 @@ public enum CommunityTopic {
 struct PublicPeerResponder: Sendable {
     let nodeID: Data
     let records: [Data: MutableRecord]
-    private let cookieKey = SymmetricKey(size: .bits256)
+    private let cookieKey = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
 
     func respond(method: String, args: [String: BValue], endpoint: DHTEndpoint, now: Date = Date()) -> [String: BValue]? {
         guard let callerID = args["id"]?.data, callerID.count == 20, let topic = args["topic"]?.data,
@@ -51,6 +51,6 @@ struct PublicPeerResponder: Sendable {
 
     private func cookie(endpoint: DHTEndpoint, topic: Data, minute: Int64) -> Data {
         let input = BValue.list([.string(endpoint.host), .int(Int64(endpoint.port)), .bytes(topic), .int(minute)]).encoded()
-        return Data(HMAC<SHA256>.authenticationCode(for: input, using: cookieKey).prefix(16))
+        return Data(HMAC<SHA256>.authenticationCode(for: input, using: SymmetricKey(data: cookieKey)).prefix(16))
     }
 }

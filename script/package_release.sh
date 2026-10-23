@@ -4,6 +4,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 VERSION="0.3.0"
 BUILD="3"
+SOURCE_REVISION="$(git rev-parse HEAD 2>/dev/null || echo source-archive)"
+if [[ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]]; then SOURCE_REVISION="$SOURCE_REVISION-dirty"; fi
 CONFIGURATION="${CONFIGURATION:-release}"
 SIGNING_IDENTITY="${UPOVI_SIGNING_IDENTITY:--}"
 if [[ "${UPOVI_UNIVERSAL:-0}" == "1" ]]; then
@@ -28,6 +30,7 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>$VERSION</string>
 <key>CFBundleVersion</key><string>$BUILD</string>
+<key>UpoviSourceRevision</key><string>$SOURCE_REVISION</string>
 <key>CFBundleIconFile</key><string>Upovi</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSPrincipalClass</key><string>NSApplication</string>

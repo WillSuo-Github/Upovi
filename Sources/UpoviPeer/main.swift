@@ -98,6 +98,12 @@ struct UpoviPeer {
                 await community.stopSharing()
             } else {
                 // No invitation, publisher key, endpoint, or read secret is accepted here.
+                let cycles = min(100, max(1, Int(option("--repeat") ?? "1") ?? 1))
+                for cycle in 0..<cycles {
+                    if cycle > 0 {
+                        try await Task.sleep(for: .seconds(1))
+                        if args.contains("--reset-between") { await community.resetRouting() }
+                    }
                 let result = try await community.discover(app)
                 let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]; encoder.dateEncodingStrategy = .iso8601
                 for observation in result.observations {
@@ -113,6 +119,7 @@ struct UpoviPeer {
                     try encoder.encode(evidence).write(to: URL(fileURLWithPath: path), options: .atomic)
                 }
                 if args.contains("--require-report"), result.observations.isEmpty { throw PeerError.unavailable("No automatically discovered publisher returned a valid report") }
+                }
             }
         case "publish":
             let own = try identity()
@@ -154,6 +161,7 @@ struct UpoviPeer {
     UpoviPeer fetch --invite <invitation-file> --bundle <id> [--channel developer|app-store]
     Network commands accept --bootstrap host:port and --allow-local for isolated tests.
     Public commands accept --state-file <path> for persistent replay and publication history.
+    Discover accepts --repeat <1-100> and --reset-between for explicit routing recovery checks.
     Discover accepts --evidence-file <path> to save public observations and separate DHT/direct counts.
     Identity and invitation files contain secrets. Never commit them.
     """

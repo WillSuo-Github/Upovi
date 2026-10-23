@@ -21,6 +21,11 @@ struct UpoviApp: App {
         }
         .defaultSize(width: 1240, height: 780)
         .commands {
+            CommandMenu("导航") {
+                Button("可用更新") { store.section = .updates }.keyboardShortcut("1", modifiers: .command)
+                Button("全部应用") { store.section = .all }.keyboardShortcut("2", modifiers: .command)
+                Button("P2P 网络") { store.section = .community }.keyboardShortcut("3", modifiers: .command)
+            }
             CommandGroup(after: .newItem) {
                 Button("重新扫描应用") { Task { await store.scan() } }.keyboardShortcut("r", modifiers: [.command, .shift])
                 Button("检查更新") { store.beginChecking() }.keyboardShortcut("r")

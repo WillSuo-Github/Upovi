@@ -127,6 +127,8 @@ def main():
             direct = subprocess.run([binary, 'discover', '--bundle', bundle, '--version', '1.0', '--require-report', *network], text=True, capture_output=True, timeout=40)
             assert direct.returncode == 0 and 'automatic_publishers=2' in direct.stdout, direct.stderr + direct.stdout
             hide_directory.clear()
+            recovery = subprocess.run([binary, 'discover', '--bundle', bundle, '--require-report', '--repeat', '10', '--reset-between', *network], text=True, capture_output=True, timeout=80)
+            assert recovery.returncode == 0 and recovery.stdout.count('automatic_publishers=2') == 10, recovery.stderr + recovery.stdout
             # One valid directory publisher must not suppress a second direct peer.
             saved_records = dict(records)
             for target in index_targets:
@@ -189,7 +191,7 @@ def main():
                         'partial_valid_index_does_not_suppress_direct_peers': True,
                         'persisted_publishers_survive_missing_index_and_offline_peers': True,
                         'replay_rejected_after_reader_restart': True,
-                        'older_honest_replica_survives_newer_omitting_slot': True, **counts}
+                        'older_honest_replica_survives_newer_omitting_slot': True, 'same_client_routing_reset_cycles': 10, **counts}
             (ROOT / '.build/automatic-discovery-evidence.json').write_text(json.dumps(evidence, indent=2) + '\n')
             print(json.dumps(evidence))
     finally:

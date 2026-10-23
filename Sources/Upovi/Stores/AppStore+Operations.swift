@@ -11,9 +11,9 @@ extension AppStore {
             await refreshInstallations()
             while !Task.isCancelled {
                 if automaticChecks && !apps.isEmpty && !scanning && !checking && !installing &&
-                    (lastChecked.map { Date().timeIntervalSince($0) >= Double(checkIntervalMinutes * 60) } ?? true) { beginChecking() }
+                    (lastCheckAttempt.map { Date().timeIntervalSince($0) >= Double(checkIntervalMinutes * 60) } ?? true) { beginChecking() }
                 if networkEnabled && !syncing && !scanning && !installing &&
-                    (lastSynced.map { Date().timeIntervalSince($0) >= 600 } ?? true) { beginSync() }
+                    (lastSyncAttempt.map { Date().timeIntervalSince($0) >= 600 } ?? true) { beginSync() }
                 try? await Task.sleep(for: .seconds(30))
             }
         }
@@ -55,9 +55,9 @@ extension AppStore {
     }
     func prepareInstallation(_ candidate: UpdateCandidate, app: InstalledApp) {
         guard !installing, !checking, !scanning else { return }
-        installing = true; installationProgress = "正在下载并验证更新…"
+        installing = true; canCancelInstallation = true; installationProgress = "正在下载并验证更新…"
         installationTask = Task { [self] in
-            defer { installing = false }
+            defer { installing = false; canCancelInstallation = false }
             do {
                 let value = try await installer.prepare(app: app, candidate: candidate) { [weak self] received, expected in
                     Task { @MainActor in
@@ -75,7 +75,7 @@ extension AppStore {
     }
     func confirmInstallation() {
         guard let value = preparedUpdate, !installing else { return }
-        installationConfirmation = false; installing = true; installationProgress = "正在安装，旧版本将保留为备份…"
+        installationConfirmation = false; installing = true; canCancelInstallation = false; installationProgress = "正在安装，旧版本将保留为备份…"
         installationTask = Task { [self] in
             defer { installing = false; preparedUpdate = nil }
             do {
