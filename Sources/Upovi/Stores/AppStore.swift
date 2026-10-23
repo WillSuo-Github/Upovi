@@ -58,7 +58,11 @@ final class AppStore {
         didSet {
             AppPreferences.shared.set(sharingEnabled, forKey: "publicSharingEnabledV2")
             syncTask?.cancel()
-            if !sharingEnabled { Task { await community.stopSharing() } }
+            if !sharingEnabled {
+                networkStatus = networkEnabled ? "公开共享已停止，已缓存记录无法立即撤回" : "P2P 已关闭"
+                logger.info("public sharing stopped")
+                Task { await community.stopSharing() }
+            }
             if networkEnabled && !syncing { beginSync() }
         }
     }
