@@ -122,6 +122,10 @@ enum PublisherSampling {
         let fresh = unique(advertised).filter { !remembered.contains($0) }.shuffled()
         let reserved = Array(remembered.prefix(4))
         let new = Array(fresh.prefix(4))
-        return Array((reserved + new + remembered.dropFirst(reserved.count) + fresh.dropFirst(new.count)).prefix(8))
+        var result = reserved
+        result.append(contentsOf: new)
+        result.append(contentsOf: remembered.dropFirst(reserved.count))
+        result.append(contentsOf: fresh.dropFirst(new.count))
+        return Array(result.prefix(8))
     }
 }

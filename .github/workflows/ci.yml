@@ -23,8 +23,20 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
-      - name: Toolchain
-        run: swift --version
+      - name: Select newest installed Xcode
+        run: |
+          python3 - <<'PY'
+          import glob,plistlib,re,subprocess
+          choices=[]
+          for app in glob.glob('/Applications/Xcode*.app'):
+              with open(app+'/Contents/Info.plist','rb') as handle:
+                  version=plistlib.load(handle).get('CFBundleShortVersionString','0')
+              choices.append((tuple(map(int,re.findall(r'\d+',version))),app))
+          version,app=max(choices)
+          assert version >= (16,), 'Swift 6 requires Xcode 16 or newer'
+          subprocess.run(['sudo','xcode-select','--switch',app+'/Contents/Developer'],check=True)
+          PY
+          swift --version
       - name: Unit and recovery tests
         run: swift test
       - name: Independent automatic discovery regression
