@@ -22,13 +22,14 @@ extension AppStore {
             Task { @MainActor in
                 guard let self else { return }
                 defer { self.previousPath = signature }
-                if self.previousPath != nil && self.previousPath != signature { self.recoverNetwork() }
+                if self.previousPath != nil && self.previousPath != signature { self.recoverNetwork(reason: "path-change") }
             }
         }
         pathMonitor.start(queue: DispatchQueue(label: "app.upovi.path"))
     }
-    func recoverNetwork() {
+    func recoverNetwork(reason: String = "network-change") {
         guard networkEnabled else { return }
+        logger.info("network recovery requested reason=\(reason, privacy: .public)")
         syncTask?.cancel()
         networkStatus = "网络已变化，正在重新连接…"
         Task {
@@ -39,7 +40,7 @@ extension AppStore {
     func setNotifications(_ enabled: Bool) async {
         let granted = enabled ? await notifications.requestAccess() : false
         notificationsEnabled = granted
-        UserDefaults.standard.set(granted, forKey: "notificationsV1")
+        AppPreferences.shared.set(granted, forKey: "notificationsV1")
         if enabled && !granted { errorMessage = "通知权限未开启，可在系统设置中允许 Upovi 通知。" }
     }
     func configureSource(for app: InstalledApp, feed: String, repository: String) throws {
@@ -50,7 +51,7 @@ extension AppStore {
               repository.isEmpty || GitHubRelease.validRepository(repository) else { throw PeerError.invalid("Use an HTTPS appcast URL and a GitHub owner/repository") }
         sourceOverrides[app.bundleID] = .init(appcast: url, githubRepository: repository.isEmpty ? nil : repository)
         let data = try JSONEncoder().encode(sourceOverrides)
-        UserDefaults.standard.set(data, forKey: "sourceOverridesV1")
+        AppPreferences.shared.set(data, forKey: "sourceOverridesV1")
         sourceResults[app.id] = nil
     }
     func prepareInstallation(_ candidate: UpdateCandidate, app: InstalledApp) {

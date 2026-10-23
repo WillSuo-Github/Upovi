@@ -2,12 +2,17 @@
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
-VERSION="0.3.0"
-BUILD="3"
+VERSION="0.3.1"
+BUILD="4"
 SOURCE_REVISION="$(git rev-parse HEAD 2>/dev/null || echo source-archive)"
 if [[ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]]; then SOURCE_REVISION="$SOURCE_REVISION-dirty"; fi
 CONFIGURATION="${CONFIGURATION:-release}"
 SIGNING_IDENTITY="${UPOVI_SIGNING_IDENTITY:--}"
+APP_BUNDLE="$ROOT_DIR/dist/Upovi.app"
+if [[ -f "$APP_BUNDLE/Contents/MacOS/Upovi" ]] && /usr/sbin/lsof -t "$APP_BUNDLE/Contents/MacOS/Upovi" >/dev/null 2>&1; then
+  echo "Quit the running Upovi build before replacing its signed bundle." >&2
+  exit 2
+fi
 if [[ "${UPOVI_UNIVERSAL:-0}" == "1" ]]; then
   swift build -c "$CONFIGURATION" --product Upovi --arch arm64 --arch x86_64
   BINARY_DIR="$(swift build -c "$CONFIGURATION" --arch arm64 --arch x86_64 --show-bin-path)"
@@ -15,7 +20,6 @@ else
   swift build -c "$CONFIGURATION" --product Upovi
   BINARY_DIR="$(swift build -c "$CONFIGURATION" --show-bin-path)"
 fi
-APP_BUNDLE="$ROOT_DIR/dist/Upovi.app"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 cp "$BINARY_DIR/Upovi" "$APP_BUNDLE/Contents/MacOS/Upovi"
 cp Resources/Upovi.icns "$APP_BUNDLE/Contents/Resources/Upovi.icns"

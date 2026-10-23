@@ -58,7 +58,7 @@ final class CommunityTests: XCTestCase {
     }
 
     func testPeerContactsRejectPrivateAndMalformedAddresses() {
-        for address in [[UInt8](arrayLiteral: 127,0,0,1), [10,0,0,1], [192,168,0,1], [198,18,0,1], [224,0,0,1]] {
+        for address in [[UInt8](arrayLiteral: 127,0,0,1), [10,0,0,1], [192,168,0,1], [198,18,0,1], [100,64,0,1], [100,127,255,254], [224,0,0,1]] {
             XCTAssertNil(DHTClient.parsePeer(Data(address + [26,225])))
         }
         XCTAssertNotNil(DHTClient.parsePeer(Data([8,8,8,8,26,225])))

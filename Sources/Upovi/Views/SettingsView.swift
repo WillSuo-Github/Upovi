@@ -4,6 +4,8 @@ import UpoviCore
 
 struct SettingsView: View {
     @Bindable var store: AppStore
+    @State private var notificationTestStatus = ""
+    @State private var sendingTestNotification = false
     var body: some View {
         TabView {
             Form {
@@ -17,6 +19,16 @@ struct SettingsView: View {
                     Toggle("发现来源更新时通知我", isOn: Binding(get: { store.notificationsEnabled }, set: { enabled in
                         Task { await store.setNotifications(enabled) }
                     }))
+                    HStack {
+                        Button("发送测试通知") {
+                            sendingTestNotification = true
+                            Task {
+                                notificationTestStatus = await store.notifications.sendTest()
+                                sendingTestNotification = false
+                            }
+                        }.disabled(!store.notificationsEnabled || sendingTestNotification)
+                        if !notificationTestStatus.isEmpty { Text(notificationTestStatus).font(.caption).foregroundStyle(.secondary) }
+                    }
                     Text("休眠或退出应用会暂停检查；醒来后恢复网络连接。社区版本仅作线索，不触发安装或官方更新通知。")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -26,7 +38,7 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                     Button("重新扫描") { Task { await store.scan() } }.disabled(store.scanning || store.checking || store.syncing || store.installing)
                 }
-                Section("Upovi 0.3.0") {
+                Section("Upovi 0.3.1") {
                     Text("SwiftUI · MIT License · macOS 14+")
                     Link("项目与问题反馈", destination: URL(string: "https://github.com/WillSuo-Github/Upovi")!)
                 }

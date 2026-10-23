@@ -2,7 +2,7 @@
 
 A native, open-source macOS application update detector with opt-in public P2P version discovery and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.3.0**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.3.1**
 
 [Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.0-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
@@ -68,6 +68,14 @@ python3 script/test_public_discovery.py
 `UpoviPeer check-sources --summary-file <path>` checks local application sources without publishing inventory to P2P. Its optional verbose output remains local and should not be attached wholesale to issues. `discover --evidence-file <path>` exports synthetic/public reports and separate DHT/direct counts. Use `--state-file <path>` for persistent diagnostic sequence history and separate files for concurrent processes.
 
 See `docs/VALIDATION.md` for measured results, `docs/CROSS-NETWORK-TEST.md` for multi-host acceptance, and `docs/RELEASE-READINESS.md` for outstanding release conditions. Unit tests and one-host public tests do not replace physical-device, sleep/wake, real-community, or twenty-four-hour acceptance.
+
+## Native acceptance
+
+`script/acceptance/native_ui.swift` is a developer-only native accessibility controller for explicitly authorized UI checks. It targets Upovi and its notification controls; compile it with `swiftc`. It never requests Accessibility permission itself. Its snapshots may contain installed application metadata; keep raw snapshots local.
+
+`script/acceptance/soak.py --help` describes the 24-hour observation harness. It observes an already configured native app, records aggregate process/UI metrics and per-process network counters, and does not change preferences, prevent sleep, restart a failed app, or declare a pass merely because a timer ended. Review sampling gaps and the runtime log before acceptance.
+
+App preferences are stored atomically with private permissions in `~/Library/Application Support/Upovi/settings-v1.plist`. Known earlier UserDefaults keys migrate on first creation when readable. An unreadable/corrupt settings file is preserved and public features start disabled; write failures are surfaced in the app.
 
 ## Distribution
 

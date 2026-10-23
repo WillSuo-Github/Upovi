@@ -43,6 +43,10 @@ jobs:
         run: python3 script/test_automatic_discovery.py
       - name: Legacy private exchange regression
         run: python3 script/test_dht_exchange.py
+      - name: Compile acceptance tools
+        run: |
+          swiftc script/acceptance/native_ui.swift -o .build/native-ui-acceptance
+          python3 -m py_compile script/acceptance/soak.py
       - name: Build native bundle
         run: CONFIGURATION=release UPOVI_STAGE_ONLY=1 ./script/package_release.sh
       - name: Read synthetic report from independent publisher

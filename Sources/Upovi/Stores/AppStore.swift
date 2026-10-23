@@ -25,8 +25,8 @@ final class AppStore {
     var checkHistory: [CheckHistoryEntry] = []
     var sourceOverrides: [String: SourceOverride] = [:]
     var apps: [InstalledApp] = []
-    var section: AppSection? = AppSection(rawValue: UserDefaults.standard.string(forKey: "lastSectionV1") ?? "") ?? .all {
-        didSet { UserDefaults.standard.set(section?.rawValue, forKey: "lastSectionV1") }
+    var section: AppSection? = AppSection(rawValue: AppPreferences.shared.string(forKey: "lastSectionV1") ?? "") ?? .all {
+        didSet { AppPreferences.shared.set(section?.rawValue, forKey: "lastSectionV1") }
     }
     var selection: String?
     var search = ""
@@ -47,7 +47,7 @@ final class AppStore {
     var identityID = "尚未创建"
     var networkEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(networkEnabled, forKey: "publicDiscoveryEnabledV2")
+            AppPreferences.shared.set(networkEnabled, forKey: "publicDiscoveryEnabledV2")
             if !networkEnabled {
                 syncTask?.cancel(); networkStatus = "P2P 已关闭"; communityResults = [:]; discoveredPublishers = [:]
                 Task { await community.stopSharing() }
@@ -56,7 +56,7 @@ final class AppStore {
     }
     var sharingEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(sharingEnabled, forKey: "publicSharingEnabledV2")
+            AppPreferences.shared.set(sharingEnabled, forKey: "publicSharingEnabledV2")
             syncTask?.cancel()
             if !sharingEnabled { Task { await community.stopSharing() } }
             if networkEnabled && !syncing { beginSync() }
@@ -64,20 +64,20 @@ final class AppStore {
     }
     var selectedBundles: Set<String> {
         didSet {
-            UserDefaults.standard.set(Array(selectedBundles), forKey: "selectedBundles")
+            AppPreferences.shared.set(Array(selectedBundles), forKey: "selectedBundles")
             syncTask?.cancel()
             communityResults = [:]
             Task { await community.stopSharing() }
         }
     }
-    var ignored: Set<String> { didSet { UserDefaults.standard.set(Array(ignored), forKey: "ignoredBundles") } }
-    var automaticChecks = UserDefaults.standard.bool(forKey: "automaticChecksV1") {
-        didSet { UserDefaults.standard.set(automaticChecks, forKey: "automaticChecksV1") }
+    var ignored: Set<String> { didSet { AppPreferences.shared.set(Array(ignored), forKey: "ignoredBundles") } }
+    var automaticChecks = AppPreferences.shared.bool(forKey: "automaticChecksV1") {
+        didSet { AppPreferences.shared.set(automaticChecks, forKey: "automaticChecksV1") }
     }
-    var checkIntervalMinutes: Int = max(15, UserDefaults.standard.integer(forKey: "checkIntervalV1") == 0 ? 60 : UserDefaults.standard.integer(forKey: "checkIntervalV1")) {
-        didSet { UserDefaults.standard.set(checkIntervalMinutes, forKey: "checkIntervalV1") }
+    var checkIntervalMinutes: Int = max(15, AppPreferences.shared.integer(forKey: "checkIntervalV1") == 0 ? 60 : AppPreferences.shared.integer(forKey: "checkIntervalV1")) {
+        didSet { AppPreferences.shared.set(checkIntervalMinutes, forKey: "checkIntervalV1") }
     }
-    var notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsV1")
+    var notificationsEnabled = AppPreferences.shared.bool(forKey: "notificationsV1")
     @ObservationIgnored let notifications = NotificationService()
     @ObservationIgnored let installer = UpdateInstaller()
     @ObservationIgnored var installationTask: Task<Void, Never>?
@@ -92,17 +92,19 @@ final class AppStore {
     @ObservationIgnored var publisherCache: [String: [String]] = [:]
 
     init() {
-        networkEnabled = UserDefaults.standard.bool(forKey: "publicDiscoveryEnabledV2")
-        sharingEnabled = UserDefaults.standard.bool(forKey: "publicSharingEnabledV2")
-        selectedBundles = Set(UserDefaults.standard.stringArray(forKey: "selectedBundles") ?? [])
-        ignored = Set(UserDefaults.standard.stringArray(forKey: "ignoredBundles") ?? [])
-        if let data = UserDefaults.standard.data(forKey: "sourceOverridesV1") {
+        networkEnabled = AppPreferences.shared.bool(forKey: "publicDiscoveryEnabledV2")
+        sharingEnabled = AppPreferences.shared.bool(forKey: "publicSharingEnabledV2")
+        selectedBundles = Set(AppPreferences.shared.stringArray(forKey: "selectedBundles") ?? [])
+        ignored = Set(AppPreferences.shared.stringArray(forKey: "ignoredBundles") ?? [])
+        if let data = AppPreferences.shared.data(forKey: "sourceOverridesV1") {
             sourceOverrides = (try? JSONDecoder().decode([String: SourceOverride].self, from: data)) ?? [:]
         }
-        if let data = UserDefaults.standard.data(forKey: "checkHistoryV1") {
+        if let data = AppPreferences.shared.data(forKey: "checkHistoryV1") {
             checkHistory = (try? JSONDecoder().decode([CheckHistoryEntry].self, from: data)) ?? []
         }
-        publisherCache = UserDefaults.standard.dictionary(forKey: "publicPublisherCacheV2") as? [String: [String]] ?? [:]
+        publisherCache = AppPreferences.shared.dictionary(forKey: "publicPublisherCacheV2") as? [String: [String]] ?? [:]
+        AppPreferences.shared.onFailure = { [weak self] message in self?.errorMessage = message }
+        errorMessage = AppPreferences.shared.loadFailure
     }
 
     var visibleApps: [InstalledApp] {
@@ -165,7 +167,7 @@ final class AppStore {
         let updates = sourceResults.values.filter { !$0.candidates.isEmpty }.count
         checkHistory.insert(.init(date: Date(), applications: snapshot.count, updates: updates, failed: failures), at: 0)
         checkHistory = Array(checkHistory.prefix(100))
-        if let data = try? JSONEncoder().encode(checkHistory) { UserDefaults.standard.set(data, forKey: "checkHistoryV1") }
+        if let data = try? JSONEncoder().encode(checkHistory) { AppPreferences.shared.set(data, forKey: "checkHistoryV1") }
         logger.info("source check completed apps=\(snapshot.count) updates=\(updates) failures=\(failures)")
         if notificationsEnabled { await notifications.announce(snapshot, results: sourceResults, ignored: ignored) }
     }
@@ -184,6 +186,7 @@ final class AppStore {
     func beginSync() {
         guard !syncing, !scanning, networkEnabled else { return }
         syncing = true; lastSyncAttempt = Date()
+        logger.info("community sync started")
         syncTask = Task { await syncCommunity() }
     }
 
@@ -242,11 +245,12 @@ final class AppStore {
                 // Keep only bounded public keys for currently selected applications, never invitation secrets.
                 let activeTopics = Set(scope.map { CommunityTopic.hash($0).base64EncodedString() })
                 publisherCache = publisherCache.filter { activeTopics.contains($0.key) }
-                UserDefaults.standard.set(publisherCache, forKey: "publicPublisherCacheV2")
+                AppPreferences.shared.set(publisherCache, forKey: "publicPublisherCacheV2")
             } catch { if Task.isCancelled { return }; failures += 1; lastFailure = error.localizedDescription }
             try? await Task.sleep(for: .milliseconds(400))
         }
         lastSynced = Date()
+        logger.info("community sync completed apps=\(scope.count) publishers=\(self.discoveredPublishers.count) leads=\(found) failures=\(failures)")
         networkStatus = "DHT 响应 \(responders) 次 · 端点 \(endpoints) 个 · 索引候选 \(directoryCandidates) 个 · 验签节点 \(discoveredPublishers.count) 个 · 更高版本线索 \(found) 条"
         if sharingEnabled { networkStatus += "\n主题登记确认 \(announcements) 次 · 索引登记确认 \(directoryAcks) 次 · 记录存储确认 \(storage) 次" }
         if unreachable > 0 { networkStatus += "\n\(unreachable) 个采样端点未返回有效记录，可能离线或受 NAT／防火墙限制" }

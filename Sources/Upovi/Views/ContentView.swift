@@ -65,7 +65,7 @@ struct ContentView: View {
             if !ids.contains(store.selection ?? "") { store.selection = ids.first }
         }
         .task { store.startMonitoring() }
-        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in store.recoverNetwork() }
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in store.recoverNetwork(reason: "wake") }
         .sheet(isPresented: $store.installationConfirmation, onDismiss: {
             if !store.installing { store.discardInstallation() }
         }) { InstallationConfirmationView(store: store) }

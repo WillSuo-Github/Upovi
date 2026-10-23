@@ -1,10 +1,40 @@
 import Foundation
 import UserNotifications
 import UpoviCore
+import OSLog
 
 @MainActor
-final class NotificationService {
-    private var seen = Set(UserDefaults.standard.stringArray(forKey: "notifiedUpdatesV1") ?? [])
+final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
+    private let logger = Logger(subsystem: "app.upovi.Upovi", category: "notifications")
+    private var seen = Set(AppPreferences.shared.stringArray(forKey: "notifiedUpdatesV1") ?? [])
+    override init() {
+        super.init()
+        UNUserNotificationCenter.current().delegate = self
+    }
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .list, .sound]
+    }
+    private func wasDelivered(_ id: String) async -> Bool {
+        await withCheckedContinuation { continuation in
+            UNUserNotificationCenter.current().getDeliveredNotifications { notifications in
+                continuation.resume(returning: notifications.contains { $0.request.identifier == id })
+            }
+        }
+    }
+    func sendTest() async -> String {
+        let content = UNMutableNotificationContent()
+        content.title = "Upovi 通知测试"
+        content.body = "来源更新提醒已启用。社区版本仍只作为线索。"
+        content.sound = .default
+        let id = UUID().uuidString
+        do {
+            try await UNUserNotificationCenter.current().add(.init(identifier: id, content: content, trigger: nil))
+            try await Task.sleep(for: .seconds(2))
+            let delivered = await wasDelivered(id)
+            logger.info("notification test submitted delivered=\(delivered)")
+            return delivered ? "测试通知已送达通知中心。" : "测试通知已提交；若未显示，请检查系统通知与专注模式。"
+        } catch { logger.error("notification test failed"); return "测试通知发送失败，请检查通知权限。" }
+    }
     func requestAccess() async -> Bool {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
     }
@@ -19,10 +49,18 @@ final class NotificationService {
         content.body = updates.prefix(3).map(\.name).joined(separator: "、")
         content.sound = .default
         do {
-            try await UNUserNotificationCenter.current().add(.init(identifier: UUID().uuidString, content: content, trigger: nil))
+            let id = UUID().uuidString
+            try await UNUserNotificationCenter.current().add(.init(identifier: id, content: content, trigger: nil))
+            logger.info("update notification scheduled apps=\(updates.count)")
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(2))
+                guard let self else { return }
+                let delivered = await wasDelivered(id)
+                logger.info("update notification delivery observed delivered=\(delivered)")
+            }
             for app in updates { for candidate in results[app.id]?.candidates ?? [] { seen.insert(app.bundleID + ":" + candidate.version + ":" + candidate.build) } }
             if seen.count > 1000 { seen = Set(seen.sorted().suffix(1000)) }
-            UserDefaults.standard.set(Array(seen), forKey: "notifiedUpdatesV1")
-        } catch { }
+            AppPreferences.shared.set(Array(seen), forKey: "notifiedUpdatesV1")
+        } catch { logger.error("update notification scheduling failed") }
     }
 }
