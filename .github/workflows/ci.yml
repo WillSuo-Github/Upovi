@@ -1,0 +1,55 @@
+name: macOS validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      public_topic:
+        description: Optional synthetic topic published from an independent test Mac
+        required: false
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: validation-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-14, macos-15-intel, macos-26]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - name: Toolchain
+        run: swift --version
+      - name: Unit and recovery tests
+        run: swift test
+      - name: Independent automatic discovery regression
+        run: python3 script/test_automatic_discovery.py
+      - name: Legacy private exchange regression
+        run: python3 script/test_dht_exchange.py
+      - name: Build native bundle
+        run: CONFIGURATION=release UPOVI_STAGE_ONLY=1 ./script/package_release.sh
+      - name: Read synthetic report from independent publisher
+        if: github.event_name == 'workflow_dispatch' && inputs.public_topic != ''
+        env:
+          UPOVI_PUBLIC_TOPIC: ${{ inputs.public_topic }}
+        run: |
+          python3 - <<'PY'
+          import os,re,subprocess
+          topic=os.environ['UPOVI_PUBLIC_TOPIC']
+          assert re.fullmatch(r'app\.upovi\.synthetic\.[a-z0-9.-]{1,100}',topic)
+          binary=subprocess.check_output(['swift','build','--show-bin-path'],text=True).strip()+'/UpoviPeer'
+          subprocess.run([binary,'discover','--bundle',topic,'--team','SYNTHETIC','--require-report','--evidence-file','.build/cross-host-reader.json'],check=True,timeout=180)
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: validation-${{ matrix.runner }}
+          path: |
+            .build/automatic-discovery-evidence.json
+            .build/cross-host-reader.json
+          if-no-files-found: ignore

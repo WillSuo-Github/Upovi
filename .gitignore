@@ -1,0 +1,8 @@
+.build/
+dist/
+.DS_Store
+*.xcuserstate
+.swiftpm/
+.local/
+__pycache__/
+*.pyc
