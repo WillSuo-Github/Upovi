@@ -4,6 +4,8 @@ A native, open-source macOS application update detector with opt-in public P2P v
 
 **SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.3.0**
 
+[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.0-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
+
 ## What it does
 
 - Scans `/Applications` and `~/Applications` without launching scanned applications.
