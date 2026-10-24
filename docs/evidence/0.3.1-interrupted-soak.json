@@ -1,0 +1,92 @@
+{
+  "version": "0.3.1",
+  "productSourceRevision": "3a71874706417e14eeee2559dcf65ecd87f83b26",
+  "reviewedAt": "2026-10-24T06:12:46.476804+00:00",
+  "outcome": "interrupted_not_accepted",
+  "requestedDurationSeconds": 86400,
+  "startedAt": "2026-10-23T13:55:17.121185+00:00",
+  "lastValidSampleAt": "2026-10-24T05:16:17.123648+00:00",
+  "observerStoppedAt": "2026-10-24T05:17:17.135387+00:00",
+  "observerElapsedSeconds": 55320.01,
+  "validSampleSpanSeconds": 55260.0,
+  "samples": 922,
+  "samplingGapsReported": [],
+  "exit": {
+    "time": "2026-10-24T05:16:55.193Z",
+    "classification": "normal_appkit_termination_and_system_voluntary_exit",
+    "triggerIdentity": "not established",
+    "matchingNewCrashReportFound": false,
+    "events": [
+      {
+        "at": "2026-10-24T05:16:55.177Z",
+        "event": "AppKit sendAction followed by terminate:"
+      },
+      {
+        "at": "2026-10-24T05:16:55.181Z",
+        "event": "applicationShouldTerminate: NSTerminateNow; App termination approved"
+      },
+      {
+        "at": "2026-10-24T05:16:55.193Z",
+        "event": "Termination complete. Exiting without sudden termination."
+      },
+      {
+        "at": "2026-10-24T05:16:55.215Z",
+        "event": "System process exit context: voluntary"
+      }
+    ]
+  },
+  "runtime": {
+    "sourceChecksCompleted": 61,
+    "publicSynchronizationsCompleted": 89,
+    "synchronizationsWithNoPublisher": 1,
+    "checksWithReportedNonzeroFailures": 0,
+    "networkRecoveryEventsObserved": 0,
+    "boundary": "A completed lookup with no report does not prove an app current; no physical sleep/wake acceptance."
+  },
+  "metrics": {
+    "rssReportedKBMin": 121952,
+    "rssReportedKBMax": 239536,
+    "lastRSSReportedKB": 134624,
+    "medianSampledCPUPercent": 0.0,
+    "peakSampledCPUPercent": 49.0,
+    "lastCumulativeCPUTime": "14:16.75",
+    "boundary": "Process statistics include normal work and accessibility-probe overhead; neither direct energy measurement nor a full-duration performance acceptance."
+  },
+  "uiCoverage": {
+    "probeExceptions": 0,
+    "samplesWithoutVisibleWindow": 559,
+    "samplesWithVisibleWindow": 363,
+    "windowlessIntervals": [
+      {
+        "firstSampleAt": "2026-10-23T18:44:17.123971+00:00",
+        "samples": 19,
+        "lastSampleAt": "2026-10-23T19:02:17.122706+00:00"
+      },
+      {
+        "firstSampleAt": "2026-10-23T19:24:17.123896+00:00",
+        "samples": 540,
+        "lastSampleAt": "2026-10-24T04:23:17.127296+00:00"
+      }
+    ],
+    "screenLockObservedDuringAffectedPeriod": true,
+    "visibleWindowReturnedBeforeExit": true,
+    "boundary": "Zero probe exceptions does not establish UI responsiveness while no window content was returned."
+  },
+  "trafficCoverage": {
+    "completeProcessRowsFlushed": 826,
+    "trailingRecordIncomplete": true,
+    "fullObservationCoverageAccepted": false,
+    "boundary": "The collector output was buffered and the saved CSV ends in a partial record. No full-run byte total or energy claim is made."
+  },
+  "safety": {
+    "binaryHashUnchanged": true,
+    "selectedSyntheticBundleCount": 1,
+    "finalSharingEnabled": false,
+    "finalAppNotificationsEnabled": false,
+    "appAutomaticallyRestarted": false,
+    "signedBundleReplaced": false,
+    "preferencesOrFixturesChangedAfterExit": false,
+    "reason": "Normal termination may reflect intervening user activity; existing settings and recoverable test bundles were preserved."
+  },
+  "newerVersionBoundary": "This run does not validate 0.3.2 trust-policy or long-run behavior. A full 24-hour acceptance remains outstanding."
+}

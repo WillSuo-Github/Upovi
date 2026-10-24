@@ -9,7 +9,7 @@
 | Native UI | Actual store/core/views, isolated synthetic entry point and settings, scoped screenshot inspected | Fixture suppresses networking/scanning/scheduled tasks; real public P2P path was accepted separately on 0.3.1 |
 | Compatibility | Final product CI passed on macOS 14 ARM, macOS 15 Intel and macOS 26 ARM | [CI run](https://github.com/WillSuo-Github/Upovi/actions/runs/39978142697): 50 tests, both isolated protocol regressions, native tool compilation and native bundle build per system |
 | Signed preview | [0.3.2 beta 1](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1), universal Developer ID | Strict original/extracted signature and ZIP checksum passed; notarization deferred |
-| 24-hour observation | Previous 0.3.1 process remains running without replacement | Planned review 2026-10-24 21:55:17 Asia/Shanghai; does not establish 0.3.2 long-run acceptance |
+| 24-hour observation | Previous 0.3.1 run interrupted after about 15 h 22 min; not accepted | Normal termination at 2026-10-24 13:16:55 Asia/Shanghai, trigger unknown; observer stopped at 13:17:17. [Evidence](evidence/0.3.1-interrupted-soak.json); no 0.3.2 long-run acceptance |
 
 Artifact: `dist/0.3.2/Upovi-0.3.2.zip`; SHA-256 `42624477445afd7cc4df4c9cdd60743c39b80e3ffe48f671ddd025db9c1ee13c`; embedded revision `525314febbcbe08e87c5ed78ccd22fc262d6b504`, build 5. Signing Team `NT9VR9C9HY`, x86_64 + arm64, hardened runtime, trusted timestamp 2026-10-23 23:25:57 Asia/Shanghai. The package was created in a separate output directory. The running 0.3.1 binary hash and PID were verified unchanged.
 
@@ -30,7 +30,7 @@ This is an experimental signed preview. Implementation, observed behavior and ac
 | ZIP/DMG installation and recovery | Actual native download, cancel, confirm, history and restore passed | Official Rectangle fixture 2.0.3 → 2.0.4 → 2.0.3 in an isolated directory; no normal user app replaced |
 | Notifications | Rejection path and actual Notification Center delivery query passed | System permission explicitly authorized; banner not visually confirmed; app notification switch restored off |
 | Scheduler and menu bar | Ten-minute P2P and fifteen-minute source checks observed; menu open action reopened closed main window | AXPress on status icon itself failed; physical pointer opening was not retested |
-| 24-hour observation | Running from 2026-10-23 21:55:17 Asia/Shanghai | Review after 2026-10-24 21:55:17; no full-duration pass claimed; gaps and collector/runtime logs require review |
+| 24-hour observation | Interrupted, not accepted: 922 samples over about 15 h 22 min | System records a voluntary normal termination; no matching new crash report found. Trigger unknown. UI coverage was limited during lock; traffic tail incomplete. [Evidence](evidence/0.3.1-interrupted-soak.json) |
 | Sleep, network changes, energy | Physical sleep deferred by owner; same-client routing resets passed separately | No active interface change or direct energy measurement accepted; CPU/RSS/traffic are supporting metrics |
 | macOS and Intel | [Final product CI passed](https://github.com/WillSuo-Github/Upovi/actions/runs/39963985467) | macOS 14 ARM, macOS 15 Intel, macOS 26 ARM; 40 unit tests, isolated automatic/private protocol regressions, native acceptance-tool compilation and bundle build on each |
 | Distribution | [0.3.1 beta 1](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.1-beta.1), universal Developer ID test package | Apple notarization explicitly deferred; signing does not establish notarization |

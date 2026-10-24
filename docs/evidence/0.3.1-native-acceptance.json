@@ -91,7 +91,7 @@
     "sourceFailures": 0
   },
   "longObservation": {
-    "status": "running_not_accepted",
+    "status": "interrupted_not_accepted",
     "startedAt": "2026-10-23T13:55:17.121185Z",
     "plannedReviewAfter": "2026-10-24T13:55:17.121185Z",
     "durationSeconds": 86400,
@@ -108,7 +108,12 @@
       "per-process traffic",
       "native runtime events"
     ],
-    "boundary": "Actual samples, gaps, collector health and failures require later review. CPU/RSS/traffic do not measure energy directly."
+    "boundary": "Actual samples, gaps, collector health and failures require later review. CPU/RSS/traffic do not measure energy directly.",
+    "stoppedAt": "2026-10-24T05:17:17.135387+00:00",
+    "observerElapsedSeconds": 55320.01,
+    "samples": 922,
+    "finalEvidence": "0.3.1-interrupted-soak.json",
+    "exitClassification": "normal AppKit termination; system voluntary exit; trigger not established"
   },
   "remaining": [
     "Full 24-hour observation and review",

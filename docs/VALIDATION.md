@@ -1,3 +1,17 @@
+# Interrupted native observation review: 2026-10-24
+
+**The requested 24-hour acceptance did not complete.** The pinned 0.3.1 app entered AppKit's normal termination flow at **13:16:55 Asia/Shanghai**; the OS reported a voluntary exit. The observer detected process absence and stopped at **13:17:17**, about **15 h 22 min** after its 2026-10-23 21:55:17 start. The trigger identity is not established; this is not classified as an observed app crash. No matching new Upovi crash report was found. [Sanitized evidence](evidence/0.3.1-interrupted-soak.json).
+
+- 922 samples; last valid sample at 13:16:17. No sampling gaps or probe exceptions were recorded before exit. However **559 samples returned no visible window content**, and screen lock was independently observed during that period. Window content was readable again before exit; zero probe exceptions are not full-duration UI responsiveness proof.
+- Runtime log: **61 completed source checks and 89 completed public synchronizations**, with no nonzero failure totals logged. One synchronization returned no publisher and later reads recovered. Empty results are not proof of no updates. No natural wake/network recovery event was logged, so this adds no sleep/wake or interface-change acceptance.
+- RSS range reported by ps: 121952–239536 KB, last 134624 KB; sampled CPU median 0.0%, maximum 49.0%. These include normal app work and accessibility-probe overhead, are not direct energy measurements and do not establish a full-duration performance pass.
+- Saved traffic CSV contains 826 complete process rows and ends with an incomplete record. Buffered/unflushed output prevents a full-observation traffic total; no complete traffic-budget acceptance is claimed.
+- Original product binary hash remained unchanged. Sharing and app notifications were off; selection remained the single synthetic fixture. The app was not restarted, replaced or rebuilt. Because normal termination may reflect intervening user activity, preferences and recoverable fixture bundles were left unchanged.
+
+The hourly follow-up for this ended run has been removed. A fresh uninterrupted 24-hour run is still required and should be scoped to the intended product version. **None of these partial results establish 0.3.2 long-run acceptance.** Its separate 50-test/CI and trust-policy UI results below remain unchanged. Physical sleep and notarization remain deferred.
+
+---
+
 # Validation: Upovi 0.3.2 community-claim policy, 2026-10-23
 
 Product revision `525314febbcbe08e87c5ed78ccd22fc262d6b504`. [Final CI 39978142697](https://github.com/WillSuo-Github/Upovi/actions/runs/39978142697) passed on macOS 14 ARM, macOS 15 Intel and macOS 26 ARM: full suite, both isolated protocol regressions, native acceptance-tool compilation and native bundle build on each. The signed universal original and fresh ZIP extraction passed strict verification; SHA-256 matches the artifact in [release readiness](RELEASE-READINESS.md).
@@ -7,7 +21,7 @@ Product revision `525314febbcbe08e87c5ed78ccd22fc262d6b504`. [Final CI 399781426
 - Actual UI checks: only community 999.0 / repeated 2.0 gives **zero** available updates and an empty available-updates page; supplying a synthetic source 2.0 build 200 gives **one** update and a source-match label for 2.0, while 999.0 remains unverified; removing the source returns to **zero**. Community reports remain visible on P2P/all-app details with no installation button. A scoped window screenshot was visually checked for source/lead separation, count and text layout. [Aggregate evidence](evidence/0.3.2-community-trust.json).
 - Notification submission uses the same tested source-only planning policy and cannot add peer candidates to notification content or persisted deduplication state. Existing real macOS Notification Center delivery acceptance belongs to 0.3.1; no new system notification was sent for this synthetic policy test.
 
-The real 24-hour observer remains pinned to **0.3.1 / 3a71874706417e14eeee2559dcf65ecd87f83b26**. It was not restarted or replaced, and cannot establish long-run acceptance of 0.3.2. Source matches refer to existing independently fetched developer/configured/catalog sources, not cryptographic developer endorsement. [Policy details](COMMUNITY-TRUST.md).
+The real 24-hour observer was pinned to **0.3.1 / 3a71874706417e14eeee2559dcf65ecd87f83b26**, but stopped early on 2026-10-24 after normal application termination (see the interrupted-run review above). It was not restarted or replaced and cannot establish long-run acceptance of 0.3.2. Source matches refer to existing independently fetched developer/configured/catalog sources, not cryptographic developer endorsement. [Policy details](COMMUNITY-TRUST.md).
 
 ---
 
@@ -29,7 +43,7 @@ User explicitly approved native Accessibility/XCTest alternatives after SkyCompu
 
 ## Long observation and remaining boundaries
 
-A real native **24-hour observer started 2026-10-23 21:55:17 Asia/Shanghai**, with review planned after **2026-10-24 21:55:17**. It samples process identity, CPU time/RSS and native UI each minute and records app-only runtime events and per-process traffic. Discovery is enabled for one synthetic bundle, sharing and notifications off, scheduled source checks every fifteen minutes. It neither prevents sleep nor restarts the app. A timer completion is not a pass: coverage gaps, errors, source/P2P completions, process changes and metric trends must be reviewed. Current status is running, not accepted. Raw observations remain in ignored `.local/physical-acceptance/native-soak-24h`.
+A real native **24-hour observer started 2026-10-23 21:55:17 Asia/Shanghai**, with review planned after **2026-10-24 21:55:17**. It samples process identity, CPU time/RSS and native UI each minute and records app-only runtime events and per-process traffic. Discovery is enabled for one synthetic bundle, sharing and notifications off, scheduled source checks every fifteen minutes. It neither prevents sleep nor restarts the app. A timer completion is not a pass: coverage gaps, errors, source/P2P completions, process changes and metric trends must be reviewed. Final status is interrupted, not accepted; the review above supersedes the original planned review time. Raw observations remain in ignored `.local/physical-acceptance/native-soak-24h`.
 
 A short 10-second harness check passed before the full run; a deliberate sharing-on probe correctly stopped. Neither substitutes for 24 hours. A short `top` sample showed low idle CPU/POWER, but POWER is an OS estimate, not watts. Direct energy measurement, physical sleep/wake (explicitly deferred), actual interface switching and a real consenting community cohort remain open. Same-client routing resets are not physical lifecycle acceptance. IPv6, coordinated NAT traversal, relay fallback, PKG/elevation, self-update and universal source coverage are not implemented; signed public reports do not prove truthful installation or independent humans. Apple notarization is deferred by the owner.
 

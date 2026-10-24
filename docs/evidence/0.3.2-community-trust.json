@@ -40,7 +40,9 @@
     "version": "0.3.1",
     "sourceRevision": "3a71874706417e14eeee2559dcf65ecd87f83b26",
     "replaced": false,
-    "boundary": "Does not validate 0.3.2 long-run behavior"
+    "boundary": "Does not validate 0.3.2 long-run behavior",
+    "outcome": "interrupted_not_accepted",
+    "finalEvidence": "0.3.1-interrupted-soak.json"
   },
   "ci": {
     "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/39978142697",

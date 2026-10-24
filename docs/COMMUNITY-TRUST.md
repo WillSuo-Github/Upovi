@@ -30,4 +30,4 @@ The P2P page and all-app details retain community reports for investigation. **C
 
 Ten targeted regression tests include a cryptographically valid invented 999.0 claim, 100 publisher identities, wrong/missing build evidence, duplicate/expired identities, source removal/failure, incorrect application identity and notification deduplication. The native synthetic UI acceptance exercises count 0 → 1 → 0 while fake 999.0 remains unverified. It uses an isolated preferences file and synthetic entry point with actual store/core/views; no public networking or notification submission is performed by that fixture.
 
-The ongoing 24-hour run is pinned to the previous 0.3.1 product binary. Its result cannot validate these new policy/UI changes. Do not replace that running signed bundle to test this change.
+The previous 0.3.1 native observation was interrupted after about 15 h 22 min by a normal application termination and was not accepted as a 24-hour run. Its partial result cannot validate these new policy/UI changes. See [interrupted-run evidence](evidence/0.3.1-interrupted-soak.json).
