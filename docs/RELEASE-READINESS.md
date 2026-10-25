@@ -1,3 +1,23 @@
+# Upovi 0.4.0 development readiness
+
+P2P mechanism expansion is deferred. Daily-use and administrator installation work is staged in draft PR [#1](https://github.com/WillSuo-Github/Upovi/pull/1), not published as a release.
+
+| Area | Evidence | Remaining boundary |
+| --- | --- | --- |
+| Sources | Same-machine sample improved from 21 unsupported entries to 8, including one synthetic fixture | Seven real apps still need a reliable adapted/configured source; not universal coverage |
+| Login startup | Actual signed-app toggle off → on → off, no registration errors | Login/reboot launch itself not accepted |
+| Retained-copy cleanup | Native cancellation and Trash confirmation on a synthetic fixture; current app retained | Interrupted transactions protected; no privileged-backup pruning |
+| Self-update | Sparkle, signed feed/archive tooling and nested packaging implemented | Feed publication and genuine old-to-new replacement pending |
+| Administrator app installation/recovery | Authorized production bootstrap/helper: isolated signed 2.0.3 → 2.0.4 → 2.0.3, resulting signatures valid | Native install-button, interruption/reboot and full PKG execution remain open |
+| PKG validation | Real official package SHA-256, matching developer, Gatekeeper and signed matching app payload passed | Package scripts not executed; main-app restore cannot undo system side effects |
+| Automated checks | 73 local tests and isolated protocol regressions passed | CI results are revision-specific; see aggregate evidence |
+| Long observation | Source-only observer prepared; final run status in evidence | Timer completion, CPU/RSS and sampled traffic do not establish complete UX/energy acceptance |
+| Distribution | Developer ID universal candidate and signed feed staged locally | Apple notarization remains deferred; no release/feed publication |
+
+See [daily readiness](DAILY-READINESS.md), [administrator design](ADMINISTRATOR-INSTALLATION.md), and [aggregate evidence](evidence/0.4.0-daily-readiness.json). Earlier-version results below retain their original scope.
+
+---
+
 # Upovi 0.3.2 release readiness
 
 | Area | State | Boundary |

@@ -1,0 +1,118 @@
+{
+  "version": "0.4.0",
+  "build": "6",
+  "validatedProductSourceRevision": "73d637a5ddd9cb05ef6cf10012dc4d251664ec98",
+  "unitTests": {
+    "passed": 73,
+    "failed": 0
+  },
+  "ci": {
+    "state": "passed",
+    "sourceRevision": "73d637a5ddd9cb05ef6cf10012dc4d251664ec98",
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40203633186",
+    "systems": [
+      "macOS 14 ARM",
+      "macOS 15 Intel",
+      "macOS 26 ARM"
+    ]
+  },
+  "sourceCoverage": {
+    "before": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 21,
+      "unsupported": 21,
+      "updateCandidates": 8,
+      "updates": 6
+    },
+    "afterAdaptation": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 30,
+      "unsupported": 8,
+      "updateCandidates": 12,
+      "updates": 10
+    },
+    "unsupportedIncludesOneSyntheticFixture": true,
+    "boundary": "Same-machine sample only; no raw installed inventory included."
+  },
+  "nativeLoginItem": {
+    "observedStates": [
+      false,
+      true,
+      false
+    ],
+    "registrationErrors": 0,
+    "rebootLaunchAccepted": false
+  },
+  "nativeBackupCleanup": {
+    "cancelPreservedBackup": true,
+    "confirmedCleanupRemovedBackup": true,
+    "currentAppVersion": "2.0",
+    "journalState": "backupDiscarded",
+    "fixtureOnly": true
+  },
+  "administratorApplicationInstallation": {
+    "actualBuild": "111",
+    "actualVersion": "2.0.4",
+    "boundary": "Actual privileged application replacement/recovery through production authorization bootstrap and helper; not PKG execution or native install-button acceptance.",
+    "isolatedFixtureOnly": true,
+    "mainApplicationSignature": "valid",
+    "state": "installed",
+    "transactionID": "47D23A90-E378-44E6-A4CD-668D254C3B0B"
+  },
+  "administratorApplicationRecovery": {
+    "actualBuild": "110",
+    "actualVersion": "2.0.3",
+    "boundary": "Actual privileged application replacement/recovery through production authorization bootstrap and helper; not PKG execution or native install-button acceptance.",
+    "isolatedFixtureOnly": true,
+    "mainApplicationSignature": "valid",
+    "state": "restored",
+    "transactionID": "47D23A90-E378-44E6-A4CD-668D254C3B0B"
+  },
+  "administratorFixtureRemovedFromApplications": true,
+  "earlierAdministratorFailures": {
+    "stage": "protected input safety check",
+    "applicationReplaced": false,
+    "rootCause": "Foundation shortened /private/var to the /var alias; fixed with realpath and a filesystem regression test."
+  },
+  "packageValidation": {
+    "archiveSHA256": "matched",
+    "boundary": "Real official package download, signature and payload verification only; no PKG scripts or installer execution.",
+    "gatekeeperInstallAssessment": "passed",
+    "installerSignatureTeam": "matched installed application",
+    "matchingPayloads": 1,
+    "nativeExecutable": "compatible",
+    "packageExecuted": false,
+    "payloadSignature": "valid",
+    "payloadVersion": "7.2.2 (88465)"
+  },
+  "protocolRegressions": {
+    "automaticDiscovery": "passed",
+    "privateExchange": "passed",
+    "publicLoadOrCommunityAcceptance": false
+  },
+  "distribution": {
+    "state": "clean final packaging pending",
+    "notarization": "deferred",
+    "published": false,
+    "publicSelfUpdateEndToEndAccepted": false
+  },
+  "longObservation": {
+    "state": "not_started_yet",
+    "mode": "sources",
+    "requiredSeconds": 86400,
+    "accepted": false
+  },
+  "remaining": [
+    "native administrator install-button flow",
+    "actual PKG execution",
+    "privileged interruption/reboot",
+    "24-hour observation review",
+    "physical sleep/interface switches",
+    "direct energy measurement",
+    "public Sparkle old-to-new update",
+    "notarization",
+    "privileged backup pruning"
+  ]
+}

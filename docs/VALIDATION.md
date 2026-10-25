@@ -1,3 +1,17 @@
+# Validation: Upovi 0.4.0 daily workflows, 2026-10-25
+
+The current local suite has **73 passing tests**. Daily workflow evidence includes a real system-backed login toggle (off → on → off), native synthetic-backup cancellation and confirmed Trash cleanup while retaining the current app, additional exact-identity source adapters and conservative version/platform handling.
+
+Actual administrator authorization and the production protected bootstrap/helper updated an isolated signed app **2.0.3 build 110 → 2.0.4 build 111 → 2.0.3 build 110**, with valid resulting signatures. A diagnostic caller invoked the production authorization/helper; the native install-button path was not accepted by this test. Early safety-check failures occurred before replacement and were repaired using physical path resolution; their evidence remains local.
+
+A real official PKG passed archive integrity, matching installer Team ID, Gatekeeper install assessment, matching payload identity/version/signature and native executable compatibility. It was expanded for inspection only, without executing package scripts. Application recovery does not roll back package changes elsewhere in the system.
+
+The same 71-app local sample (23 App Store, one synthetic fixture) improved from 21 unsupported to 8 unsupported, with 40 supported direct-source checks. Raw inventory diagnostics remain local. The new source-only 24-hour observer must complete and be reviewed separately; no current long-run pass, physical sleep/interface-switch pass, direct energy measurement, public self-update or notarization is implied.
+
+See [daily readiness](DAILY-READINESS.md), [release readiness](RELEASE-READINESS.md) and [aggregate evidence](evidence/0.4.0-daily-readiness.json).
+
+---
+
 # Interrupted native observation review: 2026-10-24
 
 **The requested 24-hour acceptance did not complete.** The pinned 0.3.1 app entered AppKit's normal termination flow at **13:16:55 Asia/Shanghai**; the OS reported a voluntary exit. The observer detected process absence and stopped at **13:17:17**, about **15 h 22 min** after its 2026-10-23 21:55:17 start. The trigger identity is not established; this is not classified as an observed app crash. No matching new Upovi crash report was found. [Sanitized evidence](evidence/0.3.1-interrupted-soak.json).
