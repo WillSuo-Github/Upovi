@@ -43,7 +43,7 @@ def main():
     parser.add_argument('--expected-scope-count', type=int, default=1)
     parser.add_argument('--duration-seconds', type=int, default=86400)
     parser.add_argument('--interval-seconds', type=int, default=60)
-    parser.add_argument('--mode', choices=['sources', 'community'], default='community',
+    parser.add_argument('--mode', choices=['sources', 'community', 'global'], default='community',
                         help='Label the observation scope; source-only acceptance does not establish P2P reliability.')
     parser.add_argument('--settings-file', type=pathlib.Path,
                         default=pathlib.Path.home() / 'Library/Application Support/Upovi/settings-v1.plist')
@@ -66,15 +66,22 @@ def main():
                'boundary': 'Real elapsed observation; gaps, exit, source checks and DHT failures require review. CPU/RSS are not direct energy measurements.'}
     def source_configuration():
         values = plistlib.loads(options.settings_file.read_bytes())
+        if 'p2pEnabledV3' in values:
+            return {key: values.get(key) for key in ['p2pEnabledV3', 'automaticChecksV1', 'checkIntervalV1', 'notificationsV1']}
         return {key: values.get(key) for key in ['publicDiscoveryEnabledV2', 'publicSharingEnabledV2',
                 'automaticChecksV1', 'checkIntervalV1', 'notificationsV1']}
     expected_configuration = None
     if options.mode == 'sources':
         expected_configuration = source_configuration()
-        if (expected_configuration['publicDiscoveryEnabledV2'] or expected_configuration['publicSharingEnabledV2']
+        if (expected_configuration.get('p2pEnabledV3') or expected_configuration.get('publicDiscoveryEnabledV2') or expected_configuration.get('publicSharingEnabledV2')
                 or not expected_configuration['automaticChecksV1']):
             raise RuntimeError('Source-only observation requires public discovery/sharing disabled and source checks enabled; no settings were changed.')
         summary['sourceConfiguration'] = expected_configuration
+    elif options.mode == 'global':
+        expected_configuration = source_configuration()
+        if expected_configuration.get('p2pEnabledV3') is not True:
+            raise RuntimeError('Global observation requires the global P2P switch enabled; no settings were changed.')
+        summary['globalConfiguration'] = expected_configuration
     save(options.output / 'summary.json', summary)
     children = []
     handles = []
@@ -97,9 +104,9 @@ def main():
             if expected_configuration is not None:
                 try:
                     if source_configuration() != expected_configuration:
-                        summary['status'] = 'source_configuration_changed'; break
+                        summary['status'] = 'source_configuration_changed' if options.mode == 'sources' else 'global_configuration_changed'; break
                 except (OSError, ValueError, plistlib.InvalidFileException):
-                    summary['status'] = 'source_configuration_unreadable'; break
+                    summary['status'] = 'source_configuration_unreadable' if options.mode == 'sources' else 'global_configuration_unreadable'; break
             try:
                 if run(['ps', '-p', pid, '-o', 'lstart=']).strip() != identity:
                     raise RuntimeError('Process identity changed')
@@ -128,8 +135,10 @@ def main():
                 summary['visibleWindowSamples' if sample['visibleWindows'] else 'windowlessSamples'] += 1
                 for value in sample['syncTimes']:
                     if value not in summary['observedSyncTimes']: summary['observedSyncTimes'].append(value)
-                if options.mode == 'sources' and 'P2P 已启用' in texts:
+                if options.mode == 'sources' and any(value in texts for value in ['P2P 已启用', 'P2P 已开启']):
                     summary['status'] = 'source_configuration_changed'; break
+                if options.mode == 'global' and 'P2P 已关闭' in texts:
+                    summary['status'] = 'global_configuration_changed'; break
                 if options.mode == 'community' and sample['scope'] and any(value != '范围：'+str(options.expected_scope_count)+' 个应用' for value in sample['scope']):
                     summary['status'] = 'scope_configuration_changed'; summary['failureSample'] = sample; break
                 if any(value != '0' for value in sample['sharingControls']):

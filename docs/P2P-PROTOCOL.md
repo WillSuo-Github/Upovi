@@ -2,7 +2,9 @@
 
 ## Consent and identity
 
-Public mode has new preference keys, `publicDiscoveryEnabledV2` and `publicSharingEnabledV2`. Both default to false. Private v1 settings are not interpreted as public-sharing consent. The publisher's Ed25519 private key is stored in Keychain account `public-dht-v2`; the v1 `dht-v1` identity and read keys are not advertised.
+The 0.4.1 native app uses one `p2pEnabledV3` preference for public discovery and sharing across all scanned application identities. Fresh installations default on after the settings file is successfully initialized. Earlier per-app scopes and separate discovery/sharing preferences migrate to off; existing explicit global choices persist. Corrupt or unwritable initialization disables P2P. The publisher's Ed25519 private key stays in Keychain account `public-dht-v2`; private v1 identities/read keys are never advertised.
+
+The switch controls the whole network: off cancels pending work and closes the UDP transport, and a new enabled session explicitly resumes it. Resource limits remain internal: bounded twenty-application batches rotate over the entire scanned inventory, preserving other batches' reports and verified-key cache. The v2 wire protocol and source-only update authority are unchanged.
 
 The application no longer asks users to exchange invitations or contacts. The legacy encrypted v1 protocol remains available to explicit CLI callers and is documented separately in `P2P-PRIVATE-V1.md`.
 
@@ -63,7 +65,7 @@ upovi_report: { id: 20-byte-client-id, topic: 20-byte-info-hash, token: cookie }
 response:    { id: node-id, k: 32-byte-publisher-key, seq: integer, sig: 64-byte-signature, v: JSON-byte-string }
 ```
 
-The server only answers topics selected for active public sharing. The cookie is a truncated HMAC-SHA256 over the source IP, source port, topic, and minute bucket, using a random server secret. Current/previous minute cookies are accepted. This limits report amplification by requiring a round trip to the claimed source endpoint. It does not authenticate a person.
+The server only answers topics prepared for active public sharing. The cookie is a truncated HMAC-SHA256 over the source IP, source port, topic, and minute bucket, using a random server secret. Current/previous minute cookies are accepted. This limits report amplification by requiring a round trip to the claimed source endpoint. It does not authenticate a person.
 
 Incoming request and response envelopes are capped at 1400 bytes. Packet parsing, nesting, outstanding requests, and inbound request budgets are bounded. The socket limits incoming queries per source IP and globally; these limits do not apply to responses to the client's own routing queries.
 
@@ -103,7 +105,7 @@ Only reports that pass signature, topic, application, timestamp, and expiry chec
 
 Receiving marks are retained for thirty days after the last sequence advance and bounded to 2048 publisher/topic entries. The oldest mark is evicted at capacity. Protection does not extend to forgotten entries, cleared local state, reinstalled machines, or a fresh publisher identity. Re-reading an identical signed record does not extend retention. Expiry is checked independently on every read; a remembered public key does not make an expired report usable. Corrupt history or persistence errors fail closed and surface as a failed check rather than silently resetting the floor.
 
-Outbound sequence allocation persists before publication. Minor clock rollback still produces an increasing sequence; a rollback exceeding the five-minute sequence tolerance stops publication until the clock recovers. Outbound marks are bounded to 2048 entries and never silently evicted. Disabling sharing or changing selected applications cancels the current synchronization; a stopped generation cannot finish preparing a new report service. Network packets already sent cannot be recalled.
+Outbound sequence allocation persists before publication. Minor clock rollback still produces an increasing sequence; a rollback exceeding the five-minute sequence tolerance stops publication until the clock recovers. Outbound marks are bounded to 2048 entries and never silently evicted. Disabling the global switch or rescanning the inventory cancels the current synchronization; a stopped generation cannot finish preparing a new report service. Network packets already sent cannot be recalled.
 
 These checks protect ordering and improve discovery continuity. They do not validate installation claims, establish independent humans, or solve malicious index writers and Sybil identities.
 
@@ -112,7 +114,7 @@ These checks protect ordering and improve discovery continuity. They do not vali
 - Automatic discovery uses standard BEP 5 membership plus an open, untrusted, rotating BEP 44 publisher index. There is no Upovi central service, user invite, private read secret, or shared publisher-signing identity. Public index slot keys provide no trust.
 - This version has no coordinated NAT punching, UPnP/NAT-PMP mapping, or relay fallback. The DHT record path avoids inbound NAT requirements; direct endpoint reachability is measured separately.
 - Advertisements may be stale, unreachable, or malicious. An empty swarm or a failed response is not evidence of an up-to-date application.
-- The first version bounds selection to twenty bundle IDs and IPv4 routing. Routing membership and record availability are best-effort.
+- The native app rotates bounded twenty-application batches across the full inventory and uses IPv4 routing. There is no per-application participation selection. Routing membership and record availability are best-effort.
 - Old private v1 records stay encrypted and are not published through this protocol.
 
 References: [BEP 5](https://www.bittorrent.org/beps/bep_0005.html), [BEP 43](https://www.bittorrent.org/beps/bep_0043.html), [BEP 44](https://www.bittorrent.org/beps/bep_0044.html), [BEP 55](https://www.bittorrent.org/beps/bep_0055.html).

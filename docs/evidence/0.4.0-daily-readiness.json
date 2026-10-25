@@ -113,7 +113,7 @@
     "publicSelfUpdateEndToEndAccepted": false
   },
   "longObservation": {
-    "state": "running",
+    "state": "process_exited_or_changed",
     "mode": "sources",
     "requiredSeconds": 86400,
     "startedAt": "2026-10-25T15:04:25.212643+00:00",
@@ -129,7 +129,12 @@
     "initialSamples": 2,
     "initialUIErrors": 0,
     "accepted": false,
-    "localEvidenceDirectory": ".local/daily-readiness/source-soak-24h"
+    "localEvidenceDirectory": ".local/daily-readiness/source-soak-24h",
+    "finalSamples": 22,
+    "finishedAt": "2026-10-25T15:26:25.235142+00:00",
+    "elapsedSeconds": 1320.02,
+    "uiErrors": 1,
+    "reason": "Observed PID 73700 disappeared; a different PID later ran the same bundle. Restart trigger is not established. No matching new Upovi crash report was found."
   },
   "remaining": [
     "native administrator install-button flow",

@@ -36,17 +36,22 @@ public actor DHTClient {
     private var socket: DHTSocket?
     private var known: [DHTNode] = []
     private var highWater: [Data: Int64] = [:]
+    private var suspended = false
 
     public init(bootstrap: [DHTEndpoint] = DHTClient.publicBootstrap, allowLocal: Bool = false) {
         self.bootstrap = bootstrap; self.allowLocal = allowLocal
     }
 
     public func resetRouting() async {
-        if let socket { await socket.setHandler(nil) }
-        socket = nil; known = []
+        let previous = socket; socket = nil; known = []
+        await previous?.close()
     }
 
+    public func suspend() async { suspended = true; await resetRouting() }
+    public func resume() { suspended = false }
+
     private func datagramSocket() throws -> DHTSocket {
+        guard !suspended else { throw CancellationError() }
         if let socket { return socket }
         let created = try DHTSocket(); socket = created
         return created
@@ -254,6 +259,7 @@ public actor DHTClient {
 
     public func servePublicRecords(_ records: [Data: MutableRecord]) async throws {
         if !records.isEmpty { try Task.checkCancellation() }
+        if records.isEmpty, socket == nil { return }
         let transport = try datagramSocket()
         let responder = PublicPeerResponder(nodeID: nodeID, records: records)
         if records.isEmpty { await transport.setHandler(nil) }

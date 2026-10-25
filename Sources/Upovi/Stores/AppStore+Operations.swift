@@ -36,12 +36,8 @@ extension AppStore {
         if reason == "wake" { lastCheckAttempt = nil }
         guard networkEnabled else { return }
         logger.info("network recovery requested reason=\(reason, privacy: .public)")
-        syncTask?.cancel()
         networkStatus = "网络已变化，正在重新连接…"
-        Task {
-            await community.resetRouting()
-            if networkEnabled && !syncing { beginSync() }
-        }
+        restartP2P()
     }
     func setNotifications(_ enabled: Bool) async {
         let granted = enabled ? await notifications.requestAccess() : false

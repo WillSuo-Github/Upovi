@@ -10,20 +10,21 @@ struct CommunityView: View {
                     .font(.largeTitle.bold()).foregroundStyle(.tint)
                 Text("自动寻找共享同一应用的公网节点，无需添加联系人或交换邀请。")
                     .foregroundStyle(.secondary)
-                GroupBox("检测与共享") {
+                GroupBox("网络状态") {
                     VStack(alignment: .leading, spacing: 16) {
-                        Toggle("启用公网 P2P 自动发现", isOn: $store.networkEnabled)
-                        Toggle("公开共享选中应用的版本", isOn: $store.sharingEnabled)
-                            .disabled(!store.sharingEnabled && (!store.networkEnabled || store.syncing))
-                        Text("公开共享默认关闭。开启后，任何人都可以读取选中应用的标识、版本、构建号、分发渠道和自报 Team ID。不会发布路径、用户名、设备名称或安装包。网络节点仍可看到你的 IP，这不是匿名网络。")
+                        HStack {
+                            Label(store.networkEnabled ? "P2P 已开启" : "P2P 已关闭", systemImage: store.networkEnabled ? "network" : "network.slash")
+                            Spacer()
+                            SettingsLink { Text("P2P 设置…") }
+                        }
+                        Text("P2P 在设置中统一控制。开启后自动发现并公开共享所有已扫描应用的版本信息，任何人均可读取，节点也能看到 IP；不包含路径、用户名、设备名或安装包。")
                             .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         Divider()
                         HStack {
-                            Label("范围：\(store.selectedBundles.count) 个应用", systemImage: "checkmark.square")
+                            Label("自动覆盖 \(store.apps.count) 个已扫描应用", systemImage: "square.grid.2x2")
                             Spacer()
-                            Button("选择应用") { store.section = .all }
                             Button("立即自动发现") { store.beginSync() }.buttonStyle(.borderedProminent)
-                                .disabled(!store.networkEnabled || store.syncing || store.scanning)
+                                .disabled(!store.networkEnabled || store.p2pTransitioning || store.syncing || store.scanning || store.installing)
                         }
                         if store.syncing { HStack { ProgressView().controlSize(.small); Text(store.p2pProgress).font(.caption) } }
                         Text(store.networkStatus).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
@@ -54,7 +55,7 @@ struct CommunityView: View {
                     if store.discoveredPublishers.isEmpty {
                         Label("尚未收到共享节点的有效记录", systemImage: "network")
                             .font(.headline).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 18)
-                        Text("选择检测范围并启用自动发现即可。需要其他用户主动共享同一应用，并且公网 DHT 中仍有可用记录；没有记录不代表应用已经最新。")
+                        Text("开启全局 P2P 后，所有已扫描应用会自动参与。仍需其他用户共享相同应用，且公网 DHT 中有可用记录；没有记录不代表应用已经最新。")
                             .font(.callout).foregroundStyle(.secondary)
                     } else {
                         ForEach(store.discoveredPublishers.values.sorted { $0.shortID < $1.shortID }) { peer in
@@ -73,7 +74,7 @@ struct CommunityView: View {
                 GroupBox("共享规则") {
                     VStack(alignment: .leading, spacing: 10) {
                         Label("自动查找公开发布者索引，读取 DHT 记录并独立验签", systemImage: "checkmark.shield")
-                        Label("应用运行时每 10 分钟尝试发现与续期", systemImage: "clock")
+                        Label("应用运行时自动同步，依次覆盖所有已扫描应用", systemImage: "clock")
                         Label("社区报告不增加更新数量，不触发更新通知", systemImage: "checkmark.seal")
                         Text("公开索引只是可被篡改、挤占的发现线索，不是可信目录。版本报告必须由发布者独立签名，但仍不能证明真实安装或开发者背书。关闭共享会停止服务与后续登记，已缓存的记录无法立即撤回。DHT 存取可绕过入站端口限制；UDP 网络不可用或索引受干扰时仍可能失败。")
                             .font(.caption).foregroundStyle(.secondary)

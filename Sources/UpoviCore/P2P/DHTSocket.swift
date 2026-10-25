@@ -14,6 +14,7 @@ final class DHTSocket: @unchecked Sendable {
     private var pending: [Data: Pending] = [:]
     private var cancelled = Set<Data>()
     private var handler: Handler?
+    private var closed = false
     private var inboundWindow = Date()
     private var inboundCounts: [String: Int] = [:]
     private var inboundTotal = 0
@@ -47,9 +48,25 @@ final class DHTSocket: @unchecked Sendable {
 
     deinit { source?.cancel() }
 
+    func close() async {
+        await withCheckedContinuation { continuation in
+            queue.async { [self] in
+                guard !closed else { continuation.resume(); return }
+                closed = true; handler = nil
+                let requests = Array(pending.values); pending.removeAll(); cancelled.removeAll()
+                for request in requests { request.continuation.resume(throwing: CancellationError()) }
+                let fd = descriptor
+                if let source {
+                    source.setCancelHandler { Darwin.close(fd); continuation.resume() }
+                    source.cancel(); self.source = nil
+                } else { continuation.resume() }
+            }
+        }
+    }
+
     func setHandler(_ handler: Handler?) async {
         await withCheckedContinuation { continuation in
-            queue.async { [self] in self.handler = handler; continuation.resume() }
+            queue.async { [self] in self.handler = closed ? nil : handler; continuation.resume() }
         }
     }
 
@@ -58,6 +75,7 @@ final class DHTSocket: @unchecked Sendable {
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 queue.async { [self] in
+                    guard !closed else { continuation.resume(throwing: CancellationError()); return }
                     if cancelled.remove(transaction) != nil { continuation.resume(throwing: CancellationError()); return }
                     guard pending.count < 64, let resolved = Self.resolve(endpoint) else {
                         continuation.resume(throwing: PeerError.unavailable("Cannot resolve DHT endpoint")); return
@@ -84,6 +102,7 @@ final class DHTSocket: @unchecked Sendable {
     }
 
     private func receive() {
+        guard !closed else { return }
         for _ in 0..<64 {
             var buffer = [UInt8](repeating: 0, count: 8192)
             var address = sockaddr_in()

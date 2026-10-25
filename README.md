@@ -1,8 +1,8 @@
 # Upovi
 
-A native, open-source macOS application update detector with opt-in public P2P version discovery and verified application replacement.
+A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.0 development**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.1 development**
 
 [Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
@@ -32,11 +32,11 @@ Current implementation and acceptance boundaries are tracked in [daily readiness
 
 ## Public community discovery
 
-1. Select up to twenty applications with the table's P2P checkboxes.
-2. Enable public discovery on the P2P page.
-3. Separately opt into publicly sharing those selected versions if desired. **Discovery and sharing both default off.**
-4. Higher community versions appear as unverified advisory leads on the P2P page and in application details. They never increase the available-update count, enter the available-updates list, send update notifications, supply download URLs, or authorize installation.
-5. Use **Check update sources** to check the configured sources. Only a matching version (and matching build when a report claims one) receives a **Source matches** label. Independent source candidates drive counts and notifications once per application; the peer report itself never gains authority.
+1. Open Settings → P2P. **Enable P2P network** is the application's only participation switch; there are no per-application controls.
+2. A fresh installation defaults on: all scanned apps automatically participate in both discovery and public version-metadata sharing. Existing users' off choices and earlier app-specific scopes migrate to off, rather than silently expanding their public inventory. Enabling the new switch opts into the full scanned inventory.
+3. Turning the switch off cancels synchronization and stops publication, serving and the UDP transport. Previously cached public records cannot be recalled immediately and expire under the protocol's existing limits.
+4. Higher community versions remain unverified advisory leads. They never increase the available-update count, enter the available-updates list, send update notifications, supply download URLs, or authorize installation.
+5. Use **Check update sources** to check the configured sources. Only a matching version/build receives a **Source matches** label; independent source candidates drive counts and notifications once per application.
 
 Single-key reports and repeated reports from multiple distinct publisher keys are labeled separately. Duplicate keys do not increase corroboration; multiple keys are not proof of independent users. Source matches are recomputed from current check results, so removing a source or a failed recheck removes the match. Homebrew is a catalog and custom sources are user-configured; a source match is not cryptographic developer endorsement. See [community trust policy](docs/COMMUNITY-TRUST.md).
 
@@ -46,9 +46,9 @@ BEP 5 membership discovers endpoints. A rotating, sharded BEP 44 directory suppl
 
 **Availability and truthfulness remain best effort.** Public directory slot keys are intentionally public coordination material, so anyone can overwrite or crowd pointers. Signatures authenticate a publisher key, not a real installation, independent human, or official release. Replica merging, rotation, limits, and replay protection do not solve sustained poisoning or Sybil attacks. Working outbound UDP and available records are required. IPv6, coordinated hole punching, port mapping, and relay fallback are not implemented.
 
-The native app attempts public synchronization every ten minutes while enabled and running. Wake/network changes reset routing. Stopping sharing stops new service/publication; already cached public records cannot be recalled immediately. Reports expire within twenty-four hours and may be evicted by DHT nodes earlier. Receiving replay history retains at most 2048 publisher/topic marks for thirty days since the last accepted sequence advance.
+The native app attempts public synchronization every ten minutes while enabled and running, rotating bounded batches across all scanned application identities so apps after the first twenty are not starved. Wake/network changes reset routing. Stopping sharing stops new service/publication; already cached public records cannot be recalled immediately. Reports expire within twenty-four hours and may be evicted by DHT nodes earlier. Receiving replay history retains at most 2048 publisher/topic marks for thirty days since the last accepted sequence advance.
 
-See `docs/P2P-PROTOCOL.md` and `SECURITY.md` for details.
+See `docs/GLOBAL-P2P.md`, `docs/P2P-PROTOCOL.md` and `SECURITY.md` for details.
 
 ## Installation and recovery
 

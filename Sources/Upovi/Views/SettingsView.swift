@@ -59,14 +59,17 @@ struct SettingsView: View {
                 }
             }.formStyle(.grouped).tabItem { Label("通用", systemImage: "gearshape") }
             Form {
-                Section("公网 DHT") {
-                    Toggle("启用 P2P 检测", isOn: $store.networkEnabled)
-                    Toggle("公开共享选中应用的版本", isOn: $store.sharingEnabled).disabled(!store.sharingEnabled && (!store.networkEnabled || store.syncing))
-                    Text("按应用主题自动发现公网共享节点，无需交换邀请。公开共享默认关闭，开启后选中的版本信息可被任何人读取。")
+                Section("P2P 网络") {
+                    Toggle("启用 P2P 网络", isOn: Binding(get: { store.networkEnabled }, set: { store.setP2PEnabled($0) }))
+                        .accessibilityIdentifier("global-p2p-toggle")
+                    Text("首次使用默认开启。开启后，所有已扫描应用都会参与版本发现与公开共享，无需逐个选择；关闭后停止发现、发布和响应请求。")
                         .foregroundStyle(.secondary)
-                    Text("检测范围：\(store.selectedBundles.count) 个应用；验签节点：\(store.discoveredPublishers.count) 个")
-                    Text("关闭共享停止服务和续期，无法立即撤回已缓存的公开记录。签名只证明记录来源，不能证明真实安装或官方发布。")
+                    Text("已扫描：\(store.apps.count) 个应用；验签节点：\(store.discoveredPublishers.count) 个")
+                    Text("公开信息包括应用标识、版本、构建号、分发渠道和自报 Team ID，任何人均可读取；节点也能看到 IP。不包含路径、用户名、设备名或安装包。")
                         .font(.caption).foregroundStyle(.secondary)
+                    Text("关闭后，网络中已缓存的公开记录仍会按有效期过期，无法立即撤回。签名不能证明真实安装或官方发布。")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text(store.networkStatus).font(.caption).foregroundStyle(.secondary)
                 }
             }.formStyle(.grouped).tabItem { Label("P2P", systemImage: "network") }
             InstallationHistoryView(store: store).tabItem { Label("记录与恢复", systemImage: "clock.arrow.circlepath") }

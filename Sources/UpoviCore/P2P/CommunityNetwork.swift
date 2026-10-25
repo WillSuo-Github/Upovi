@@ -55,6 +55,14 @@ public actor CommunityNetwork {
 
     public func resetRouting() async { await dht.resetRouting() }
 
+    public func resume() async { await dht.resume() }
+
+    public func stop() async {
+        sharingGeneration &+= 1
+        records = [:]; ownKey = nil
+        await dht.suspend()
+    }
+
     public func stopSharing() async {
         sharingGeneration &+= 1
         records = [:]

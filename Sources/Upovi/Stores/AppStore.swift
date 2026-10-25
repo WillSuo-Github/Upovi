@@ -53,35 +53,11 @@ final class AppStore {
     var p2pProgress = ""
     var discoveredPublishers: [String: DiscoveredPublisher] = [:]
     var identityID = "尚未创建"
-    var networkEnabled: Bool {
-        didSet {
-            AppPreferences.shared.set(networkEnabled, forKey: "publicDiscoveryEnabledV2")
-            if !networkEnabled {
-                syncTask?.cancel(); networkStatus = "P2P 已关闭"; communityResults = [:]; discoveredPublishers = [:]
-                Task { await community.stopSharing() }
-            } else { beginSync() }
-        }
-    }
-    var sharingEnabled: Bool {
-        didSet {
-            AppPreferences.shared.set(sharingEnabled, forKey: "publicSharingEnabledV2")
-            syncTask?.cancel()
-            if !sharingEnabled {
-                networkStatus = networkEnabled ? "公开共享已停止，已缓存记录无法立即撤回" : "P2P 已关闭"
-                logger.info("public sharing stopped")
-                Task { await community.stopSharing() }
-            }
-            if networkEnabled && !syncing { beginSync() }
-        }
-    }
-    var selectedBundles: Set<String> {
-        didSet {
-            AppPreferences.shared.set(Array(selectedBundles), forKey: "selectedBundles")
-            syncTask?.cancel()
-            communityResults = [:]
-            Task { await community.stopSharing() }
-        }
-    }
+    private(set) var networkEnabled: Bool
+    var p2pTransitioning = false
+    var p2pBatchOffset = 0
+    var p2pGeneration: UInt64 = 0
+    @ObservationIgnored var p2pControlTask: Task<Void, Never>?
     var ignored: Set<String> { didSet { AppPreferences.shared.set(Array(ignored), forKey: "ignoredBundles") } }
     var automaticChecks = AppPreferences.shared.bool(forKey: "automaticChecksV1") {
         didSet { AppPreferences.shared.set(automaticChecks, forKey: "automaticChecksV1") }
@@ -104,9 +80,7 @@ final class AppStore {
     @ObservationIgnored var publisherCache: [String: [String]] = [:]
 
     init() {
-        networkEnabled = AppPreferences.shared.bool(forKey: "publicDiscoveryEnabledV2")
-        sharingEnabled = AppPreferences.shared.bool(forKey: "publicSharingEnabledV2")
-        selectedBundles = Set(AppPreferences.shared.stringArray(forKey: "selectedBundles") ?? [])
+        networkEnabled = AppPreferences.shared.bool(forKey: GlobalP2PSettings.key)
         ignored = Set(AppPreferences.shared.stringArray(forKey: "ignoredBundles") ?? [])
         if let data = AppPreferences.shared.data(forKey: "sourceOverridesV1") {
             sourceOverrides = (try? JSONDecoder().decode([String: SourceOverride].self, from: data)) ?? [:]
@@ -117,6 +91,24 @@ final class AppStore {
         publisherCache = AppPreferences.shared.dictionary(forKey: "publicPublisherCacheV2") as? [String: [String]] ?? [:]
         AppPreferences.shared.onFailure = { [weak self] message in self?.errorMessage = message }
         errorMessage = AppPreferences.shared.loadFailure
+        networkStatus = networkEnabled ? "P2P 已开启，正在等待扫描应用" : "P2P 已关闭"
+    }
+
+    func setP2PEnabled(_ enabled: Bool) {
+        guard enabled != networkEnabled else { return }
+        if enabled {
+            guard AppPreferences.shared.set(true, forKey: GlobalP2PSettings.key) else { return }
+            networkEnabled = true
+            networkStatus = "P2P 已开启，正在连接…"
+        } else {
+            networkEnabled = false
+            if !AppPreferences.shared.set(false, forKey: GlobalP2PSettings.key) {
+                errorMessage = "P2P 已停止，但关闭设置未能保存。下次启动前请修复设置目录的可写性。"
+            }
+            communityResults = [:]; discoveredPublishers = [:]
+            networkStatus = "P2P 已关闭，已缓存的公开记录会按有效期过期"
+        }
+        restartP2P()
     }
 
     var visibleApps: [InstalledApp] {
@@ -147,6 +139,7 @@ final class AppStore {
         if !apps.contains(where: { $0.id == selection }) { selection = apps.first?.id }
         scanning = false
         logger.info("scan completed count=\(found.count)")
+        if networkEnabled { p2pBatchOffset = 0; restartP2P() }
     }
 
     func beginChecking() {
@@ -181,93 +174,9 @@ final class AppStore {
         if notificationsEnabled { await notifications.announce(snapshot, results: sourceResults, ignored: ignored) }
     }
 
-    func setSelected(_ app: InstalledApp, enabled: Bool) {
-        if enabled {
-            guard selectedBundles.count < 20 else { errorMessage = "第一版每次最多检测 20 个 P2P 应用，以限制公共 DHT 流量。"; return }
-            selectedBundles.insert(app.bundleID)
-        } else { selectedBundles.remove(app.bundleID) }
-    }
-
     func toggleIgnored(_ app: InstalledApp) {
         if ignored.contains(app.bundleID) { ignored.remove(app.bundleID) } else { ignored.insert(app.bundleID) }
     }
-
-    func beginSync() {
-        guard !syncing, !scanning, networkEnabled else { return }
-        syncing = true; lastSyncAttempt = Date()
-        logger.info("community sync started")
-        syncTask = Task { await syncCommunity() }
-    }
-
-    private func loadIdentity() throws -> PeerIdentity {
-        if let identity { return identity }
-        let loaded = try PeerIdentity.loadOrCreate(account: "public-dht-v2"); identity = loaded; identityID = loaded.invitation.shortID
-        return loaded
-    }
-
-    private func syncCommunity() async {
-        syncing = true; communityResults = [:]; discoveredPublishers = [:]
-        defer { syncing = false; p2pProgress = "" }
-        let scope = Array(Dictionary(apps.filter { selectedBundles.contains($0.bundleID) }.map { ($0.bundleID + $0.channel, $0) }, uniquingKeysWith: { a, _ in a }).values.prefix(20))
-        guard !scope.isEmpty else { networkStatus = "先在应用列表选择 P2P 检测范围，无需添加节点或交换邀请"; return }
-        var announcements = 0, storage = 0, directoryAcks = 0, directoryCandidates = 0, failedRecords = 0, rejectedReports = 0, found = 0, responders = 0, endpoints = 0, unreachable = 0, failures = 0
-        var lastFailure = ""
-        networkStatus = "正在自动发现应用主题中的公网节点…"
-        do {
-            await community.stopSharing()
-            try Task.checkCancellation()
-            let own = sharingEnabled ? try loadIdentity() : nil
-            try await community.prepare(apps: scope, sharingIdentity: own)
-        } catch { if !Task.isCancelled { networkStatus = error.localizedDescription }; return }
-        for (index, app) in scope.enumerated() {
-            if Task.isCancelled || !networkEnabled { return }
-            p2pProgress = "\(index + 1)/\(scope.count) · \(app.name)"
-            if sharingEnabled, selectedBundles.contains(app.bundleID) {
-                do {
-                    let result = try await community.publish(app)
-                    announcements += result.announcements; storage += result.storage; directoryAcks += result.directory
-                } catch { if Task.isCancelled { return }; failures += 1; lastFailure = error.localizedDescription }
-            }
-            do {
-                let topic = CommunityTopic.hash(app).base64EncodedString()
-                let keys = (publisherCache[topic] ?? []).compactMap { Data(base64Encoded: $0) }
-                let result = try await community.discover(app, cachedKeys: keys)
-                if Task.isCancelled || !networkEnabled || !selectedBundles.contains(app.bundleID) { return }
-                responders += result.responders; endpoints += result.endpoints; unreachable += result.unreachable
-                directoryCandidates += result.directoryCandidates; failedRecords += result.failedRecords
-                rejectedReports += result.rejectedReports
-                var discoveredKeys = publisherCache[topic] ?? []
-                for observation in result.observations {
-                    if !discoveredKeys.contains(observation.id) { discoveredKeys.append(observation.id) }
-                    var publisher = discoveredPublishers[observation.id] ?? DiscoveredPublisher(id: observation.id, shortID: observation.shortID, applications: [], lastSeen: observation.report.observedAt)
-                    publisher.applications.insert(app.name)
-                    publisher.lastSeen = max(publisher.lastSeen, observation.report.observedAt)
-                    discoveredPublishers[observation.id] = publisher
-                    let report = observation.report
-                    guard VersionOrder.isNewer(version: report.version, build: report.build, than: app) else { continue }
-                    communityResults[app.id, default: []].append(.init(version: report.version, build: report.build,
-                        source: "公开节点 \(observation.shortID)", isCommunity: true, url: nil,
-                        observedAt: report.observedAt, peerID: observation.id, expiresAt: report.expiresAt))
-                    found += 1
-                }
-                publisherCache[topic] = Array(discoveredKeys.prefix(16))
-                // Keep only bounded public keys for currently selected applications, never invitation secrets.
-                let activeTopics = Set(scope.map { CommunityTopic.hash($0).base64EncodedString() })
-                publisherCache = publisherCache.filter { activeTopics.contains($0.key) }
-                AppPreferences.shared.set(publisherCache, forKey: "publicPublisherCacheV2")
-            } catch { if Task.isCancelled { return }; failures += 1; lastFailure = error.localizedDescription }
-            try? await Task.sleep(for: .milliseconds(400))
-        }
-        lastSynced = Date()
-        logger.info("community sync completed apps=\(scope.count) publishers=\(self.discoveredPublishers.count) leads=\(found) failures=\(failures)")
-        networkStatus = "DHT 响应 \(responders) 次 · 端点 \(endpoints) 个 · 索引候选 \(directoryCandidates) 个 · 验签节点 \(discoveredPublishers.count) 个 · 更高版本线索 \(found) 条"
-        if sharingEnabled { networkStatus += "\n主题登记确认 \(announcements) 次 · 索引登记确认 \(directoryAcks) 次 · 记录存储确认 \(storage) 次" }
-        if unreachable > 0 { networkStatus += "\n\(unreachable) 个采样端点未返回有效记录，可能离线或受 NAT／防火墙限制" }
-        if failedRecords > 0 { networkStatus += "\n\(failedRecords) 个索引候选未返回有效签名记录" }
-        if rejectedReports > 0 { networkStatus += "\n已拒绝 \(rejectedReports) 条回放、冲突或无效报告" }
-        if failures > 0 { networkStatus += "\n\(failures) 项失败：\(lastFailure)" }
-    }
-
 
     func open(_ url: URL?) {
         guard let url, ["https", "macappstore"].contains(url.scheme ?? "") else { return }

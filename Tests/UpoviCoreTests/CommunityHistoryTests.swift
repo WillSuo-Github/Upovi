@@ -116,6 +116,19 @@ final class CommunityHistoryTests: XCTestCase {
         do { _ = try await network.publish(application); XCTFail("Stopped record was still publishable") }
         catch { XCTAssertTrue(error.localizedDescription.contains("not authorized")) }
     }
+    func testGlobalStopInvalidatesPreparationAlreadyInProgress() async throws {
+        let history = PausedPublicationHistory()
+        let network = CommunityNetwork(dht: DHTClient(bootstrap: [], allowLocal: true), history: history)
+        let application = app()
+        let preparation = Task { try await network.prepare(apps: [application], sharingIdentity: PeerIdentity()) }
+        await history.waitUntilPreparing()
+        await network.stop()
+        await history.resume()
+        do { try await preparation.value; XCTFail("Disabled network resumed a delayed preparation") }
+        catch { XCTAssertTrue(error is CancellationError) }
+        do { _ = try await network.publish(application); XCTFail("Disabled network retained a publishable report") }
+        catch { XCTAssertTrue(error.localizedDescription.contains("not authorized")) }
+    }
 }
 
 private actor PausedPublicationHistory: CommunityHistoryStore {

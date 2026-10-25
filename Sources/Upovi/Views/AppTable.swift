@@ -36,11 +36,7 @@ struct AppTable: View {
                     Text(status(app)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
             }.width(min: 90, ideal: 105, max: 140)
-            TableColumn("P2P") { app in
-                Toggle("对 \(app.name) 使用 P2P 检测", isOn: Binding(get: { store.selectedBundles.contains(app.bundleID) }, set: { store.setSelected(app, enabled: $0) }))
-                    .labelsHidden().toggleStyle(.checkbox).disabled(store.syncing)
-                    .help("加入 P2P 检测范围；只有开启共享后才会发布此应用的版本")
-            }.width(42)
+
         }
         .contextMenu(forSelectionType: String.self) { ids in
             if let id = ids.first, let app = store.apps.first(where: { $0.id == id }) {
