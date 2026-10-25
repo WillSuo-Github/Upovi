@@ -1,3 +1,13 @@
+# Upovi 0.4.1 global P2P development readiness
+
+Settings now has one global P2P switch controlling discovery and sharing for the full scanned inventory. Fresh installations default on; legacy application-specific consent is not silently expanded. The current user explicitly enabled the combined global scope. Application-level P2P controls are removed.
+
+The signed universal candidate passed 81 local tests, isolated automatic/private protocol regressions, native switch/off-socket/restart acceptance, and original/fresh-extracted signature plus signed-feed/archive verification. Current-source CI and the new global 24-hour observation are recorded in [0.4.1 evidence](evidence/0.4.1-global-p2p.json). The observation has started; it is not accepted. The release/feed remains unpublished and notarization deferred.
+
+See [global behavior and validation](GLOBAL-P2P.md). Previous daily-workflow, administrator and release evidence below retains its version-specific scope; its outstanding acceptance requirements still apply.
+
+---
+
 # Upovi 0.4.0 development readiness
 
 P2P mechanism expansion is deferred. Daily-use and administrator installation work is staged in draft PR [#1](https://github.com/WillSuo-Github/Upovi/pull/1), not published as a release.

@@ -127,7 +127,9 @@ def main():
                 sample['uiProbeSeconds'] = round(time.monotonic() - before, 3)
                 texts = [node['value'] for node in nodes if node['role'] == 'AXStaticText']
                 sample['syncTimes'] = [text for text in texts if text.startswith('最近发现：')]
-                sample['networkStatus'] = [text for text in texts if text.startswith('DHT 响应 ') or text.startswith('正在自动发现')]
+                sample['networkStatus'] = [text for text in texts if text.startswith(('DHT 响应 ', '正在自动发现', '正在发现并共享', '已同步 '))]
+                sample['globalControls'] = [node['value'] for node in nodes if node['role'] == 'AXCheckBox' and node['identifier'] == 'global-p2p-toggle']
+                sample['globalScope'] = [text for text in texts if text.startswith('已扫描：')]
                 sample['scope'] = [text for text in texts if text.startswith('范围：')]
                 sample['visibleCheckHistory'] = [text for text in texts if re.fullmatch(r'\d+ 个应用 · \d+ 个更新 · \d+ 项未完整检查', text)]
                 sample['sharingControls'] = [node['value'] for node in nodes if node['role'] == 'AXCheckBox' and node['description'] == '公开共享选中应用的版本']
@@ -137,7 +139,7 @@ def main():
                     if value not in summary['observedSyncTimes']: summary['observedSyncTimes'].append(value)
                 if options.mode == 'sources' and any(value in texts for value in ['P2P 已启用', 'P2P 已开启']):
                     summary['status'] = 'source_configuration_changed'; break
-                if options.mode == 'global' and 'P2P 已关闭' in texts:
+                if options.mode == 'global' and ('P2P 已关闭' in texts or any(value != '1' for value in sample['globalControls'])):
                     summary['status'] = 'global_configuration_changed'; break
                 if options.mode == 'community' and sample['scope'] and any(value != '范围：'+str(options.expected_scope_count)+' 个应用' for value in sample['scope']):
                     summary['status'] = 'scope_configuration_changed'; summary['failureSample'] = sample; break

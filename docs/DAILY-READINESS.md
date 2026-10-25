@@ -1,6 +1,6 @@
 # Upovi 0.4.0 daily-use readiness
 
-Date: 2026-10-25, Asia/Shanghai. P2P mechanism expansion is deferred by the owner. The linked public preview remains 0.3.2; this work is a development candidate.
+Date: 2026-10-25, Asia/Shanghai. This section records the 0.4.0 scope, when P2P mechanism expansion was deferred. The subsequent owner-requested global P2P change and its separate validation are documented in [0.4.1 global P2P](GLOBAL-P2P.md). The linked public preview remains 0.3.2; this work is a development candidate.
 
 ## Implemented
 

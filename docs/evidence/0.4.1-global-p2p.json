@@ -1,0 +1,114 @@
+{
+  "version": "0.4.1",
+  "build": "7",
+  "validatedProductSourceRevision": "322283d4d75a0b2cae82efa7edbf410915b8cdbf",
+  "globalPolicy": {
+    "controlCount": 1,
+    "firstInstallationDefaultOn": true,
+    "combinedDiscoveryAndSharing": true,
+    "perApplicationControlsRemoved": true,
+    "scope": "all scanned application topics, deduplicated and rotated through bounded batches",
+    "legacyConsent": "not broadened automatically; old choices migrate off until global enable",
+    "currentUserExplicitlyEnabled": true
+  },
+  "unitTests": {
+    "passed": 81,
+    "failed": 0
+  },
+  "protocolRegressions": {
+    "automaticDiscovery": "passed",
+    "privateExchange": "passed",
+    "routingResetCycles": 10
+  },
+  "nativeAcceptance": {
+    "signedApplication": true,
+    "scannedApplicationCount": 71,
+    "settingsToggleIdentifier": "global-p2p-toggle",
+    "oneGlobalSwitch": true,
+    "perApplicationCheckboxCount": 0,
+    "tableColumns": [
+      "application",
+      "version",
+      "status"
+    ],
+    "enabledUDPSocketObserved": true,
+    "disabledSocketChecks": [
+      {
+        "secondsAfterToggle": 0,
+        "udpSockets": 0
+      },
+      {
+        "secondsAfterToggle": 1,
+        "udpSockets": 0
+      },
+      {
+        "secondsAfterToggle": 2,
+        "udpSockets": 0
+      }
+    ],
+    "persistedOff": true,
+    "legacyKeysRemoved": true,
+    "rapidTransitionsFinalOffSocketCount": 0,
+    "onRestoredAfterNativeRestart": true,
+    "finalGlobalSetting": true,
+    "boundary": "Actual local UI and owned UDP transport; public inventory publication was authorized. No real remote consenting cohort is claimed."
+  },
+  "distribution": {
+    "state": "signed universal local candidate",
+    "sourceRevision": "322283d4d75a0b2cae82efa7edbf410915b8cdbf",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "c9e68a5e4833c10e28088694b3358a1ef93df8203f82d8b7a4754eb764e45242",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "freshExtractionNestedSignature": "passed",
+    "notarization": "deferred",
+    "published": false
+  },
+  "observationHarnessSmoke": {
+    "state": "passed",
+    "samples": 2,
+    "uiErrors": 0,
+    "trafficProbeFailures": 0,
+    "boundary": "Short collector smoke only.",
+    "globalTogglePinned": true,
+    "networkStatusCaptured": true
+  },
+  "longObservation": {
+    "state": "running",
+    "startedAt": "2026-10-25T15:54:42.722920+00:00",
+    "mode": "global",
+    "requiredSeconds": 86400,
+    "sourceRevision": "322283d4d75a0b2cae82efa7edbf410915b8cdbf",
+    "binarySHA256": "fb2b211f7370a6a51839002adf5fc578c6681f5e4453c5d4652edcd9c64dc72e",
+    "configuration": {
+      "p2pEnabledV3": true,
+      "automaticChecksV1": true,
+      "checkIntervalV1": 15,
+      "notificationsV1": false
+    },
+    "accepted": false,
+    "localEvidenceDirectory": ".local/global-p2p/soak-24h-final",
+    "boundary": "A new run. No time or acceptance inherited from the interrupted 0.4.0 source-only run.",
+    "initialSamples": 1,
+    "initialUIErrors": 0,
+    "harnessSHA256": "e3a1d67b555da7887b7200cd15220b8c30107c0a507b89b61877691aed1386dd"
+  },
+  "ci": {
+    "state": "in_progress",
+    "sourceRevision": "322283d4d75a0b2cae82efa7edbf410915b8cdbf",
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40208623826"
+  },
+  "remaining": [
+    "complete current-version observation and review",
+    "real community coverage and sustained reliability",
+    "native privileged install-button flow and actual PKG execution",
+    "privileged interruption/reboot and backup pruning",
+    "physical sleep/interface changes and direct energy measurement",
+    "published old-to-new Sparkle update",
+    "notarization"
+  ]
+}
