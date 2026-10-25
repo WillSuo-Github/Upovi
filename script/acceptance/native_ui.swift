@@ -44,13 +44,14 @@ while index < queue.count, index < 3000 {
     let description = attribute(element,kAXDescriptionAttribute) as? String ?? ""
     let value = attribute(element,kAXValueAttribute).map { String(describing:$0) } ?? ""
     let placeholder = attribute(element,kAXPlaceholderValueAttribute) as? String ?? ""
+    let identifier = attribute(element,kAXIdentifierAttribute) as? String ?? ""
     let enabled = attribute(element,kAXEnabledAttribute) as? Bool ?? true
     let labelElement = attribute(element,kAXTitleUIElementAttribute)
     let associatedLabel: String
     if let labelElement { let target = labelElement as! AXUIElement; associatedLabel = attribute(target,kAXValueAttribute) as? String ?? attribute(target,kAXTitleAttribute) as? String ?? "" } else { associatedLabel = "" }
-    snapshot.append(["role":role,"title":title,"description":description,"value":String(value.prefix(600)),"placeholder":placeholder,"label":associatedLabel,"enabled":enabled,"depth":depth])
+    snapshot.append(["role":role,"title":title,"description":description,"value":String(value.prefix(600)),"placeholder":placeholder,"label":associatedLabel,"identifier":identifier,"enabled":enabled,"depth":depth])
     if action != "snapshot", (wantedRole == nil || role == wantedRole),
-       label == nil || [title,description,value,placeholder,associatedLabel].contains(label!) { found = element; break }
+       label == nil || [title,description,value,placeholder,associatedLabel,identifier].contains(label!) { found = element; break }
     if depth < 18, !(role == "AXMenuBarItem" && title == "Apple") {
         queue += (attribute(element,kAXChildrenAttribute) as? [AXUIElement] ?? []).map { ($0,depth+1) }
     }

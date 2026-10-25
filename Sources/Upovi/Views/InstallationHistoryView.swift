@@ -41,6 +41,7 @@ struct InstallationHistoryView: View {
                                 Button("查看副本") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
                                 if receipt.retainedPath != nil {
                                     Button("清理备份…", role: .destructive) { store.backupDeletionConfirmation = receipt }.disabled(store.installing)
+                                        .accessibilityIdentifier("cleanup-backup-\(receipt.id)")
                                 }
                             }
                         }

@@ -51,10 +51,13 @@ jobs:
         run: |
           swift build --product UpoviInstaller
           UPOVI_BIN_DIR="$(swift build --show-bin-path)"
-          if "$UPOVI_BIN_DIR/UpoviInstaller" /dev/null; then
-            echo 'Administrator helper unexpectedly accepted an unprivileged invocation' >&2
-            exit 1
-          fi
+          set +e
+          "$UPOVI_BIN_DIR/UpoviInstaller" /dev/null > .build/helper-denial.log 2>&1
+          UPOVI_HELPER_STATUS=$?
+          set -e
+          cat .build/helper-denial.log
+          test "$UPOVI_HELPER_STATUS" -eq 1
+          rg 'Administrator authorization is required' .build/helper-denial.log
       - name: Build native bundle
         run: CONFIGURATION=release UPOVI_STAGE_ONLY=1 ./script/package_release.sh
       - name: Read synthetic report from independent publisher
