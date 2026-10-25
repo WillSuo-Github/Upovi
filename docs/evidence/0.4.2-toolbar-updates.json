@@ -1,0 +1,97 @@
+{
+  "version": "0.4.2",
+  "build": "8",
+  "validatedProductSourceRevision": "3874d13d0c76b4424358e3724ea484229987cdc7",
+  "unitAndStoreTests": {
+    "passed": 95,
+    "failed": 0,
+    "core": 90,
+    "actualStoreWorkflows": 5,
+    "boundaries": "Synthetic installation paths and private preferences; production downloader rejection exercised without network or application mutation."
+  },
+  "coverage": [
+    "full refresh scan-before-check despite filters and background sync",
+    "cancel during scan suppresses source checks",
+    "complete non-ignored source-confirmed inventory in bulk review",
+    "forged/stale/wrong-source/manual update exclusions",
+    "latest target and same-target download preference",
+    "sequential failure continuation",
+    "download cancellation and stop after commit",
+    "production bulk preparation failures release busy state"
+  ],
+  "nativeAcceptance": {
+    "signedApplication": true,
+    "refreshToolbarIdentifier": "refresh-all-apps",
+    "bulkToolbarIdentifier": "update-all-apps",
+    "refreshEnabledDuringP2P": true,
+    "rescanObserved": true,
+    "sourceCheckCompleted": true,
+    "scannedApplicationCount": 71,
+    "sourceUpdateCount": 9,
+    "reviewInstallableCount": 8,
+    "reviewManualCount": 1,
+    "bulkStartButtonEnabled": true,
+    "overlappingToolbarActionsDisabledDuringReview": true,
+    "reviewCancelledWithoutInstalling": true,
+    "dailyApplicationsChanged": false,
+    "boundary": "Actual native refresh and bulk review only. No multi-application successful installation, native administrator batch, or PKG execution acceptance is claimed."
+  },
+  "distribution": {
+    "state": "signed universal local candidate",
+    "sourceRevision": "3874d13d0c76b4424358e3724ea484229987cdc7",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "1b6af4e143bc26d26a481e7b6cd8d6aff30123bb36740e64bd5afd43466de032",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "freshExtractionNestedSignature": "passed",
+    "notarization": "deferred",
+    "published": false
+  },
+  "ci": {
+    "state": "passed",
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40210631504",
+    "sourceRevision": "3874d13d0c76b4424358e3724ea484229987cdc7",
+    "systems": [
+      "macOS 14 ARM",
+      "macOS 15 Intel",
+      "macOS 26 ARM"
+    ]
+  },
+  "longObservation": {
+    "state": "running",
+    "accepted": false,
+    "priorVersion": "0.4.1",
+    "priorDurationSeconds": 1187.31,
+    "boundary": "0.4.1 observation was deliberately stopped for this upgrade. No earlier duration transfers to 0.4.2.",
+    "startedAt": "2026-10-25T16:18:23.563883+00:00",
+    "sourceRevision": "3874d13d0c76b4424358e3724ea484229987cdc7",
+    "binarySHA256": "02aa8451443cb1d08dab4d1685566f8bce194d367efbc981a8a8fb6bbf81191b",
+    "configuration": {
+      "p2pEnabledV3": true,
+      "automaticChecksV1": true,
+      "checkIntervalV1": 15,
+      "notificationsV1": false
+    },
+    "initialSamples": 1,
+    "initialUIErrors": 0,
+    "localEvidenceDirectory": ".local/toolbar-updates/soak-24h"
+  },
+  "remaining": [
+    "successful native multi-application batch and stop during a real committed install",
+    "native administrator/PKG batch execution and interruption/reboot",
+    "complete current-version 24-hour observation and review",
+    "physical sleep/interface changes and direct energy measurement",
+    "published old-to-new Sparkle update",
+    "notarization"
+  ],
+  "observationHarnessSmoke": {
+    "state": "passed",
+    "samples": 2,
+    "uiErrors": 0,
+    "trafficProbeFailures": 0
+  }
+}

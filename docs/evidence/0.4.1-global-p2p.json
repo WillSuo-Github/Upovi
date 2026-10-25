@@ -78,7 +78,7 @@
     "networkStatusCaptured": true
   },
   "longObservation": {
-    "state": "running",
+    "state": "observer_interrupted",
     "startedAt": "2026-10-25T15:54:42.722920+00:00",
     "mode": "global",
     "requiredSeconds": 86400,
@@ -95,7 +95,12 @@
     "boundary": "A new run. No time or acceptance inherited from the interrupted 0.4.0 source-only run.",
     "initialSamples": 1,
     "initialUIErrors": 0,
-    "harnessSHA256": "e3a1d67b555da7887b7200cd15220b8c30107c0a507b89b61877691aed1386dd"
+    "harnessSHA256": "e3a1d67b555da7887b7200cd15220b8c30107c0a507b89b61877691aed1386dd",
+    "finishedAt": "2026-10-25T16:14:30.030907+00:00",
+    "elapsedSeconds": 1187.31,
+    "samples": 20,
+    "uiErrors": 0,
+    "reason": "Collector deliberately stopped before replacing the running 0.4.1 application with 0.4.2 for owner-requested toolbar/bulk-update validation. Not a 24-hour pass."
   },
   "ci": {
     "state": "passed",
