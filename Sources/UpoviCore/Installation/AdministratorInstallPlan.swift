@@ -58,11 +58,15 @@ public enum AdministratorAuthorization {
         "\"" + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\n", with: "\\n").replacingOccurrences(of: "\r", with: "\\r") + "\""
     }
-    public static func script(helper: URL, plan: URL, hostTeam: String) throws -> String {
+    public static func requirement(hostTeam: String) throws -> String {
         guard hostTeam.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil else {
             throw PeerError.invalid("Administrator installation requires a Developer ID signed Upovi build")
         }
-        let requirement = "anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier \"app.upovi.Installer\" and certificate leaf[subject.OU] = \"\(hostTeam)\""
+        // codesign/csreq distinguish inline requirements from filenames using the leading '='.
+        return "=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier \"app.upovi.Installer\" and certificate leaf[subject.OU] = \"\(hostTeam)\""
+    }
+    public static func script(helper: URL, plan: URL, hostTeam: String) throws -> String {
+        let requirement = try requirement(hostTeam: hostTeam)
         let command = """
         set -eu
         umask 077

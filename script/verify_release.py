@@ -28,7 +28,7 @@ assert set(archs) == {'arm64', 'x86_64'}, archs
 helper = bundle / 'Contents/MacOS/UpoviInstaller'
 assert set(subprocess.check_output(['lipo', '-archs', str(helper)], text=True).split()) == {'arm64', 'x86_64'}
 subprocess.run(['codesign', '--verify', '--strict', '--all-architectures', '-R',
-                'anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier "app.upovi.Installer"', str(helper)], check=True)
+                '=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier "app.upovi.Installer"', str(helper)], check=True)
 archive = folder / ('Upovi-' + release['version'] + '.zip')
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 assert digest == archive.with_suffix('.zip.sha256').read_text().split()[0]

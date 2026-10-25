@@ -73,4 +73,11 @@ final class AdministratorInstallationTests: XCTestCase {
             XCTAssertTrue(saved.contains("stdout")); XCTAssertTrue(saved.contains("stderr"))
         }
     }
+    func testDeveloperIDRequirementIsCompiledByTheSystemRequirementTool() async throws {
+        let output = FileManager.default.temporaryDirectory.appending(path: "Upovi-requirement-\(UUID().uuidString).bin")
+        defer { try? FileManager.default.removeItem(at: output) }
+        let requirement = try AdministratorAuthorization.requirement(hostTeam: "SYNTHETIC1")
+        _ = try await ProcessCommand().run("/usr/bin/csreq", ["-r", requirement, "-b", output.path])
+        XCTAssertGreaterThan(try Data(contentsOf: output).count, 0)
+    }
 }
