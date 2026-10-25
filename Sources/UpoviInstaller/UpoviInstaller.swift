@@ -17,7 +17,7 @@ struct UpoviInstaller {
             let size = (attributes[.size] as? NSNumber)?.int64Value ?? Int64.max
             let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0o777
             guard attributes[.type] as? FileAttributeType == .typeRegular,
-                  input.resolvingSymlinksInPath().path == input.path, owner == 0, size <= 65536,
+                  try CanonicalFilePath.resolve(input) == input.path, owner == 0, size <= 65536,
                   mode & 0o022 == 0 else { throw PeerError.invalid("Unsafe administrator plan file (owner=\(owner), mode=\(String(mode, radix: 8)), bytes=\(size))") }
             let plan = try JSONDecoder().decode(AdministratorInstallPlan.self, from: Data(contentsOf: input))
             try plan.validate()
@@ -30,7 +30,7 @@ struct UpoviInstaller {
     }
 
     private static func requireRootOwnership(_ url: URL) throws {
-        guard url.resolvingSymlinksInPath().path == url.path else { throw PeerError.invalid("Linked administrator transaction directory") }
+        guard try CanonicalFilePath.resolve(url) == url.path else { throw PeerError.invalid("Linked administrator transaction directory") }
         let attributes = try files.attributesOfItem(atPath: url.path)
         let owner = (attributes[.ownerAccountID] as? NSNumber)?.intValue ?? -1
         let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0o777

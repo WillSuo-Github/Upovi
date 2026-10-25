@@ -80,4 +80,15 @@ final class AdministratorInstallationTests: XCTestCase {
         _ = try await ProcessCommand().run("/usr/bin/csreq", ["-r", requirement, "-b", output.path])
         XCTAssertGreaterThan(try Data(contentsOf: output).count, 0)
     }
+    func testProtectedTemporaryPathsUsePhysicalResolutionAndStillExposeSymlinks() throws {
+        let directory = URL(fileURLWithPath: "/private/var/tmp").appending(path: "Upovi-path-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appending(path: "plan.json"), link = directory.appending(path: "linked.json")
+        try Data("{}".utf8).write(to: file)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: file)
+        XCTAssertEqual(try CanonicalFilePath.resolve(file), file.path)
+        XCTAssertNotEqual(try CanonicalFilePath.resolve(link), link.path)
+        XCTAssertEqual(try CanonicalFilePath.resolve(link), file.path)
+    }
 }
