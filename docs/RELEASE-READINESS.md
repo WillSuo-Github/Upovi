@@ -11,7 +11,7 @@ P2P mechanism expansion is deferred. Daily-use and administrator installation wo
 | Administrator app installation/recovery | Authorized production bootstrap/helper: isolated signed 2.0.3 → 2.0.4 → 2.0.3, resulting signatures valid | Native install-button, interruption/reboot and full PKG execution remain open |
 | PKG validation | Real official package SHA-256, matching developer, Gatekeeper and signed matching app payload passed | Package scripts not executed; main-app restore cannot undo system side effects |
 | Automated checks | 73 local tests and isolated protocol regressions passed | CI results are revision-specific; see aggregate evidence |
-| Long observation | Source-only observer prepared; final run status in evidence | Timer completion, CPU/RSS and sampled traffic do not establish complete UX/energy acceptance |
+| Long observation | Started 2026-10-25 23:04:25 Asia/Shanghai; running at handoff, not accepted | Timer completion, CPU/RSS and sampled traffic do not establish complete UX/energy acceptance |
 | Distribution | Developer ID universal candidate and signed feed staged locally | Apple notarization remains deferred; no release/feed publication |
 
 See [daily readiness](DAILY-READINESS.md), [administrator design](ADMINISTRATOR-INSTALLATION.md), and [aggregate evidence](evidence/0.4.0-daily-readiness.json). Earlier-version results below retain their original scope.

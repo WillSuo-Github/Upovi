@@ -93,16 +93,43 @@
     "publicLoadOrCommunityAcceptance": false
   },
   "distribution": {
-    "state": "clean final packaging pending",
+    "version": "0.4.0",
+    "build": "6",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "bc72c533d2bd56e224ce6998e03979fb700d188e12630af581a0c582f2031b03",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
     "notarization": "deferred",
+    "state": "signed universal local candidate",
+    "sourceRevision": "831dc00e2471ecd853ba730109feb54462e26d13",
+    "cleanBuildSnapshot": true,
+    "freshExtractionNestedSignature": "passed",
+    "tamperedFeedRejected": true,
     "published": false,
     "publicSelfUpdateEndToEndAccepted": false
   },
   "longObservation": {
-    "state": "not_started_yet",
+    "state": "running",
     "mode": "sources",
     "requiredSeconds": 86400,
-    "accepted": false
+    "startedAt": "2026-10-25T15:04:25.212643+00:00",
+    "sourceRevision": "831dc00e2471ecd853ba730109feb54462e26d13",
+    "binarySHA256": "89fd527c197985a11cb2864562ecf3b5d38c75a419233534a1e9ef6502b7a506",
+    "sourceConfiguration": {
+      "publicDiscoveryEnabledV2": false,
+      "publicSharingEnabledV2": false,
+      "automaticChecksV1": true,
+      "checkIntervalV1": 15,
+      "notificationsV1": false
+    },
+    "initialSamples": 2,
+    "initialUIErrors": 0,
+    "accepted": false,
+    "localEvidenceDirectory": ".local/daily-readiness/source-soak-24h"
   },
   "remaining": [
     "native administrator install-button flow",
@@ -114,5 +141,13 @@
     "public Sparkle old-to-new update",
     "notarization",
     "privileged backup pruning"
-  ]
+  ],
+  "observationHarnessSmoke": {
+    "state": "passed",
+    "samples": 2,
+    "uiErrors": 0,
+    "trafficProbeFailures": 0,
+    "boundary": "Short harness/configuration smoke only, not long-run acceptance."
+  },
+  "productSourcesMatchCIRevision": true
 }
