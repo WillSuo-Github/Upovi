@@ -2,6 +2,50 @@ import XCTest
 @testable import UpoviCore
 
 final class SourceTests: XCTestCase {
+    func testCuratedCatalogDoesNotConfuseSameNamedProducts() throws {
+        let json = #"[{"token":"orca","version":"1.3.1","artifacts":[{"app":["orca.app"]}]},{"token":"cursor","version":"3.0","artifacts":[{"app":["Cursor.app"]}]}]"#
+        let casks = try JSONDecoder().decode([CaskMetadata].self, from: Data(json.utf8))
+        let unrelated = InstalledApp(name: "Orca", bundleID: "com.stablyai.orca", version: "1", path: "/Applications/Orca.app")
+        XCTAssertNil(CaskCatalog.resolve(unrelated, in: casks))
+        let cursor = InstalledApp(name: "Renamed", bundleID: "com.todesktop.230313mzl4w4u92", version: "1", path: "/Applications/Renamed.app")
+        XCTAssertEqual(CaskCatalog.resolve(cursor, in: casks)?.token, "cursor")
+        let lookalike = InstalledApp(name: "Cursor", bundleID: "app.unrelated.Cursor", version: "1", path: "/Applications/Cursor.app")
+        XCTAssertNil(CaskCatalog.resolve(lookalike, in: casks))
+    }
+    func testReusedBundleIdentityRequiresExactUnambiguousApplicationFilename() throws {
+        let json = #"[{"token":"first","version":"2","artifacts":[{"app":["First.app"]},{"uninstall":[{"quit":"app.shared"}]}]},{"token":"second","version":"3","artifacts":[{"app":["Second.app"]},{"uninstall":[{"quit":"app.shared"}]}]}]"#
+        let casks = try JSONDecoder().decode([CaskMetadata].self, from: Data(json.utf8))
+        let app = InstalledApp(name: "First", bundleID: "app.shared", version: "1", path: "/Applications/First.app")
+        XCTAssertEqual(CaskCatalog.resolve(app, in: casks)?.token, "first")
+        let renamed = InstalledApp(name: "First", bundleID: "app.shared", version: "1", path: "/Applications/Renamed.app")
+        XCTAssertNil(CaskCatalog.resolve(renamed, in: casks))
+        XCTAssertNil(CaskCatalog.index(casks)["app.shared"])
+    }
+    func testCaskPlatformVersionAndHeterogeneousAppArtifacts() throws {
+        let json = #"{"token":"app","version":"5.0","artifacts":[{"app":["App.app",{"target":"Renamed.app"}]}],"variations":{"sonoma":{"version":"4.5"},"arm64_sonoma":{"version":"4.9"}}}"#
+        let cask = try JSONDecoder().decode(CaskMetadata.self, from: Data(json.utf8))
+        XCTAssertEqual(cask.platformVersion(intel: true, osMajor: 14), "4.5")
+        XCTAssertEqual(cask.platformVersion(intel: false, osMajor: 14), "4.9")
+        XCTAssertEqual(cask.platformVersion(intel: false, osMajor: 26), "5.0")
+    }
+    func testKnownPackagingVersionsCompareWithoutGuessingUnknownFormats() {
+        XCTAssertEqual(VersionOrder.compare("3.6.9-e0ba6bb8", "3.6.9"), .orderedSame)
+        XCTAssertEqual(VersionOrder.compare("7.2.2 (88465)", "7.2.2.88465"), .orderedSame)
+        XCTAssertEqual(VersionOrder.compare("7.2.3.1", "7.2.2 (88465)"), .orderedDescending)
+        XCTAssertFalse(SourceVersion.comparable("latest", installed: "1.0"))
+        XCTAssertFalse(SourceVersion.comparable("8.1", installed: "Chromium custom build"))
+        XCTAssertTrue(VersionOrder.isPrerelease("2.0-beta.1"))
+        XCTAssertEqual(VersionOrder.compare("2.0-beta.1", "2.0"), .orderedAscending)
+        XCTAssertEqual(VersionOrder.compare("6000.6.7f1", "Unity version 6000.6.0f1"), .orderedDescending)
+        XCTAssertEqual(VersionOrder.compare("6000.6.7b1", "6000.6.7f1"), .orderedAscending)
+        XCTAssertEqual(VersionOrder.compare("6000.6.7p1", "6000.6.7f1"), .orderedDescending)
+    }
+    func testPackageOnlyDiskImagesCannotOfferDirectApplicationReplacement() throws {
+        let json = #"{"token":"package","version":"2","url":"https://example.com/Package.dmg","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifacts":[{"pkg":["Package.pkg"]}]}"#
+        XCTAssertNil(try JSONDecoder().decode(CaskMetadata.self, from: Data(json.utf8)).download)
+        let app = json.replacingOccurrences(of: #""pkg":["Package.pkg"]"#, with: #""app":["Application.app"]"#)
+        XCTAssertNotNil(try JSONDecoder().decode(CaskMetadata.self, from: Data(app.utf8)).download)
+    }
     func testCatalogRequiresExactUnambiguousIdentifiers() throws {
         let json = #"[{"token":"one","version":"2","artifacts":[{"uninstall":[{"quit":["app.one","app.*"]}]}]},{"token":"two","version":"3","artifacts":[{"uninstall":[{"quit":"app.one"}]}]},{"token":"valid","version":"4","artifacts":[{"uninstall":[{"quit":"app.valid"}]}]}]"#
         let catalog = CaskCatalog.index(try JSONDecoder().decode([CaskMetadata].self, from: Data(json.utf8)))

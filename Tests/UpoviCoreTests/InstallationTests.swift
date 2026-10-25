@@ -16,6 +16,64 @@ final class InstallationTests: XCTestCase {
         addTeardownBlock { try? FileManager.default.removeItem(at: root) }
         return root
     }
+    private func installedFixture() throws -> (URL, BundleTransaction, InstallationReceipt) {
+        let root = try directory(), app = try fixture(root, name: "Installed", version: "1.0")
+        let update = try fixture(root, name: "Prepared", version: "2.0")
+        let transaction = BundleTransaction(journalDirectory: root.appending(path: "Journal"), validate: { _ in })
+        let receipt = try transaction.commit(prepared: URL(fileURLWithPath: update.path), replacing: app, newVersion: "2.0", newBuild: "2.0")
+        return (root, transaction, receipt)
+    }
+    func testBackupCleanupRecyclesOnlyTheRecordedBackupAndRetainsLiveApp() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        let recycled = root.appending(path: "Recycled.app")
+        let result = try transaction.discardBackup(receipt) { try FileManager.default.moveItem(at: $0, to: recycled) }
+        XCTAssertEqual(result.state, .backupDiscarded)
+        XCTAssertEqual(AppScanner.read(recycled)?.version, "1.0")
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: receipt.application.path))?.version, "2.0")
+        XCTAssertThrowsError(try transaction.discardBackup(receipt) { _ in XCTFail("Already discarded") })
+    }
+    func testFailedRecyclingPreservesBackupAndJournalForRecovery() throws {
+        let (_, transaction, receipt) = try installedFixture()
+        XCTAssertThrowsError(try transaction.discardBackup(receipt) { _ in throw PeerError.invalid("Injected recycle failure") })
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: receipt.backupPath))?.version, "1.0")
+        XCTAssertEqual(try transaction.restore(receipt).state, .restored)
+    }
+    func testRestoredInstallationRetainsAndCanRecycleDisplacedNewVersion() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        let restored = try transaction.restore(receipt)
+        let retainedPath = try XCTUnwrap(restored.retainedPath)
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: retainedPath))?.version, "2.0")
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: restored.application.path))?.version, "1.0")
+        let result = try transaction.discardBackup(restored) { try FileManager.default.moveItem(at: $0, to: root.appending(path: "Recycled.app")) }
+        XCTAssertEqual(result.state, .backupDiscarded)
+        XCTAssertNil(result.retainedPath)
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: restored.application.path))?.version, "1.0")
+    }
+    func testBackupCleanupRejectsMissingOrExternallyChangedReplacement() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        try FileManager.default.removeItem(atPath: receipt.application.path)
+        XCTAssertThrowsError(try transaction.discardBackup(receipt) { _ in XCTFail("Missing replacement") })
+        _ = try fixture(root, name: "Installed", version: "3.0")
+        XCTAssertThrowsError(try transaction.discardBackup(receipt) { _ in XCTFail("Changed replacement") })
+        XCTAssertTrue(FileManager.default.fileExists(atPath: receipt.backupPath))
+    }
+    func testBackupCleanupRejectsUnrecordedPathsAndInterruptedTransactions() throws {
+        let (_, transaction, receipt) = try installedFixture()
+        let forged = InstallationReceipt(id: receipt.id, date: receipt.date, application: receipt.application,
+            newVersion: receipt.newVersion, newBuild: receipt.newBuild, backupPath: receipt.application.path,
+            incomingPath: receipt.incomingPath, state: .installed)
+        XCTAssertThrowsError(try transaction.discardBackup(forged) { _ in XCTFail("Forged path") })
+        var interrupted = receipt; interrupted.state = .backedUp
+        XCTAssertThrowsError(try transaction.discardBackup(interrupted) { _ in XCTFail("Recovery material") })
+    }
+    func testBackupCleanupRejectsSymlinkReplacement() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        let moved = root.appending(path: "Moved.app")
+        try FileManager.default.moveItem(atPath: receipt.backupPath, toPath: moved.path)
+        try FileManager.default.createSymbolicLink(atPath: receipt.backupPath, withDestinationPath: moved.path)
+        XCTAssertThrowsError(try transaction.discardBackup(receipt) { _ in XCTFail("Linked backup") })
+        XCTAssertEqual(AppScanner.read(moved)?.version, "1.0")
+    }
     func testInstallationAndRestoreRetainOriginalBundle() throws {
         let root = try directory(), app = try fixture(root, name: "Installed", version: "1.0")
         let update = try fixture(root, name: "Prepared", version: "2.0")

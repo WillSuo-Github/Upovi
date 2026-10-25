@@ -43,6 +43,8 @@ def main():
     parser.add_argument('--expected-scope-count', type=int, default=1)
     parser.add_argument('--duration-seconds', type=int, default=86400)
     parser.add_argument('--interval-seconds', type=int, default=60)
+    parser.add_argument('--mode', choices=['sources', 'community'], default='community',
+                        help='Label the observation scope; source-only acceptance does not establish P2P reliability.')
     options = parser.parse_args()
     if not 10 <= options.interval_seconds <= 3600 or not 1 <= options.duration_seconds <= 86400:
         parser.error('Use a 10–3600 second interval and at most 86400 seconds.')
@@ -55,16 +57,15 @@ def main():
     info = plistlib.loads((options.app / 'Contents/Info.plist').read_bytes())
     started = time.time()
     summary = {'status': 'running', 'startedAt': utc(), 'requestedDurationSeconds': options.duration_seconds,
-               'sourceRevision': info.get('UpoviSourceRevision'), 'version': info.get('CFBundleShortVersionString'),
+               'sourceRevision': info.get('UpoviSourceRevision'), 'version': info.get('CFBundleShortVersionString'), 'mode': options.mode,
                'binarySHA256': hashlib.sha256((options.app / 'Contents/MacOS/Upovi').read_bytes()).hexdigest(),
                'processID': options.pid, 'expectedScopeCount': options.expected_scope_count, 'samples': 0, 'uiErrors': 0, 'coverageGapsSeconds': [],
-               'observedSyncTimes': [], 'rssKBMin': None, 'rssKBMax': None,
+               'observedSyncTimes': [], 'visibleWindowSamples': 0, 'windowlessSamples': 0, 'rssKBMin': None, 'rssKBMax': None,
                'boundary': 'Real elapsed observation; gaps, exit, source checks and DHT failures require review. CPU/RSS are not direct energy measurements.'}
     save(options.output / 'summary.json', summary)
     children = []
     handles = []
     for name, command in [
-        ('traffic.csv', ['nettop', '-P', '-d', '-L', '0', '-s', str(options.interval_seconds), '-p', pid, '-J', 'bytes_in,bytes_out']),
         ('runtime.log', ['/usr/bin/log', 'stream', '--style', 'compact', '--level', 'info', '--predicate',
                          'processIdentifier == '+pid+' AND subsystem == "app.upovi.Upovi"'])]:
         handle = (options.output / name).open('w'); handles.append(handle)
@@ -87,6 +88,13 @@ def main():
                 sample.update(rssKB=int(fields[0]), cpuPercent=float(fields[1]), cpuTime=fields[2])
             except (subprocess.SubprocessError, ValueError, RuntimeError):
                 summary['status'] = 'process_exited_or_changed'; break
+            # One bounded snapshot per sample avoids a long-lived nettop process losing a buffered tail.
+            try:
+                traffic = run(['nettop', '-P', '-L', '1', '-p', pid, '-J', 'bytes_in,bytes_out'], timeout=10)
+                with (options.output / 'traffic.jsonl').open('a') as handle:
+                    handle.write(json.dumps({'at': sample['at'], 'snapshot': traffic}) + '\n')
+            except subprocess.SubprocessError:
+                sample['trafficProbeFailed'] = True
             try:
                 before = time.monotonic()
                 nodes = json.loads(run([str(options.probe.resolve()), '--pid', pid, '--action', 'snapshot']))
@@ -98,6 +106,7 @@ def main():
                 sample['visibleCheckHistory'] = [text for text in texts if re.fullmatch(r'\d+ 个应用 · \d+ 个更新 · \d+ 项未完整检查', text)]
                 sample['sharingControls'] = [node['value'] for node in nodes if node['role'] == 'AXCheckBox' and node['description'] == '公开共享选中应用的版本']
                 sample['visibleWindows'] = len([node for node in nodes if node['role'] == 'AXWindow'])
+                summary['visibleWindowSamples' if sample['visibleWindows'] else 'windowlessSamples'] += 1
                 for value in sample['syncTimes']:
                     if value not in summary['observedSyncTimes']: summary['observedSyncTimes'].append(value)
                 if sample['scope'] and any(value != '范围：'+str(options.expected_scope_count)+' 个应用' for value in sample['scope']):

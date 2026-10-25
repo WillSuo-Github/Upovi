@@ -16,7 +16,7 @@ public struct GitHubRelease: Decodable, Sendable {
     public var download: DownloadDescriptor? {
         let compatible = assets.filter { asset in
             let name = asset.name.lowercased()
-            guard ["dmg", "zip"].contains(asset.browser_download_url.pathExtension.lowercased()),
+            guard ["dmg", "zip", "pkg"].contains(asset.browser_download_url.pathExtension.lowercased()),
                   !name.contains("symbols"), !name.contains("source"), !name.contains("windows"), !name.contains("linux") else { return false }
             #if arch(arm64)
             return !name.contains("x86_64") && !name.contains("x64") && !name.contains("intel")

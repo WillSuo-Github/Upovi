@@ -115,6 +115,24 @@ public actor UpdateInstaller {
             try BundleTransaction(journalDirectory: journal, validate: { _ in }).restore(receipt)
         }.value
     }
+    public static func requestApplicationQuit(_ app: InstalledApp) async throws { try await quit(app) }
+
+    public func discardBackup(_ receipt: InstallationReceipt) async throws {
+        guard !busy else { throw PeerError.unavailable("An installation operation is already running") }
+        busy = true; defer { busy = false }
+        guard let retainedPath = receipt.retainedPath else { throw PeerError.invalid("Keep interrupted installation backups for recovery") }
+        let backup = URL(fileURLWithPath: retainedPath)
+        let running = await MainActor.run {
+            NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL.path == backup.path }
+        }
+        guard !running else { throw PeerError.invalid("Quit the backup application before moving it to Trash") }
+        let journal = journalDirectory
+        _ = try await Task.detached {
+            try BundleTransaction(journalDirectory: journal, validate: { _ in }).discardBackup(receipt) { url in
+                try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+            }
+        }.value
+    }
 
     private static func quit(_ app: InstalledApp) async throws {
         func running() async -> Bool {

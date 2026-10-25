@@ -53,8 +53,22 @@ struct UpoviPeer {
             let data = try JSONSerialization.data(withJSONObject: summary, options: [.prettyPrinted, .sortedKeys])
             print(String(decoding: data, as: UTF8.self))
             if let path = option("--summary-file") { try data.write(to: URL(fileURLWithPath: path), options: .atomic) }
+            if let path = option("--details-file") {
+                let details: [[String: Any]] = results.map { result in
+                    let app = apps.first { $0.id == result.appID }
+                    return ["bundleID": app?.bundleID ?? "", "name": app?.name ?? "", "path": result.appID,
+                            "status": result.status.rawValue, "note": result.note]
+                }.sorted { ($0["path"] as? String ?? "") < ($1["path"] as? String ?? "") }
+                let detailsData = try JSONSerialization.data(withJSONObject: details, options: [.prettyPrinted, .sortedKeys])
+                let file = URL(fileURLWithPath: path)
+                try detailsData.write(to: file, options: .atomic)
+                try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
+            }
             if args.contains("--verbose") {
-                for result in results.sorted(by: { $0.appID < $1.appID }) { print("\(result.status.rawValue)\t\(result.note)") }
+                for result in results.sorted(by: { $0.appID < $1.appID }) {
+                    let app = apps.first { $0.id == result.appID }
+                    print("\(result.status.rawValue)\t\(app?.name ?? "Unknown")\t\(app?.bundleID ?? "")\t\(result.note)")
+                }
             }
         case "install-check":
             let appPath = try required("--app")
@@ -151,7 +165,7 @@ struct UpoviPeer {
     static let usage = """
     UpoviPeer scan
     UpoviPeer install-check --app <path> --url <https-archive> --version <version> --sha256 <hash> --journal-directory <path> [--apply] [--restore]
-    UpoviPeer check-sources [--app <path>] [--summary-file <path>] [--verbose]
+    UpoviPeer check-sources [--app <path>] [--summary-file <path>] [--details-file <private-local-path>] [--verbose]
     UpoviPeer identity --output <private-key-file>
     UpoviPeer probe
     UpoviPeer share-public --identity <file> --bundle <synthetic-id> --version <version> [--duration 60]

@@ -13,14 +13,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 struct UpoviApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var store = AppStore()
+    @ObservedObject private var updater = SelfUpdateService.shared
 
     var body: some Scene {
         WindowGroup("Upovi", id: "main") {
             ContentView(store: store)
                 .frame(minWidth: 1000, minHeight: 650)
+                .task { [store] in updater.installationBusy = { [weak store] in store?.installing == true || store?.preparedUpdate != nil || store?.preparedPackage != nil } }
         }
         .defaultSize(width: 1240, height: 780)
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("检查 Upovi 自身更新…") { updater.check() }.disabled(!updater.canCheck || store.installing)
+            }
             CommandMenu("导航") {
                 Button("可用更新") { store.section = .updates }.keyboardShortcut("1", modifiers: .command)
                 Button("全部应用") { store.section = .all }.keyboardShortcut("2", modifiers: .command)

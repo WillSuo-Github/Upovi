@@ -47,8 +47,13 @@ struct ContentView: View {
         .searchable(text: $store.search, prompt: "搜索应用或 Bundle ID")
         .toolbar {
             ToolbarItemGroup {
+                if store.section != .community {
+                    Picker("检测来源", selection: $store.sourceFilter) {
+                        ForEach(SourceFilter.allCases) { Text($0.rawValue).tag($0) }
+                    }.frame(maxWidth: 140)
+                }
                 Button { Task { await store.scan() } } label: { Label("重新扫描", systemImage: "arrow.clockwise") }
-                    .disabled(store.scanning || store.checking || store.syncing).help("重新扫描应用目录")
+                    .disabled(store.scanning || store.checking || store.syncing || store.installing).help("重新扫描应用目录")
                 Button { store.beginChecking() } label: { Label("检查更新", systemImage: "arrow.down.circle") }
                     .disabled(store.scanning || store.checking || store.installing || store.apps.isEmpty)
                 if store.section == .community {
@@ -64,6 +69,7 @@ struct ContentView: View {
         .onChange(of: store.visibleApps.map(\.id)) { _, ids in
             if !ids.contains(store.selection ?? "") { store.selection = ids.first }
         }
+        .onChange(of: store.section) { _, _ in store.sourceFilter = .all }
         .task { store.startMonitoring() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in store.recoverNetwork(reason: "wake") }
         .sheet(isPresented: $store.installationConfirmation, onDismiss: {
@@ -100,6 +106,7 @@ struct ContentView: View {
                 Text(store.section?.rawValue ?? "全部应用").font(.title2.bold())
                 Text(store.section == .updates ? "仅显示更新来源已提供的版本，社区报告不计入" : "扫描本机应用，选择需要关注的更新")
                     .font(.callout).foregroundStyle(.secondary)
+                if !store.networkAvailable { Text("网络不可用，自动检测将在联网后恢复").font(.caption).foregroundStyle(.orange) }
             }
             Spacer()
             Text("\(store.visibleApps.count)").font(.title2.monospacedDigit()).foregroundStyle(.secondary)

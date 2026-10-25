@@ -8,6 +8,17 @@ public enum VersionOrder {
     }
 
     private static func parse(_ value: String) -> Parsed? {
+        let value = SourceVersion.normalize(value)
+        let unity = #"^(?:Unity version )?(\d+(?:\.\d+){2})([abfp])(\d+)$"#
+        if let regex = try? NSRegularExpression(pattern: unity),
+           let match = regex.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)),
+           let numbers = Range(match.range(at: 1), in: value),
+           let stage = Range(match.range(at: 2), in: value),
+           let revision = Range(match.range(at: 3), in: value), let revisionValue = Int(value[revision]) {
+            let parts = value[numbers].split(separator: ".").compactMap { Int($0) }
+            guard parts.count == 3 else { return nil }
+            return Parsed(numbers: parts, stage: ["a": 0, "b": 1, "f": 4, "p": 5][String(value[stage])]!, revision: revisionValue)
+        }
         let pattern = #"^v?(\d+(?:\.\d+)*)(?:[-. ]?(alpha|a|beta|b|preview|pre|rc)[-. ]?(\d*))?(?:\+[0-9A-Za-z.-]+)?$"#
         guard value.count <= 128, let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
               let match = regex.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)),

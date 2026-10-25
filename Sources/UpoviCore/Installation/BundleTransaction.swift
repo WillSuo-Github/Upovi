@@ -1,7 +1,7 @@
 import Foundation
 
 public struct InstallationReceipt: Codable, Identifiable, Sendable {
-    public enum State: String, Codable, Sendable { case prepared, backedUp, installed, restored, failed }
+    public enum State: String, Codable, Sendable { case prepared, backedUp, installed, restored, failed, backupDiscarded }
     public let id: String
     public let date: Date
     public let application: InstalledApp
@@ -10,6 +10,14 @@ public struct InstallationReceipt: Codable, Identifiable, Sendable {
     public let backupPath: String
     public let incomingPath: String
     public var state: State
+    public var displacedPath: String? = nil
+    public var retainedPath: String? {
+        switch state {
+        case .installed: backupPath
+        case .restored: displacedPath
+        default: nil
+        }
+    }
 }
 
 /// All rename operations stay on the destination volume. Original bundles are retained for recovery.
@@ -76,7 +84,7 @@ struct BundleTransaction {
         if let current = AppScanner.read(target) {
             guard current.bundleID == old.bundleID, current.version == receipt.newVersion, current.build == receipt.newBuild,
                   current.teamID == old.teamID else { throw PeerError.invalid("Current application has changed since this installation; automatic restore refused") }
-            let saved = parent.appending(path: ".upovi-replaced-\(UUID().uuidString).app")
+            let saved = parent.appending(path: ".upovi-replaced-\(receipt.id).app")
             try files.moveItem(at: target, to: saved); displaced = saved
         } else if files.fileExists(atPath: target.path) { throw PeerError.invalid("Destination is occupied by an unknown file") }
         do { try files.moveItem(at: backup, to: target) }
@@ -84,7 +92,39 @@ struct BundleTransaction {
             if let displaced { try? files.moveItem(at: displaced, to: target) }
             throw error
         }
-        var updated = receipt; updated.state = .restored; try write(updated)
+        var updated = receipt; updated.state = .restored; updated.displacedPath = displaced?.path; try write(updated)
+        return updated
+    }
+
+    /// Only completed installations with a matching live replacement can relinquish recovery material.
+    func discardBackup(_ receipt: InstallationReceipt, recycle: (URL) throws -> Void) throws -> InstallationReceipt {
+        guard UUID(uuidString: receipt.id) != nil, [.installed, .restored].contains(receipt.state) else {
+            throw PeerError.invalid("Interrupted installation backups cannot be discarded")
+        }
+        let journal = journalDirectory.appending(path: receipt.id + ".json")
+        let data = try Data(contentsOf: journal)
+        let stored = try JSONDecoder().decode(InstallationReceipt.self, from: data)
+        guard stored.state == receipt.state, stored.application == receipt.application,
+              stored.backupPath == receipt.backupPath, stored.displacedPath == receipt.displacedPath, stored.newVersion == receipt.newVersion,
+              stored.newBuild == receipt.newBuild else { throw PeerError.invalid("Installation receipt has changed") }
+        let target = URL(fileURLWithPath: receipt.application.path).standardizedFileURL
+        let restored = receipt.state == .restored
+        let backup = target.deletingLastPathComponent().appending(path: ".upovi-\(restored ? "replaced" : "backup")-\(receipt.id).app")
+        guard target.resolvingSymlinksInPath().path == target.path,
+              backup.path == receipt.retainedPath, backup.resolvingSymlinksInPath().path == backup.path,
+              let old = AppScanner.read(backup), old.bundleID == receipt.application.bundleID,
+              old.version == (restored ? receipt.newVersion : receipt.application.version),
+              old.build == (restored ? receipt.newBuild : receipt.application.build),
+              old.teamID == receipt.application.teamID,
+              let current = AppScanner.read(target), current.bundleID == old.bundleID,
+              current.teamID == old.teamID,
+              current.version == (restored ? receipt.application.version : receipt.newVersion),
+              current.build == (restored ? receipt.application.build : receipt.newBuild) else {
+            throw PeerError.invalid("Backup or installed application changed; keep this backup for recovery")
+        }
+        try recycle(backup)
+        var updated = stored; updated.state = .backupDiscarded
+        try write(updated)
         return updated
     }
 }

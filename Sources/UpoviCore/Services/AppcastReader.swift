@@ -57,7 +57,7 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
                     entries.append(.init(version: version, build: item.build, source: "Developer appcast", isCommunity: false, url: url,
                                          usesBuildVersion: item.version.isEmpty,
                                          download: URL(string: item.download).flatMap { url in
-                                             guard url.scheme == "https", ["zip", "dmg"].contains(url.pathExtension.lowercased()),
+                                             guard url.scheme == "https", ["zip", "dmg", "pkg"].contains(url.pathExtension.lowercased()),
                                                    let signature = Data(base64Encoded: item.signature), signature.count == 64 else { return nil }
                                              return DownloadDescriptor(url: url, edSignature: signature)
                                          }))

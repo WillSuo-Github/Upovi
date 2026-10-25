@@ -16,12 +16,19 @@ enum AppSection: String, CaseIterable, Identifiable {
 @MainActor @Observable
 final class AppStore {
     var preparedUpdate: PreparedUpdate?
+    var preparedPackage: PreparedInstallerPackage?
+    var administratorInstallRequested = false
+    var administratorRestoreConfirmation: AdministratorInstallAttempt?
+    var administrator = AdministratorInstallationService()
     var installationReceipts: [InstallationReceipt] = []
     var installationProgress = ""
     var installing = false
     var canCancelInstallation = false
     var installationConfirmation = false
     var restoreConfirmation: InstallationReceipt?
+    var backupDeletionConfirmation: InstallationReceipt?
+    var backupSizes: [String: Int64] = [:]
+    var sourceFilter: SourceFilter = .all
     var checkHistory: [CheckHistoryEntry] = []
     var sourceOverrides: [String: SourceOverride] = [:]
     var apps: [InstalledApp] = []
@@ -42,6 +49,7 @@ final class AppStore {
     var lastChecked: Date?
     var lastSynced: Date?
     var completedChecks = 0
+    var networkAvailable = true
     var p2pProgress = ""
     var discoveredPublishers: [String: DiscoveredPublisher] = [:]
     var identityID = "尚未创建"
@@ -114,7 +122,7 @@ final class AppStore {
     var visibleApps: [InstalledApp] {
         apps.filter { app in
             let matches = search.isEmpty || app.name.localizedCaseInsensitiveContains(search) || app.bundleID.localizedCaseInsensitiveContains(search)
-            guard matches else { return false }
+            guard matches, sourceFilter.includes(sourceResults[app.id]?.status) else { return false }
             switch section {
             case .updates: return !ignored.contains(app.bundleID) && assessment(for: app).hasUpdate
             case .ignored: return ignored.contains(app.bundleID)
@@ -143,6 +151,7 @@ final class AppStore {
 
     func beginChecking() {
         guard !checking, !scanning, !installing else { return }
+        guard networkAvailable else { errorMessage = "当前没有可用网络，联网后再检查更新。"; return }
         checking = true; lastCheckAttempt = Date()
         checkTask = Task { await checkUpdates() }
     }

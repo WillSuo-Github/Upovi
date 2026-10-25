@@ -47,6 +47,14 @@ jobs:
         run: |
           swiftc script/acceptance/native_ui.swift -o .build/native-ui-acceptance
           python3 -m py_compile script/acceptance/soak.py
+      - name: Verify administrator helper refuses unprivileged execution
+        run: |
+          swift build --product UpoviInstaller
+          UPOVI_BIN_DIR="$(swift build --show-bin-path)"
+          if "$UPOVI_BIN_DIR/UpoviInstaller" /dev/null; then
+            echo 'Administrator helper unexpectedly accepted an unprivileged invocation' >&2
+            exit 1
+          fi
       - name: Build native bundle
         run: CONFIGURATION=release UPOVI_STAGE_ONLY=1 ./script/package_release.sh
       - name: Read synthetic report from independent publisher

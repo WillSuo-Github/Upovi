@@ -48,7 +48,7 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
                     let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
                     self.session = session
                     var request = URLRequest(url: url)
-                    request.setValue("Upovi/0.3.0 (macOS)", forHTTPHeaderField: "User-Agent")
+                    request.setValue("Upovi (macOS)", forHTTPHeaderField: "User-Agent")
                     let task = session.dataTask(with: request); self.task = task
                     lock.unlock(); task.resume()
                 } catch { lock.unlock(); continuation.resume(throwing: error) }

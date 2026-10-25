@@ -10,8 +10,9 @@ extension AppStore {
             guard let self else { return }
             await refreshInstallations()
             while !Task.isCancelled {
-                if automaticChecks && !apps.isEmpty && !scanning && !checking && !installing &&
-                    (lastCheckAttempt.map { Date().timeIntervalSince($0) >= Double(checkIntervalMinutes * 60) } ?? true) { beginChecking() }
+                if CheckSchedule.isDue(enabled: automaticChecks && !apps.isEmpty, online: networkAvailable,
+                    busy: scanning || checking || installing, lastAttempt: lastCheckAttempt,
+                    intervalMinutes: checkIntervalMinutes) { beginChecking() }
                 if networkEnabled && !syncing && !scanning && !installing &&
                     (lastSyncAttempt.map { Date().timeIntervalSince($0) >= 600 } ?? true) { beginSync() }
                 try? await Task.sleep(for: .seconds(30))
@@ -22,12 +23,17 @@ extension AppStore {
             Task { @MainActor in
                 guard let self else { return }
                 defer { self.previousPath = signature }
+                let reconnected = !self.networkAvailable && path.status == .satisfied
+                self.networkAvailable = path.status == .satisfied
+                if reconnected { self.lastCheckAttempt = nil }
                 if self.previousPath != nil && self.previousPath != signature { self.recoverNetwork(reason: "path-change") }
             }
         }
         pathMonitor.start(queue: DispatchQueue(label: "app.upovi.path"))
     }
     func recoverNetwork(reason: String = "network-change") {
+        // Source scheduling recovers independently of whether optional P2P is enabled.
+        if reason == "wake" { lastCheckAttempt = nil }
         guard networkEnabled else { return }
         logger.info("network recovery requested reason=\(reason, privacy: .public)")
         syncTask?.cancel()
@@ -56,26 +62,47 @@ extension AppStore {
     }
     func prepareInstallation(_ candidate: UpdateCandidate, app: InstalledApp) {
         guard !installing, !checking, !scanning else { return }
+        guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = "请先完成或关闭 Upovi 自身更新，再安装其他应用。"; return }
         installing = true; canCancelInstallation = true; installationProgress = "正在下载并验证更新…"
         installationTask = Task { [self] in
             defer { installing = false; canCancelInstallation = false }
             do {
+                if candidate.download?.url.pathExtension.lowercased() == "pkg" {
+                    preparedPackage = try await administrator.preparePackage(candidate, app: app) { [weak self] received, expected in
+                        Task { @MainActor in self?.installationProgress = expected > 0 ? "下载中 \(received * 100 / expected)%" : "已下载 \(received / 1_000_000) MB" }
+                    }
+                    installationConfirmation = true; installationProgress = "安装包已验证，等待管理员安装确认"
+                    return
+                }
                 let value = try await installer.prepare(app: app, candidate: candidate) { [weak self] received, expected in
                     Task { @MainActor in
                         self?.installationProgress = expected > 0 ? "下载中 \(received * 100 / expected)%" : "已下载 \(received / 1_000_000) MB"
                     }
                 }
-                preparedUpdate = value; installationConfirmation = true; installationProgress = "更新已验证，等待安装确认"
+                preparedUpdate = value
+                administratorInstallRequested = !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path)
+                installationConfirmation = true; installationProgress = "更新已验证，等待安装确认"
             } catch { installationProgress = "下载或验证未完成"; if !Task.isCancelled { errorMessage = error.localizedDescription } }
         }
     }
     func cancelInstallation() { installationTask?.cancel() }
     func discardInstallation() {
         if let value = preparedUpdate { Task { await installer.discard(value.id) } }
+        if let value = preparedPackage { administrator.discard(value); preparedPackage = nil }
         preparedUpdate = nil; installationConfirmation = false; installationProgress = ""
     }
     func confirmInstallation() {
+        if let package = preparedPackage {
+            confirmAdministratorInstallation(package.plan)
+            return
+        }
         guard let value = preparedUpdate, !installing else { return }
+        if administratorInstallRequested {
+            confirmAdministratorInstallation(.init(operation: .application, application: value.application,
+                version: value.replacement.version, build: value.replacement.build,
+                artifactPath: value.bundle.resolvingSymlinksInPath().path))
+            return
+        }
         installationConfirmation = false; installing = true; canCancelInstallation = false; installationProgress = "正在安装，旧版本将保留为备份…"
         installationTask = Task { [self] in
             defer { installing = false; preparedUpdate = nil }
@@ -89,9 +116,77 @@ extension AppStore {
             } catch { errorMessage = error.localizedDescription; installationProgress = "安装未完成，原应用或恢复备份已保留" }
         }
     }
-    func refreshInstallations() async { installationReceipts = (try? await installer.receipts()) ?? [] }
+    private func confirmAdministratorInstallation(_ plan: AdministratorInstallPlan) {
+        guard !installing, !SelfUpdateService.shared.sessionInProgress else { return }
+        installationConfirmation = false; installing = true; canCancelInstallation = false
+        installationProgress = "正在请求管理员授权并安装，请留意系统授权窗口…"
+        installationTask = Task { [self] in
+            defer {
+                installing = false
+                if let value = preparedUpdate { Task { await installer.discard(value.id) } }
+                if let value = preparedPackage { administrator.discard(value) }
+                preparedUpdate = nil; preparedPackage = nil
+            }
+            do {
+                try await administrator.perform(plan)
+                installationProgress = "管理员安装完成；主应用备份已保留"
+                apps = await Task.detached { AppScanner.scan() }.value
+                sourceResults[plan.application.id] = nil
+            } catch { errorMessage = "管理员安装未完成或授权已取消。请在记录中检查恢复选项：\(error.localizedDescription)" }
+        }
+    }
+    func restoreAdministratorInstallation(_ attempt: AdministratorInstallAttempt) {
+        guard !installing, !SelfUpdateService.shared.sessionInProgress else { return }
+        installing = true; canCancelInstallation = false; installationProgress = "正在请求管理员授权以恢复主应用…"
+        installationTask = Task { [self] in
+            defer { installing = false }
+            do {
+                let plan = AdministratorInstallPlan(id: attempt.id, operation: .restore, application: attempt.plan.application,
+                    version: attempt.plan.version, build: attempt.plan.build)
+                try await administrator.perform(plan)
+                apps = await Task.detached { AppScanner.scan() }.value; sourceResults = [:]
+                installationProgress = "主应用已恢复；安装包的其他系统改动未回滚"
+            } catch { errorMessage = "主应用未恢复：\(error.localizedDescription)" }
+        }
+    }
+    func refreshInstallations() async {
+        do {
+            installationReceipts = try await installer.receipts()
+            let receipts = installationReceipts
+            backupSizes = await Task.detached {
+                var sizes: [String: Int64] = [:]
+                for receipt in receipts {
+                    guard let path = receipt.retainedPath else { continue }
+                    let root = URL(fileURLWithPath: path)
+                    guard FileManager.default.fileExists(atPath: root.path),
+                          let iterator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileAllocatedSizeKey, .isSymbolicLinkKey]) else { continue }
+                    var bytes: Int64 = 0
+                    while let file = iterator.nextObject() as? URL {
+                        if let values = try? file.resourceValues(forKeys: [.fileAllocatedSizeKey, .isSymbolicLinkKey]), values.isSymbolicLink != true {
+                            bytes += Int64(values.fileAllocatedSize ?? 0)
+                        }
+                    }
+                    sizes[receipt.id] = bytes
+                }
+                return sizes
+            }.value
+        } catch { errorMessage = "安装记录无法读取：\(error.localizedDescription)" }
+    }
+    func discardBackup(_ receipt: InstallationReceipt) {
+        guard !installing else { return }
+        installing = true
+        Task {
+            defer { installing = false }
+            do {
+                try await installer.discardBackup(receipt)
+                installationProgress = "旧版本备份已移到废纸篓"
+                await refreshInstallations()
+            } catch { errorMessage = "备份未清理：\(error.localizedDescription)" }
+        }
+    }
     func restoreInstallation(_ receipt: InstallationReceipt) {
         guard !installing else { return }
+        guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = "请先完成或关闭 Upovi 自身更新，再恢复其他应用。"; return }
         installing = true
         Task {
             defer { installing = false }

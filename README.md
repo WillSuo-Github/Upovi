@@ -2,7 +2,7 @@
 
 A native, open-source macOS application update detector with opt-in public P2P version discovery and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.3.2**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.0 development**
 
 [Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
@@ -12,7 +12,10 @@ A native, open-source macOS application update detector with opt-in public P2P v
 - Checks developer Sparkle appcasts, Homebrew's official catalog using exact declared bundle IDs, curated identity mappings, and supported GitHub releases. Unknown apps can be assigned an HTTPS appcast or official GitHub repository in the detail panel.
 - Distinguishes source-reported updates, community leads, unsupported sources, and failed checks. An empty result is never proof that all applications are current.
 - Downloads eligible ZIP/DMG updates, verifies archive integrity, matching application/developer identity, nested code signatures, version and native executable compatibility, and Gatekeeper acceptance. Installation requires an explicit confirmation and retains the old app for recovery.
-- Provides a menu bar entry, opt-in scheduled checks and notifications, source settings, recent-check history, and installation/recovery history.
+- Provides a menu bar entry, opt-in scheduled checks and notifications, system-backed login-at-startup settings, source filters/settings, recent-check history, and installation/recovery history.
+- Shows retained-copy sizes and moves eligible copies to Trash only after confirmation. Interrupted recovery material is protected.
+- Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. Publishing the new feed and end-to-end self-update acceptance remain pending.
+- Offers Upovi-managed administrator installation for signed application replacements and inspectable signed PKGs. Each operation requests macOS authorization, uses a verified protected helper, and retains a protected main-app backup. PKG script side effects are not rolled back; see [the administrator design](docs/ADMINISTRATOR-INSTALLATION.md).
 - Automatically discovers opted-in public publishers using BitTorrent DHT. No invitation, account, publisher-key exchange, or Upovi relay is required.
 
 ## Build and run
@@ -23,7 +26,9 @@ Install Xcode with Swift 6 command-line tools, then:
 ./script/build_and_run.sh
 ```
 
-This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive. Header notices are in `THIRD-PARTY-NOTICES.md`.
+This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive and Upovi embeds the pinned Sparkle framework. Header notices are in `THIRD-PARTY-NOTICES.md`.
+
+Current implementation and acceptance boundaries are tracked in [daily readiness](docs/DAILY-READINESS.md). The linked public preview above is still 0.3.2; the new development artifact has not been published.
 
 ## Public community discovery
 
@@ -47,11 +52,11 @@ See `docs/P2P-PROTOCOL.md` and `SECURITY.md` for details.
 
 ## Installation and recovery
 
-Eligible sources offer **Download and verify update**. After verification, a separate confirmation requests closing the target application and replacing it. Upovi never force-kills an app with unsaved work. The old bundle is retained beside the destination as a hidden `.upovi-backup-<id>.app`; journal entries are under `~/Library/Application Support/Upovi/Installations`. Settings → History and recovery exposes available backups and interrupted transactions. Backups are not automatically deleted.
+Eligible sources offer **Download and verify update**. After verification, a separate confirmation requests closing the target application and replacing it. Upovi never force-kills an app with unsaved work. The old bundle is retained beside the destination as a hidden `.upovi-backup-<id>.app`; journal entries are under `~/Library/Application Support/Upovi/Installations`. Settings → History and recovery exposes available backups and interrupted transactions. Backups are not automatically deleted. History shows retained-copy sizes and offers confirmed Trash cleanup for completed transactions; interrupted transactions cannot be cleaned through that action. New restores also track the displaced newer app as a retained copy.
 
-Only HTTPS ZIP/DMG application updates with a SHA-256 or verifiable installed Sparkle Ed25519 key are eligible. The incoming bundle ID and Team ID must match, its code signature and version must validate, its native executable must support this Mac and OS, and Gatekeeper must accept it. Archive extraction rejects traversal, unsafe symlinks, duplicate members, and bounded size/time violations. DMGs are mounted read-only. Quarantine is retained.
+HTTPS ZIP/DMG application updates and direct PKG downloads need a SHA-256 or verifiable installed Sparkle Ed25519 key. PKGs additionally need a matching Developer ID Installer signature, Gatekeeper acceptance and a matching signed app payload; administrator destinations are restricted to direct children of /Applications. The incoming bundle ID and Team ID must match, its code signature and version must validate, its native executable must support this Mac and OS, and Gatekeeper must accept it. Archive extraction rejects traversal, unsafe symlinks, duplicate members, and bounded size/time violations. DMGs are mounted read-only. Quarantine is retained.
 
-App Store updates, PKG/script installers, unsigned apps, unverified archives, privileged replacements, ambiguous assets, and Upovi self-replacement use the official source/manual workflow. Community reports cannot offer installation. Rolling back an app does not roll back its data format; save documents first. A restore refuses to overwrite a newer external update.
+App Store updates, unsigned/unverifiable artifacts, script-only or uninspectable packages, unsupported administrator destinations, and ambiguous assets use the official source/manual workflow. The normal app replacement path refuses Upovi self-replacement; Upovi uses its dedicated Sparkle updater. Community reports cannot offer installation. Rolling back an app does not roll back its data format; save documents first. A restore refuses to overwrite a newer external update.
 
 ## Checks and evidence
 
@@ -68,7 +73,7 @@ An explicit public-network check publishes **synthetic metadata only**:
 python3 script/test_public_discovery.py
 ```
 
-`UpoviPeer check-sources --summary-file <path>` checks local application sources without publishing inventory to P2P. Its optional verbose output remains local and should not be attached wholesale to issues. `discover --evidence-file <path>` exports synthetic/public reports and separate DHT/direct counts. Use `--state-file <path>` for persistent diagnostic sequence history and separate files for concurrent processes.
+`UpoviPeer check-sources --summary-file <path>` checks local application sources without publishing inventory to P2P. Use `--details-file <private-local-path>` for per-app adapter gaps. Its details and optional verbose output remain local and should not be attached wholesale to issues. `discover --evidence-file <path>` exports synthetic/public reports and separate DHT/direct counts. Use `--state-file <path>` for persistent diagnostic sequence history and separate files for concurrent processes.
 
 See `docs/VALIDATION.md` for measured results, `docs/CROSS-NETWORK-TEST.md` for multi-host acceptance, and `docs/RELEASE-READINESS.md` for outstanding release conditions. Unit tests and one-host public tests do not replace physical-device, sleep/wake, real-community, or twenty-four-hour acceptance.
 
@@ -87,6 +92,8 @@ UPOVI_UNIVERSAL=1 UPOVI_SIGNING_IDENTITY='Developer ID Application: …' ./scrip
 ```
 
 This produces a signed universal app and ZIP. Set `UPOVI_OUTPUT_DIR` to an absolute alternative output directory to stage another version without replacing a running test bundle. Add `UPOVI_NOTARY_PROFILE=<existing-keychain-profile>` to submit the app to Apple, require an Accepted result, staple its ticket, and verify Gatekeeper. Credentials remain in Keychain. A signed-only artifact is not a notarized release; do not bypass macOS security warnings to run it.
+
+Release metadata comes from `Resources/Release.json`. After producing the signed ZIP, run `script/generate_update_feed.sh` and `python3 script/verify_release.py <output-directory>` to generate and verify the signed feed and archive. The private Sparkle key remains in Keychain under the configured account. Publish the ZIP and feed together only after acceptance.
 
 ## Contributing
 

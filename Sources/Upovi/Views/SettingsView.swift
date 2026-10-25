@@ -6,9 +6,20 @@ struct SettingsView: View {
     @Bindable var store: AppStore
     @State private var notificationTestStatus = ""
     @State private var sendingTestNotification = false
+    @State private var loginItem = LoginItemService()
+    @ObservedObject private var updater = SelfUpdateService.shared
+    @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         TabView {
             Form {
+                Section("启动") {
+                    Toggle("登录时启动 Upovi", isOn: Binding(get: { loginItem.enabled }, set: { loginItem.setEnabled($0) }))
+                    if loginItem.needsApproval {
+                        Text("需要在系统设置中允许 Upovi 登录启动。").font(.caption).foregroundStyle(.secondary)
+                        Button("打开登录项设置") { loginItem.openSettings() }
+                    }
+                    if let error = loginItem.errorMessage { Text(error).font(.caption).foregroundStyle(.red) }
+                }
                 Section("更新检测") {
                     Toggle("应用运行时自动检查更新", isOn: $store.automaticChecks)
                     Picker("检查间隔", selection: $store.checkIntervalMinutes) {
@@ -34,12 +45,16 @@ struct SettingsView: View {
                 }
                 Section("应用扫描与安装") {
                     Text("扫描 /Applications 和 ~/Applications，不执行被扫描应用。当前识别 \(store.apps.count) 个应用。")
-                    Text("支持通过完整性与同一开发者签名校验的 ZIP／DMG 应用更新。App Store、PKG、无完整性信息或需管理员权限的更新交给官方渠道。")
+                    Text("支持验证后的 ZIP／DMG 应用更新，以及经负载检查的签名 PKG。管理员安装会显示系统授权窗口；App Store 和无法验证的安装包使用官方渠道。")
                         .font(.caption).foregroundStyle(.secondary)
                     Button("重新扫描") { Task { await store.scan() } }.disabled(store.scanning || store.checking || store.syncing || store.installing)
                 }
-                Section("Upovi 0.3.1") {
+                Section("Upovi \(AppMetadata.displayVersion)") {
                     Text("SwiftUI · MIT License · macOS 14+")
+                    Button("检查 Upovi 自身更新…") { updater.check() }.disabled(!updater.canCheck || store.installing)
+                    Toggle("自动检查 Upovi 自身更新", isOn: Binding(get: { updater.automaticChecks }, set: { updater.setAutomaticChecks($0) }))
+                        .disabled(!updater.isConfigured)
+                    if !updater.isConfigured { Text("开发命令行版本未配置自身更新，请使用完整应用包。").font(.caption).foregroundStyle(.secondary) }
                     Link("项目与问题反馈", destination: URL(string: "https://github.com/WillSuo-Github/Upovi")!)
                 }
             }.formStyle(.grouped).tabItem { Label("通用", systemImage: "gearshape") }
@@ -54,52 +69,33 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }.formStyle(.grouped).tabItem { Label("P2P", systemImage: "network") }
-            HistoryView(store: store).tabItem { Label("记录与恢复", systemImage: "clock.arrow.circlepath") }
-        }.frame(width: 660, height: 550)
-    }
-}
-
-private struct HistoryView: View {
-    @Bindable var store: AppStore
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("安装与恢复").font(.headline)
-                if store.installationReceipts.isEmpty { Text("尚无安装记录").foregroundStyle(.secondary) }
-                ForEach(store.installationReceipts) { receipt in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(receipt.application.name).font(.headline)
-                        Text("\(receipt.application.version) → \(receipt.newVersion) · \(receipt.date.formatted())")
-                            .font(.caption).foregroundStyle(.secondary)
-                        Text(stateLabel(receipt.state)).font(.caption)
-                        if FileManager.default.fileExists(atPath: receipt.backupPath) {
-                            HStack {
-                                Button("恢复旧版本…") { store.restoreConfirmation = receipt }.disabled(store.installing)
-                                Button("查看备份") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: receipt.backupPath)]) }
-                            }
-                        }
-                    }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+            InstallationHistoryView(store: store).tabItem { Label("记录与恢复", systemImage: "clock.arrow.circlepath") }
+        }.frame(width: 660, height: 620)
+        .onAppear { loginItem.refresh() }
+        .onChange(of: scenePhase) { _, phase in if phase == .active { loginItem.refresh() } }
+        .sheet(item: $store.backupDeletionConfirmation) { receipt in
+            VStack(alignment: .leading, spacing: 18) {
+                Text("清理 \(receipt.application.name) 的保留副本？").font(.title2.bold())
+                Text("保留副本将移到废纸篓，清理后将无法使用这份副本恢复。当前应用、文稿和设置会保留。")
+                HStack {
+                    Button("取消") { store.backupDeletionConfirmation = nil }.keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button("移到废纸篓", role: .destructive) {
+                        store.backupDeletionConfirmation = nil; store.discardBackup(receipt)
+                    }
                 }
-                Divider()
-                Text("最近检测").font(.headline)
-                if store.checkHistory.isEmpty { Text("尚无检测记录").foregroundStyle(.secondary) }
-                ForEach(store.checkHistory) { entry in
-                    HStack {
-                        Text(entry.date, style: .date); Text(entry.date, style: .time)
-                        Spacer()
-                        Text("\(entry.applications) 个应用 · \(entry.updates) 个更新 · \(entry.failed) 项未完整检查")
-                    }.font(.caption)
+            }.padding(28).frame(width: 480)
+        }
+        .sheet(item: $store.administratorRestoreConfirmation) { attempt in
+            VStack(alignment: .leading, spacing: 18) {
+                Text("恢复 \(attempt.plan.application.name) 的主应用？").font(.title2.bold())
+                Text("将请求管理员授权，从受保护的事务备份恢复安装前的主应用。PKG 脚本、系统服务、驱动和数据变更不会因此撤销。")
+                HStack {
+                    Button("取消") { store.administratorRestoreConfirmation = nil }.keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button("授权并恢复主应用") { store.administratorRestoreConfirmation = nil; store.restoreAdministratorInstallation(attempt) }
                 }
-            }.padding(24)
-        }.task { await store.refreshInstallations() }
-    }
-    private func stateLabel(_ state: InstallationReceipt.State) -> String {
-        switch state {
-        case .prepared: "安装尚未完成，请检查恢复备份"
-        case .backedUp: "安装中断，旧版本备份已保留"
-        case .installed: "已安装，旧版本备份已保留"
-        case .restored: "旧版本已恢复"
-        case .failed: "安装未完成"
+            }.padding(28).frame(width: 480)
         }
     }
 }

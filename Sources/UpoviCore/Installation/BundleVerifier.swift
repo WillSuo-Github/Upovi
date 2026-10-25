@@ -35,10 +35,7 @@ public enum BundleVerifier {
     public static func verifyArchive(_ archive: URL, descriptor: DownloadDescriptor, app: InstalledApp) throws {
         guard descriptor.hasIntegrityProof else { throw PeerError.invalid("Missing archive integrity proof") }
         if let sha = descriptor.sha256 {
-            let input = try FileHandle(forReadingFrom: archive); defer { try? input.close() }
-            var hash = SHA256()
-            while let chunk = try input.read(upToCount: 1_048_576), !chunk.isEmpty { try Task.checkCancellation(); hash.update(data: chunk) }
-            let value = hash.finalize().map { String(format: "%02x", $0) }.joined()
+            let value = try sha256(of: archive)
             guard value.caseInsensitiveCompare(sha) == .orderedSame else { throw PeerError.invalid("Downloaded archive checksum mismatch") }
         }
         if let signature = descriptor.edSignature {
@@ -50,5 +47,11 @@ public enum BundleVerifier {
                 throw PeerError.invalid("Sparkle archive signature could not be verified against the installed application")
             }
         }
+    }
+    public static func sha256(of url: URL) throws -> String {
+        let input = try FileHandle(forReadingFrom: url); defer { try? input.close() }
+        var hash = SHA256()
+        while let chunk = try input.read(upToCount: 1_048_576), !chunk.isEmpty { try Task.checkCancellation(); hash.update(data: chunk) }
+        return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
 }
