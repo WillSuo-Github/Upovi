@@ -25,7 +25,7 @@ extension AppStore {
     }
 
     func beginSync() {
-        guard networkEnabled, networkAvailable, !p2pTransitioning, !syncing, !scanning, !installing else { return }
+        guard networkEnabled, networkAvailable, !p2pTransitioning, !syncing, !scanning, !refreshing, !installationBusy else { return }
         syncing = true; lastSyncAttempt = Date()
         let generation = p2pGeneration
         logger.info("community sync started")
@@ -113,7 +113,7 @@ extension AppStore {
         }
         guard !Task.isCancelled, networkEnabled, generation == p2pGeneration else { return }
         p2pBatchOffset = batch.nextOffset
-        AppPreferences.shared.set(publisherCache, forKey: "publicPublisherCacheV2")
+        preferences.set(publisherCache, forKey: "publicPublisherCacheV2")
         lastSynced = Date()
         logger.info("community sync completed apps=\(batch.apps.count) publishers=\(self.discoveredPublishers.count) leads=\(found) failures=\(failures)")
         networkStatus = "已同步 \(batch.start + 1)–\(batch.start + batch.apps.count)/\(batch.total) 个应用 · 验签节点 \(discoveredPublishers.count) 个 · 更高版本线索 \(found) 条"

@@ -11,9 +11,9 @@ extension AppStore {
             await refreshInstallations()
             while !Task.isCancelled {
                 if CheckSchedule.isDue(enabled: automaticChecks && !apps.isEmpty, online: networkAvailable,
-                    busy: scanning || checking || installing, lastAttempt: lastCheckAttempt,
+                    busy: refreshing || scanning || checking || installationBusy, lastAttempt: lastCheckAttempt,
                     intervalMinutes: checkIntervalMinutes) { beginChecking() }
-                if networkEnabled && !syncing && !scanning && !installing &&
+                if networkEnabled && !syncing && !scanning && !refreshing && !installationBusy &&
                     (lastSyncAttempt.map { Date().timeIntervalSince($0) >= 600 } ?? true) { beginSync() }
                 try? await Task.sleep(for: .seconds(30))
             }
@@ -42,7 +42,7 @@ extension AppStore {
     func setNotifications(_ enabled: Bool) async {
         let granted = enabled ? await notifications.requestAccess() : false
         notificationsEnabled = granted
-        AppPreferences.shared.set(granted, forKey: "notificationsV1")
+        preferences.set(granted, forKey: "notificationsV1")
         if enabled && !granted { errorMessage = "通知权限未开启，可在系统设置中允许 Upovi 通知。" }
     }
     func configureSource(for app: InstalledApp, feed: String, repository: String) throws {
@@ -53,11 +53,11 @@ extension AppStore {
               repository.isEmpty || GitHubRelease.validRepository(repository) else { throw PeerError.invalid("Use an HTTPS appcast URL and a GitHub owner/repository") }
         sourceOverrides[app.bundleID] = .init(appcast: url, githubRepository: repository.isEmpty ? nil : repository)
         let data = try JSONEncoder().encode(sourceOverrides)
-        AppPreferences.shared.set(data, forKey: "sourceOverridesV1")
+        preferences.set(data, forKey: "sourceOverridesV1")
         sourceResults[app.id] = nil
     }
     func prepareInstallation(_ candidate: UpdateCandidate, app: InstalledApp) {
-        guard !installing, !checking, !scanning else { return }
+        guard !installationBusy, !refreshing, !checking, !scanning else { return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = "请先完成或关闭 Upovi 自身更新，再安装其他应用。"; return }
         installing = true; canCancelInstallation = true; installationProgress = "正在下载并验证更新…"
         installationTask = Task { [self] in
@@ -106,7 +106,7 @@ extension AppStore {
                 _ = try await installer.install(value.id)
                 installationProgress = "安装完成，可在安装记录中恢复旧版本"
                 await refreshInstallations()
-                let found = await Task.detached { AppScanner.scan() }.value
+                let found = await scanApplications()
                 apps = found; sourceResults[value.application.id] = nil
                 logger.info("installation completed")
             } catch { errorMessage = error.localizedDescription; installationProgress = "安装未完成，原应用或恢复备份已保留" }
@@ -126,13 +126,13 @@ extension AppStore {
             do {
                 try await administrator.perform(plan)
                 installationProgress = "管理员安装完成；主应用备份已保留"
-                apps = await Task.detached { AppScanner.scan() }.value
+                apps = await scanApplications()
                 sourceResults[plan.application.id] = nil
             } catch { errorMessage = "管理员安装未完成或授权已取消。请在记录中检查恢复选项：\(error.localizedDescription)" }
         }
     }
     func restoreAdministratorInstallation(_ attempt: AdministratorInstallAttempt) {
-        guard !installing, !SelfUpdateService.shared.sessionInProgress else { return }
+        guard !installationBusy, !refreshing, !checking, !scanning, !SelfUpdateService.shared.sessionInProgress else { return }
         installing = true; canCancelInstallation = false; installationProgress = "正在请求管理员授权以恢复主应用…"
         installationTask = Task { [self] in
             defer { installing = false }
@@ -140,7 +140,7 @@ extension AppStore {
                 let plan = AdministratorInstallPlan(id: attempt.id, operation: .restore, application: attempt.plan.application,
                     version: attempt.plan.version, build: attempt.plan.build)
                 try await administrator.perform(plan)
-                apps = await Task.detached { AppScanner.scan() }.value; sourceResults = [:]
+                apps = await scanApplications(); sourceResults = [:]
                 installationProgress = "主应用已恢复；安装包的其他系统改动未回滚"
             } catch { errorMessage = "主应用未恢复：\(error.localizedDescription)" }
         }
@@ -169,7 +169,7 @@ extension AppStore {
         } catch { errorMessage = "安装记录无法读取：\(error.localizedDescription)" }
     }
     func discardBackup(_ receipt: InstallationReceipt) {
-        guard !installing else { return }
+        guard !installationBusy, !refreshing, !checking, !scanning else { return }
         installing = true
         Task {
             defer { installing = false }
@@ -181,14 +181,14 @@ extension AppStore {
         }
     }
     func restoreInstallation(_ receipt: InstallationReceipt) {
-        guard !installing else { return }
+        guard !installationBusy, !refreshing, !checking, !scanning else { return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = "请先完成或关闭 Upovi 自身更新，再恢复其他应用。"; return }
         installing = true
         Task {
             defer { installing = false }
             do {
                 try await installer.restore(receipt); await refreshInstallations()
-                apps = await Task.detached { AppScanner.scan() }.value
+                apps = await scanApplications()
                 sourceResults = [:]; installationProgress = "旧版本已恢复"
             } catch { errorMessage = error.localizedDescription }
         }

@@ -20,6 +20,7 @@ let package = Package(
                           linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]),
         .executableTarget(name: "UpoviPeer", dependencies: ["UpoviCore"]),
         .executableTarget(name: "UpoviInstaller", dependencies: ["UpoviCore"]),
-        .testTarget(name: "UpoviCoreTests", dependencies: ["UpoviCore"])
+        .testTarget(name: "UpoviCoreTests", dependencies: ["UpoviCore"]),
+        .testTarget(name: "UpoviTests", dependencies: ["Upovi"])
     ]
 )

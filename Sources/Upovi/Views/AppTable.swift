@@ -46,7 +46,7 @@ struct AppTable: View {
         }
         .overlay {
             if store.visibleApps.isEmpty && !store.scanning {
-                ContentUnavailableView(store.section == .updates ? "暂无来源更新" : "没有匹配的应用", systemImage: "checkmark.circle", description: Text("点击“检查更新”，或调整搜索条件。社区报告不代表已确认更新。"))
+                ContentUnavailableView(store.section == .updates ? "暂无来源更新" : "没有匹配的应用", systemImage: "checkmark.circle", description: Text("点击“刷新并检查”，或调整搜索条件。社区报告不代表已确认更新。"))
             }
         }
     }

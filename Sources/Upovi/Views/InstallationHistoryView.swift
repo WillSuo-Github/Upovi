@@ -16,7 +16,7 @@ struct InstallationHistoryView: View {
                             Text("\(attempt.plan.application.version) → \(attempt.plan.version)").font(.caption)
                             Text(administratorState(attempt.state)).font(.caption).foregroundStyle(.secondary)
                             if attempt.state != "restored" {
-                                Button("恢复主应用…") { store.administratorRestoreConfirmation = attempt }.disabled(store.installing)
+                                Button("恢复主应用…") { store.administratorRestoreConfirmation = attempt }.disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
                             }
                         }
                     }
@@ -36,11 +36,11 @@ struct InstallationHistoryView: View {
                         if let path = receipt.retainedPath ?? ([.prepared, .backedUp, .failed].contains(receipt.state) ? receipt.backupPath : nil), FileManager.default.fileExists(atPath: path) {
                             HStack {
                                 if receipt.state != .restored {
-                                    Button("恢复旧版本…") { store.restoreConfirmation = receipt }.disabled(store.installing)
+                                    Button("恢复旧版本…") { store.restoreConfirmation = receipt }.disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
                                 }
                                 Button("查看副本") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
                                 if receipt.retainedPath != nil {
-                                    Button("清理备份…", role: .destructive) { store.backupDeletionConfirmation = receipt }.disabled(store.installing)
+                                    Button("清理备份…", role: .destructive) { store.backupDeletionConfirmation = receipt }.disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
                                         .accessibilityIdentifier("cleanup-backup-\(receipt.id)")
                                 }
                             }

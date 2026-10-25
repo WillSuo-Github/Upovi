@@ -1,3 +1,11 @@
+# Upovi 0.4.2 toolbar and batch update development readiness
+
+Refresh now rescans and checks every application. Update all reviews and executes a serial source-confirmed update batch, with visible manual-only items, per-app results and safe stop behavior. See [toolbar behavior](TOOLBAR-UPDATES.md) and [version-specific evidence](evidence/0.4.2-toolbar-updates.json). Direct commits go to main; no pull request is required for this project.
+
+Earlier evidence below retains its original version and acceptance boundaries.
+
+---
+
 # Upovi 0.4.1 global P2P development readiness
 
 Settings now has one global P2P switch controlling discovery and sharing for the full scanned inventory. Fresh installations default on; legacy application-specific consent is not silently expanded. The current user explicitly enabled the combined global scope. Application-level P2P controls are removed.

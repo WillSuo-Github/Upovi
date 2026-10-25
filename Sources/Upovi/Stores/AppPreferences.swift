@@ -4,7 +4,7 @@ import UpoviCore
 @MainActor
 final class AppPreferences {
     static let shared = AppPreferences()
-    private let storage = SettingsFile(url: URL.applicationSupportDirectory.appending(path: "Upovi/settings-v1.plist"))
+    private let storage: SettingsFile
     private var values: [String: Any] = [:]
     private(set) var loadFailure: String?
     var onFailure: ((String) -> Void)?
@@ -12,11 +12,12 @@ final class AppPreferences {
         "ignoredBundles", "automaticChecksV1", "checkIntervalV1", "notificationsV1", "sourceOverridesV1", "checkHistoryV1",
         "publicPublisherCacheV2", "notifiedUpdatesV1"]
 
-    private init() {
+    init(url: URL = URL.applicationSupportDirectory.appending(path: "Upovi/settings-v1.plist"), migrateUserDefaults: Bool = true) {
+        storage = SettingsFile(url: url)
         do {
             let saved = try storage.read()
             if let saved { values = saved }
-            else {
+            else if migrateUserDefaults {
                 for key in Self.migratedKeys { values[key] = UserDefaults.standard.object(forKey: key) }
             }
             let needsMigration = GlobalP2PSettings.storedEnabled(in: values) == nil

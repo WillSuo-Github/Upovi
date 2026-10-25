@@ -15,6 +15,20 @@ enum AppSection: String, CaseIterable, Identifiable {
 
 @MainActor @Observable
 final class AppStore {
+    var refreshing = false
+    var bulkUpdatePresented = false
+    var bulkUpdating = false
+    var bulkHasRun = false
+    var bulkStopRequested = false
+    var bulkItems: [BulkUpdateItem] = []
+    var bulkOutcomes: [String: BulkUpdateOutcome] = [:]
+    var bulkCurrentID: String?
+    @ObservationIgnored var bulkTask: Task<Void, Never>?
+    var installationBusy: Bool {
+        installing || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
+            || administratorRestoreConfirmation != nil || backupDeletionConfirmation != nil
+            || bulkUpdating || (bulkUpdatePresented && !bulkHasRun)
+    }
     var preparedUpdate: PreparedUpdate?
     var preparedPackage: PreparedInstallerPackage?
     var administratorInstallRequested = false
@@ -32,8 +46,8 @@ final class AppStore {
     var checkHistory: [CheckHistoryEntry] = []
     var sourceOverrides: [String: SourceOverride] = [:]
     var apps: [InstalledApp] = []
-    var section: AppSection? = AppSection(rawValue: AppPreferences.shared.string(forKey: "lastSectionV1") ?? "") ?? .all {
-        didSet { AppPreferences.shared.set(section?.rawValue, forKey: "lastSectionV1") }
+    var section: AppSection? {
+        didSet { preferences.set(section?.rawValue, forKey: "lastSectionV1") }
     }
     var selection: String?
     var search = ""
@@ -58,16 +72,19 @@ final class AppStore {
     var p2pBatchOffset = 0
     var p2pGeneration: UInt64 = 0
     @ObservationIgnored var p2pControlTask: Task<Void, Never>?
-    var ignored: Set<String> { didSet { AppPreferences.shared.set(Array(ignored), forKey: "ignoredBundles") } }
-    var automaticChecks = AppPreferences.shared.bool(forKey: "automaticChecksV1") {
-        didSet { AppPreferences.shared.set(automaticChecks, forKey: "automaticChecksV1") }
+    var ignored: Set<String> { didSet { preferences.set(Array(ignored), forKey: "ignoredBundles") } }
+    var automaticChecks: Bool {
+        didSet { preferences.set(automaticChecks, forKey: "automaticChecksV1") }
     }
-    var checkIntervalMinutes: Int = max(15, AppPreferences.shared.integer(forKey: "checkIntervalV1") == 0 ? 60 : AppPreferences.shared.integer(forKey: "checkIntervalV1")) {
-        didSet { AppPreferences.shared.set(checkIntervalMinutes, forKey: "checkIntervalV1") }
+    var checkIntervalMinutes: Int {
+        didSet { preferences.set(checkIntervalMinutes, forKey: "checkIntervalV1") }
     }
-    var notificationsEnabled = AppPreferences.shared.bool(forKey: "notificationsV1")
-    @ObservationIgnored let notifications = NotificationService()
-    @ObservationIgnored let installer = UpdateInstaller()
+    var notificationsEnabled: Bool
+    @ObservationIgnored let preferences: AppPreferences
+    @ObservationIgnored lazy var notifications = NotificationService()
+    @ObservationIgnored let installer: UpdateInstaller
+    @ObservationIgnored let scanApplications: @Sendable () async -> [InstalledApp]
+    @ObservationIgnored let checkApplication: @Sendable (InstalledApp, SourceOverride?) async -> SourceResult
     @ObservationIgnored var installationTask: Task<Void, Never>?
     @ObservationIgnored var checkTask: Task<Void, Never>?
     @ObservationIgnored var monitoringTask: Task<Void, Never>?
@@ -79,30 +96,39 @@ final class AppStore {
     @ObservationIgnored var syncTask: Task<Void, Never>?
     @ObservationIgnored var publisherCache: [String: [String]] = [:]
 
-    init() {
-        networkEnabled = AppPreferences.shared.bool(forKey: GlobalP2PSettings.key)
-        ignored = Set(AppPreferences.shared.stringArray(forKey: "ignoredBundles") ?? [])
-        if let data = AppPreferences.shared.data(forKey: "sourceOverridesV1") {
+    init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
+         scanApplications: @escaping @Sendable () async -> [InstalledApp] = { await Task.detached { AppScanner.scan() }.value },
+         checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
+        self.preferences = preferences
+        self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
+        section = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .all
+        automaticChecks = preferences.bool(forKey: "automaticChecksV1")
+        let interval = preferences.integer(forKey: "checkIntervalV1")
+        checkIntervalMinutes = max(15, interval == 0 ? 60 : interval)
+        notificationsEnabled = preferences.bool(forKey: "notificationsV1")
+        networkEnabled = preferences.bool(forKey: GlobalP2PSettings.key)
+        ignored = Set(preferences.stringArray(forKey: "ignoredBundles") ?? [])
+        if let data = preferences.data(forKey: "sourceOverridesV1") {
             sourceOverrides = (try? JSONDecoder().decode([String: SourceOverride].self, from: data)) ?? [:]
         }
-        if let data = AppPreferences.shared.data(forKey: "checkHistoryV1") {
+        if let data = preferences.data(forKey: "checkHistoryV1") {
             checkHistory = (try? JSONDecoder().decode([CheckHistoryEntry].self, from: data)) ?? []
         }
-        publisherCache = AppPreferences.shared.dictionary(forKey: "publicPublisherCacheV2") as? [String: [String]] ?? [:]
-        AppPreferences.shared.onFailure = { [weak self] message in self?.errorMessage = message }
-        errorMessage = AppPreferences.shared.loadFailure
+        publisherCache = preferences.dictionary(forKey: "publicPublisherCacheV2") as? [String: [String]] ?? [:]
+        preferences.onFailure = { [weak self] message in self?.errorMessage = message }
+        errorMessage = preferences.loadFailure
         networkStatus = networkEnabled ? "P2P 已开启，正在等待扫描应用" : "P2P 已关闭"
     }
 
     func setP2PEnabled(_ enabled: Bool) {
         guard enabled != networkEnabled else { return }
         if enabled {
-            guard AppPreferences.shared.set(true, forKey: GlobalP2PSettings.key) else { return }
+            guard preferences.set(true, forKey: GlobalP2PSettings.key) else { return }
             networkEnabled = true
             networkStatus = "P2P 已开启，正在连接…"
         } else {
             networkEnabled = false
-            if !AppPreferences.shared.set(false, forKey: GlobalP2PSettings.key) {
+            if !preferences.set(false, forKey: GlobalP2PSettings.key) {
                 errorMessage = "P2P 已停止，但关闭设置未能保存。下次启动前请修复设置目录的可写性。"
             }
             communityResults = [:]; discoveredPublishers = [:]
@@ -132,18 +158,37 @@ final class AppStore {
     }
 
     func scan() async {
-        guard !scanning, !checking, !syncing, !installing else { return }
+        guard !scanning, !checking, !installationBusy else { return }
         scanning = true
-        let found = await Task.detached(priority: .userInitiated) { AppScanner.scan() }.value
+        // A background community lookup must not block an explicit inventory refresh.
+        if networkEnabled { restartP2P() }
+        let found = await scanApplications()
         apps = found; sourceResults = [:]; communityResults = [:]
         if !apps.contains(where: { $0.id == selection }) { selection = apps.first?.id }
         scanning = false
         logger.info("scan completed count=\(found.count)")
-        if networkEnabled { p2pBatchOffset = 0; restartP2P() }
+        p2pBatchOffset = 0
+        if networkEnabled && !refreshing { restartP2P() }
+    }
+
+    func refreshAll() {
+        guard !refreshing, !scanning, !checking, !installationBusy else { return }
+        refreshing = true
+        checkTask = Task {
+            defer {
+                refreshing = false
+                if networkEnabled { restartP2P() }
+            }
+            await scan()
+            guard !Task.isCancelled else { return }
+            guard networkAvailable else { errorMessage = "应用已重新扫描；当前没有可用网络，联网后再检查更新。"; return }
+            checking = true; lastCheckAttempt = Date()
+            await checkUpdates()
+        }
     }
 
     func beginChecking() {
-        guard !checking, !scanning, !installing else { return }
+        guard !refreshing, !checking, !scanning, !installationBusy else { return }
         guard networkAvailable else { errorMessage = "当前没有可用网络，联网后再检查更新。"; return }
         checking = true; lastCheckAttempt = Date()
         checkTask = Task { await checkUpdates() }
@@ -154,13 +199,14 @@ final class AppStore {
         defer { checking = false }
         let overrides = sourceOverrides
         let snapshot = apps
+        let checkApplication = checkApplication
         await withTaskGroup(of: SourceResult.self) { group in
             var iterator = snapshot.makeIterator()
-            for _ in 0..<5 { if let app = iterator.next() { group.addTask { await UpdateChecker.check(app, override: overrides[app.bundleID]) } } }
+            for _ in 0..<5 { if let app = iterator.next() { group.addTask { await checkApplication(app, overrides[app.bundleID]) } } }
             for await result in group {
                 if Task.isCancelled { group.cancelAll(); break }
                 sourceResults[result.appID] = result; completedChecks += 1
-                if let app = iterator.next() { group.addTask { await UpdateChecker.check(app, override: overrides[app.bundleID]) } }
+                if let app = iterator.next() { group.addTask { await checkApplication(app, overrides[app.bundleID]) } }
             }
         }
         guard !Task.isCancelled else { logger.info("source check cancelled"); return }
@@ -169,7 +215,7 @@ final class AppStore {
         let updates = snapshot.filter { assessment(for: $0).hasUpdate }.count
         checkHistory.insert(.init(date: Date(), applications: snapshot.count, updates: updates, failed: failures), at: 0)
         checkHistory = Array(checkHistory.prefix(100))
-        if let data = try? JSONEncoder().encode(checkHistory) { AppPreferences.shared.set(data, forKey: "checkHistoryV1") }
+        if let data = try? JSONEncoder().encode(checkHistory) { preferences.set(data, forKey: "checkHistoryV1") }
         logger.info("source check completed apps=\(snapshot.count) updates=\(updates) failures=\(failures)")
         if notificationsEnabled { await notifications.announce(snapshot, results: sourceResults, ignored: ignored) }
     }

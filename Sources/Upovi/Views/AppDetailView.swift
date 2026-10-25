@@ -37,7 +37,7 @@ struct AppDetailView: View {
                                     if candidate.url != nil { Button("查看更新来源") { store.open(candidate.url) } }
                                     if candidate.download?.hasIntegrityProof == true, app.teamID != nil, app.bundleID != "app.upovi.Upovi" {
                                         Button("下载并验证更新") { store.prepareInstallation(candidate, app: app) }
-                                            .buttonStyle(.borderedProminent).disabled(store.installing || store.checking || store.scanning)
+                                            .buttonStyle(.borderedProminent).disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
                                     } else {
                                         Text("此更新请使用官方来源或应用内更新。").font(.caption).foregroundStyle(.secondary)
                                     }

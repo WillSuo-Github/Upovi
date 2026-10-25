@@ -52,13 +52,17 @@ struct ContentView: View {
                         ForEach(SourceFilter.allCases) { Text($0.rawValue).tag($0) }
                     }.frame(maxWidth: 140)
                 }
-                Button { Task { await store.scan() } } label: { Label("重新扫描", systemImage: "arrow.clockwise") }
-                    .disabled(store.scanning || store.checking || store.syncing || store.installing).help("重新扫描应用目录")
-                Button { store.beginChecking() } label: { Label("检查更新", systemImage: "arrow.down.circle") }
-                    .disabled(store.scanning || store.checking || store.installing || store.apps.isEmpty)
+                Button { store.refreshAll() } label: { Label("刷新并检查", systemImage: "arrow.clockwise") }
+                    .disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
+                    .help("重新扫描全部应用，然后检查全部应用的更新")
+                    .accessibilityIdentifier("refresh-all-apps")
+                Button { store.reviewAllUpdates() } label: { Label("全部更新", systemImage: "arrow.down.circle") }
+                    .disabled(store.refreshing || store.scanning || store.checking || store.installationBusy || store.updateCount == 0)
+                    .help("下载并安装所有可验证的来源更新；需官方更新的应用将单独列出")
+                    .accessibilityIdentifier("update-all-apps")
                 if store.section == .community {
                     Button { store.beginSync() } label: { Label("同步 P2P", systemImage: "network") }
-                        .disabled(!store.networkEnabled || store.syncing || store.scanning)
+                        .disabled(!store.networkEnabled || store.syncing || store.scanning || store.refreshing || store.installationBusy)
                 }
             }
         }
@@ -75,6 +79,7 @@ struct ContentView: View {
         .sheet(isPresented: $store.installationConfirmation, onDismiss: {
             if !store.installing { store.discardInstallation() }
         }) { InstallationConfirmationView(store: store) }
+        .sheet(isPresented: $store.bulkUpdatePresented) { BulkUpdateView(store: store) }
         .sheet(item: $store.restoreConfirmation) { receipt in
             VStack(alignment: .leading, spacing: 18) {
                 Text("恢复 \(receipt.application.name)？").font(.title2.bold())
@@ -117,10 +122,12 @@ struct ContentView: View {
         HStack {
             if store.scanning || store.checking || store.installing { ProgressView().controlSize(.small) }
             Text(store.scanning ? "正在扫描应用…" : store.checking ? "检查中 \(store.completedChecks)/\(store.apps.count)" : "\(store.apps.count) 个本机应用 · \(store.updateCount) 个有来源更新")
-            if store.checking { Button("取消检测") { store.cancelChecking() }.buttonStyle(.link) }
+            if store.checking || store.refreshing { Button("取消检测") { store.cancelChecking() }.buttonStyle(.link) }
             if store.installing {
                 Text(store.installationProgress)
-                if store.canCancelInstallation { Button("取消下载") { store.cancelInstallation() }.buttonStyle(.link) }
+                if store.bulkUpdating {
+                    Button("查看更新进度") { store.bulkUpdatePresented = true }.buttonStyle(.link)
+                } else if store.canCancelInstallation { Button("取消下载") { store.cancelInstallation() }.buttonStyle(.link) }
             }
             Spacer()
             if let date = store.lastChecked { Text(date, style: .time) }

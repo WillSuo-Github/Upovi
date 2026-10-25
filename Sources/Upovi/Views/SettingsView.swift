@@ -47,11 +47,11 @@ struct SettingsView: View {
                     Text("扫描 /Applications 和 ~/Applications，不执行被扫描应用。当前识别 \(store.apps.count) 个应用。")
                     Text("支持验证后的 ZIP／DMG 应用更新，以及经负载检查的签名 PKG。管理员安装会显示系统授权窗口；App Store 和无法验证的安装包使用官方渠道。")
                         .font(.caption).foregroundStyle(.secondary)
-                    Button("重新扫描") { Task { await store.scan() } }.disabled(store.scanning || store.checking || store.syncing || store.installing)
+                    Button("刷新并检查") { store.refreshAll() }.disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
                 }
                 Section("Upovi \(AppMetadata.displayVersion)") {
                     Text("SwiftUI · MIT License · macOS 14+")
-                    Button("检查 Upovi 自身更新…") { updater.check() }.disabled(!updater.canCheck || store.installing)
+                    Button("检查 Upovi 自身更新…") { updater.check() }.disabled(!updater.canCheck || store.installationBusy)
                     Toggle("自动检查 Upovi 自身更新", isOn: Binding(get: { updater.automaticChecks }, set: { updater.setAutomaticChecks($0) }))
                         .disabled(!updater.isConfigured)
                     if !updater.isConfigured { Text("开发命令行版本未配置自身更新，请使用完整应用包。").font(.caption).foregroundStyle(.secondary) }
