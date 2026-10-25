@@ -98,9 +98,14 @@
     "harnessSHA256": "e3a1d67b555da7887b7200cd15220b8c30107c0a507b89b61877691aed1386dd"
   },
   "ci": {
-    "state": "in_progress",
+    "state": "passed",
     "sourceRevision": "322283d4d75a0b2cae82efa7edbf410915b8cdbf",
-    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40208623826"
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40208623826",
+    "systems": [
+      "macOS 14 ARM",
+      "macOS 15 Intel",
+      "macOS 26 ARM"
+    ]
   },
   "remaining": [
     "complete current-version observation and review",
