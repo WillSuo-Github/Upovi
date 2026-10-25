@@ -13,9 +13,12 @@ struct UpoviInstaller {
             guard geteuid() == 0, CommandLine.arguments.count == 2 else { throw PeerError.invalid("Administrator authorization is required") }
             let input = URL(fileURLWithPath: CommandLine.arguments[1])
             let attributes = try files.attributesOfItem(atPath: input.path)
-            guard input.resolvingSymlinksInPath() == input, attributes[.ownerAccountID] as? Int == 0,
-                  (attributes[.size] as? Int ?? Int.max) <= 65536,
-                  (attributes[.posixPermissions] as? Int ?? 0) & 0o022 == 0 else { throw PeerError.invalid("Unsafe administrator plan file") }
+            let owner = (attributes[.ownerAccountID] as? NSNumber)?.intValue ?? -1
+            let size = (attributes[.size] as? NSNumber)?.int64Value ?? Int64.max
+            let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0o777
+            guard attributes[.type] as? FileAttributeType == .typeRegular,
+                  input.resolvingSymlinksInPath().path == input.path, owner == 0, size <= 65536,
+                  mode & 0o022 == 0 else { throw PeerError.invalid("Unsafe administrator plan file (owner=\(owner), mode=\(String(mode, radix: 8)), bytes=\(size))") }
             let plan = try JSONDecoder().decode(AdministratorInstallPlan.self, from: Data(contentsOf: input))
             try plan.validate()
             let result = try await execute(plan)
@@ -27,10 +30,12 @@ struct UpoviInstaller {
     }
 
     private static func requireRootOwnership(_ url: URL) throws {
-        guard url.resolvingSymlinksInPath() == url else { throw PeerError.invalid("Linked administrator transaction directory") }
+        guard url.resolvingSymlinksInPath().path == url.path else { throw PeerError.invalid("Linked administrator transaction directory") }
         let attributes = try files.attributesOfItem(atPath: url.path)
-        guard attributes[.ownerAccountID] as? Int == 0, (attributes[.posixPermissions] as? Int ?? 0) & 0o022 == 0 else {
-            throw PeerError.invalid("Administrator transaction storage is not protected")
+        let owner = (attributes[.ownerAccountID] as? NSNumber)?.intValue ?? -1
+        let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0o777
+        guard owner == 0, mode & 0o022 == 0 else {
+            throw PeerError.invalid("Administrator transaction storage is not protected (owner=\(owner), mode=\(String(mode, radix: 8)))")
         }
     }
 

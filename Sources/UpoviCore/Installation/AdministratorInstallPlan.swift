@@ -73,8 +73,12 @@ public enum AdministratorAuthorization {
         work=$(/usr/bin/mktemp -d /private/var/tmp/upovi-authorized.XXXXXX)
         trap '/bin/rm -rf "$work"' EXIT
         /bin/cp \(shellQuote(helper.path)) "$work/UpoviInstaller"
+        /usr/sbin/chown 0:0 "$work" "$work/UpoviInstaller"
+        /bin/chmod 700 "$work" "$work/UpoviInstaller"
         /usr/bin/codesign --verify --strict --all-architectures -R \(shellQuote(requirement)) "$work/UpoviInstaller"
         /bin/cp \(shellQuote(plan.path)) "$work/plan.json"
+        /usr/sbin/chown 0:0 "$work/plan.json"
+        /bin/chmod 600 "$work/plan.json"
         "$work/UpoviInstaller" "$work/plan.json"
         """
         return "do shell script " + appleScriptLiteral(command) + " with administrator privileges"

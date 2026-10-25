@@ -67,7 +67,8 @@ final class AdministratorInstallationService {
         defer { try? FileManager.default.removeItem(at: input) }
         do {
             let script = try AdministratorAuthorization.script(helper: helper, plan: input, hostTeam: team)
-            let data = try await ProcessCommand().run("/usr/bin/osascript", ["-e", script], timeoutSeconds: 2100)
+            let data = try await ProcessCommand().run("/usr/bin/osascript", ["-e", script], timeoutSeconds: 2100,
+                outputFile: directory.appending(path: plan.id.uuidString + "-authorization.log"))
             let result = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: data)
             guard result.id == plan.id, ["installed", "restored"].contains(result.state) else { throw PeerError.invalid("Unexpected administrator transaction result") }
             try save(result)
