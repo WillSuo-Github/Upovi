@@ -57,7 +57,7 @@ jobs:
           set -e
           cat .build/helper-denial.log
           test "$UPOVI_HELPER_STATUS" -eq 1
-          rg 'Administrator authorization is required' .build/helper-denial.log
+          /usr/bin/grep -F 'Administrator authorization is required' .build/helper-denial.log
       - name: Build native bundle
         run: CONFIGURATION=release UPOVI_STAGE_ONLY=1 ./script/package_release.sh
       - name: Read synthetic report from independent publisher
