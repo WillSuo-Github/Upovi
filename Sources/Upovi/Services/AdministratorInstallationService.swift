@@ -11,8 +11,9 @@ struct PreparedInstallerPackage {
 final class AdministratorInstallationService {
     private(set) var attempts: [AdministratorInstallAttempt] = []
     private let directory: URL
+    private let downloads: DownloadCoordinator
 
-    init(directory: URL = URL.applicationSupportDirectory.appending(path: "Upovi/AdministratorAttempts")) { self.directory = directory; refresh() }
+    init(directory: URL = URL.applicationSupportDirectory.appending(path: "Upovi/AdministratorAttempts"), downloads: DownloadCoordinator = .shared) { self.directory = directory; self.downloads = downloads; refresh() }
     func refresh() {
         let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.fileSizeKey])) ?? []
         attempts = files.filter { $0.pathExtension == "json" }.compactMap {
@@ -37,7 +38,7 @@ final class AdministratorInstallationService {
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         do {
             let package = workspace.appending(path: "Update.pkg")
-            try await ArtifactDownloadCache.shared.download(descriptor, app: app, to: package, progress: progress)
+            try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: package, progress: progress)
             let hash = try await Task.detached {
                 try BundleVerifier.verifyArchive(package, descriptor: descriptor, app: app)
                 return try BundleVerifier.sha256(of: package)

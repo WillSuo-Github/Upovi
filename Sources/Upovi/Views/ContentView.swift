@@ -11,6 +11,7 @@ struct ContentView: View {
                 Section("应用") {
                     sidebarItem(.updates, count: store.updateCount)
                     sidebarItem(.all, count: store.apps.count)
+                    sidebarItem(.downloads, count: store.downloadCenter.records.filter { $0.state.active }.count)
                     sidebarItem(.ignored, count: store.ignored.count)
                 }
                 Section("发现") { sidebarItem(.community, count: store.discoveredPublishers.count) }
@@ -29,7 +30,9 @@ struct ContentView: View {
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(18)
             }
         } detail: {
-            if store.section == .community {
+            if store.section == .downloads {
+                DownloadTasksView(store: store)
+            } else if store.section == .community {
                 CommunityView(store: store)
             } else {
                 HSplitView {
@@ -47,7 +50,7 @@ struct ContentView: View {
         .searchable(text: $store.search, prompt: "搜索应用或 Bundle ID")
         .toolbar {
             ToolbarItemGroup {
-                if store.section != .community {
+                if store.section != .community && store.section != .downloads {
                     Picker("检测来源", selection: $store.sourceFilter) {
                         ForEach(SourceFilter.allCases) { Text($0.rawValue).tag($0) }
                     }.frame(maxWidth: 140)
@@ -74,7 +77,7 @@ struct ContentView: View {
             if !ids.contains(store.selection ?? "") { store.selection = ids.first }
         }
         .onChange(of: store.section) { _, _ in store.sourceFilter = .all }
-        .task { store.startMonitoring() }
+        .task { store.downloadCenter.start(); store.startMonitoring() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in store.recoverNetwork(reason: "wake") }
         .sheet(isPresented: $store.installationConfirmation, onDismiss: {
             if !store.installing { store.discardInstallation() }

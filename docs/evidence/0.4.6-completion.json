@@ -1,0 +1,80 @@
+{
+  "version": "0.4.6",
+  "build": "12",
+  "automatedTests": {
+    "core": 134,
+    "store": 15,
+    "failures": 0
+  },
+  "nativeDownloadCenter": {
+    "pauseResumeAndNetwork": {
+      "pausePreservedBytes": 2998272,
+      "offlineResumeWaitedForNetwork": true,
+      "reconnectAutomaticallyResumed": true,
+      "finalState": "verified",
+      "resumedBytes": 2998272,
+      "boundary": "Synthetic transfer injected into the actual production coordinator and native views; no application installed."
+    },
+    "cancelAndColdRestart": {
+      "cancelledStateObserved": true,
+      "perButtonAccessibilityIdentifiers": true,
+      "coldRestartMarkedInterrupted": true,
+      "noAutomaticRestartOrInstallation": true,
+      "recheckWithoutUpdateRefusedHistoricalRequest": true
+    }
+  },
+  "administratorAcceptance": {
+    "environment": "disposable macOS 26.6.2 ARM virtual machine; dedicated read-only share",
+    "installed": {
+      "build": "7.2.2.88465",
+      "originalBackupExists": true,
+      "packageInstallerLogExists": true,
+      "signatureValid": true,
+      "state": "installed",
+      "transactionID": "FEE3EF29-A3BF-4911-A2F1-05B313A2E860",
+      "version": "7.2.2 (88465)"
+    },
+    "restored": {
+      "build": "7.2.1.88329",
+      "originalBackupExists": true,
+      "packageInstallerLogExists": true,
+      "signatureValid": true,
+      "state": "restored",
+      "transactionID": "FEE3EF29-A3BF-4911-A2F1-05B313A2E860",
+      "version": "7.2.1 (88329)"
+    },
+    "forcedInterruption": {
+      "transactionID": "F4BB5BBE-B30B-4F8C-BFC7-4F641199FD5C",
+      "checkpoint": "backedUp",
+      "helperTerminated": true
+    },
+    "beforeReboot": {
+      "build": "7.2.1.88329",
+      "originalBackupExists": true,
+      "packageInstallerLogExists": false,
+      "signatureValid": true,
+      "state": "backedUp",
+      "transactionID": "F4BB5BBE-B30B-4F8C-BFC7-4F641199FD5C",
+      "version": "7.2.1 (88329)"
+    },
+    "afterRebootRestored": {
+      "build": "7.2.1.88329",
+      "originalBackupExists": true,
+      "packageInstallerLogExists": false,
+      "signatureValid": true,
+      "state": "restored",
+      "transactionID": "F4BB5BBE-B30B-4F8C-BFC7-4F641199FD5C",
+      "version": "7.2.1 (88329)"
+    },
+    "boundary": "Actual production protected helper and real vendor PKG scripts. Guest passwordless sudo, not a new native OS authentication-window test; guest reboot at backedUp checkpoint. Main-app recovery only."
+  },
+  "finalProductCI": "pending",
+  "signedUniversalArtifact": "pending",
+  "publicRelease": "pending",
+  "genuineSelfUpdate": "pending",
+  "latest24HourObservation": "pending",
+  "sleepWake": "pending",
+  "networkChange": "pending",
+  "powerSampling": "pending",
+  "notarization": "deferred by owner"
+}

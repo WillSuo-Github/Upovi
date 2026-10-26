@@ -13,11 +13,12 @@ public struct PreparedUpdate: Identifiable, Sendable {
 public actor UpdateInstaller {
     public static let defaultJournalDirectory = URL.applicationSupportDirectory.appending(path: "Upovi/Installations")
     private let journalDirectory: URL
-    private let downloadCache: ArtifactDownloadCache
+    public nonisolated let downloads: DownloadCoordinator
     private var busy = false
     private var prepared: PreparedUpdate?
-    public init(journalDirectory: URL = UpdateInstaller.defaultJournalDirectory, downloadCache: ArtifactDownloadCache = .shared) {
-        self.journalDirectory = journalDirectory; self.downloadCache = downloadCache
+    public init(journalDirectory: URL = UpdateInstaller.defaultJournalDirectory, downloadCache: ArtifactDownloadCache = .shared, downloads: DownloadCoordinator? = nil) {
+        self.journalDirectory = journalDirectory
+        self.downloads = downloads ?? (downloadCache === ArtifactDownloadCache.shared ? .shared : DownloadCoordinator(cache: downloadCache))
     }
 
     public func prepare(app: InstalledApp, candidate: UpdateCandidate,
@@ -33,7 +34,7 @@ public actor UpdateInstaller {
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false)
         let archive = workspace.appending(path: "update." + descriptor.url.pathExtension.lowercased())
         do {
-            try await downloadCache.download(descriptor, app: app, to: archive, progress: progress)
+            try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: archive, progress: progress)
             let verification = Task.detached { try BundleVerifier.verifyArchive(archive, descriptor: descriptor, app: app) }
             try await withTaskCancellationHandler { try await verification.value } onCancel: { verification.cancel() }
             try Task.checkCancellation()

@@ -2,6 +2,8 @@ import CryptoKit
 import Darwin
 import Foundation
 
+public enum ArtifactDownloadPhase: Sendable { case downloading, verifying }
+
 /// Private, resumable artifact storage. Every use revalidates the selected integrity proof.
 public actor ArtifactDownloadCache {
     public static let shared = ArtifactDownloadCache()
@@ -41,6 +43,7 @@ public actor ArtifactDownloadCache {
     }
     private func unlock(_ fd: Int32) { _ = flock(fd, LOCK_UN); close(fd) }
     public func download(_ descriptor: DownloadDescriptor, app: InstalledApp, to destination: URL,
+                         onPhase: @escaping @Sendable (ArtifactDownloadPhase) -> Void = { _ in },
                          onResume: @escaping @Sendable (Int64) -> Void = { _ in },
                          progress: @escaping @Sendable (Int64, Int64) -> Void) async throws {
         guard descriptor.hasIntegrityProof, descriptor.url.scheme == "https", descriptor.url.host != nil,
@@ -56,6 +59,7 @@ public actor ArtifactDownloadCache {
         try prune()
         let partial = entry.appending(path: "Download.part"), complete = entry.appending(path: "Complete.bin")
         if FileManager.default.fileExists(atPath: complete.path) {
+            onPhase(.verifying)
             var verified = false
             do {
                 try await verify(complete, descriptor: descriptor, app: app)
@@ -68,8 +72,10 @@ public actor ArtifactDownloadCache {
                 progress(Int64(size), Int64(size)); return
             }
         }
+        onPhase(.downloading)
         try await HTTPTransfer.download(from: descriptor.url, to: partial, limit: 2_000_000_000, resuming: true,
                                         configuration: configuration, onResume: onResume, progress: progress)
+        onPhase(.verifying)
         do { try await verify(partial, descriptor: descriptor, app: app) }
         catch {
             if !Task.isCancelled { try? FileManager.default.removeItem(at: partial); try? FileManager.default.removeItem(at: DownloadResumeState.metadata(for: partial)) }

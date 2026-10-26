@@ -1,3 +1,11 @@
+# Upovi 0.4.6 download center and completion acceptance
+
+Download tasks now expose pause/continue, automatic reconnect/retry, persisted results and explicit fresh-source recovery after restart. Actual signed PKG execution/recovery and protected-helper termination followed by a guest OS reboot passed in a disposable macOS VM. See [behavior and acceptance](DOWNLOAD-CENTER-AND-ACCEPTANCE.md) and [version-specific evidence](evidence/0.4.6-completion.json).
+
+149 local tests passed (134 core, 15 store). Public self-update, final artifact/CI and newest-candidate long observation retain explicit independent result fields. This iteration follows direct-main delivery.
+
+---
+
 # Upovi 0.4.5 diagnostics and sources development readiness
 
 Settings now provides local diagnostic preview/export with default inventory redaction and classified source/operation failures. Source coverage adds exact LiveHub and PlayCover repositories, stable VSCodium cask mapping, and correct renamed/platform-specific Homebrew app artifact handling. See [behavior and validation](DIAGNOSTICS-AND-SOURCES.md) and [version-specific evidence](evidence/0.4.5-diagnostics-sources.json).

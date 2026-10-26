@@ -6,15 +6,16 @@ import Network
 import OSLog
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case updates = "可用更新", all = "全部应用", community = "P2P 网络", ignored = "已忽略"
+    case updates = "可用更新", all = "全部应用", community = "P2P 网络", ignored = "已忽略", downloads = "下载任务"
     var id: String { rawValue }
     var symbol: String {
-        switch self { case .updates: "arrow.down.circle"; case .all: "square.grid.2x2"; case .community: "point.3.connected.trianglepath.dotted"; case .ignored: "eye.slash" }
+        switch self { case .downloads: "tray.and.arrow.down"; case .updates: "arrow.down.circle"; case .all: "square.grid.2x2"; case .community: "point.3.connected.trianglepath.dotted"; case .ignored: "eye.slash" }
     }
 }
 
 @MainActor @Observable
 final class AppStore {
+    let downloadCenter: DownloadCenterService
     var diagnosticEvents: [DiagnosticEvent] = []
     var diagnosticsPresentation: DiagnosticSnapshot?
     var updatePolicy = UpdatePolicy()
@@ -109,7 +110,9 @@ final class AppStore {
     init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
          scanApplications: @escaping @Sendable ([URL]) async -> [InstalledApp] = { roots in await Task.detached { AppScanner.scan(roots: roots) }.value },
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
+        self.downloadCenter = DownloadCenterService(coordinator: installer.downloads)
         self.preferences = preferences
+        self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
         section = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .all
         automaticChecks = preferences.bool(forKey: "automaticChecksV1")

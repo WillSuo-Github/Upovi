@@ -23,9 +23,10 @@ public struct DiagnosticSnapshot: Sendable, Identifiable {
         }
     }
     public struct Transaction: Sendable {
-        public enum Kind: String, Codable, Sendable { case application, administrator, batch }
+        public enum Kind: String, Codable, Sendable { case application, administrator, batch, download }
         public enum State: String, Codable, Sendable {
             case pending, preparing, prepared, backedUp, installing, installed, restored, failed, cancelled, manual, interrupted
+            case downloading, paused, waitingForNetwork, retrying, verifying, verified
             case backupDiscarded, awaitingAuthorization, interruptedOrFailed, cleanupPending, unknown
             public static func known(_ value: String) -> Self { Self(rawValue: value) ?? .unknown }
         }

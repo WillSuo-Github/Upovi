@@ -2,7 +2,7 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.5 development**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.6 development**
 
 [Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
@@ -11,6 +11,7 @@ A native, open-source macOS application update detector with globally controlled
 - **Refresh and check** rescans `/Applications` and `~/Applications`, then checks the complete new inventory for updates, independently of search and list filters. Background P2P does not disable refresh.
 - **Update all** reviews all source-confirmed updates once, then downloads, verifies and installs eligible applications sequentially. Per-app results and unfinished batches survive relaunch; retry rechecks current apps and sources before presenting a new confirmation. Failures do not suppress later apps, and official/manual-only updates are listed explicitly.
 - Supports skipping a specific version/build, postponing update reminders, viewing source release notes, and selecting extra scan directories in Settings. The policy applies consistently to update counts, bulk actions and notifications; global P2P participation remains independent.
+- Provides a download task center with pause/continue, network-reconnect continuation, bounded automatic retry and private history. Interrupted tasks require fresh source checks after restart; installation confirmation is preserved. See [download center and acceptance](docs/DOWNLOAD-CENTER-AND-ACCEPTANCE.md).
 - Exports a previewable local diagnostic JSON with source outcomes, classified errors and operation phases. Application identifiers are optional; paths, URLs, raw logs and credentials are excluded. See [diagnostics and source coverage](docs/DIAGNOSTICS-AND-SOURCES.md).
 - Checks developer Sparkle appcasts, Homebrew's official catalog using exact declared bundle IDs, curated identity mappings, and supported GitHub releases. Unknown apps can be assigned an HTTPS appcast or official GitHub repository in the detail panel.
 - Distinguishes source-reported updates, community leads, unsupported sources, and failed checks. An empty result is never proof that all applications are current.

@@ -26,6 +26,7 @@ extension AppStore {
                 defer { self.previousPath = signature }
                 let reconnected = !self.networkAvailable && path.status == .satisfied
                 self.networkAvailable = path.status == .satisfied
+                self.downloadCenter.networkChanged(self.networkAvailable)
                 if reconnected { self.lastCheckAttempt = nil }
                 if self.previousPath != nil && self.previousPath != signature { self.recoverNetwork(reason: "path-change") }
             }
@@ -79,7 +80,7 @@ extension AppStore {
                 preparedUpdate = value
                 administratorInstallRequested = !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path)
                 installationConfirmation = true; installationProgress = "更新已验证，等待安装确认"
-            } catch { recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = "下载或验证未完成"; if !Task.isCancelled { errorMessage = error.localizedDescription } }
+            } catch { recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = "下载或验证未完成"; if !Task.isCancelled && !(error is CancellationError) { errorMessage = error.localizedDescription } }
         }
     }
     func cancelInstallation() { installationTask?.cancel() }

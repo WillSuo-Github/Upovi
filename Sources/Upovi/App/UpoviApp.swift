@@ -29,6 +29,7 @@ struct UpoviApp: App {
             CommandMenu("导航") {
                 Button("可用更新") { store.section = .updates }.keyboardShortcut("1", modifiers: .command)
                 Button("全部应用") { store.section = .all }.keyboardShortcut("2", modifiers: .command)
+                Button("下载任务") { store.section = .downloads }.keyboardShortcut("4", modifiers: .command)
                 Button("P2P 网络") { store.section = .community }.keyboardShortcut("3", modifiers: .command)
             }
             CommandGroup(after: .newItem) {
