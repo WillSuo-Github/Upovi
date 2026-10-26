@@ -86,22 +86,26 @@ private struct Sidebar: View {
     @Bindable var store: AppStore
 
     var body: some View {
-        List(selection: $store.section) {
+        // Keep row identity and selection the same type; detail rendering uses this selection too.
+        List<AppSection, _>(selection: $store.section) {
             Section {
-                item(.updates, badge: store.updateCount)
-                item(.all, badge: 0)
-                item(.downloads, badge: store.downloadCenter.records.filter { $0.state.active }.count)
-                item(.history, badge: 0)
+                ForEach([AppSection.updates, .all, .downloads, .history], id: \.self) { section in
+                    item(section, badge: badge(for: section))
+                        .tag(section)
+                }
             }
             Section("社区") {
-                NavigationLink(value: AppSection.community) {
+                Button { store.section = .community } label: {
                     HStack {
                         Label(AppSection.community.rawValue, systemImage: AppSection.community.symbol)
                         Spacer()
                         Circle().fill(store.networkEnabled ? Color.green : Color.secondary.opacity(0.5)).frame(width: 7, height: 7)
                             .help(store.networkEnabled ? "P2P 已开启" : "P2P 已关闭")
                     }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .tag(AppSection.community)
             }
         }
         .listStyle(.sidebar)
@@ -109,8 +113,22 @@ private struct Sidebar: View {
     }
 
     private func item(_ section: AppSection, badge: Int) -> some View {
-        NavigationLink(value: section) { Label(section.rawValue, systemImage: section.symbol) }
-            .badge(badge)
+        // Activate the same state used by the detail column, including accessibility presses.
+        Button { store.section = section } label: {
+            Label(section.rawValue, systemImage: section.symbol)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .badge(badge)
+    }
+
+    private func badge(for section: AppSection) -> Int {
+        switch section {
+        case .updates: store.updateCount
+        case .downloads: store.downloadCenter.records.filter { $0.state.active }.count
+        default: 0
+        }
     }
 
     private var footer: some View {
