@@ -30,7 +30,6 @@ struct AppDetailView: View {
                     .padding(.top, 120)
             }
         }
-        .background(.background.secondary.opacity(0.5))
         .sheet(isPresented: $sourceEditor) { if let app = store.selectedApp { SourceEditorView(store: store, app: app) } }
     }
 

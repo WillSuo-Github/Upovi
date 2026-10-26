@@ -64,6 +64,10 @@ final class AppStore {
         didSet { preferences.set(section?.rawValue, forKey: "lastSectionV1") }
     }
     var selection: String?
+    /// Whether the library's trailing detail inspector is visible; hidden by default and remembered.
+    var libraryInspectorPresented: Bool {
+        didSet { preferences.set(libraryInspectorPresented, forKey: "libraryInspectorPresentedV1") }
+    }
     var search = ""
     var scanning = false
     var checking = false
@@ -124,6 +128,7 @@ final class AppStore {
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
         self.revalidateSources = revalidateSources
         section = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .updates
+        libraryInspectorPresented = preferences.bool(forKey: "libraryInspectorPresentedV1")
         automaticChecks = preferences.bool(forKey: "automaticChecksV1")
         let interval = preferences.integer(forKey: "checkIntervalV1")
         checkIntervalMinutes = max(15, interval == 0 ? 60 : interval)

@@ -2,19 +2,30 @@ import SwiftUI
 import AppKit
 import UpoviCore
 
-/// Every scanned application, filterable by check outcome, with an inspector.
+/// Every scanned application, filterable by check outcome, with a collapsible inspector.
 struct LibraryView: View {
     @Bindable var store: AppStore
 
     var body: some View {
-        HSplitView {
-            VStack(spacing: 0) {
-                header.padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 14)
-                AppTable(store: store)
-            }.frame(minWidth: 460)
-            AppDetailView(store: store).frame(minWidth: 300, idealWidth: 340, maxWidth: 420)
+        VStack(spacing: 0) {
+            header.padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 14)
+            AppTable(store: store)
         }
+        .frame(minWidth: 460)
         .navigationTitle("全部应用")
+        .inspector(isPresented: $store.libraryInspectorPresented) {
+            AppDetailView(store: store).inspectorColumnWidth(min: 300, ideal: 340, max: 420)
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { store.libraryInspectorPresented.toggle() } label: {
+                    Label(store.libraryInspectorPresented ? "隐藏详情" : "显示详情", systemImage: "sidebar.trailing")
+                }
+                .keyboardShortcut("i", modifiers: [.command, .option])
+                .help(store.libraryInspectorPresented ? "隐藏应用详情（⌥⌘I）" : "显示应用详情（⌥⌘I）")
+                .accessibilityIdentifier("toggle-library-inspector")
+            }
+        }
     }
 
     private var header: some View {

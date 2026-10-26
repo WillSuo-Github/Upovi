@@ -111,5 +111,6 @@ extension AppStore {
 
     func show(_ app: InstalledApp) {
         section = .all; sourceFilter = ignored.contains(app.bundleID) ? .ignored : .all; selection = app.id
+        libraryInspectorPresented = true
     }
 }
