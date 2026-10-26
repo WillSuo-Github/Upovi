@@ -1,0 +1,148 @@
+{
+  "version": "0.4.3",
+  "build": "9",
+  "validatedProductSourceRevision": "4c1eb41e57b6a9dae602c9047514a4a217d24d88",
+  "unitAndStoreTests": {
+    "passed": 109,
+    "failed": 0,
+    "core": 99,
+    "actualStoreWorkflows": 10
+  },
+  "implemented": [
+    "Orca/Audiout source mappings and explicit vendor-manual version ambiguity",
+    "ten private durable batch histories with interrupted-state display",
+    "rechecked explicit retry excluding completed or changed-identity targets",
+    "version/build skip and deferred reminders across counts/bulk/notifications",
+    "bounded plain-text GitHub and appcast release notes",
+    "additional normalized scan directories"
+  ],
+  "sourceCoverage": {
+    "before": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 28,
+      "unsupported": 8,
+      "updateCandidates": 14,
+      "updates": 12
+    },
+    "after": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 29,
+      "unsupported": 6,
+      "updateCandidates": 15,
+      "updates": 13
+    },
+    "newlyRecognizedBundleIDs": [
+      "com.audiout.Audiout",
+      "com.stablyai.orca"
+    ],
+    "rawInventoryPublished": false,
+    "boundary": "Same-machine 71-application read-only CLI comparison. Source versions and counts of available updates can change independently of adapter coverage."
+  },
+  "nativeBatchAcceptance": {
+    "host": "isolated Developer ID signed fixture using production views/store/downloader/verifier/installer",
+    "inventoryAndPreferencesAndJournals": "private fixture only",
+    "firstBatch": {
+      "builds": [
+        "111",
+        "110",
+        "111"
+      ],
+      "failed": 1,
+      "historyCount": 1,
+      "installed": 2,
+      "isolatedCopiesOnly": true,
+      "outcomes": [
+        "failed",
+        "installed",
+        "installed"
+      ],
+      "signaturesValid": true,
+      "versions": [
+        "2.0.4",
+        "2.0.3",
+        "2.0.4"
+      ]
+    },
+    "expectedFailureDiagnostics": [
+      "Downloaded archive checksum mismatch"
+    ],
+    "retryBatch": {
+      "builds": [
+        "111",
+        "111",
+        "111"
+      ],
+      "failed": 0,
+      "historyCount": 2,
+      "installed": 1,
+      "isolatedCopiesOnly": true,
+      "outcomes": [
+        "installed"
+      ],
+      "signaturesValid": true,
+      "versions": [
+        "2.0.4",
+        "2.0.4",
+        "2.0.4"
+      ]
+    },
+    "coldRelaunchPersistedRecords": 2,
+    "completedTargetNotReinstalledOnLaterRetry": true,
+    "dailyApplicationsChanged": false,
+    "boundary": "Fixture injects scan/source selection to use three signed copies and a pinned official release. Actual download, verification, application transactions, GUI review, failure continuation and retry ran; administrator/PKG operations were not executed."
+  },
+  "distribution": {
+    "version": "0.4.3",
+    "build": "9",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "1b322a862cbfb502d7e6fe2cbe70f301eaa5361f50396acc6cdcfbed5190aee9",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "deferred",
+    "state": "signed universal local candidate",
+    "sourceRevision": "4c1eb41e57b6a9dae602c9047514a4a217d24d88",
+    "freshExtractionNestedSignature": "passed",
+    "published": false
+  },
+  "ci": {
+    "state": "passed",
+    "sourceRevision": "4c1eb41e57b6a9dae602c9047514a4a217d24d88",
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40268706914",
+    "systems": [
+      "macOS 14 ARM",
+      "macOS 15 Intel",
+      "macOS 26 ARM"
+    ]
+  },
+  "olderCompilerFailure": {
+    "run": "https://github.com/WillSuo-Github/Upovi/actions/runs/40268011438",
+    "system": "macOS 14 / Xcode 16.2",
+    "stage": "Swift frontend SIL lowering of AppStore default initialization",
+    "signal": 11,
+    "correction": "Explicit root-argument scanning closure instead of an optional closure default; no platform check was removed.",
+    "correctedOnAllThreeSystems": true
+  },
+  "longObservation": {
+    "candidateAccepted": false,
+    "existingVersion": "0.4.2",
+    "existingProcessPreserved": true,
+    "binaryHashPreserved": true,
+    "boundary": "The pinned 0.4.2 process and collector continue. No older elapsed time accepts 0.4.3."
+  },
+  "remaining": [
+    "download byte-range resume",
+    "administrator-owned backup cleanup and capacity management",
+    "actual native administrator/PKG execution, interruptions and reboot",
+    "physical sleep/interface change and direct energy measurements",
+    "current-candidate long observation",
+    "public signed-feed old-to-new update",
+    "notarization"
+  ],
+  "packageExecutionTestConstraint": "No Developer ID Installer identity available to sign an isolated synthetic package. Vendor-signed runtime package installation does not require the user to own such a certificate."
+}
