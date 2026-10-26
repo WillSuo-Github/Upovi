@@ -1,0 +1,25 @@
+# Resilient update workflows, 0.4.3
+
+Source coverage adds exact installed bundle mappings for Orca (stablyai/orca) and Audiout (aa-hh/Audiout), verified against their official release/download documentation. Orca is not the unrelated plotly/orca cask. Battle.net launcher and installer versions are separate products; Chromium-style Lark versions also do not establish a comparable client version. Their default paths explicitly remain unconfirmed/manual, with vendor entry points. Private development apps with no published feed remain unsupported until a source is configured. Unknown does not become current.
+
+Batch history persists the most recent ten batches with per-app phases and bounded diagnostics in the existing private settings store. Download URLs/proofs and long release bodies are deliberately omitted from historical snapshots. An unfinished saved task is shown as interrupted and never starts automatically. Retrying refreshes the inventory and sources, requires matching bundle/developer/channel, excludes targets already completed by another updater, applies ignored/skipped/deferred preferences, then presents a new review. Successful apps are not repeated merely because another member failed. The install phase is journaled before mutation; a failed history write prevents a new installation from starting. Installer recovery journals remain separate and authoritative.
+
+Skip-version policies distinguish version/build, distribution channel and developer; equivalent numeric marketing versions share the same key. Snooze applies until the selected date, then takes effect at the next source check while the app is running. Policies affect available-update counts, bulk plans and source notifications, without changing the raw checked result or global P2P scope. The detail view retains suppressed source updates so the user can restore their reminders. Settings can reset the policies.
+
+GitHub release bodies and appcast descriptions are displayed as bounded text. Remote HTML, scripts and images are not rendered or executed. Source URLs remain separately reviewable.
+
+Settings supports up to 32 extra scan directories in addition to the two default directories. Paths are normalized, duplicate default paths and filesystem root are excluded, and changing the list triggers a complete refresh. Source and installation views identify the target installation path. With global P2P enabled, newly scanned applications join the existing all-inventory scope; directory selection explains that scope.
+
+## Acceptance
+
+The suite passed 109 tests: 99 core and 10 actual-store tests. New coverage includes policy expiration/persistence, counts/notification/bulk consistency, interrupted-task recovery, committed-target exclusion on retry, failed-write refusal, semantic target equivalence, manual-source ambiguity and plain-text release descriptions.
+
+The developer-only native fixture builder copies three official signed Rectangle 2.0.3 applications into a new private .local directory and injects isolated preferences, scanning and journals. The actual toolbar, batch review, production HTTPS downloader, checksum verifier, code-signature/Gatekeeper checks and application transactions are used. A and C use the official signed 2.0.4 ZIP; B intentionally has a wrong checksum. Native acceptance observed two successful updates, one preserved original and continued queue execution; repairing the fixture source then produced a review of only the failed member and a successful retry. All three final signatures and 2.0.4/111 versions passed; cold relaunch displayed both persisted batch records. Daily applications were not replaced. Raw snapshots, paths and source inventories remain private.
+
+Run script/acceptance/build_bulk_fixture.py --help for explicit setup. The fixture is not included in the shipping application. Its history and backup data stay in its private root.
+
+## Remaining boundaries
+
+A batch can be recovered, but partial download bytes are not resumed yet. Administrator-owned backup pruning is still unavailable. Actual PKG script execution and administrator batch interruption/reboot remain separate acceptance work; a private synthetic package cannot currently be signed because this machine has no Developer ID Installer identity. That is a test-fixture limitation, not a runtime requirement for installing vendor-signed packages. Notarization remains deferred, and the new ZIP/feed has not been published. The existing 0.4.2 long observer continues on its pinned original process; no observation duration is transferred to this new version.
+
+Aggregate results are recorded in evidence/0.4.3-resilient-updates.json. Source references: https://www.onorca.dev/docs/install, https://github.com/stablyai/orca/releases, https://audiout.app/releases, https://github.com/aa-hh/Audiout.

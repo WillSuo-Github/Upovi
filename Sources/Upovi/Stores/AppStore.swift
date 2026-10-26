@@ -15,6 +15,12 @@ enum AppSection: String, CaseIterable, Identifiable {
 
 @MainActor @Observable
 final class AppStore {
+    var updatePolicy = UpdatePolicy()
+    var policyClock = Date()
+    var additionalScanDirectories: [String] = []
+    var batchHistory: [BulkUpdateRecord] = []
+    var bulkRecordID: UUID?
+    var bulkPersistenceFailed = false
     var refreshing = false
     var bulkUpdatePresented = false
     var bulkUpdating = false
@@ -24,6 +30,7 @@ final class AppStore {
     var bulkOutcomes: [String: BulkUpdateOutcome] = [:]
     var bulkCurrentID: String?
     @ObservationIgnored var bulkTask: Task<Void, Never>?
+    @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
         installing || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
             || administratorRestoreConfirmation != nil || backupDeletionConfirmation != nil
@@ -83,7 +90,7 @@ final class AppStore {
     @ObservationIgnored let preferences: AppPreferences
     @ObservationIgnored lazy var notifications = NotificationService()
     @ObservationIgnored let installer: UpdateInstaller
-    @ObservationIgnored let scanApplications: @Sendable () async -> [InstalledApp]
+    @ObservationIgnored let scanApplications: (@Sendable () async -> [InstalledApp])?
     @ObservationIgnored let checkApplication: @Sendable (InstalledApp, SourceOverride?) async -> SourceResult
     @ObservationIgnored var installationTask: Task<Void, Never>?
     @ObservationIgnored var checkTask: Task<Void, Never>?
@@ -97,7 +104,7 @@ final class AppStore {
     @ObservationIgnored var publisherCache: [String: [String]] = [:]
 
     init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
-         scanApplications: @escaping @Sendable () async -> [InstalledApp] = { await Task.detached { AppScanner.scan() }.value },
+         scanApplications: (@Sendable () async -> [InstalledApp])? = nil,
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
         self.preferences = preferences
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
@@ -107,6 +114,11 @@ final class AppStore {
         checkIntervalMinutes = max(15, interval == 0 ? 60 : interval)
         notificationsEnabled = preferences.bool(forKey: "notificationsV1")
         networkEnabled = preferences.bool(forKey: GlobalP2PSettings.key)
+        additionalScanDirectories = ScanLocations.normalized(preferences.stringArray(forKey: "scanDirectoriesV1") ?? [])
+        if let data = preferences.data(forKey: "updatePolicyV1") { updatePolicy = (try? JSONDecoder().decode(UpdatePolicy.self, from: data)) ?? UpdatePolicy() }
+        if let data = preferences.data(forKey: "bulkHistoryV1"), let records = try? JSONDecoder().decode([BulkUpdateRecord].self, from: data) {
+            batchHistory = Array(records.prefix(10)).map { var record = $0; record.recoverInterrupted(); return record }
+        }
         ignored = Set(preferences.stringArray(forKey: "ignoredBundles") ?? [])
         if let data = preferences.data(forKey: "sourceOverridesV1") {
             sourceOverrides = (try? JSONDecoder().decode([String: SourceOverride].self, from: data)) ?? [:]
@@ -153,7 +165,7 @@ final class AppStore {
     var communityApps: [InstalledApp] { apps.filter { !assessment(for: $0).communityLeads.isEmpty } }
 
     func assessment(for app: InstalledApp) -> UpdateAssessment {
-        UpdateAssessment(app: app, sourceResult: sourceResults[app.id],
+        UpdateAssessment(app: app, sourceResult: sourceResults[app.id].map { updatePolicy.filtering($0, app: app, now: policyClock) },
             reports: networkEnabled ? communityResults[app.id] ?? [] : [])
     }
 
@@ -162,7 +174,7 @@ final class AppStore {
         scanning = true
         // A background community lookup must not block an explicit inventory refresh.
         if networkEnabled { restartP2P() }
-        let found = await scanApplications()
+        let found = await scanInventory()
         apps = found; sourceResults = [:]; communityResults = [:]
         if !apps.contains(where: { $0.id == selection }) { selection = apps.first?.id }
         scanning = false
@@ -217,7 +229,7 @@ final class AppStore {
         checkHistory = Array(checkHistory.prefix(100))
         if let data = try? JSONEncoder().encode(checkHistory) { preferences.set(data, forKey: "checkHistoryV1") }
         logger.info("source check completed apps=\(snapshot.count) updates=\(updates) failures=\(failures)")
-        if notificationsEnabled { await notifications.announce(snapshot, results: sourceResults, ignored: ignored) }
+        if notificationsEnabled { await notifications.announce(snapshot, results: actionableSourceResults, ignored: ignored) }
     }
 
     func toggleIgnored(_ app: InstalledApp) {

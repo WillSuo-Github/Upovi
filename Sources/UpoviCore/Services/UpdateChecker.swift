@@ -5,8 +5,9 @@ public struct SourceResult: Sendable {
     public let candidates: [UpdateCandidate]
     public let note: String
     public let status: SourceStatus
-    public init(appID: String, candidates: [UpdateCandidate], note: String, status: SourceStatus = .current) {
-        self.appID = appID; self.candidates = candidates; self.note = note; self.status = status
+    public let manualURL: URL?
+    public init(appID: String, candidates: [UpdateCandidate], note: String, status: SourceStatus = .current, manualURL: URL? = nil) {
+        self.appID = appID; self.candidates = candidates; self.note = note; self.status = status; self.manualURL = manualURL
     }
 }
 
@@ -27,11 +28,15 @@ public enum UpdateChecker {
         "com.knollsoft.Rectangle": "rxhanson/Rectangle", "eu.exelban.Stats": "exelban/stats",
         "com.caldis.Mos": "Caldis/Mos", "com.colliderli.iina": "iina/iina",
         "com.aone.keka": "aonez/Keka", "com.ranchero.NetNewsWire-Evergreen": "Ranchero-Software/NetNewsWire",
-        "com.steipete.codexbar": "steipete/CodexBar", "app.upovi.Upovi": "WillSuo-Github/Upovi"
+        "com.steipete.codexbar": "steipete/CodexBar", "app.upovi.Upovi": "WillSuo-Github/Upovi",
+        "com.stablyai.orca": "stablyai/orca", "com.audiout.Audiout": "aa-hh/Audiout"
     ]
 
     public static func check(_ app: InstalledApp, override: SourceOverride? = nil) async -> SourceResult {
         if app.isAppStore { return .init(appID: app.id, candidates: [], note: "由 App Store 管理更新", status: .appStore) }
+        if override?.appcast == nil, override?.githubRepository == nil, let hint = ManualUpdateSource.forBundle(app.bundleID) {
+            return .init(appID: app.id, candidates: [], note: hint.note, status: .unsupported, manualURL: hint.url)
+        }
         var candidates: [UpdateCandidate] = [], notes: [String] = []
         var checked = 0, failed = 0, uncomparable = 0
         if let feed = override?.appcast ?? app.feedURL {
@@ -73,14 +78,15 @@ public enum UpdateChecker {
                 let release = try await GitHubRelease.latest(repository: repository)
                 if VersionOrder.isNewer(version: release.version, than: app) {
                     candidates.append(.init(version: release.version, source: "GitHub Release", isCommunity: false,
-                                            url: release.page, download: release.download))
+                                            url: release.page, download: release.download, releaseNotes: release.releaseNotes))
                 }
                 checked += 1; notes.append("已检查 GitHub Release")
             } catch { failed += 1; notes.append("GitHub：\(error.localizedDescription)") }
         }
         let status: SourceStatus = failed > 0 ? (checked > 0 ? .partial : .failed)
             : !candidates.isEmpty ? .updates : checked > 0 ? (uncomparable > 0 ? .partial : .current) : .unsupported
-        return .init(appID: app.id, candidates: candidates, note: notes.isEmpty ? "暂未适配更新来源，可手动设置开发者 appcast 或 GitHub 仓库" : notes.joined(separator: " · "), status: status)
+        let hint = ManualUpdateSource.forBundle(app.bundleID)
+        return .init(appID: app.id, candidates: candidates, note: notes.isEmpty ? hint?.note ?? "暂未适配更新来源，可手动设置开发者 appcast 或 GitHub 仓库" : notes.joined(separator: " · "), status: status, manualURL: hint?.url)
     }
 
     public static func fetch(_ url: URL, limit: Int) async throws -> Data {

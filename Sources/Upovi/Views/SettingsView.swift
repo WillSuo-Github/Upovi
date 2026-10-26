@@ -42,12 +42,25 @@ struct SettingsView: View {
                     }
                     Text("休眠或退出应用会暂停检查；醒来后恢复网络连接。社区版本仅作线索，不触发安装或官方更新通知。")
                         .font(.caption).foregroundStyle(.secondary)
+                    if !store.updatePolicy.skipped.isEmpty || !store.updatePolicy.deferredUntil.isEmpty {
+                        Button("恢复所有跳过与稍后提醒") { store.clearUpdatePolicy() }
+                    }
                 }
                 Section("应用扫描与安装") {
                     Text("扫描 /Applications 和 ~/Applications，不执行被扫描应用。当前识别 \(store.apps.count) 个应用。")
                     Text("支持验证后的 ZIP／DMG 应用更新，以及经负载检查的签名 PKG。管理员安装会显示系统授权窗口；App Store 和无法验证的安装包使用官方渠道。")
                         .font(.caption).foregroundStyle(.secondary)
                     Button("刷新并检查") { store.refreshAll() }.disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
+                    ForEach(store.additionalScanDirectories, id: \.self) { path in
+                        HStack {
+                            Text(path).font(.caption).textSelection(.enabled)
+                            Spacer()
+                            Button("移除") { store.setScanDirectories(store.additionalScanDirectories.filter { $0 != path }) }
+                                .disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
+                        }
+                    }
+                    Button("添加扫描目录…") { store.chooseScanDirectory() }
+                        .disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
                 }
                 Section("Upovi \(AppMetadata.displayVersion)") {
                     Text("SwiftUI · MIT License · macOS 14+")

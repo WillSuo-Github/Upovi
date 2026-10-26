@@ -2,7 +2,7 @@ import Foundation
 
 public final class AppcastReader: NSObject, XMLParserDelegate {
     private var entries: [UpdateCandidate] = []
-    private var current: (version: String, build: String, minimum: String, link: String, download: String, signature: String)?
+    private var current: (version: String, build: String, minimum: String, link: String, download: String, signature: String, notes: String)?
     private var element = ""
     private var text = ""
     private var channel = ""
@@ -18,7 +18,7 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
 
     public func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?, qualifiedName: String?, attributes: [String: String]) {
         element = name; text = ""
-        if name == "item" { current = ("", "", "", "", "", ""); channel = "" }
+        if name == "item" { current = ("", "", "", "", "", "", ""); channel = "" }
         if name == "enclosure", current != nil {
             guard attributes["sparkle:deltaFrom"] == nil, attributes["os"] == nil || attributes["os"] == "macos" else { return }
             #if arch(arm64)
@@ -35,6 +35,7 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
     }
 
     public func parser(_ parser: XMLParser, foundCharacters string: String) { text += string }
+    public func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) { text += String(decoding: CDATABlock, as: UTF8.self) }
 
     public func parser(_ parser: XMLParser, didEndElement name: String, namespaceURI: String?, qualifiedName: String?) {
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -44,6 +45,7 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
         case "sparkle:minimumSystemVersion": current?.minimum = value
         case "sparkle:channel": channel = value
         case "link": current?.link = value
+        case "description": current?.notes = String(value.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression).prefix(20_000))
         case "item":
             if let item = current, channel.isEmpty || channel == "stable" {
                 let os = ProcessInfo.processInfo.operatingSystemVersion
@@ -60,7 +62,7 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
                                              guard url.scheme == "https", ["zip", "dmg", "pkg"].contains(url.pathExtension.lowercased()),
                                                    let signature = Data(base64Encoded: item.signature), signature.count == 64 else { return nil }
                                              return DownloadDescriptor(url: url, edSignature: signature)
-                                         }))
+                                         }, releaseNotes: item.notes.isEmpty ? nil : item.notes))
                 }
             }
             current = nil

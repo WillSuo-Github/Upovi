@@ -38,6 +38,10 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     func requestAccess() async -> Bool {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
     }
+    func allowReminder(for app: InstalledApp) {
+        seen = seen.filter { !$0.hasPrefix(app.bundleID + ":") }
+        AppPreferences.shared.set(Array(seen), forKey: "notifiedUpdatesV1")
+    }
     func announce(_ apps: [InstalledApp], results: [String: SourceResult], ignored: Set<String>) async {
         let updates = UpdateAssessment.notificationBatch(apps: apps, results: results, ignored: ignored, seen: seen)
         guard !updates.isEmpty else { return }

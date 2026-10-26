@@ -1,3 +1,11 @@
+# Upovi 0.4.3 resilient update development readiness
+
+Exact-source coverage, durable batch records and explicit rechecked retry, per-version skip/snooze, text release notes and extra scan locations are implemented. Actual isolated native multi-application replacement, checksum-failure continuation and a successful retry have been exercised. See [workflow details](RESILIENT-UPDATES.md) and [version-specific evidence](evidence/0.4.3-resilient-updates.json).
+
+Earlier evidence retains its original version and scope. Administrator/PKG execution, download-byte resume, protected-backup pruning and public distribution boundaries remain open. The existing 0.4.2 observation continues independently.
+
+---
+
 # Upovi 0.4.2 toolbar and batch update development readiness
 
 Refresh now rescans and checks every application. Update all reviews and executes a serial source-confirmed update batch, with visible manual-only items, per-app results and safe stop behavior. See [toolbar behavior](TOOLBAR-UPDATES.md) and [version-specific evidence](evidence/0.4.2-toolbar-updates.json). Direct commits go to main; no pull request is required for this project.

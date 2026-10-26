@@ -10,6 +10,7 @@ extension AppStore {
             guard let self else { return }
             await refreshInstallations()
             while !Task.isCancelled {
+                policyClock = Date()
                 if CheckSchedule.isDue(enabled: automaticChecks && !apps.isEmpty, online: networkAvailable,
                     busy: refreshing || scanning || checking || installationBusy, lastAttempt: lastCheckAttempt,
                     intervalMinutes: checkIntervalMinutes) { beginChecking() }
@@ -106,7 +107,7 @@ extension AppStore {
                 _ = try await installer.install(value.id)
                 installationProgress = "安装完成，可在安装记录中恢复旧版本"
                 await refreshInstallations()
-                let found = await scanApplications()
+                let found = await scanInventory()
                 apps = found; sourceResults[value.application.id] = nil
                 logger.info("installation completed")
             } catch { errorMessage = error.localizedDescription; installationProgress = "安装未完成，原应用或恢复备份已保留" }
@@ -126,7 +127,7 @@ extension AppStore {
             do {
                 try await administrator.perform(plan)
                 installationProgress = "管理员安装完成；主应用备份已保留"
-                apps = await scanApplications()
+                apps = await scanInventory()
                 sourceResults[plan.application.id] = nil
             } catch { errorMessage = "管理员安装未完成或授权已取消。请在记录中检查恢复选项：\(error.localizedDescription)" }
         }
@@ -140,7 +141,7 @@ extension AppStore {
                 let plan = AdministratorInstallPlan(id: attempt.id, operation: .restore, application: attempt.plan.application,
                     version: attempt.plan.version, build: attempt.plan.build)
                 try await administrator.perform(plan)
-                apps = await scanApplications(); sourceResults = [:]
+                apps = await scanInventory(); sourceResults = [:]
                 installationProgress = "主应用已恢复；安装包的其他系统改动未回滚"
             } catch { errorMessage = "主应用未恢复：\(error.localizedDescription)" }
         }
@@ -188,7 +189,7 @@ extension AppStore {
             defer { installing = false }
             do {
                 try await installer.restore(receipt); await refreshInstallations()
-                apps = await scanApplications()
+                apps = await scanInventory()
                 sourceResults = [:]; installationProgress = "旧版本已恢复"
             } catch { errorMessage = error.localizedDescription }
         }

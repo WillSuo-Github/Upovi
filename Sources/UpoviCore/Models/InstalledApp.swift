@@ -20,7 +20,7 @@ public struct InstalledApp: Identifiable, Hashable, Codable, Sendable {
     public var channel: String { isAppStore ? "app-store" : "developer" }
 }
 
-public struct UpdateCandidate: Identifiable, Hashable, Sendable {
+public struct UpdateCandidate: Identifiable, Hashable, Codable, Sendable {
     public var id: String { source + version + build }
     public let version: String
     public var build: String = ""
@@ -32,11 +32,13 @@ public struct UpdateCandidate: Identifiable, Hashable, Sendable {
     public var peerID: String? = nil
     public var expiresAt: Date? = nil
     public var download: DownloadDescriptor? = nil
+    public var releaseNotes: String? = nil
 
     public init(version: String, build: String = "", source: String, isCommunity: Bool, url: URL?, usesBuildVersion: Bool = false,
-                observedAt: Date = Date(), peerID: String? = nil, expiresAt: Date? = nil, download: DownloadDescriptor? = nil) {
+                observedAt: Date = Date(), peerID: String? = nil, expiresAt: Date? = nil, download: DownloadDescriptor? = nil, releaseNotes: String? = nil) {
         self.version = version; self.build = build; self.source = source; self.isCommunity = isCommunity; self.url = url
         self.usesBuildVersion = usesBuildVersion; self.observedAt = observedAt; self.peerID = peerID
         self.expiresAt = expiresAt; self.download = isCommunity ? nil : download
+        self.releaseNotes = isCommunity ? nil : releaseNotes.map { String($0.prefix(20_000)) }
     }
 }

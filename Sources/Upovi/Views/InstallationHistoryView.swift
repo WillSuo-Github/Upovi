@@ -7,6 +7,8 @@ struct InstallationHistoryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                BatchHistoryView(store: store)
+                Divider()
                 if !store.administrator.attempts.isEmpty {
                     Text("管理员安装与主应用恢复").font(.headline)
                     Text("只恢复主应用，安装脚本和其他系统变更不会回滚。取消授权的尝试可能没有生成系统备份。").font(.caption).foregroundStyle(.secondary)

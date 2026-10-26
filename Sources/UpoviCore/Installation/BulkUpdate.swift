@@ -1,6 +1,6 @@
 import Foundation
 
-public struct BulkUpdateItem: Identifiable, Sendable {
+public struct BulkUpdateItem: Identifiable, Codable, Sendable {
     public var id: String { application.id }
     public let application: InstalledApp
     public let candidate: UpdateCandidate
@@ -20,7 +20,7 @@ public enum BulkUpdatePlan {
             }
             guard let latest = candidates.first else { return nil }
             // Prefer a downloadable source for the same target; never silently fall back to an older release.
-            let sameTarget = candidates.filter { $0.version == latest.version && $0.build == latest.build }
+            let sameTarget = candidates.filter { VersionOrder.compare($0.version, latest.version) == .orderedSame && $0.build == latest.build && $0.usesBuildVersion == latest.usesBuildVersion }
             let candidate = sameTarget.first { manualReason(app: app, candidate: $0) == nil } ?? latest
             return BulkUpdateItem(application: app, candidate: candidate, manualReason: manualReason(app: app, candidate: candidate))
         }
@@ -37,7 +37,7 @@ public enum BulkUpdatePlan {
 }
 
 public struct BulkUpdateOutcome: Sendable {
-    public enum Status: Sendable { case installed, failed, cancelled, manual }
+    public enum Status: String, Codable, Sendable { case installed, failed, cancelled, manual }
     public let item: BulkUpdateItem
     public let status: Status
     public let detail: String

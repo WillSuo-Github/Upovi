@@ -14,7 +14,7 @@ struct BulkUpdateView: View {
                     Text(store.installationProgress).font(.callout).foregroundStyle(.secondary)
                 }
             } else {
-                Text("将依次下载、验证并安装 \(store.bulkInstallableCount) 个更新。使用全部应用的检测结果，不受搜索和列表筛选影响；已忽略的应用不参与。")
+                Text("可自动更新 \(store.bulkInstallableCount) 个，需官方处理 \(store.bulkItems.count - store.bulkInstallableCount) 个。使用全部应用的检测结果，不受搜索和列表筛选影响；已忽略、跳过或稍后提醒的更新不参与。")
                 Text("更新时会请求退出应用，请先保存文稿。旧版主应用将保留以便恢复；需要管理员权限时会出现系统授权窗口。")
                     .foregroundStyle(.secondary)
                 if store.bulkItems.contains(where: { $0.canInstall && $0.candidate.download?.url.pathExtension.lowercased() == "pkg" }) {
@@ -27,6 +27,7 @@ struct BulkUpdateView: View {
                     Image(systemName: symbol(for: item)).frame(width: 20)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(item.application.name).font(.headline)
+                        Text(item.application.path).font(.caption2).foregroundStyle(.secondary).lineLimit(2).textSelection(.enabled)
                         Text("\(item.application.version) → \(item.candidate.version)").font(.callout.monospacedDigit())
                         Text(status(for: item)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
                     }
@@ -51,6 +52,9 @@ struct BulkUpdateView: View {
                     }
                 } else {
                     Button(store.bulkHasRun ? "完成" : "取消") { store.bulkUpdatePresented = false }.keyboardShortcut(.cancelAction)
+                    if store.bulkHasRun, let record = store.batchHistory.first(where: { $0.id == store.bulkRecordID }), !record.retryIDs.isEmpty {
+                        Button("重新检测并重试未完成项") { store.retryBatch(record) }
+                    }
                 }
                 Spacer()
                 if !store.bulkHasRun {

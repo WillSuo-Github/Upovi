@@ -50,6 +50,12 @@ final class BulkUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(items.first?.candidate.build, "201")
         XCTAssertTrue(items.first?.canInstall ?? false)
     }
+    func testEquivalentMarketingVersionDoesNotHideAVerifiableDownload() {
+        let a = app(1)
+        let items = BulkUpdatePlan.make(apps: [a], results: results([a], candidates: [candidate("v2.0", proof: false), candidate("2.0.0")]), ignored: [])
+        XCTAssertTrue(items[0].canInstall)
+        XCTAssertNotNil(items[0].candidate.download)
+    }
 
     func testManualChannelsMissingIdentityIntegrityAndUnsupportedFormatsAreReported() {
         let apps = [app(0, store: true), app(1, bundle: "app.upovi.Upovi"), app(2, team: nil), app(3)]

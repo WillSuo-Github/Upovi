@@ -6,6 +6,7 @@ public struct GitHubRelease: Decodable, Sendable {
     let draft: Bool
     let prerelease: Bool
     let assets: [Asset]
+    let body: String?
     struct Asset: Decodable, Sendable {
         let name: String
         let browser_download_url: URL
@@ -13,6 +14,7 @@ public struct GitHubRelease: Decodable, Sendable {
     }
     public var version: String { tag_name.hasPrefix("v") ? String(tag_name.dropFirst()) : tag_name }
     public var page: URL { html_url }
+    public var releaseNotes: String? { body.map { String($0.prefix(20_000)) } }
     public var download: DownloadDescriptor? {
         let compatible = assets.filter { asset in
             let name = asset.name.lowercased()

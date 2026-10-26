@@ -1,6 +1,6 @@
 {
-  "version": "0.4.2",
-  "build": "8",
+  "version": "0.4.3",
+  "build": "9",
   "feedURL": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
   "publicEDKey": "WOJwHlAdu/s5q0s2TdnTA4vShnqUWg1pREFOYa8vS0w=",
   "keychainAccount": "app.upovi.sparkle"

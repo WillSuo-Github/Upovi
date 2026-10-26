@@ -27,6 +27,8 @@ struct AppTable: View {
                         Text(candidate.version).font(.callout.monospacedDigit()).foregroundStyle(Color.accentColor)
                         Text("来源有更新").font(.caption).foregroundStyle(.secondary)
                     }
+                } else if store.fullAssessment(for: app).hasUpdate {
+                    Text("已跳过或稍后提醒").font(.caption).foregroundStyle(.secondary)
                 } else if let lead = store.assessment(for: app).communityLeads.first {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(lead.report.version).font(.callout.monospacedDigit()).foregroundStyle(.orange)
