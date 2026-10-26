@@ -46,39 +46,12 @@ struct AppTable: View {
     @Bindable var store: AppStore
 
     var body: some View {
-        Table(store.visibleApps, selection: $store.selection) {
-            TableColumn("应用") { app in
-                HStack(spacing: 10) {
-                    AppIcon(path: app.path, size: 28)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(app.name).lineLimit(1)
-                        Text(app.bundleID).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                }.padding(.vertical, 4)
-            }.width(min: 200, ideal: 280)
-            TableColumn("当前版本") { app in
-                Text(app.version).font(.callout.monospacedDigit()).foregroundStyle(.secondary).lineLimit(1).help("Build: \(app.build)")
-            }.width(min: 80, ideal: 120, max: 160)
-            TableColumn("可用版本") { app in
-                let status = store.status(for: app)
-                if let version = status.targetVersion {
-                    ToneText(text: version, tone: status.tone).font(.callout.monospacedDigit().weight(.semibold)).lineLimit(1)
-                } else {
-                    Text("—").foregroundStyle(.tertiary)
-                }
-            }.width(min: 80, ideal: 120, max: 160)
-            TableColumn("状态") { app in
-                let status = store.status(for: app)
-                StatusBadge(text: status.shortLabel, symbol: status.symbol, tone: status.tone)
-            }.width(min: 100, ideal: 120, max: 180)
-        }
-        .tableStyle(.inset(alternatesRowBackgrounds: false))
-        .contextMenu(forSelectionType: String.self) { ids in
-            if let id = ids.first, let app = store.apps.first(where: { $0.id == id }) {
-                Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: app.path)]) }
-                Button(store.ignored.contains(app.bundleID) ? "恢复更新提醒" : "忽略更新提醒") { store.toggleIgnored(app) }
-            }
-        }
+        ApplicationTable(
+            rows: store.visibleApps.map { .init(app: $0, status: store.status(for: $0)) },
+            selection: $store.selection,
+            reveal: { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: $0.path)]) },
+            toggleIgnored: { store.toggleIgnored($0) }
+        )
         .overlay {
             if store.visibleApps.isEmpty && !store.scanning {
                 if !store.search.isEmpty { ContentUnavailableView.search(text: store.search) }

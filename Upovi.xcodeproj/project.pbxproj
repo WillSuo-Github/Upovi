@@ -62,6 +62,7 @@
 		5E841E3710FABE53512E776C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A315DDD221F95AFF9C824B5F /* Assets.xcassets */; };
 		61074AA73F8C84CBF6000017 /* UpdateAssessment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C60CD84A6E92B304B3A3B64 /* UpdateAssessment.swift */; };
 		62AED13B056FF9E9619C9CA6 /* AppStore+Downloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E7256EE554FEBE4389FFB96 /* AppStore+Downloads.swift */; };
+		66C298EE0A291069CB1F43BC /* ApplicationTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D126983E39B3F7F4B4E16BF8 /* ApplicationTable.swift */; };
 		699974020127FFEFA28D9E84 /* CaskCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430696A0A1734C9A109E1525 /* CaskCatalog.swift */; };
 		6BE83E402538EFE8C965AEAC /* GlobalP2PTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2BDA2F56AC3A043CC187DF /* GlobalP2PTests.swift */; };
 		6F967075A31909192A8081D9 /* CommunityHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0D5152DBF8F8A34A2C91586 /* CommunityHistory.swift */; };
@@ -94,6 +95,7 @@
 		98410AE03A6D0D2733F43950 /* SourceEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B323BDE71CE1C122683B76 /* SourceEditorView.swift */; };
 		99AABCF59892E4AF9700B012 /* ManualUpdateSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31D0F626104891D99B43C281 /* ManualUpdateSource.swift */; };
 		9D7536A7BD31F08E3B35506A /* AppStore+UpdateControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126D63E5E3B898343D14A823 /* AppStore+UpdateControls.swift */; };
+		9F281F35B473759734B63AD6 /* AppTableLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC734DED28ABA73C21BAC18D /* AppTableLayoutTests.swift */; };
 		A0D782F2A08A5AE66CDA1257 /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
 		A2A240FBC8ED4F9DB9A7A98C /* InstallationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43667E5DF78D7C5FBCE26B18 /* InstallationTests.swift */; };
 		A35E06205921FD7A8845D094 /* ProcessCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211706499C567E1A7027E386 /* ProcessCommand.swift */; };
@@ -377,6 +379,7 @@
 		AA58FDE9A6CE0B67C70F488C /* UpoviCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpoviCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA842F745C9A0679903A0FD2 /* embed_xcode_resources.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = embed_xcode_resources.sh; sourceTree = "<group>"; };
 		AA8B7398E052985DA7B6DFAC /* ArchiveExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveExtractor.swift; sourceTree = "<group>"; };
+		AC734DED28ABA73C21BAC18D /* AppTableLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTableLayoutTests.swift; sourceTree = "<group>"; };
 		ADFD1E20BF56C09FDFCF2365 /* PublicPeerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicPeerProtocol.swift; sourceTree = "<group>"; };
 		AF04C5BB957703EE1740DC83 /* embed_store_bridge.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = embed_store_bridge.py; sourceTree = "<group>"; };
 		AF2F9DE11662C826329F91FF /* native_ui.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = native_ui.swift; sourceTree = "<group>"; };
@@ -397,6 +400,7 @@
 		CE95B2B760BD2723B5C14153 /* libArchiveSupport.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libArchiveSupport.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D00051D55B6C5AEDD8FF9883 /* libUpoviCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libUpoviCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0EC6911ED80B9285EE8DCEF /* SourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceTests.swift; sourceTree = "<group>"; };
+		D126983E39B3F7F4B4E16BF8 /* ApplicationTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationTable.swift; sourceTree = "<group>"; };
 		D1D569E7071CCB46EAF130AC /* SourceHTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHTTPClient.swift; sourceTree = "<group>"; };
 		D675D630F5266112A52E9DE5 /* BundleVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleVerifier.swift; sourceTree = "<group>"; };
 		D8595E8ED2B0246333DBC0C9 /* UpoviApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpoviApp.swift; sourceTree = "<group>"; };
@@ -524,6 +528,7 @@
 			isa = PBXGroup;
 			children = (
 				97F27BB60A1ACB9A22805311 /* AppStoreWorkflowTests.swift */,
+				AC734DED28ABA73C21BAC18D /* AppTableLayoutTests.swift */,
 				0752EE762D9878EED96DAED8 /* DiagnosticsWorkflowTests.swift */,
 				10C3186A78FC7CF98D6A82AA /* DownloadWorkflowTests.swift */,
 				B3453C7074ED60A9804CA828 /* ToolbarWorkflowTests.swift */,
@@ -549,6 +554,7 @@
 			isa = PBXGroup;
 			children = (
 				AFF3159B46330E61FDA54665 /* AppDetailView.swift */,
+				D126983E39B3F7F4B4E16BF8 /* ApplicationTable.swift */,
 				DF9255B0D669DB0C4BE7DE90 /* BulkUpdateView.swift */,
 				C00F6463BC2B71CC4CC10C88 /* CommunityView.swift */,
 				6DE37D90F5CC2C99251E05F1 /* ContentView.swift */,
@@ -1290,6 +1296,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E894075DCA143CA2536ED1DE /* AppStoreWorkflowTests.swift in Sources */,
+				9F281F35B473759734B63AD6 /* AppTableLayoutTests.swift in Sources */,
 				DB06422D74838FD02B017862 /* DiagnosticsWorkflowTests.swift in Sources */,
 				BD69C72ECD40DFA3803E17BC /* DownloadWorkflowTests.swift in Sources */,
 				5CF3ACD5EEAC3490D7468014 /* ToolbarWorkflowTests.swift in Sources */,
@@ -1324,6 +1331,7 @@
 				9D7536A7BD31F08E3B35506A /* AppStore+UpdateControls.swift in Sources */,
 				354E6DF5FDAB4C1FA4281261 /* AppStore.swift in Sources */,
 				DB779A5470F386CAA87A27B2 /* AppStoreInstallationService.swift in Sources */,
+				66C298EE0A291069CB1F43BC /* ApplicationTable.swift in Sources */,
 				3219E146C4669F39D6E40EB1 /* BulkUpdateView.swift in Sources */,
 				33AF8B0802C9560DF674A739 /* CheckHistory.swift in Sources */,
 				8B9A5F9A28044DE5AA47EB42 /* CommunityView.swift in Sources */,
