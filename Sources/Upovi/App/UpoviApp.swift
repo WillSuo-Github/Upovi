@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UpoviCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -11,13 +12,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 @main
 struct UpoviApp: App {
+    private static let isTestHost = ProcessInfo.processInfo.environment["UPOVI_TEST_HOST"] == "1"
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @State private var store = AppStore()
+    @State private var store: AppStore = {
+        guard isTestHost else { return AppStore() }
+        let url = FileManager.default.temporaryDirectory.appending(path: "UpoviTestHost-\(UUID().uuidString)/settings.plist")
+        let preferences = AppPreferences(url: url, migrateUserDefaults: false)
+        preferences.set(false, forKey: GlobalP2PSettings.key)
+        return AppStore(preferences: preferences)
+    }()
     @ObservedObject private var updater = SelfUpdateService.shared
 
     var body: some Scene {
         WindowGroup("Upovi", id: "main") {
-            ContentView(store: store)
+            Group {
+                if Self.isTestHost { Color.clear }
+                else { ContentView(store: store) }
+            }
                 .frame(minWidth: 1000, minHeight: 650)
                 .task { [store] in updater.installationBusy = { [weak store] in store?.installationBusy == true } }
         }
@@ -46,7 +57,7 @@ struct UpoviApp: App {
             }
         }
         MenuBarExtra {
-            MenuBarContent(store: store)
+            if !Self.isTestHost { MenuBarContent(store: store) }
         } label: {
             Image(systemName: store.updateCount > 0 ? "arrow.down.circle.fill" : "arrow.triangle.2.circlepath")
             if store.updateCount > 0 { Text(store.updateCount.formatted()) }

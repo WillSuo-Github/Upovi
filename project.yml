@@ -1,0 +1,153 @@
+name: Upovi
+options:
+  minimumXcodeGenVersion: 2.44.0
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  transitivelyLinkDependencies: true
+  groupSortPosition: top
+fileGroups:
+  - Config
+  - README.md
+  - CONTRIBUTING.md
+  - project.yml
+  - script
+  - Resources/Release.json
+configFiles:
+  Debug: Config/Release.xcconfig
+  Release: Config/Release.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.0
+targetTemplates:
+  Tool:
+    type: tool
+    platform: macOS
+    settings:
+      SKIP_INSTALL: YES
+      ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - target: UpoviCore
+targets:
+  ArchiveSupport:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: Sources/ArchiveSupport
+        excludes: [vendor]
+    settings:
+      HEADER_SEARCH_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/vendor"
+      DEFINES_MODULE: YES
+      MODULEMAP_FILE: Sources/ArchiveSupport/include/module.modulemap
+      SKIP_INSTALL: YES
+    dependencies:
+      - sdk: libarchive.tbd
+  UpoviCore:
+    type: library.static
+    platform: macOS
+    sources: [Sources/UpoviCore]
+    settings:
+      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+      SKIP_INSTALL: YES
+    dependencies:
+      - target: ArchiveSupport
+  UpoviInstaller:
+    templates: [Tool]
+    sources: [Sources/UpoviInstaller]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: app.upovi.Installer
+  UpoviStoreInstaller:
+    templates: [Tool]
+    sources: [Sources/UpoviStoreInstaller]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: app.upovi.StoreInstaller
+  UpoviPeer:
+    templates: [Tool]
+    sources: [Sources/UpoviPeer]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: app.upovi.Peer
+    scheme: {}
+  Upovi:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/Upovi
+      - Resources/Assets.xcassets
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: app.upovi.Upovi
+      INFOPLIST_FILE: "$(DERIVED_FILE_DIR)/Upovi-Info.plist"
+      GENERATE_INFOPLIST_FILE: NO
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      ENABLE_APP_SANDBOX: NO
+      ENABLE_HARDENED_RUNTIME: YES
+      LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+    dependencies:
+      - target: UpoviCore
+      - package: Sparkle
+      - target: UpoviInstaller
+        link: false
+        embed: true
+        codeSign: true
+        copy:
+          destination: executables
+      - target: UpoviStoreInstaller
+        link: false
+        embed: true
+        codeSign: true
+        copy:
+          destination: executables
+    preBuildScripts:
+      - name: Prepare application metadata
+        path: script/prepare_xcode_info.sh
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
+        outputFiles:
+          - $(DERIVED_FILE_DIR)/Upovi-Info.plist
+    postBuildScripts:
+      - name: Embed Store bridge and third-party licenses
+        path: script/embed_xcode_resources.sh
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
+  UpoviCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [Tests/UpoviCoreTests]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: app.upovi.CoreTests
+      GENERATE_INFOPLIST_FILE: YES
+      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+    dependencies:
+      - target: UpoviCore
+  UpoviTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [Tests/UpoviTests]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: app.upovi.Tests
+      GENERATE_INFOPLIST_FILE: YES
+      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+    dependencies:
+      - target: Upovi
+schemes:
+  Upovi:
+    build:
+      targets:
+        Upovi: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - UpoviCoreTests
+        - UpoviTests
+      environmentVariables:
+        UPOVI_TEST_HOST: "1"
+    archive:
+      config: Release

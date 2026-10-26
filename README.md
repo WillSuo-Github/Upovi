@@ -27,13 +27,17 @@ A native, open-source macOS application update detector with globally controlled
 
 ## Build and run
 
-Install Xcode with Swift 6 command-line tools, then:
+Open `Upovi.xcodeproj` in Xcode 16 or newer, select the **Upovi** scheme and **My Mac**, then press **Run (⌘R)**. This is a native macOS SwiftUI application target with Debug/Release configurations, an AppIcon asset catalog, native installer-tool targets, and shared test/archive actions. Use **Test (⌘U)** for both test suites and **Product → Archive** for a release archive. Choose your signing team in Signing & Capabilities when signing for distribution.
+
+For the command-line build/run workflow:
 
 ```sh
 ./script/build_and_run.sh
 ```
 
-This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive and Upovi embeds the pinned Sparkle framework. Header notices are in `THIRD-PARTY-NOTICES.md`.
+This uses `xcodebuild` and stages the built, ad-hoc signed application at `dist/Upovi.app`. The Codex Run action uses the same entrypoint. Xcode builds the app bundle, embeds Sparkle and both installer tools, and runs a build phase to embed the checksum-pinned Store bridge and third-party licenses. First-time package resolution and Store bridge download require network access. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive. Header notices are in `THIRD-PARTY-NOTICES.md`.
+
+The checked-in project opens directly without XcodeGen. `project.yml` is its reproducible specification; after changing project structure, run `xcodegen generate` and commit both files. Existing SwiftPM tools and tests remain available through `Package.swift` for diagnostic/acceptance scripts. The main app development entrypoint is `Upovi.xcodeproj`. See [Xcode project details](docs/XCODE-PROJECT.md) for targets and build settings.
 
 Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.8 signed preview and public feed are published; genuine Sparkle old-to-new update results remain version-specific. The 0.4.6 baseline collector disappeared after about 52 minutes; the original app was still running at review and was later normally stopped to launch the 0.4.8 candidate; the observation is not accepted and does not validate later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
 
@@ -68,7 +72,7 @@ Unsupported Store installations, unsigned/unverifiable artifacts, script-only or
 ## Checks and evidence
 
 ```sh
-swift test
+xcodebuild -project Upovi.xcodeproj -scheme Upovi -destination 'platform=macOS' test
 python3 script/test_automatic_discovery.py
 python3 script/test_dht_exchange.py
 ./script/build_and_run.sh --verify
@@ -100,7 +104,7 @@ UPOVI_UNIVERSAL=1 UPOVI_SIGNING_IDENTITY='Developer ID Application: …' ./scrip
 
 This produces a signed universal app and ZIP. Set `UPOVI_OUTPUT_DIR` to an absolute alternative output directory to stage another version without replacing a running test bundle. Add `UPOVI_NOTARY_PROFILE=<existing-keychain-profile>` to submit the app to Apple, require an Accepted result, staple its ticket, and verify Gatekeeper. Credentials remain in Keychain. A signed-only artifact is not a notarized release; do not bypass macOS security warnings to run it.
 
-Release metadata comes from `Resources/Release.json`. After producing the signed ZIP, run `script/generate_update_feed.sh` and `python3 script/verify_release.py <output-directory>` to generate and verify the signed feed and archive. The private Sparkle key remains in Keychain under the configured account. Publish the ZIP and feed together only after acceptance.
+Version/build settings are in `Config/Release.xcconfig`; keep them synchronized with `Resources/Release.json` when preparing a release. Feed URL and public key come from `Resources/Release.json`. After producing the signed ZIP, run `script/generate_update_feed.sh` and `python3 script/verify_release.py <output-directory>` to generate and verify the signed feed and archive. The feed script resolves the pinned Sparkle package tools when needed. The private Sparkle key remains in Keychain under the configured account. Publish the ZIP and feed together only after acceptance.
 
 ## Contributing
 

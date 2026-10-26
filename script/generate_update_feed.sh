@@ -7,6 +7,7 @@ VERSION="$(python3 -c 'import json; print(json.load(open("Resources/Release.json
 ACCOUNT="$(python3 -c 'import json; print(json.load(open("Resources/Release.json"))["keychainAccount"])')"
 PUBLIC_KEY="$(python3 -c 'import json; print(json.load(open("Resources/Release.json"))["publicEDKey"])')"
 TOOLS="$ROOT_DIR/.build/artifacts/sparkle/Sparkle/bin"
+if [[ ! -x "$TOOLS/generate_appcast" ]]; then swift package resolve; fi
 ACTUAL_KEY="$("$TOOLS/generate_keys" --account "$ACCOUNT" -p)"
 if [[ "$ACTUAL_KEY" != "$PUBLIC_KEY" ]]; then echo "Sparkle signing key does not match Release.json." >&2; exit 2; fi
 ARCHIVE="$OUTPUT_DIR/Upovi-$VERSION.zip"

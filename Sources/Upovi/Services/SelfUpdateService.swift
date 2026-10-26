@@ -18,6 +18,7 @@ final class SelfUpdateService: NSObject, ObservableObject, SPUUpdaterDelegate {
             && (bundle.object(forInfoDictionaryKey: "SUPublicEDKey") as? String).flatMap { Data(base64Encoded: $0) }?.count == 32
             && (bundle.object(forInfoDictionaryKey: "SUFeedURL") as? String).flatMap(URL.init(string:))?.scheme == "https"
         super.init()
+        guard ProcessInfo.processInfo.environment["UPOVI_TEST_HOST"] != "1" else { return }
         guard isConfigured else { return }
         let controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
         self.controller = controller

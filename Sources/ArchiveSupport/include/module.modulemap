@@ -1,0 +1,4 @@
+module ArchiveSupport {
+    header "ArchiveSupport.h"
+    export *
+}

@@ -38,7 +38,10 @@ jobs:
           PY
           swift --version
       - name: Unit and recovery tests
-        run: swift test
+        run: >-
+          xcodebuild -project Upovi.xcodeproj -scheme Upovi
+          -destination 'platform=macOS' -derivedDataPath .build/XcodeDerivedData
+          -resultBundlePath .build/xcode-tests.xcresult test
       - name: Independent automatic discovery regression
         run: python3 script/test_automatic_discovery.py
       - name: Legacy private exchange regression
@@ -91,4 +94,5 @@ jobs:
           path: |
             .build/automatic-discovery-evidence.json
             .build/cross-host-reader.json
+            .build/xcode-tests.xcresult
           if-no-files-found: ignore

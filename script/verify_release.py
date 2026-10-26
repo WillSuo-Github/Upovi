@@ -39,6 +39,8 @@ archive = folder / ('Upovi-' + release['version'] + '.zip')
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 assert digest == archive.with_suffix('.zip.sha256').read_text().split()[0]
 tools = root / '.build/artifacts/sparkle/Sparkle/bin'
+if not (tools / 'sign_update').is_file():
+    subprocess.run(['swift', 'package', 'resolve'], cwd=root, check=True)
 public_key = subprocess.check_output([str(tools / 'generate_keys'), '--account', release['keychainAccount'], '-p'], text=True).strip()
 assert public_key == release['publicEDKey'], 'Keychain account does not match the bundled public key'
 feed = folder / 'update-feed/appcast.xml'
