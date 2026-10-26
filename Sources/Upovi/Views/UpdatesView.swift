@@ -16,7 +16,7 @@ struct UpdatesView: View {
         let plan = plan
         let visible = plan.filter { store.matchesSearch($0.application) }
         let installable = visible.filter(\.canInstall), manual = visible.filter { !$0.canInstall }
-        let postponed = store.postponedApps.filter(store.matchesSearch)
+        let postponed = store.postponedApps.filter { store.matchesSearch($0) }
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 hero(total: plan.count, installable: plan.filter(\.canInstall).count).entrance(0)
