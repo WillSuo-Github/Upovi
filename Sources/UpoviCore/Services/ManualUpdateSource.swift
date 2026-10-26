@@ -5,6 +5,10 @@ public struct ManualUpdateSource: Sendable {
     public let note: String
     public static func forBundle(_ bundle: String) -> Self? {
         switch bundle {
+        case "dev.appbinnacle.AppBinnacle":
+            return .init(url: URL(string: "https://github.com/WillSuo-Github/AppBinnacle/releases")!, note: "此安装没有内置公开更新源，请查看开发者发布页；未确认是否有更新。")
+        case "com.ws.youtube-music":
+            return .init(url: URL(string: "https://apps.apple.com/app/id6482353962")!, note: "此安装未识别到 App Store 凭据，开发者提供商店版本。请使用官方商店检查，不自动替换不同渠道的应用。")
         case "net.battle.app":
             return .init(url: URL(string: "https://www.battle.net/")!, note: "Battle.net 启动器版本与公开安装器版本不同，请使用应用内更新；未确认是否有更新。")
         case "com.electron.lark":

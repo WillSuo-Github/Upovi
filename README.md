@@ -2,7 +2,7 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.6 preview**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.7 development**
 
 [Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.6). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
@@ -13,13 +13,14 @@ A native, open-source macOS application update detector with globally controlled
 - Supports skipping a specific version/build, postponing update reminders, viewing source release notes, and selecting extra scan directories in Settings. The policy applies consistently to update counts, bulk actions and notifications; global P2P participation remains independent.
 - Provides a download task center with pause/continue, network-reconnect continuation, bounded automatic retry and private history. Interrupted tasks require fresh source checks after restart; installation confirmation is preserved. See [download center and acceptance](docs/DOWNLOAD-CENTER-AND-ACCEPTANCE.md).
 - Exports a previewable local diagnostic JSON with source outcomes, classified errors and operation phases. Application identifiers are optional; paths, URLs, raw logs and credentials are excluded. See [diagnostics and source coverage](docs/DIAGNOSTICS-AND-SOURCES.md).
+- Manual refresh revalidates source metadata instead of reusing a day-old catalog. Source requests use bounded memory caching, conditional validation, per-origin queues and server-directed cooldowns. Failures never silently become successful stale checks.
 - Checks developer Sparkle appcasts, Homebrew's official catalog using exact declared bundle IDs, curated identity mappings, and supported GitHub releases. Unknown apps can be assigned an HTTPS appcast or official GitHub repository in the detail panel.
 - Distinguishes source-reported updates, community leads, unsupported sources, and failed checks. An empty result is never proof that all applications are current.
 - Downloads eligible ZIP/DMG updates, verifies archive integrity, matching application/developer identity, nested code signatures, version and native executable compatibility, and Gatekeeper acceptance. Installation requires an explicit individual or batch confirmation and retains the old app for recovery.
 - Provides a menu bar entry, opt-in scheduled checks and notifications, system-backed login-at-startup settings, source filters/settings, recent-check history, and installation/recovery history.
 - Resumes canceled/interrupted ZIP, DMG and PKG downloads when the HTTPS server provides a strong validator; retry revalidates the final artifact before installation. See [download recovery](docs/DOWNLOAD-RESUME-AND-CLEANUP.md).
 - Shows retained-copy sizes and moves eligible copies to Trash only after confirmation. Interrupted recovery material is protected.
-- Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. Publishing the new feed and end-to-end self-update acceptance remain pending.
+- Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. The public feed and genuine 0.4.5 → 0.4.6 replacement/relaunch have been accepted; newer artifacts keep separate evidence.
 - Offers Upovi-managed administrator installation for signed application replacements and inspectable signed PKGs. Each operation requests macOS authorization, uses a verified protected helper, and retains a protected main-app backup. Completed protected backups can be inspected and permanently cleaned after confirmation and authorization; failed/interrupted transactions remain protected. PKG script side effects are not rolled back; see [the administrator design](docs/ADMINISTRATOR-INSTALLATION.md).
 - Automatically discovers opted-in public publishers using BitTorrent DHT. No invitation, account, publisher-key exchange, or Upovi relay is required.
 
@@ -33,7 +34,7 @@ Install Xcode with Swift 6 command-line tools, then:
 
 This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive and Upovi embeds the pinned Sparkle framework. Header notices are in `THIRD-PARTY-NOTICES.md`.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [0.4.6 evidence](docs/evidence/0.4.6-completion.json). The signed preview and public update feed are published; a genuine 0.4.5 → 0.4.6 Sparkle update passed. The latest-version 24-hour observation is running, not accepted. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.6 signed preview and public feed are published, with a genuine 0.4.5 → 0.4.6 Sparkle update accepted. The 0.4.6 background observation continues as a version-specific baseline, not acceptance of later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
 
 ## Public community discovery
 

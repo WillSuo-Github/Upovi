@@ -57,7 +57,7 @@ struct AppTable: View {
         if app.isAppStore { return "App Store" }
         guard let result = store.sourceResults[app.id] else { return "尚未检查" }
         switch result.status {
-        case .unsupported: return "未适配来源"
+        case .unsupported: return result.manualURL == nil ? "未适配来源" : "需官方渠道检查"
         case .partial: return "部分检测失败"
         case .failed: return "检测失败"
         case .current: return "已检查，未发现更新"

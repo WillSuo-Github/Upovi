@@ -1,0 +1,83 @@
+{
+  "version": "0.4.7",
+  "build": "13",
+  "automatedTests": {
+    "core": 145,
+    "store": 15,
+    "failures": 0
+  },
+  "realHTTPSRevalidation": {
+    "result": "passed",
+    "requests": [
+      {
+        "conditional": false,
+        "status": 200,
+        "bytes": 19238103,
+        "host": "formulae.brew.sh"
+      },
+      {
+        "conditional": true,
+        "status": 304,
+        "bytes": 0,
+        "host": "formulae.brew.sh"
+      },
+      {
+        "conditional": false,
+        "status": 200,
+        "bytes": 17202,
+        "host": "api.github.com"
+      },
+      {
+        "conditional": true,
+        "status": 304,
+        "bytes": 0,
+        "host": "api.github.com"
+      }
+    ],
+    "manualCatalogRefreshContactedOrigin": true
+  },
+  "sourceScan": {
+    "before": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 27,
+      "failed": 3,
+      "partial": 5,
+      "unsupported": 5,
+      "updateCandidates": 10,
+      "updates": 8
+    },
+    "after": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 31,
+      "unsupported": 5,
+      "updateCandidates": 14,
+      "updates": 12
+    },
+    "realManualOnly": 4,
+    "syntheticUnsupported": 1,
+    "boundary": "Default-directory CLI without user overrides. Original intermittent 403 cause not established; zero failures only in the measured later run. No installations."
+  },
+  "sourceMetadataCache": {
+    "storage": "memory only",
+    "maximumEntries": 128,
+    "maximumBytes": 64000000,
+    "freshnessSeconds": 300,
+    "manualRefresh": "conditional origin revalidation; cooldowns preserved",
+    "staleFallback": false
+  },
+  "protocolRegressions": {
+    "automatic": "passed",
+    "legacyPrivate": "passed"
+  },
+  "finalProductCI": "pending",
+  "signedUniversalArtifact": "pending",
+  "publicRelease": "pending",
+  "observation": {
+    "version": "0.4.6",
+    "status": "continuing baseline; no duration inherited by 0.4.7"
+  },
+  "physicalSleepNetworkPower": "deferred by owner",
+  "notarization": "deferred by owner"
+}

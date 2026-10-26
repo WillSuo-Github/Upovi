@@ -95,6 +95,7 @@ final class AppStore {
     @ObservationIgnored lazy var notifications = NotificationService()
     @ObservationIgnored let installer: UpdateInstaller
     @ObservationIgnored let scanApplications: @Sendable ([URL]) async -> [InstalledApp]
+    @ObservationIgnored let revalidateSources: @Sendable () async -> Void
     @ObservationIgnored let checkApplication: @Sendable (InstalledApp, SourceOverride?) async -> SourceResult
     @ObservationIgnored var installationTask: Task<Void, Never>?
     @ObservationIgnored var checkTask: Task<Void, Never>?
@@ -109,11 +110,15 @@ final class AppStore {
 
     init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
          scanApplications: @escaping @Sendable ([URL]) async -> [InstalledApp] = { roots in await Task.detached { AppScanner.scan(roots: roots) }.value },
+         revalidateSources: @escaping @Sendable () async -> Void = {
+             await SourceHTTPClient.shared.revalidate(); await CaskCatalog.shared.invalidate()
+         },
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
         self.downloadCenter = DownloadCenterService(coordinator: installer.downloads)
         self.preferences = preferences
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
+        self.revalidateSources = revalidateSources
         section = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .all
         automaticChecks = preferences.bool(forKey: "automaticChecksV1")
         let interval = preferences.integer(forKey: "checkIntervalV1")
@@ -203,6 +208,8 @@ final class AppStore {
             await scan()
             guard !Task.isCancelled else { return }
             guard networkAvailable else { errorMessage = "应用已重新扫描；当前没有可用网络，联网后再检查更新。"; return }
+            await revalidateSources()
+            guard !Task.isCancelled else { return }
             checking = true; lastCheckAttempt = Date()
             await checkUpdates()
         }

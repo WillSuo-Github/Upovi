@@ -1,3 +1,13 @@
+# Upovi 0.4.7 source refresh and reliability
+
+Manual refresh now invalidates catalog freshness and revalidates metadata with the origin. Scheduled checks use a five-minute catalog lifetime instead of twenty-four hours. An older in-flight catalog response cannot overwrite a newer refresh. Source HTTP requests use a bounded in-memory validator cache, serial per-origin requests, cancellation and bounded transient retries. Explicit throttling headers establish cooldowns; a plain 403 is reported as denied and never invented as a rate-limit diagnosis. Failed revalidation cannot silently reuse stale success.
+
+Read-only public HTTPS acceptance observed both Homebrew and GitHub return 200 for the initial request and 304 for forced conditional revalidation. A new 71-app source scan reported zero failed/partial checks in that run, compared with three failed and five partial previously; transient network behavior can change and this is not proof that every 403 is eliminated. Four real manual-only applications now have exact official entry points; one synthetic fixture remains unsupported. No app was installed by this scan.
+
+See [behavior and validation](SOURCE-REFRESH-AND-RELIABILITY.md) and [version-specific evidence](evidence/0.4.7-source-reliability.json). Final CI/artifact fields are recorded separately. Existing 0.4.6 observation continues on its unchanged process as a baseline; its duration and results do not validate 0.4.7. Physical sleep/wake, host interface changes, privileged energy sampling and notarization retain their owner-deferred status. Direct-main delivery continues.
+
+---
+
 # Upovi 0.4.6 download center and completion acceptance
 
 Download tasks now expose pause/continue, automatic reconnect/retry, persisted results and explicit fresh-source recovery after restart. Actual signed PKG execution/recovery and protected-helper termination followed by a guest OS reboot passed in a disposable macOS VM. See [behavior and acceptance](DOWNLOAD-CENTER-AND-ACCEPTANCE.md) and [version-specific evidence](evidence/0.4.6-completion.json).

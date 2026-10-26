@@ -92,12 +92,22 @@ public struct CaskMetadata: Decodable, Sendable {
 /// Match only exact bundle IDs explicitly declared in official cask metadata.
 public actor CaskCatalog {
     public static let shared = CaskCatalog()
-    private var pending: Task<[String: CaskMetadata], any Error>?
+    private var pending: (id: UUID, task: Task<[CaskMetadata], any Error>)?
     private var cache: [String: CaskMetadata] = [:]
     private var catalog: [CaskMetadata] = []
     private var loadedAt: Date?
     private var failedAt: Date?
-    public init() { }
+    private let fetch: @Sendable () async throws -> Data
+    public init() {
+        fetch = { try await UpdateChecker.fetch(URL(string: "https://formulae.brew.sh/api/cask.json")!, limit: 40_000_000) }
+    }
+    init(fetch: @escaping @Sendable () async throws -> Data) { self.fetch = fetch }
+
+    public func invalidate() {
+        loadedAt = nil; failedAt = nil
+        // An older in-flight response cannot populate a newer refresh generation.
+        pending = nil
+    }
 
     // Explicit identities checked against the official cask's declared application and identity paths.
     // These are never inferred from a display-name search or a peer report.
@@ -151,23 +161,25 @@ public actor CaskCatalog {
 
     private func load() async throws {
         if let failedAt, Date().timeIntervalSince(failedAt) < 60 { throw PeerError.unavailable("Homebrew catalog temporarily unavailable") }
-        if let loadedAt, Date().timeIntervalSince(loadedAt) < 86400 { return }
-        let task: Task<[String: CaskMetadata], any Error>
-        if let pending { task = pending }
+        if let loadedAt, Date().timeIntervalSince(loadedAt) < 300 { return }
+        try Task.checkCancellation()
+        let request: (id: UUID, task: Task<[CaskMetadata], any Error>)
+        if let pending { request = pending }
         else {
-            task = Task {
-                let data = try await UpdateChecker.fetch(URL(string: "https://formulae.brew.sh/api/cask.json")!, limit: 40_000_000)
-                let casks = try JSONDecoder().decode([CaskMetadata].self, from: data)
-                self.setCatalog(casks)
-                return Self.index(casks)
-            }
-            pending = task
+            let fetch = fetch
+            request = (UUID(), Task {
+                try JSONDecoder().decode([CaskMetadata].self, from: await fetch())
+            })
+            pending = request
         }
         do {
-            let result = try await task.value
-            cache = result; loadedAt = Date(); pending = nil
-            failedAt = nil
-        } catch { pending = nil; failedAt = Date(); throw error }
+            let result = try await request.task.value
+            try Task.checkCancellation()
+            guard pending?.id == request.id else { try await load(); return }
+            catalog = result; cache = Self.index(result); loadedAt = Date(); pending = nil; failedAt = nil
+        } catch {
+            if pending?.id == request.id { pending = nil; failedAt = error is CancellationError ? nil : Date() }
+            throw error
+        }
     }
-    private func setCatalog(_ casks: [CaskMetadata]) { catalog = casks }
 }

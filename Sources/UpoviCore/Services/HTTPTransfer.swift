@@ -3,7 +3,27 @@ import Darwin
 
 public struct HTTPStatusError: LocalizedError, Sendable {
     public let statusCode: Int
-    public init(statusCode: Int) { self.statusCode = statusCode }
+    public let retryAt: Date?
+    public let rateLimited: Bool
+    public init(statusCode: Int, retryAt: Date? = nil, rateLimited: Bool = false) {
+        self.statusCode = statusCode; self.retryAt = retryAt; self.rateLimited = rateLimited || statusCode == 429
+    }
+    static func response(_ response: HTTPURLResponse, now: Date = Date()) -> Self {
+        let status = response.statusCode
+        let remaining = response.value(forHTTPHeaderField: "X-RateLimit-Remaining")
+        let retry = response.value(forHTTPHeaderField: "Retry-After").flatMap { value -> Date? in
+            if let seconds = Double(value), seconds.isFinite, seconds >= 0 { return now.addingTimeInterval(min(seconds, 86400)) }
+            let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0); formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+            return formatter.date(from: value).map { min($0, now.addingTimeInterval(86400)) }
+        }
+        let githubLimit = response.url?.host?.lowercased() == "api.github.com" && remaining == "0"
+        let reset = githubLimit ? response.value(forHTTPHeaderField: "X-RateLimit-Reset").flatMap(Double.init)
+            .flatMap { $0.isFinite ? Date(timeIntervalSince1970: $0) : nil } : nil
+        let limited = status == 429 || (status == 403 && (githubLimit || retry != nil))
+        let deadline = [retry, reset].compactMap { $0 }.max().map { min(max($0, now), now.addingTimeInterval(86400)) }
+        return .init(statusCode: status, retryAt: deadline, rateLimited: limited)
+    }
     public var errorDescription: String? { "HTTP request failed with status \(statusCode)" }
 }
 
@@ -21,7 +41,20 @@ struct DownloadResumeState: Codable {
 
 enum DownloadRestart: Error { case required }
 
+struct HTTPMetadataResponse: Sendable {
+    let data: Data
+    let status: Int
+    let headers: [String: String]
+}
+
 public enum HTTPTransfer {
+    static func metadata(from url: URL, limit: Int, headers: [String: String],
+                         configuration: URLSessionConfiguration = .ephemeral) async throws -> HTTPMetadataResponse {
+        let transfer = Transfer(url: url, limit: Int64(limit), destination: nil, progress: nil,
+                                configuration: configuration, metadataHeaders: headers)
+        let data = try await transfer.run()
+        return transfer.metadataResult(data)
+    }
     public static func data(from url: URL, limit: Int) async throws -> Data {
         let result = try await Transfer(url: url, limit: Int64(limit), destination: nil, progress: nil).run()
         return result
@@ -63,13 +96,20 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
     private let resuming: Bool
     private let configuration: URLSessionConfiguration
     private let onResume: @Sendable (Int64) -> Void
+    private let metadataHeaders: [String: String]?
+    private var responseStatus = 0
+    private var conditionalMetadata = false
+    private var responseHeaders: [String: String] = [:]
+    func metadataResult(_ data: Data) -> HTTPMetadataResponse {
+        lock.withLock { .init(data: data, status: responseStatus, headers: responseHeaders) }
+    }
     private var resumeState: DownloadResumeState?
     private var offset: Int64 = 0
 
     init(url: URL, limit: Int64, destination: URL?, progress: (@Sendable (Int64, Int64) -> Void)?,
-         resuming: Bool = false, configuration: URLSessionConfiguration = .ephemeral, onResume: @escaping @Sendable (Int64) -> Void = { _ in }) {
+         resuming: Bool = false, configuration: URLSessionConfiguration = .ephemeral, metadataHeaders: [String: String]? = nil, onResume: @escaping @Sendable (Int64) -> Void = { _ in }) {
         self.url = url; self.limit = limit; self.destination = destination; self.progress = progress
-        self.resuming = resuming; self.configuration = configuration
+        self.resuming = resuming; self.configuration = configuration; self.metadataHeaders = metadataHeaders
         self.onResume = onResume
     }
     func run() async throws -> Data {
@@ -105,11 +145,15 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
                     let config = configuration.copy() as! URLSessionConfiguration
                     config.timeoutIntervalForRequest = 30; config.timeoutIntervalForResource = 300
                     config.urlCredentialStorage = nil; config.httpShouldSetCookies = false; config.httpCookieStorage = nil
-                    if destination != nil { config.urlCache = nil; config.requestCachePolicy = .reloadIgnoringLocalCacheData }
+                    if destination != nil || metadataHeaders != nil { config.urlCache = nil; config.requestCachePolicy = .reloadIgnoringLocalCacheData }
                     let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
                     self.session = session
                     var request = URLRequest(url: url)
                     request.setValue("Upovi (macOS)", forHTTPHeaderField: "User-Agent")
+                    if let metadataHeaders {
+                        for (key, value) in metadataHeaders { request.setValue(value, forHTTPHeaderField: key) }
+                        conditionalMetadata = metadataHeaders["If-None-Match"] != nil || metadataHeaders["If-Modified-Since"] != nil
+                    }
                     if destination != nil { request.setValue("identity", forHTTPHeaderField: "Accept-Encoding") }
                     if let state = resumeState {
                         request.setValue("bytes=\(offset)-", forHTTPHeaderField: "Range")
@@ -129,6 +173,11 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
             lock.withLock { failure = URLError(.unsupportedURL) }; completionHandler(nil); return
         }
         var redirected = request
+        if request.url?.host?.lowercased() != response.url?.host?.lowercased() || request.url?.port != response.url?.port {
+            redirected.setValue(nil, forHTTPHeaderField: "If-None-Match")
+            redirected.setValue(nil, forHTTPHeaderField: "If-Modified-Since")
+            lock.withLock { conditionalMetadata = false }
+        }
         if destination != nil { redirected.setValue("identity", forHTTPHeaderField: "Accept-Encoding") }
         if let state = resumeState {
             redirected.setValue("bytes=\(offset)-", forHTTPHeaderField: "Range")
@@ -142,7 +191,15 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
         do {
             guard let http = response as? HTTPURLResponse, response.url?.scheme == "https" else { throw URLError(.badServerResponse) }
             if http.statusCode == 416 && offset > 0 { throw DownloadRestart.required }
-            guard (200..<300).contains(http.statusCode) else { throw HTTPStatusError(statusCode: http.statusCode) }
+            responseStatus = http.statusCode
+            for key in ["ETag", "Last-Modified", "Cache-Control", "Vary"] {
+                if let value = http.value(forHTTPHeaderField: key) { responseHeaders[key.lowercased()] = value }
+            }
+            if metadataHeaders != nil, http.statusCode == 304 {
+                guard conditionalMetadata else { throw URLError(.badServerResponse) }
+                lock.unlock(); completionHandler(.allow); return
+            }
+            guard (200..<300).contains(http.statusCode) else { throw HTTPStatusError.response(http) }
             guard response.expectedContentLength <= limit else { throw URLError(.badServerResponse) }
             if let destination {
                 let encoding = http.value(forHTTPHeaderField: "Content-Encoding")?.lowercased()

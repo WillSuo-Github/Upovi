@@ -1,0 +1,27 @@
+# Source refresh and reliability, 0.4.7
+
+## Freshness and failure behavior
+
+Refresh rescans the inventory, invalidates catalog freshness and revalidates source metadata. Old in-flight catalog fetches cannot repopulate a newer refresh. Background catalog freshness is five minutes, so the configured fifteen-minute checks no longer reuse an entire day's catalog. The source HTTP cache is process-local, bounded to 128 entries and 64 MB, with a maximum five-minute freshness window. A manual refresh bypasses freshness while retaining ETag or Last-Modified validators. A 304 reuses bytes only for an actual conditional request and a matching retained entry. Metadata is not persisted; closing the app clears this cache and cooldown state.
+
+Requests are serialized per HTTPS origin. Temporary connection failures and selected HTTP 408/500/502/503/504 responses receive at most two retries with one/two-second delays. TLS, authorization and metadata validation failures are not retried. HTTP 429, or 403 with explicit throttling evidence, establishes a bounded server-directed cooldown using Retry-After and GitHub remaining/reset headers; accepted cooldowns are capped at 24 hours. Plain 403 is classified as denied, and 401/403/404 cool down only the requested endpoint for one minute. Manual refresh does not bypass a cooldown. An unsuccessful revalidation reports failure/partial status and cannot silently return old bytes as a new success. No token, cookie, password or authenticated rate-limit exemption is required or claimed. Download-byte retry remains a separate policy.
+
+Only fixed rate-limit classification and retry date fields are added to diagnostic issues. Response bodies, raw headers, request URLs and cache entries are not exported. Cross-origin redirects drop conditional validators. The transport continues to enforce HTTPS, response-size bounds, cancellation and download integrity protections. Cache-Control no-store/no-cache and smaller max-age directives are honored.
+
+The request policy follows [GitHub's primary guidance](https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api). Unauthenticated 304 responses are not claimed exempt from GitHub rate limits.
+
+## Exact official manual entry points
+
+The installed `com.ws.youtube-music` matches the developer's [App Store entry](https://apps.apple.com/app/id6482353962), confirmed by Apple's public lookup response. A non-store installation receives that official manual entry point; its version is not silently compared or replaced across distribution channels. Actual App Store receipt installations retain their existing system-managed path.
+
+The installed `dev.appbinnacle.AppBinnacle` matches the bundle identifier in its [official repository](https://github.com/WillSuo-Github/AppBinnacle). The repository had no public Release during acceptance. Its release page is now available as a manual entry point; no version is inferred from commits. Battle.net and Lark retain their exact vendor/manual routes because their launcher/kernel versions do not establish comparable product updates. The table says official-channel check required when a manual entry point exists. These four real apps remain unconfirmed/manual; this work does not manufacture automatic coverage or report them current. Explicit valid source overrides still work where permitted by the existing channel policy.
+
+## Verification
+
+160 local tests passed: 145 core and 15 actual-store workflow tests. New checks cover manual refresh ordering, changed catalog versions, failure without stale fallback, invalidated in-flight responses, conditional response reuse, no-store/no-cache, bounded cache size, caller size limits, malformed/unexpected 304s, throttling-vs-denial classification, origin cooldown scope, TLS refusal, bounded transient retries, queued cancellation, transport header behavior and exact manual identities.
+
+`script/acceptance/source_refresh.swift` is a read-only developer acceptance tool linked against the debug core with test visibility. It requests only the public Homebrew catalog and one public GitHub release. The actual HTTPS origin returned 200 then conditional 304 for each. A repeated catalog lookup reused the loaded snapshot, while manual invalidation necessarily contacted the origin again. This verifies the production transport/cache/catalog, not an installed-app mutation.
+
+A fresh default-directory source scan retained 71 applications: 23 App Store, 31 checked without updates, 12 with source updates and five unconfirmed/unsupported (four real manual routes plus one synthetic fixture). This run had zero failed/partial checks. The preceding run had three failed and five partial GitHub 403 outcomes; subsequent single-endpoint probes returned 200 even before the fix. Therefore the original intermittent 403 cause remains unproven, and the improvement is scoped to the observed run. The CLI scan does not apply user source overrides. Raw inventory stays private under .local/source-hardening.
+
+Original 0.4.6 installation/self-update/PKG evidence retains its exact version and checkpoint scope. Its existing 24-hour observation is a background baseline; newer code is not accepted by inheriting its duration. Physical host sleep/network/power checks and notarization remain owner-deferred. See [0.4.7 evidence](evidence/0.4.7-source-reliability.json) for final CI and artifact results.

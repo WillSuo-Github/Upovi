@@ -60,7 +60,7 @@ public enum UpdateChecker {
                 }
                 checked += 1; notes.append("已检查开发者 appcast"); checks.append(.init(.appcast, .checked))
             } catch is CancellationError { return .init(appID: app.id, candidates: [], note: "检测已取消", status: .failed, checks: [.init(.appcast, .cancelled, error: CancellationError())]) }
-            catch { failed += 1; notes.append("appcast：\(error.localizedDescription)"); checks.append(.init(.appcast, .failed, error: error)) }
+            catch { failed += 1; notes.append("appcast：\(failureDescription(error))"); checks.append(.init(.appcast, .failed, error: error)) }
         }
         if Task.isCancelled { return .init(appID: app.id, candidates: [], note: "检测已取消", status: .failed) }
         do {
@@ -83,7 +83,7 @@ public enum UpdateChecker {
                 if comparable { checked += 1; notes.append("已检查 Homebrew"); checks.append(.init(.homebrew, .checked)) }
                 else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append("Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新") }
             }
-        } catch { failed += 1; notes.append("Homebrew：\(error.localizedDescription)"); checks.append(.init(.homebrew, .failed, error: error)) }
+        } catch { failed += 1; notes.append("Homebrew：\(failureDescription(error))"); checks.append(.init(.homebrew, .failed, error: error)) }
         if let repository = override?.githubRepository ?? githubRepositories[app.bundleID], !Task.isCancelled {
             do {
                 let release = try await GitHubRelease.latest(repository: repository, fetch: fetch)
@@ -92,7 +92,7 @@ public enum UpdateChecker {
                                             url: release.page, download: release.download, releaseNotes: release.releaseNotes))
                 }
                 checked += 1; notes.append("已检查 GitHub Release"); checks.append(.init(.github, .checked))
-            } catch { failed += 1; notes.append("GitHub：\(error.localizedDescription)"); checks.append(.init(.github, .failed, error: error)) }
+            } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
         }
         let status: SourceStatus = failed > 0 ? (checked > 0 ? .partial : .failed)
             : !candidates.isEmpty ? .updates : checked > 0 ? (uncomparable > 0 ? .partial : .current) : .unsupported
@@ -100,7 +100,15 @@ public enum UpdateChecker {
         return .init(appID: app.id, candidates: candidates, note: notes.isEmpty ? hint?.note ?? "暂未适配更新来源，可手动设置开发者 appcast 或 GitHub 仓库" : notes.joined(separator: " · "), status: status, manualURL: hint?.url, checks: checks)
     }
 
+    private static func failureDescription(_ error: any Error) -> String {
+        guard let http = error as? HTTPStatusError else { return error.localizedDescription }
+        if http.rateLimited { return "服务器限制了请求频率，请稍后重试（HTTP \(http.statusCode)）" }
+        if http.statusCode == 403 { return "服务器拒绝了请求，未确认是否有更新（HTTP 403）" }
+        if http.statusCode == 404 { return "公开更新来源暂不可用，未确认是否有更新（HTTP 404）" }
+        return "来源请求失败（HTTP \(http.statusCode)）"
+    }
+
     public static func fetch(_ url: URL, limit: Int) async throws -> Data {
-        try await HTTPTransfer.data(from: url, limit: limit)
+        try await SourceHTTPClient.shared.data(from: url, limit: limit)
     }
 }

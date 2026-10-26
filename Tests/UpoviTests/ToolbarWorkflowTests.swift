@@ -25,7 +25,7 @@ final class ToolbarWorkflowTests: XCTestCase {
         let fresh = (0..<7).map { app($0) }, tracker = RefreshTracker()
         let store = AppStore(preferences: try preferences(), scanApplications: { _ in
             await tracker.record("scan"); return fresh
-        }, checkApplication: { app, _ in
+        }, revalidateSources: { await tracker.record("revalidate") }, checkApplication: { app, _ in
             await tracker.record(app.id)
             return .init(appID: app.id, candidates: [.init(version: "2.0", source: "Fixture source", isCommunity: false, url: nil)], note: "Fixture", status: .updates)
         })
@@ -35,8 +35,9 @@ final class ToolbarWorkflowTests: XCTestCase {
         await store.checkTask?.value
         let events = await tracker.events
         XCTAssertEqual(events.first, "scan")
-        XCTAssertEqual(Set(events.dropFirst()), Set(fresh.map(\.id)))
-        XCTAssertEqual(events.count, 8)
+        XCTAssertEqual(events.dropFirst().first, "revalidate")
+        XCTAssertEqual(Set(events.dropFirst(2)), Set(fresh.map(\.id)))
+        XCTAssertEqual(events.count, 9)
         XCTAssertEqual(store.apps, fresh)
         XCTAssertEqual(store.sourceResults.count, 7)
         XCTAssertEqual(store.completedChecks, 7)
