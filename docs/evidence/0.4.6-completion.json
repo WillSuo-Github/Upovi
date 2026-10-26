@@ -132,7 +132,7 @@
     "boundary": "Actual Sparkle public-feed old-to-new update. Guest UI observed download/install and new download-tasks sidebar. No manual copy of the new bundle."
   },
   "latest24HourObservation": {
-    "status": "running",
+    "status": "collector_disappeared_not_accepted",
     "startedAt": "2026-10-26T09:30:24.986676+00:00",
     "requestedDurationSeconds": 86400,
     "version": "0.4.6",
@@ -146,9 +146,28 @@
       "checkIntervalV1": 15,
       "notificationsV1": false
     },
-    "expectedCompletionAt": "2026-10-27T09:30:24.986676+00:00",
-    "boundary": "New real elapsed run. Not accepted; timer completion requires log, traffic, process identity and sampling-gap review. No inherited duration.",
-    "followUpAutomation": "upovi-0-4-6"
+    "boundary": "About 52 minutes recorded, not 24-hour acceptance. Most samples lacked a visible window. Application exit or crash is not established; the exact original app PID and binary remain present. Raw records are preserved, no application or collector restart and no inherited duration. Baseline applies only to 0.4.6, not 0.4.7.",
+    "followUpAutomation": "upovi-0-4-6; deleted after recording collector disappearance",
+    "reviewedAt": "2026-10-26T10:29:07.725801+00:00",
+    "applicationStillRunning": true,
+    "binarySHA256Verified": "4ddc84bafed5b8643aba6538518237eb33368bf4289e763be81d4d6091a34b8e",
+    "collectorPresent": false,
+    "managedCollectorSession": "unavailable",
+    "lastRecordedSampleAt": "2026-10-26T10:22:24.996654+00:00",
+    "recordedElapsedSeconds": 3120.01,
+    "samples": 53,
+    "uiProbeErrors": 0,
+    "trafficProbeFailures": 0,
+    "visibleWindowSamples": 8,
+    "windowlessSamples": 45,
+    "recordedCoverageGapsSeconds": [],
+    "rssKBMin": 99344,
+    "rssKBMax": 204480,
+    "configurationUnchanged": true,
+    "completedSourceChecks": 3,
+    "sourceFailuresInCompletedChecks": 0,
+    "completedCommunitySyncs": 1,
+    "collectorExitCause": "unknown; raw summary remains stale running and no observer or log-stream collector process exists"
   },
   "sleepWake": {
     "status": "deferred_by_owner_this_session",

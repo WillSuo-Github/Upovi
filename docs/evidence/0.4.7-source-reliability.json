@@ -113,7 +113,11 @@
   },
   "observation": {
     "version": "0.4.6",
-    "status": "continuing baseline; no duration inherited by 0.4.7"
+    "status": "collector_disappeared_not_accepted",
+    "recordedElapsedSeconds": 3120.01,
+    "samples": 53,
+    "applicationStillRunning": true,
+    "boundary": "Baseline stopped collecting after its last sample. No duration or acceptance inherited by 0.4.7."
   },
   "physicalSleepNetworkPower": "deferred by owner",
   "notarization": "deferred by owner",

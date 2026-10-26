@@ -34,7 +34,7 @@ Install Xcode with Swift 6 command-line tools, then:
 
 This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive and Upovi embeds the pinned Sparkle framework. Header notices are in `THIRD-PARTY-NOTICES.md`.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.7 signed preview and public feed are published; genuine Sparkle old-to-new update results remain version-specific. The 0.4.6 background observation continues as a version-specific baseline, not acceptance of later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.7 signed preview and public feed are published; genuine Sparkle old-to-new update results remain version-specific. The 0.4.6 baseline collector disappeared after about 52 minutes; the original app remains running, but the observation is not accepted and does not validate later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
 
 ## Public community discovery
 
