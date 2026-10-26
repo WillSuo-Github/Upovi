@@ -61,6 +61,11 @@ final class UpdateControlsTests: XCTestCase, @unchecked Sendable {
             XCTAssertEqual(result.status, .unsupported)
             XCTAssertTrue(result.candidates.isEmpty)
             XCTAssertNotNil(result.manualURL)
+            if bundle == "com.electron.lark" {
+                let custom = await UpdateChecker.check(app, override: .init(appcast: URL(string: "http://example.invalid/unused")))
+                XCTAssertEqual(custom.status, .unsupported)
+                XCTAssertTrue(custom.candidates.isEmpty)
+            }
         }
     }
     func testReleaseNotesAreBoundedAndCannotBeProvidedByPeers() throws {

@@ -34,7 +34,8 @@ public enum UpdateChecker {
 
     public static func check(_ app: InstalledApp, override: SourceOverride? = nil) async -> SourceResult {
         if app.isAppStore { return .init(appID: app.id, candidates: [], note: "由 App Store 管理更新", status: .appStore) }
-        if override?.appcast == nil, override?.githubRepository == nil, let hint = ManualUpdateSource.forBundle(app.bundleID) {
+        let browserVersion = app.bundleID == "com.electron.lark" && (Int(app.version.split(separator: ".").first.map(String.init) ?? "") ?? 0) >= 100
+        if let hint = ManualUpdateSource.forBundle(app.bundleID), browserVersion || (override?.appcast == nil && override?.githubRepository == nil) {
             return .init(appID: app.id, candidates: [], note: hint.note, status: .unsupported, manualURL: hint.url)
         }
         var candidates: [UpdateCandidate] = [], notes: [String] = []
