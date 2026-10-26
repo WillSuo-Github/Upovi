@@ -19,9 +19,15 @@ struct DiagnosticsView: View {
     private var report: Data? { try? snapshot.report(includingApplicationIdentifiers: includeIdentifiers) }
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("诊断报告").font(.title2.bold())
-            Text("包含来源检查状态、失败阶段和错误代码。默认使用临时应用编号；不包含本机路径、设备名、IP、来源／下载链接、原始日志或凭据。报告只保存到你选择的位置，不会自动上传。")
-                .font(.callout).foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: "stethoscope").font(.title2.weight(.semibold)).foregroundStyle(Theme.accent)
+                    .frame(width: 44, height: 44).background(Theme.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("诊断报告").font(.title3.weight(.semibold))
+                    Text("包含来源检查状态、失败阶段和错误代码。默认使用临时应用编号；不包含本机路径、设备名、IP、来源／下载链接、原始日志或凭据。报告只保存到你选择的位置，不会自动上传。")
+                        .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
             Toggle("包含应用标识与版本（会暴露软件清单）", isOn: $includeIdentifiers)
                 .accessibilityIdentifier("diagnostics-identifiers-toggle")
             ScrollView {
@@ -30,12 +36,12 @@ struct DiagnosticsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading).padding(12)
                     .accessibilityIdentifier("diagnostics-preview")
                     .id(includeIdentifiers)
-            }.frame(minHeight: 250).background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+            }.frame(minHeight: 250).background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             if !status.isEmpty { Text(status).font(.caption).accessibilityIdentifier("diagnostics-export-status") }
             HStack {
-                Button("关闭") { dismiss() }.keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("保存诊断报告…") { status = ""; exporting = true }.disabled(report == nil)
+                Button("关闭") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("保存诊断报告…") { status = ""; exporting = true }.disabled(report == nil).buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("save-diagnostics-report")
             }
         }.padding(24).frame(width: 650, height: 560)

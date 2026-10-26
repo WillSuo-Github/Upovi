@@ -6,10 +6,13 @@ import Network
 import OSLog
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case updates = "可用更新", all = "全部应用", community = "P2P 网络", ignored = "已忽略", downloads = "下载任务"
+    case updates = "可用更新", all = "全部应用", downloads = "下载", history = "历史与恢复", community = "P2P 网络"
     var id: String { rawValue }
     var symbol: String {
-        switch self { case .downloads: "tray.and.arrow.down"; case .updates: "arrow.down.circle"; case .all: "square.grid.2x2"; case .community: "point.3.connected.trianglepath.dotted"; case .ignored: "eye.slash" }
+        switch self {
+        case .updates: "arrow.down.circle"; case .all: "square.grid.2x2"; case .downloads: "tray.and.arrow.down"
+        case .history: "clock.arrow.circlepath"; case .community: "point.3.connected.trianglepath.dotted"
+        }
     }
 }
 
@@ -120,7 +123,7 @@ final class AppStore {
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
         self.revalidateSources = revalidateSources
-        section = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .all
+        section = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .updates
         automaticChecks = preferences.bool(forKey: "automaticChecksV1")
         let interval = preferences.integer(forKey: "checkIntervalV1")
         checkIntervalMinutes = max(15, interval == 0 ? 60 : interval)
@@ -167,12 +170,10 @@ final class AppStore {
     var visibleApps: [InstalledApp] {
         apps.filter { app in
             let matches = search.isEmpty || app.name.localizedCaseInsensitiveContains(search) || app.bundleID.localizedCaseInsensitiveContains(search)
-            guard matches, sourceFilter.includes(sourceResults[app.id]?.status, isAppStore: app.isAppStore) else { return false }
-            switch section {
-            case .updates: return !ignored.contains(app.bundleID) && assessment(for: app).hasUpdate
-            case .ignored: return ignored.contains(app.bundleID)
-            default: return true
-            }
+            guard matches else { return false }
+            if section == .updates { return !ignored.contains(app.bundleID) && assessment(for: app).hasUpdate }
+            if sourceFilter == .ignored { return ignored.contains(app.bundleID) }
+            return sourceFilter.includes(sourceResults[app.id]?.status, isAppStore: app.isAppStore)
         }
     }
     var selectedApp: InstalledApp? { apps.first { $0.id == selection } }

@@ -4,137 +4,196 @@ import UpoviCore
 
 struct SettingsView: View {
     @Bindable var store: AppStore
+    @AppStorage("settingsTabV1") private var tab = "general"
+
+    var body: some View {
+        TabView(selection: $tab) {
+            GeneralSettings(store: store).tabItem { Label("通用", systemImage: "gearshape") }.tag("general")
+            ScanSettings(store: store).tabItem { Label("扫描与安装", systemImage: "square.grid.2x2") }.tag("scan")
+            P2PSettings(store: store).tabItem { Label("P2P", systemImage: "point.3.connected.trianglepath.dotted") }.tag("p2p")
+            AboutSettings(store: store).tabItem { Label("关于", systemImage: "info.circle") }.tag("about")
+        }
+        .frame(width: 600, height: 500)
+        .tint(Theme.accent)
+    }
+}
+
+private struct GeneralSettings: View {
+    @Bindable var store: AppStore
+    @State private var loginItem = LoginItemService()
     @State private var notificationTestStatus = ""
     @State private var sendingTestNotification = false
-    @State private var loginItem = LoginItemService()
-    @ObservedObject private var updater = SelfUpdateService.shared
     @Environment(\.scenePhase) private var scenePhase
+
     var body: some View {
-        TabView {
-            Form {
-                Section("启动") {
-                    Toggle("登录时启动 Upovi", isOn: Binding(get: { loginItem.enabled }, set: { loginItem.setEnabled($0) }))
-                    if loginItem.needsApproval {
-                        Text("需要在系统设置中允许 Upovi 登录启动。").font(.caption).foregroundStyle(.secondary)
-                        Button("打开登录项设置") { loginItem.openSettings() }
-                    }
-                    if let error = loginItem.errorMessage { Text(error).font(.caption).foregroundStyle(.red) }
+        Form {
+            Section {
+                Toggle("登录时启动 Upovi", isOn: Binding(get: { loginItem.enabled }, set: { loginItem.setEnabled($0) }))
+                if loginItem.needsApproval {
+                    LabeledContent("需要在系统设置中允许 Upovi 登录启动。") { Button("打开登录项设置") { loginItem.openSettings() } }
+                        .font(.caption)
                 }
-                Section("更新检测") {
-                    Toggle("应用运行时自动检查更新", isOn: $store.automaticChecks)
-                    Picker("检查间隔", selection: $store.checkIntervalMinutes) {
-                        Text("15 分钟").tag(15)
-                        Text("1 小时").tag(60)
-                        Text("6 小时").tag(360)
-                    }.disabled(!store.automaticChecks)
-                    Toggle("发现来源更新时通知我", isOn: Binding(get: { store.notificationsEnabled }, set: { enabled in
-                        Task { await store.setNotifications(enabled) }
-                    }))
-                    HStack {
-                        Button("发送测试通知") {
-                            sendingTestNotification = true
-                            Task {
-                                notificationTestStatus = await store.notifications.sendTest()
-                                sendingTestNotification = false
-                            }
-                        }.disabled(!store.notificationsEnabled || sendingTestNotification)
-                        if !notificationTestStatus.isEmpty { Text(notificationTestStatus).font(.caption).foregroundStyle(.secondary) }
-                    }
-                    Text("休眠或退出应用会暂停检查；醒来后恢复网络连接。社区版本仅作线索，不触发安装或官方更新通知。")
-                        .font(.caption).foregroundStyle(.secondary)
-                    if !store.updatePolicy.skipped.isEmpty || !store.updatePolicy.deferredUntil.isEmpty {
-                        Button("恢复所有跳过与稍后提醒") { store.clearUpdatePolicy() }
-                    }
-                }
-                Section("应用扫描与安装") {
-                    Text("扫描 /Applications 和 ~/Applications，不执行被扫描应用。当前识别 \(store.apps.count) 个应用。")
-                    Text("支持验证后的 ZIP／DMG 应用更新，以及经负载检查的签名 PKG。管理员安装会显示系统授权窗口。App Store 应用可在 Upovi 内发起商店更新，可能需要 Apple 账户认证；商店更新不提供 Upovi 旧版备份或暂停。无法验证的其他安装包仍使用官方渠道。")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Button("刷新并检查") { store.refreshAll() }.disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
-                    ForEach(store.additionalScanDirectories, id: \.self) { path in
-                        HStack {
-                            Text(path).font(.caption).textSelection(.enabled)
-                            Spacer()
-                            Button("移除") { store.setScanDirectories(store.additionalScanDirectories.filter { $0 != path }) }
-                                .disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
+                if let error = loginItem.errorMessage { Text(error).font(.caption).foregroundStyle(.red) }
+            } header: { Text("启动") }
+
+            Section {
+                Toggle("应用运行时自动检查更新", isOn: $store.automaticChecks)
+                Picker("检查间隔", selection: $store.checkIntervalMinutes) {
+                    Text("每 15 分钟").tag(15)
+                    Text("每小时").tag(60)
+                    Text("每 6 小时").tag(360)
+                }.disabled(!store.automaticChecks)
+            } header: { Text("自动检查") } footer: {
+                Text("休眠或退出应用会暂停检查；醒来后恢复网络连接。").font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("发现来源更新时通知我", isOn: Binding(get: { store.notificationsEnabled }, set: { enabled in
+                    Task { await store.setNotifications(enabled) }
+                }))
+                LabeledContent {
+                    Button("发送测试通知") {
+                        sendingTestNotification = true
+                        Task {
+                            notificationTestStatus = await store.notifications.sendTest()
+                            sendingTestNotification = false
                         }
-                    }
-                    Button("添加扫描目录…") { store.chooseScanDirectory() }
-                        .disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
+                    }.disabled(!store.notificationsEnabled || sendingTestNotification)
+                } label: {
+                    Text(notificationTestStatus.isEmpty ? "测试通知" : notificationTestStatus).foregroundStyle(notificationTestStatus.isEmpty ? .primary : .secondary)
                 }
-                Section("诊断与反馈") {
-                    Button("预览并导出诊断报告…") { store.diagnosticsPresentation = store.diagnosticSnapshot() }
-                        .accessibilityIdentifier("open-diagnostics-report")
-                    Text("先预览再保存。默认隐藏软件标识，不读取系统或管理员授权日志。")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Section("Upovi \(AppMetadata.displayVersion)") {
-                    Text("SwiftUI · MIT License · macOS 14+")
-                    Button("检查 Upovi 自身更新…") { updater.check() }.disabled(!updater.canCheck || store.installationBusy)
-                    Toggle("自动检查 Upovi 自身更新", isOn: Binding(get: { updater.automaticChecks }, set: { updater.setAutomaticChecks($0) }))
-                        .disabled(!updater.isConfigured)
-                    if !updater.isConfigured { Text("开发命令行版本未配置自身更新，请使用完整应用包。").font(.caption).foregroundStyle(.secondary) }
-                    Link("项目与问题反馈", destination: URL(string: "https://github.com/WillSuo-Github/Upovi")!)
-                }
-            }.formStyle(.grouped).tabItem { Label("通用", systemImage: "gearshape") }
-            Form {
-                Section("P2P 网络") {
-                    Toggle("启用 P2P 网络", isOn: Binding(get: { store.networkEnabled }, set: { store.setP2PEnabled($0) }))
-                        .accessibilityIdentifier("global-p2p-toggle")
-                    Text("首次使用默认开启。开启后，所有已扫描应用都会参与版本发现与公开共享，无需逐个选择；关闭后停止发现、发布和响应请求。")
-                        .foregroundStyle(.secondary)
-                    Text("已扫描：\(store.apps.count) 个应用；验签节点：\(store.discoveredPublishers.count) 个")
-                    Text("公开信息包括应用标识、版本、构建号、分发渠道和自报 Team ID，任何人均可读取；节点也能看到 IP。不包含路径、用户名、设备名或安装包。")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text("关闭后，网络中已缓存的公开记录仍会按有效期过期，无法立即撤回。签名不能证明真实安装或官方发布。")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text(store.networkStatus).font(.caption).foregroundStyle(.secondary)
-                }
-            }.formStyle(.grouped).tabItem { Label("P2P", systemImage: "network") }
-            InstallationHistoryView(store: store).tabItem { Label("记录与恢复", systemImage: "clock.arrow.circlepath") }
-        }.frame(width: 660, height: 620)
-        .sheet(item: $store.diagnosticsPresentation) { DiagnosticsView(snapshot: $0) }
+            } header: { Text("通知") } footer: {
+                Text("社区版本仅作线索，不触发更新通知。").font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
+                LabeledContent("跳过的版本") { Text("\(store.updatePolicy.skipped.count) 个").foregroundStyle(.secondary) }
+                LabeledContent("稍后提醒的应用") { Text("\(store.updatePolicy.deferredUntil.count) 个").foregroundStyle(.secondary) }
+                Button("恢复所有跳过与稍后提醒") { store.clearUpdatePolicy() }
+                    .disabled(store.updatePolicy.skipped.isEmpty && store.updatePolicy.deferredUntil.isEmpty)
+            } header: { Text("提醒规则") }
+        }
+        .formStyle(.grouped)
         .onAppear { loginItem.refresh() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { loginItem.refresh() } }
-        .sheet(item: $store.backupDeletionConfirmation) { receipt in
-            VStack(alignment: .leading, spacing: 18) {
-                Text("清理 \(receipt.application.name) 的保留副本？").font(.title2.bold())
-                Text("保留副本将移到废纸篓，清理后将无法使用这份副本恢复。当前应用、文稿和设置会保留。")
-                HStack {
-                    Button("取消") { store.backupDeletionConfirmation = nil }.keyboardShortcut(.cancelAction)
-                    Spacer()
-                    Button("移到废纸篓", role: .destructive) {
-                        store.backupDeletionConfirmation = nil; store.discardBackup(receipt)
+    }
+}
+
+private struct ScanSettings: View {
+    @Bindable var store: AppStore
+
+    var body: some View {
+        Form {
+            Section {
+                ForEach(["/Applications", "~/Applications"], id: \.self) { path in
+                    Label(path, systemImage: "folder.fill").foregroundStyle(.secondary)
+                }
+                ForEach(store.additionalScanDirectories, id: \.self) { path in
+                    HStack {
+                        Label(path, systemImage: "folder.badge.plus").textSelection(.enabled)
+                        Spacer()
+                        Button { store.setScanDirectories(store.additionalScanDirectories.filter { $0 != path }) } label: {
+                            Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.borderless).help("移除此目录").disabled(store.operationBusy)
                     }
                 }
-            }.padding(28).frame(width: 480)
+                Button { store.chooseScanDirectory() } label: { Label("添加扫描目录…", systemImage: "plus") }
+                    .disabled(store.operationBusy)
+            } header: { Text("扫描位置") } footer: {
+                Text("当前识别 \(store.apps.count) 个应用。Upovi 只读取应用信息，不会运行被扫描的应用；更改目录后会自动重新扫描。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
+                capability("checkmark.shield", "ZIP／DMG 应用更新", "下载后核对完整性、应用标识、开发者签名与 Gatekeeper，安装时保留旧版本。")
+                capability("shippingbox", "签名 PKG", "检查安装负载后执行；管理员安装会显示系统授权窗口，脚本改动无法回滚。")
+                capability("bag", "App Store 应用", "由 Upovi 发起商店更新，可能需要 Apple 账户认证；不提供旧版备份或暂停。")
+                capability("arrow.up.forward.app", "其他安装包", "无法验证时，引导到官方来源更新。")
+            } header: { Text("支持的安装方式") }
+        }.formStyle(.grouped)
+    }
+
+    private func capability(_ symbol: String, _ title: String, _ detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: symbol).foregroundStyle(Theme.accent).frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(detail).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .sheet(item: $store.administratorRestoreConfirmation) { attempt in
-            VStack(alignment: .leading, spacing: 18) {
-                Text("恢复 \(attempt.plan.application.name) 的主应用？").font(.title2.bold())
-                Text("将请求管理员授权，从受保护的事务备份恢复安装前的主应用。PKG 脚本、系统服务、驱动和数据变更不会因此撤销。")
-                HStack {
-                    Button("取消") { store.administratorRestoreConfirmation = nil }.keyboardShortcut(.cancelAction)
-                    Spacer()
-                    Button("授权并恢复主应用") { store.administratorRestoreConfirmation = nil; store.restoreAdministratorInstallation(attempt) }
+    }
+}
+
+private struct P2PSettings: View {
+    @Bindable var store: AppStore
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle(isOn: Binding(get: { store.networkEnabled }, set: { store.setP2PEnabled($0) })) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("启用 P2P 网络")
+                        Text("所有已扫描应用都会参与版本发现与公开共享，无需逐个选择。").font(.caption).foregroundStyle(.secondary)
+                    }
                 }
-            }.padding(28).frame(width: 480)
+                .accessibilityIdentifier("global-p2p-toggle")
+                LabeledContent("已扫描应用") { Text("\(store.apps.count) 个").monospacedDigit() }
+                LabeledContent("验签节点") { Text("\(store.discoveredPublishers.count) 个").monospacedDigit() }
+                LabeledContent("状态") { Text(store.networkStatus.components(separatedBy: "\n").first ?? "").foregroundStyle(.secondary).multilineTextAlignment(.trailing) }
+            } footer: {
+                Text("首次使用默认开启。关闭后停止发现、发布和响应请求。").font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
+                note("eye", "公开信息包括应用标识、版本、构建号、分发渠道和自报 Team ID，任何人均可读取；节点也能看到 IP。")
+                note("eye.slash", "不包含路径、用户名、设备名或安装包。")
+                note("clock.arrow.circlepath", "关闭后，网络中已缓存的公开记录仍会按有效期过期，无法立即撤回。")
+                note("signature", "签名不能证明真实安装或官方发布；社区报告不计入可用更新。")
+            } header: { Text("共享的内容") }
+        }.formStyle(.grouped)
+    }
+
+    private func note(_ symbol: String, _ text: String) -> some View {
+        Label { Text(text).font(.callout).fixedSize(horizontal: false, vertical: true) } icon: { Image(systemName: symbol).foregroundStyle(.secondary) }
+    }
+}
+
+private struct AboutSettings: View {
+    @Bindable var store: AppStore
+    @ObservedObject private var updater = SelfUpdateService.shared
+    @State private var diagnostics: DiagnosticSnapshot?
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 16) {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 64, height: 64)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Upovi").font(Theme.display(22))
+                        Text("版本 \(AppMetadata.displayVersion)").font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+                        Text("开源 · 原生 · 让应用常新 — SwiftUI · MIT · macOS 14+").font(.caption).foregroundStyle(.tertiary)
+                    }
+                }.padding(.vertical, 4)
+                Link(destination: URL(string: "https://github.com/WillSuo-Github/Upovi")!) { Label("项目主页与问题反馈", systemImage: "arrow.up.forward.square") }
+            }
+
+            Section {
+                Toggle("自动检查 Upovi 自身更新", isOn: Binding(get: { updater.automaticChecks }, set: { updater.setAutomaticChecks($0) }))
+                    .disabled(!updater.isConfigured)
+                Button("检查 Upovi 自身更新…") { updater.check() }.disabled(!updater.canCheck || store.installationBusy)
+            } header: { Text("Upovi 更新") } footer: {
+                if !updater.isConfigured { Text("开发命令行版本未配置自身更新，请使用完整应用包。").font(.caption).foregroundStyle(.secondary) }
+            }
+
+            Section {
+                Button("预览并导出诊断报告…") { diagnostics = store.diagnosticSnapshot() }
+                    .accessibilityIdentifier("open-diagnostics-report")
+            } header: { Text("诊断") } footer: {
+                Text("先预览再保存，不会自动上传。默认隐藏软件标识，不读取系统或管理员授权日志。").font(.caption).foregroundStyle(.secondary)
+            }
         }
-        .sheet(item: $store.administratorCleanupConfirmation) { attempt in
-            VStack(alignment: .leading, spacing: 18) {
-                Text("清理 \(attempt.plan.application.name) 的管理员备份？").font(.title2.bold())
-                Text(attempt.plan.application.path).font(.caption).textSelection(.enabled)
-                Text("将请求管理员授权，永久删除这个已完成事务的主应用副本、安装包和展开数据。清理后无法通过此事务恢复。当前应用和事务记录会保留。")
-                Text("中断、失败或当前应用身份／版本不匹配的事务会被拒绝清理。").font(.caption).foregroundStyle(.secondary)
-                HStack {
-                    Button("取消") { store.administratorCleanupConfirmation = nil }.keyboardShortcut(.cancelAction)
-                    Spacer()
-                    Button("授权并永久清理", role: .destructive) {
-                        store.administratorCleanupConfirmation = nil
-                        store.manageAdministratorBackup(attempt, cleanup: true)
-                    }.accessibilityIdentifier("confirm-admin-backup-cleanup")
-                }
-            }.padding(28).frame(width: 500)
-        }
+        .formStyle(.grouped)
+        .sheet(item: $diagnostics) { DiagnosticsView(snapshot: $0) }
     }
 }

@@ -10,7 +10,7 @@ The HTTP validator rules follow [RFC 9110 If-Range](https://www.rfc-editor.org/r
 
 ## Administrator cleanup
 
-Settings → History and recovery shows protected transaction status and cached retained-data usage. **Inspect administrator record** requests system authorization to reconcile the authoritative root receipt. **Clean administrator backup** presents a permanent-deletion confirmation and requests authorization. Cleanup preserves the current application, receipt and installer log. It removes only the transaction's known retained app copies, package and expanded payload; it does not use Trash or run automatically.
+The main window's History and recovery section shows protected transaction status and cached retained-data usage. **Inspect administrator record** requests system authorization to reconcile the authoritative root receipt. **Clean administrator backup** presents a permanent-deletion confirmation and requests authorization. Cleanup preserves the current application, receipt and installer log. It removes only the transaction's known retained app copies, package and expanded payload; it does not use Trash or run automatically.
 
 The helper binds the request UUID, original application identity and selected version/build to the protected receipt. Only completed installs/restores whose current signed application still matches may begin cleanup. Older receipts without enough identity information are refused. Failed/interrupted installations keep recovery material. Before deleting any retained data, the helper durably revokes restoration in the receipt. Partial deletion remains visible and retryable; cancellation or an uncertain response requires an authoritative inspection. A completed cleanup cannot restore through this transaction.
 
