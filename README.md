@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.6 development**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.6 preview**
 
-[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
+[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.6). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
 ## What it does
 
@@ -33,7 +33,7 @@ Install Xcode with Swift 6 command-line tools, then:
 
 This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive and Upovi embeds the pinned Sparkle framework. Header notices are in `THIRD-PARTY-NOTICES.md`.
 
-Current implementation and acceptance boundaries are tracked in [daily readiness](docs/DAILY-READINESS.md). The linked public preview above is still 0.3.2; the new development artifact has not been published.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [0.4.6 evidence](docs/evidence/0.4.6-completion.json). The signed preview and public update feed are published; a genuine 0.4.5 → 0.4.6 Sparkle update passed. The latest-version 24-hour observation is running, not accepted. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
 
 ## Public community discovery
 

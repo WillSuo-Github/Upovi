@@ -2,7 +2,9 @@
 
 Download tasks now expose pause/continue, automatic reconnect/retry, persisted results and explicit fresh-source recovery after restart. Actual signed PKG execution/recovery and protected-helper termination followed by a guest OS reboot passed in a disposable macOS VM. See [behavior and acceptance](DOWNLOAD-CENTER-AND-ACCEPTANCE.md) and [version-specific evidence](evidence/0.4.6-completion.json).
 
-149 local tests passed (134 core, 15 store). Public self-update, final artifact/CI and newest-candidate long observation retain explicit independent result fields. This iteration follows direct-main delivery.
+149 local tests passed (134 core, 15 store). Product revision `b327595` passed CI on macOS 14 ARM, macOS 15 Intel and macOS 26 ARM. The Developer ID signed universal bundle, fresh archive extraction and signed feed/archive verification passed. [0.4.6 experimental preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.6) and its signed public latest feed are published. Actual Sparkle 0.4.5 build 11 → 0.4.6 build 12 replacement/relaunch passed inside the disposable VM, with the resulting bundle signature valid.
+
+A fresh host 0.4.6 global-P2P 24-hour observation started at 2026-10-26 17:30:24 Asia/Shanghai; it is running, not accepted. The operator intentionally stopped the older 0.4.2 run after about 17 hours to switch to the latest candidate; its records are retained without transferring duration. The owner chose to perform physical sleep/wake, actual host interface changes and privileged energy sampling later. Apple notarization remains deferred. This iteration follows direct-main delivery; older sections below are historical and keep their original scope.
 
 ---
 

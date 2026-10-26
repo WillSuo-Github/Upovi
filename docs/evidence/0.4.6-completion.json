@@ -68,13 +68,118 @@
     },
     "boundary": "Actual production protected helper and real vendor PKG scripts. Guest passwordless sudo, not a new native OS authentication-window test; guest reboot at backedUp checkpoint. Main-app recovery only."
   },
-  "finalProductCI": "pending",
-  "signedUniversalArtifact": "pending",
-  "publicRelease": "pending",
-  "genuineSelfUpdate": "pending",
-  "latest24HourObservation": "pending",
-  "sleepWake": "pending",
-  "networkChange": "pending",
-  "powerSampling": "pending",
-  "notarization": "deferred by owner"
+  "finalProductCI": {
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40297522012",
+    "jobs": [
+      {
+        "name": "tests (macos-15-intel)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-26)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-14)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "signedUniversalArtifact": {
+    "version": "0.4.6",
+    "build": "12",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "2a4c296d8a5b251395f4b0c927622f6a135865357076a33700d9d75418b29375",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "not_checked"
+  },
+  "publicRelease": {
+    "status": "published",
+    "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.6",
+    "feedURL": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+    "assets": [
+      "Upovi-0.4.6.zip",
+      "Upovi-0.4.6.zip.sha256",
+      "appcast.xml"
+    ],
+    "publicLatestFeedSignature": "verified",
+    "channel": "experimental signed preview; not notarized"
+  },
+  "genuineSelfUpdate": {
+    "fromVersion": "0.4.5",
+    "fromBuild": "11",
+    "fromProcessID": 823,
+    "toVersion": "0.4.6",
+    "toBuild": "12",
+    "toProcessID": 919,
+    "sourceRevision": "b327595591e2e640b0bcfd00710b6b9268bcf0ef",
+    "feedURL": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+    "actions": [
+      "Check for Updates",
+      "Install Update",
+      "Install and Relaunch"
+    ],
+    "result": "passed",
+    "signature": "deep strict all architectures passed after replacement",
+    "environment": "disposable macOS 26.6.2 ARM VM",
+    "boundary": "Actual Sparkle public-feed old-to-new update. Guest UI observed download/install and new download-tasks sidebar. No manual copy of the new bundle."
+  },
+  "latest24HourObservation": {
+    "status": "running",
+    "startedAt": "2026-10-26T09:30:24.986676+00:00",
+    "requestedDurationSeconds": 86400,
+    "version": "0.4.6",
+    "sourceRevision": "b327595591e2e640b0bcfd00710b6b9268bcf0ef",
+    "processID": 85261,
+    "binarySHA256": "4ddc84bafed5b8643aba6538518237eb33368bf4289e763be81d4d6091a34b8e",
+    "mode": "global",
+    "globalConfiguration": {
+      "p2pEnabledV3": true,
+      "automaticChecksV1": true,
+      "checkIntervalV1": 15,
+      "notificationsV1": false
+    },
+    "expectedCompletionAt": "2026-10-27T09:30:24.986676+00:00",
+    "boundary": "New real elapsed run. Not accepted; timer completion requires log, traffic, process identity and sampling-gap review. No inherited duration.",
+    "followUpAutomation": "upovi-0-4-6"
+  },
+  "sleepWake": {
+    "status": "deferred_by_owner_this_session",
+    "scope": "physical host Mac",
+    "reason": "Owner chose to perform physical sleep/wake, network switching and read-only energy authorization later on 2026-10-26. No host sleep, interface changes or privileged energy sampling performed."
+  },
+  "networkChange": {
+    "status": "deferred_by_owner_this_session",
+    "scope": "physical host Mac",
+    "reason": "Owner chose to perform physical sleep/wake, network switching and read-only energy authorization later on 2026-10-26. No host sleep, interface changes or privileged energy sampling performed."
+  },
+  "powerSampling": {
+    "status": "deferred_by_owner_this_session",
+    "scope": "physical host Mac",
+    "reason": "Owner chose to perform physical sleep/wake, network switching and read-only energy authorization later on 2026-10-26. No host sleep, interface changes or privileged energy sampling performed."
+  },
+  "notarization": "deferred by owner",
+  "productRevision": "b327595591e2e640b0bcfd00710b6b9268bcf0ef",
+  "supersededObservation": {
+    "version": "0.4.2",
+    "sourceRevision": "3874d13d0c76b4424358e3724ea484229987cdc7",
+    "processID": 451,
+    "startedAt": "2026-10-25T16:18:23.563883+00:00",
+    "finishedAt": "2026-10-26T09:28:43.287082+00:00",
+    "elapsedSeconds": 61819.72,
+    "samples": 1031,
+    "uiErrors": 0,
+    "coverageGapsSeconds": [],
+    "rssKBMin": 40800,
+    "rssKBMax": 215648,
+    "status": "operator_stopped_superseded_not_accepted",
+    "reason": "Explicitly replaced the 0.4.2 host process with the latest signed 0.4.6 candidate; duration is not transferred."
+  }
 }
