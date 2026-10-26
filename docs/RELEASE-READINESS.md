@@ -2,7 +2,7 @@
 
 Settings now provides local diagnostic preview/export with default inventory redaction and classified source/operation failures. Source coverage adds exact LiveHub and PlayCover repositories, stable VSCodium cask mapping, and correct renamed/platform-specific Homebrew app artifact handling. See [behavior and validation](DIAGNOSTICS-AND-SOURCES.md) and [version-specific evidence](evidence/0.4.5-diagnostics-sources.json).
 
-141 local tests passed (128 core, 13 store). Native export, signed artifact and revision-specific CI results are recorded in the evidence file. Existing PKG execution, interruption/reboot, long-observation and distribution boundaries retain their original scope. Direct commits go to main.
+141 local tests passed (128 core, 13 store), together with native report preview/save/cancel and opt-in/reset acceptance. Product revision 9e2529c passed CI on macOS 14 ARM, macOS 15 Intel and macOS 26 ARM. The signed universal bundle, fresh ZIP extraction and signed feed/archive verification passed. Results and exact artifact identity are recorded in the evidence file. Existing PKG execution, interruption/reboot, long-observation and distribution boundaries retain their original scope. Direct commits go to main.
 
 ---
 

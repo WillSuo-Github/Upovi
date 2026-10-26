@@ -46,17 +46,58 @@
       "previewEqualsSavedBytes": true,
       "accessibilityTextRefreshesBothDirections": true,
       "explicitIdentifiersRemainsOptional": true,
-      "finalSchemaVerifiableCount": true
+      "finalSchemaVerifiableCount": true,
+      "previewLength": 1045,
+      "previewAndSavedFNV1a": "1cf73110"
     },
     "boundary": "Synthetic offline fixture with the production store/settings/preview/export views; no actual app inventory or admin operation."
   },
-  "signedUniversalArtifact": "pending",
-  "finalProductCI": "pending",
+  "signedUniversalArtifact": {
+    "version": "0.4.5",
+    "build": "11",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "be52862328ea68a9d115a285bb682ce71d274f7cf96864105ed07f5ecc63c764",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "not_checked",
+    "embeddedSourceRevision": "9e2529c915d8d900b80ca19cd416b112c7e0e64d",
+    "freshExtractedSignature": "passed",
+    "published": false,
+    "notarized": false
+  },
+  "finalProductCI": {
+    "runID": 40290448950,
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40290448950",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "tests (macos-14)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-26)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-15-intel)",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
   "remaining": [
     "actual PKG scripts",
     "privileged interruption/reboot",
     "final-candidate long observation",
     "self-update publication",
     "notarization (deferred)"
-  ]
+  ],
+  "productSourceRevision": "9e2529c915d8d900b80ca19cd416b112c7e0e64d"
 }
