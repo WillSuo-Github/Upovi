@@ -90,7 +90,7 @@ final class AppStore {
     @ObservationIgnored let preferences: AppPreferences
     @ObservationIgnored lazy var notifications = NotificationService()
     @ObservationIgnored let installer: UpdateInstaller
-    @ObservationIgnored let scanApplications: (@Sendable () async -> [InstalledApp])?
+    @ObservationIgnored let scanApplications: @Sendable ([URL]) async -> [InstalledApp]
     @ObservationIgnored let checkApplication: @Sendable (InstalledApp, SourceOverride?) async -> SourceResult
     @ObservationIgnored var installationTask: Task<Void, Never>?
     @ObservationIgnored var checkTask: Task<Void, Never>?
@@ -104,7 +104,7 @@ final class AppStore {
     @ObservationIgnored var publisherCache: [String: [String]] = [:]
 
     init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
-         scanApplications: (@Sendable () async -> [InstalledApp])? = nil,
+         scanApplications: @escaping @Sendable ([URL]) async -> [InstalledApp] = { roots in await Task.detached { AppScanner.scan(roots: roots) }.value },
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
         self.preferences = preferences
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication

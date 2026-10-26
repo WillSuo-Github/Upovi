@@ -23,7 +23,7 @@ final class ToolbarWorkflowTests: XCTestCase {
 
     func testRefreshScansThenChecksEntireNewInventoryDespiteFiltersAndBackgroundSync() async throws {
         let fresh = (0..<7).map { app($0) }, tracker = RefreshTracker()
-        let store = AppStore(preferences: try preferences(), scanApplications: {
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in
             await tracker.record("scan"); return fresh
         }, checkApplication: { app, _ in
             await tracker.record(app.id)
@@ -48,7 +48,7 @@ final class ToolbarWorkflowTests: XCTestCase {
 
     func testCancellationDuringScanPreventsSubsequentSourceChecks() async throws {
         let fresh = [app(1)], gate = ScanGate(), tracker = RefreshTracker()
-        let store = AppStore(preferences: try preferences(), scanApplications: {
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in
             await gate.pause(); return fresh
         }, checkApplication: { app, _ in
             await tracker.record(app.id)
@@ -102,7 +102,7 @@ final class ToolbarWorkflowTests: XCTestCase {
         let apps = [app(1), app(2)]
         let journal = FileManager.default.temporaryDirectory.appending(path: "Upovi-toolbar-journal-\(UUID().uuidString)")
         addTeardownBlock { try? FileManager.default.removeItem(at: journal) }
-        let store = AppStore(preferences: try preferences(), installer: UpdateInstaller(journalDirectory: journal), scanApplications: { apps })
+        let store = AppStore(preferences: try preferences(), installer: UpdateInstaller(journalDirectory: journal), scanApplications: { _ in apps })
         store.apps = apps
         // The production downloader rejects HTTP before any request or application mutation.
         store.sourceResults = Dictionary(uniqueKeysWithValues: apps.map { app in

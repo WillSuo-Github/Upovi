@@ -29,7 +29,7 @@ final class UpdateControlsWorkflowTests: XCTestCase {
     }
     func testCompletedFailureBatchIsPersistedAndLoadedForExplicitRetry() async throws {
         let prefs = try preferences(), apps = [app]
-        let value = AppStore(preferences: prefs, scanApplications: { apps })
+        let value = AppStore(preferences: prefs, scanApplications: { _ in apps })
         value.apps = apps; value.sourceResults = [app.id: .init(appID: app.id, candidates: [candidate], note: "Fixture", status: .updates)]
         value.reviewAllUpdates(); value.startAllUpdates(); await value.bulkTask?.value
         XCTAssertEqual(value.batchHistory.count, 1)
@@ -64,7 +64,7 @@ final class UpdateControlsWorkflowTests: XCTestCase {
         record.update(app.id, phase: .failed, detail: "Failed")
         record.update(other.id, phase: .installed, detail: "Installed")
         record.finishedAt = Date()
-        let store = AppStore(preferences: try preferences(), scanApplications: { oldApps }, checkApplication: { app, _ in
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in oldApps }, checkApplication: { app, _ in
             .init(appID: app.id, candidates: [.init(version: "3.0", source: "Fresh source", isCommunity: false, url: nil)], note: "Fresh", status: .updates)
         })
         store.retryBatch(record); await store.retryTask?.value
@@ -79,7 +79,7 @@ final class UpdateControlsWorkflowTests: XCTestCase {
         var record = BulkUpdateRecord(items: BulkUpdatePlan.make(apps: [app], results: [app.id: old], ignored: []))
         record.update(app.id, phase: .failed, detail: "Failed"); record.finishedAt = Date()
         let installed = InstalledApp(name: app.name, bundleID: app.bundleID, version: "2.0", path: app.path, teamID: app.teamID)
-        let value = AppStore(preferences: try preferences(), scanApplications: { [installed] }, checkApplication: { app, _ in
+        let value = AppStore(preferences: try preferences(), scanApplications: { _ in [installed] }, checkApplication: { app, _ in
             .init(appID: app.id, candidates: [.init(version: "3.0", source: "Fresh", isCommunity: false, url: nil)], note: "Fresh", status: .updates)
         })
         value.retryBatch(record); await value.retryTask?.value

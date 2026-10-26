@@ -44,7 +44,7 @@ struct BulkAcceptanceApp: App {
         preferences.set(false, forKey: "notificationsV1")
         let source = AcceptanceSource(); self.source = source
         let value = AppStore(preferences: preferences, installer: UpdateInstaller(journalDirectory: root.appending(path: "Journal")),
-            scanApplications: { urls.compactMap { AppScanner.read($0) } }, checkApplication: { app, _ in await source.check(app) })
+            scanApplications: { _ in urls.compactMap { AppScanner.read($0) } }, checkApplication: { app, _ in await source.check(app) })
         value.apps = apps; value.selection = apps[0].id; value.section = .all
         value.monitoringTask = Task { }
         _store = State(initialValue: value)

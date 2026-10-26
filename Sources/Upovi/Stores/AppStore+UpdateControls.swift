@@ -30,9 +30,8 @@ extension AppStore {
         return true
     }
     func scanInventory() async -> [InstalledApp] {
-        if let scanApplications { return await scanApplications() }
         let roots = ScanLocations.defaults + additionalScanDirectories.map { URL(fileURLWithPath: $0) }
-        return await Task.detached { AppScanner.scan(roots: roots) }.value
+        return await scanApplications(roots)
     }
     func chooseScanDirectory() {
         guard !refreshing, !scanning, !checking, !installationBusy else { return }
