@@ -43,6 +43,13 @@ struct UpoviInstaller {
         let url = job.appending(path: "receipt.json")
         try JSONEncoder().encode(attempt).write(to: url, options: .atomic)
         try files.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        let handle = try FileHandle(forWritingTo: url)
+        do { try handle.synchronize(); try handle.close() }
+        catch { try? handle.close(); throw error }
+        let directory = open(job.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)
+        guard directory >= 0 else { throw PeerError.unavailable("Cannot synchronize administrator receipt directory") }
+        defer { close(directory) }
+        guard fsync(directory) == 0 else { throw PeerError.unavailable("Cannot persist administrator receipt replacement") }
     }
 
     private static func matches(_ app: InstalledApp, _ expected: InstalledApp) -> Bool {
@@ -60,13 +67,26 @@ struct UpoviInstaller {
         defer { _ = flock(lockFile, LOCK_UN); close(lockFile) }
         guard flock(lockFile, LOCK_EX) == 0 else { throw PeerError.unavailable("Cannot lock administrator transactions") }
         let job = base.appending(path: supplied.id.uuidString)
-        if supplied.operation == .restore {
+        if [.restore, .discardBackup, .inspect].contains(supplied.operation) {
             try requireRootOwnership(job)
             let journal = job.appending(path: "receipt.json")
             try requireRootOwnership(journal)
-            let original = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: Data(contentsOf: journal))
-            guard original.id == supplied.id, original.state != "restored" else { throw PeerError.invalid("No active recovery transaction") }
+            let a = try files.attributesOfItem(atPath: journal.path)
+            guard a[.type] as? FileAttributeType == .typeRegular, (a[.size] as? NSNumber)?.intValue ?? Int.max <= 65536 else { throw PeerError.invalid("Invalid administrator journal") }
+            var original = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: Data(contentsOf: journal))
+            guard AdministratorBackupCleaner.requestMatches(supplied, stored: original) else { throw PeerError.invalid("Administrator journal identity or selected-version mismatch") }
             try original.plan.validate()
+            if supplied.operation == .inspect {
+                let usage = try AdministratorBackupCleaner.usage(in: job)
+                original.backupBytes = usage.bytes; original.backupBytesIsLowerBound = usage.lowerBound
+                try save(original, in: job); return original
+            }
+            if supplied.operation == .discardBackup {
+                return try AdministratorBackupCleaner.discard(original, in: job, current: AppScanner.read(URL(fileURLWithPath: original.plan.application.path)),
+                    validateCurrent: { try BundleVerifier.checkSignature(URL(fileURLWithPath: original.plan.application.path), like: original.plan.application) },
+                    save: { try save($0, in: job) })
+            }
+            guard AdministratorBackupCleaner.canRestore(original.state) else { throw PeerError.invalid("Recovery is unavailable after backup cleanup or completed restoration") }
             return try restore(original, job: job)
         }
         try files.createDirectory(at: job, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
@@ -115,6 +135,10 @@ struct UpoviInstaller {
                 try files.moveItem(at: incoming, to: target)
             }
             try validateUpdate(target, plan: supplied)
+            attempt.installedApplication = AppScanner.read(target)
+            if let usage = try? AdministratorBackupCleaner.usage(in: job) {
+                attempt.backupBytes = usage.bytes; attempt.backupBytesIsLowerBound = usage.lowerBound
+            }
             attempt.state = "installed"; attempt.updatedAt = Date(); try save(attempt, in: job)
             return attempt
         } catch {
@@ -191,7 +215,11 @@ struct UpoviInstaller {
         }
         do { try files.moveItem(at: incoming, to: target) }
         catch { if let displaced { try? files.moveItem(at: displaced, to: target) }; throw error }
-        var result = stored; result.state = "restored"; result.updatedAt = Date(); try save(result, in: job)
+        var result = stored; result.state = "restored"; result.updatedAt = Date()
+        if let usage = try? AdministratorBackupCleaner.usage(in: job) {
+            result.backupBytes = usage.bytes; result.backupBytesIsLowerBound = usage.lowerBound
+        }
+        try save(result, in: job)
         return result
     }
 }

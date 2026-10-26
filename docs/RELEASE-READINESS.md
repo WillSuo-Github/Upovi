@@ -1,3 +1,11 @@
+# Upovi 0.4.4 download and cleanup development readiness
+
+Verified artifact caching now supports HTTP byte-range resume across retries and restarts. Completed administrator transactions expose protected usage inspection and confirmed authorized cleanup, with durable recovery revocation before deletion. See [behavior and validation](DOWNLOAD-RESUME-AND-CLEANUP.md) and [version-specific evidence](evidence/0.4.4-resume-cleanup.json).
+
+127 local tests and a real public HTTPS cancel/resume passed. Administrator acceptance, signed artifact and revision-specific CI results are recorded in the evidence file. Actual PKG execution, administrator interruption/reboot, newer-version long observation, publication and notarization retain their separate boundaries. Direct commits go to main.
+
+---
+
 # Upovi 0.4.3 resilient update development readiness
 
 Exact-source coverage, durable batch records and explicit rechecked retry, per-version skip/snooze, text release notes and extra scan locations are implemented. Actual isolated native multi-application replacement, checksum-failure continuation and a successful retry have been exercised. See [workflow details](RESILIENT-UPDATES.md) and [version-specific evidence](evidence/0.4.3-resilient-updates.json).

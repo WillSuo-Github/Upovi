@@ -33,13 +33,14 @@ final class AppStore {
     @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
         installing || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
-            || administratorRestoreConfirmation != nil || backupDeletionConfirmation != nil
+            || administratorRestoreConfirmation != nil || administratorCleanupConfirmation != nil || backupDeletionConfirmation != nil
             || bulkUpdating || (bulkUpdatePresented && !bulkHasRun)
     }
     var preparedUpdate: PreparedUpdate?
     var preparedPackage: PreparedInstallerPackage?
     var administratorInstallRequested = false
     var administratorRestoreConfirmation: AdministratorInstallAttempt?
+    var administratorCleanupConfirmation: AdministratorInstallAttempt?
     var administrator = AdministratorInstallationService()
     var installationReceipts: [InstallationReceipt] = []
     var installationProgress = ""

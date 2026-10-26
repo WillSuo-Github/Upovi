@@ -3,7 +3,7 @@ import Foundation
 import Security
 
 public struct AdministratorInstallPlan: Codable, Sendable {
-    public enum Operation: String, Codable, Sendable { case application, package, restore }
+    public enum Operation: String, Codable, Sendable { case application, package, restore, discardBackup, inspect }
     public let id: UUID
     public let operation: Operation
     public let application: InstalledApp
@@ -31,7 +31,7 @@ public struct AdministratorInstallPlan: Codable, Sendable {
               let team = application.teamID, team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil else {
             throw PeerError.invalid("Administrator installation requires a signed direct-distribution app directly in /Applications")
         }
-        guard operation != .restore else { return }
+        guard ![.restore, .discardBackup, .inspect].contains(operation) else { return }
         let artifact = URL(fileURLWithPath: artifactPath).standardizedFileURL
         guard artifact.path == artifactPath, artifact.resolvingSymlinksInPath().path == artifact.path,
               artifactPath != application.path, VersionOrder.isNewer(version: version, build: build, than: application) else {
@@ -49,6 +49,10 @@ public struct AdministratorInstallAttempt: Codable, Identifiable, Sendable {
     public var id: UUID { plan.id }
     public var state: String
     public var updatedAt: Date
+    public var installedApplication: InstalledApp?
+    public var backupBytes: Int64?
+    public var backupBytesIsLowerBound: Bool?
+    public var cleanupComplete: Bool?
     public init(plan: AdministratorInstallPlan, state: String) { self.plan = plan; self.state = state; updatedAt = Date() }
 }
 

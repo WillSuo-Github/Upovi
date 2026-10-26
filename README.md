@@ -2,7 +2,7 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.3 development**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.4 development**
 
 [Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.3.2-beta.1). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
@@ -15,9 +15,10 @@ A native, open-source macOS application update detector with globally controlled
 - Distinguishes source-reported updates, community leads, unsupported sources, and failed checks. An empty result is never proof that all applications are current.
 - Downloads eligible ZIP/DMG updates, verifies archive integrity, matching application/developer identity, nested code signatures, version and native executable compatibility, and Gatekeeper acceptance. Installation requires an explicit individual or batch confirmation and retains the old app for recovery.
 - Provides a menu bar entry, opt-in scheduled checks and notifications, system-backed login-at-startup settings, source filters/settings, recent-check history, and installation/recovery history.
+- Resumes canceled/interrupted ZIP, DMG and PKG downloads when the HTTPS server provides a strong validator; retry revalidates the final artifact before installation. See [download recovery](docs/DOWNLOAD-RESUME-AND-CLEANUP.md).
 - Shows retained-copy sizes and moves eligible copies to Trash only after confirmation. Interrupted recovery material is protected.
 - Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. Publishing the new feed and end-to-end self-update acceptance remain pending.
-- Offers Upovi-managed administrator installation for signed application replacements and inspectable signed PKGs. Each operation requests macOS authorization, uses a verified protected helper, and retains a protected main-app backup. PKG script side effects are not rolled back; see [the administrator design](docs/ADMINISTRATOR-INSTALLATION.md).
+- Offers Upovi-managed administrator installation for signed application replacements and inspectable signed PKGs. Each operation requests macOS authorization, uses a verified protected helper, and retains a protected main-app backup. Completed protected backups can be inspected and permanently cleaned after confirmation and authorization; failed/interrupted transactions remain protected. PKG script side effects are not rolled back; see [the administrator design](docs/ADMINISTRATOR-INSTALLATION.md).
 - Automatically discovers opted-in public publishers using BitTorrent DHT. No invitation, account, publisher-key exchange, or Upovi relay is required.
 
 ## Build and run

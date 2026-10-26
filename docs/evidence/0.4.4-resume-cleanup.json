@@ -1,0 +1,76 @@
+{
+  "version": "0.4.4",
+  "build": "10",
+  "delivery": "direct main; no PR or release publication",
+  "automatedTests": {
+    "core": 117,
+    "store": 10,
+    "failures": 0,
+    "isolatedAutomaticDiscovery": "passed",
+    "isolatedDHTExchange": "passed"
+  },
+  "publicHTTPSResume": {
+    "boundary": "Archive download and integrity acceptance only; no application installed.",
+    "cancelledOutputAbsent": true,
+    "freshCacheInstance": true,
+    "publicHTTPS": true,
+    "retainedBytes": 16375,
+    "sha256": "0b9b8b11edeb3237e3224c619a6f6bfb5e5996a477048be6ff4b98b0346aedc9",
+    "validated206Offset": 16375
+  },
+  "nativeAdministratorCleanup": {
+    "scope": "isolated signed Rectangle fixture only; user completed macOS authorization",
+    "install": {
+      "backupBytes": 15196160,
+      "cleanupComplete": false,
+      "currentBuild": "111",
+      "currentVersion": "2.0.4",
+      "isolatedApplicationOnly": true,
+      "signatureValid": true,
+      "state": "installed",
+      "transactionID": "A103033A-4B6D-4957-AD16-F569521CAF0F"
+    },
+    "cancel": {
+      "cancelPreservedAttempt": true,
+      "backupBytes": 15196160,
+      "cleanupComplete": false,
+      "currentBuild": "111",
+      "currentVersion": "2.0.4",
+      "isolatedApplicationOnly": true,
+      "signatureValid": true,
+      "state": "installed",
+      "transactionID": "A103033A-4B6D-4957-AD16-F569521CAF0F"
+    },
+    "cleanup": {
+      "backupBytes": 0,
+      "cleanupComplete": true,
+      "currentBuild": "111",
+      "currentVersion": "2.0.4",
+      "isolatedApplicationOnly": true,
+      "signatureValid": true,
+      "state": "backupDiscarded",
+      "transactionID": "A103033A-4B6D-4957-AD16-F569521CAF0F"
+    },
+    "inspection": {
+      "backupBytes": 0,
+      "cleanupComplete": true,
+      "currentBuild": "111",
+      "currentVersion": "2.0.4",
+      "isolatedApplicationOnly": true,
+      "signatureValid": true,
+      "state": "backupDiscarded",
+      "transactionID": "A103033A-4B6D-4957-AD16-F569521CAF0F"
+    },
+    "restoreDenial": "pending",
+    "boundary": "Native cleanup exercised before final explicit receipt file/directory synchronization hardening; final-helper inspection pending."
+  },
+  "finalProductCI": "pending",
+  "signedUniversalArtifact": "pending",
+  "remaining": [
+    "actual PKG scripts",
+    "administrator interruption/reboot",
+    "0.4.4 long observation",
+    "feed and release publication",
+    "Apple notarization (deferred)"
+  ]
+}

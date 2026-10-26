@@ -13,9 +13,12 @@ public struct PreparedUpdate: Identifiable, Sendable {
 public actor UpdateInstaller {
     public static let defaultJournalDirectory = URL.applicationSupportDirectory.appending(path: "Upovi/Installations")
     private let journalDirectory: URL
+    private let downloadCache: ArtifactDownloadCache
     private var busy = false
     private var prepared: PreparedUpdate?
-    public init(journalDirectory: URL = UpdateInstaller.defaultJournalDirectory) { self.journalDirectory = journalDirectory }
+    public init(journalDirectory: URL = UpdateInstaller.defaultJournalDirectory, downloadCache: ArtifactDownloadCache = .shared) {
+        self.journalDirectory = journalDirectory; self.downloadCache = downloadCache
+    }
 
     public func prepare(app: InstalledApp, candidate: UpdateCandidate,
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedUpdate {
@@ -30,7 +33,7 @@ public actor UpdateInstaller {
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false)
         let archive = workspace.appending(path: "update." + descriptor.url.pathExtension.lowercased())
         do {
-            try await HTTPTransfer.download(from: descriptor.url, to: archive, progress: progress)
+            try await downloadCache.download(descriptor, app: app, to: archive, progress: progress)
             let verification = Task.detached { try BundleVerifier.verifyArchive(archive, descriptor: descriptor, app: app) }
             try await withTaskCancellationHandler { try await verification.value } onCancel: { verification.cancel() }
             try Task.checkCancellation()

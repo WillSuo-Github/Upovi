@@ -113,5 +113,21 @@ struct SettingsView: View {
                 }
             }.padding(28).frame(width: 480)
         }
+        .sheet(item: $store.administratorCleanupConfirmation) { attempt in
+            VStack(alignment: .leading, spacing: 18) {
+                Text("清理 \(attempt.plan.application.name) 的管理员备份？").font(.title2.bold())
+                Text(attempt.plan.application.path).font(.caption).textSelection(.enabled)
+                Text("将请求管理员授权，永久删除这个已完成事务的主应用副本、安装包和展开数据。清理后无法通过此事务恢复。当前应用和事务记录会保留。")
+                Text("中断、失败或当前应用身份／版本不匹配的事务会被拒绝清理。").font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("取消") { store.administratorCleanupConfirmation = nil }.keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button("授权并永久清理", role: .destructive) {
+                        store.administratorCleanupConfirmation = nil
+                        store.manageAdministratorBackup(attempt, cleanup: true)
+                    }.accessibilityIdentifier("confirm-admin-backup-cleanup")
+                }
+            }.padding(28).frame(width: 500)
+        }
     }
 }

@@ -10,9 +10,9 @@ struct PreparedInstallerPackage {
 @MainActor @Observable
 final class AdministratorInstallationService {
     private(set) var attempts: [AdministratorInstallAttempt] = []
-    private let directory = URL.applicationSupportDirectory.appending(path: "Upovi/AdministratorAttempts")
+    private let directory: URL
 
-    init() { refresh() }
+    init(directory: URL = URL.applicationSupportDirectory.appending(path: "Upovi/AdministratorAttempts")) { self.directory = directory; refresh() }
     func refresh() {
         let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.fileSizeKey])) ?? []
         attempts = files.filter { $0.pathExtension == "json" }.compactMap {
@@ -37,7 +37,7 @@ final class AdministratorInstallationService {
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         do {
             let package = workspace.appending(path: "Update.pkg")
-            try await HTTPTransfer.download(from: descriptor.url, to: package, progress: progress)
+            try await ArtifactDownloadCache.shared.download(descriptor, app: app, to: package, progress: progress)
             let hash = try await Task.detached {
                 try BundleVerifier.verifyArchive(package, descriptor: descriptor, app: app)
                 return try BundleVerifier.sha256(of: package)
@@ -58,9 +58,14 @@ final class AdministratorInstallationService {
               let helper = Bundle.main.url(forAuxiliaryExecutable: "UpoviInstaller") else {
             throw PeerError.unavailable("Use a complete Developer ID signed Upovi bundle for administrator installation")
         }
-        try await UpdateInstaller.requestApplicationQuit(plan.application)
+        if ![.discardBackup, .inspect].contains(plan.operation) { try await UpdateInstaller.requestApplicationQuit(plan.application) }
         var attempt = AdministratorInstallAttempt(plan: plan, state: "awaitingAuthorization")
-        if plan.operation != .restore { try save(attempt) }
+        let installing = [.application, .package].contains(plan.operation)
+        if installing { try save(attempt) }
+        if plan.operation == .discardBackup, var cached = attempts.first(where: { $0.id == plan.id }) {
+            cached.state = "cleanupPending"; try save(cached)
+        }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let input = directory.appending(path: "Request-\(UUID().uuidString).json")
         try JSONEncoder().encode(plan).write(to: input, options: .atomic)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: input.path)
@@ -70,10 +75,11 @@ final class AdministratorInstallationService {
             let data = try await ProcessCommand().run("/usr/bin/osascript", ["-e", script], timeoutSeconds: 2100,
                 outputFile: directory.appending(path: plan.id.uuidString + "-authorization.log"))
             let result = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: data)
-            guard result.id == plan.id, ["installed", "restored"].contains(result.state) else { throw PeerError.invalid("Unexpected administrator transaction result") }
+            let accepted = plan.operation == .inspect || (plan.operation == .discardBackup ? result.state == "backupDiscarded" : plan.operation == .restore ? result.state == "restored" : result.state == "installed")
+            guard result.id == plan.id, accepted else { throw PeerError.invalid("Unexpected administrator transaction result") }
             try save(result)
         } catch {
-            if plan.operation != .restore {
+            if installing {
                 attempt.state = "interruptedOrFailed"; attempt.updatedAt = Date(); try? save(attempt)
             }
             throw error

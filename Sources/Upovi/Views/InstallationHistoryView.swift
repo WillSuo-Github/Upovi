@@ -13,14 +13,7 @@ struct InstallationHistoryView: View {
                     Text("管理员安装与主应用恢复").font(.headline)
                     Text("只恢复主应用，安装脚本和其他系统变更不会回滚。取消授权的尝试可能没有生成系统备份。").font(.caption).foregroundStyle(.secondary)
                     ForEach(store.administrator.attempts) { attempt in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(attempt.plan.application.name).font(.headline)
-                            Text("\(attempt.plan.application.version) → \(attempt.plan.version)").font(.caption)
-                            Text(administratorState(attempt.state)).font(.caption).foregroundStyle(.secondary)
-                            if attempt.state != "restored" {
-                                Button("恢复主应用…") { store.administratorRestoreConfirmation = attempt }.disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
-                            }
-                        }
+                        AdministratorBackupRow(store: store, attempt: attempt)
                     }
                     Divider()
                 }

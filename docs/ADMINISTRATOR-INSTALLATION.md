@@ -18,3 +18,7 @@ PKG scripts may modify receipts, launch services, drivers, files and data outsid
 ## Acceptance
 
 Unit tests must cover plan bounds and destinations, quoted authorization arguments, wrong signer/team, package payload identity/version, stale restoration, interrupted journals and retained backups. Packaging must sign and verify the helper on both architectures. Native UI acceptance can inspect consent and cancellation; a real privileged install, rejection/cancellation, and reboot/interruption behavior need separate recorded acceptance. Passing compilation or unprivileged tests does not establish privileged execution success.
+
+## Protected backup cleanup (0.4.4)
+
+Completed installs/restores offer authorized inspection and permanent cleanup in History and recovery. The helper validates the authoritative transaction and matching current signed app, revokes restoration durably, then deletes only known retained data. Incomplete deletion can be retried; failed/interrupted installs cannot begin cleanup. Receipts and installer logs stay protected. See [download and cleanup details](DOWNLOAD-RESUME-AND-CLEANUP.md).
