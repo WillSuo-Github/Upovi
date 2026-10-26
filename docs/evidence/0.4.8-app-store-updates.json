@@ -30,11 +30,97 @@
     "version": "2.11.0",
     "build": "821",
     "singleApplicationReviewDisplayed": true,
-    "noInstallationStarted": false,
     "candidateSignature": "Developer ID universal; deep/strict/all-architecture passed",
-    "executionStartedAfterExplicitOwnerAuthorization": true
+    "executionStartedAfterExplicitOwnerAuthorization": true,
+    "reviewAloneDidNotExecuteUpdate": true
   },
   "authenticatedStoreExecution": {
+    "application": "Shazam",
+    "bundleID": "com.shazam.mac.Shazam",
+    "version": "2.11.0",
+    "build": "821",
+    "result": "current",
+    "userAuthorizedSpecificDailyApp": true,
+    "userConfirmedNativeAuthenticationCompleted": true,
+    "productionReviewAndStartButton": true,
+    "protectedHelperReturnedVerifiedStoreReceipt": true,
+    "completedCount": 1,
+    "failureCount": 0,
+    "versionChanged": false,
+    "sourceRevision": "8b6d1a354ee15e16c0d1d01cf2064ce45ffcea09",
+    "signedArchiveSHA256": "10823fee5837bea6610dd5acbdd483cc910e04b6a2370779510126752e09afbd",
+    "checkedStateAndExactStoreCurrentNotePreservedAfterClosingReview": true,
+    "actualNewVersionInstallation": "not exercised; no newer release observed",
+    "boundary": "Actual clean-source Developer ID signed universal artifact invoked its protected helper and Apple accurate Store check. Shazam remained 2.11.0 (821). Other daily applications were excluded."
+  },
+  "finalProductCI": {
+    "conclusion": "success",
+    "headSha": "8b6d1a354ee15e16c0d1d01cf2064ce45ffcea09",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "name": "tests (macos-14)"
+      },
+      {
+        "conclusion": "success",
+        "name": "tests (macos-15-intel)"
+      },
+      {
+        "conclusion": "success",
+        "name": "tests (macos-26)"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40317055166"
+  },
+  "signedUniversalArtifact": {
+    "version": "0.4.8",
+    "build": "14",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "10823fee5837bea6610dd5acbdd483cc910e04b6a2370779510126752e09afbd",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "not_checked",
+    "freshExtractedSignature": "passed",
+    "allFourExecutableBytesMatchAfterExtraction": true,
+    "sourceRevision": "8b6d1a354ee15e16c0d1d01cf2064ce45ffcea09",
+    "cleanSource": true,
+    "UpoviSHA256": "9865cad5101aed9935aafceea76e1adf730cc12c1f8a6e4b34ed2a773b272c45",
+    "UpoviStoreInstallerSHA256": "66bd754e5c40faa4c24852af4e8cb497b1d1b23fddb8909eb4687d99d2c1ddcf",
+    "UpoviStoreBridgeSHA256": "aae43e0648410dd3bc4a00759a5ca784e3736ccb3f2e3a1c365e6ec6feb6a7c8"
+  },
+  "publicRelease": {
+    "status": "published",
+    "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.8",
+    "publicLatestFeedBuild": "14",
+    "publicLatestFeedSignature": "verified",
+    "publicArchiveSHA256": "10823fee5837bea6610dd5acbdd483cc910e04b6a2370779510126752e09afbd",
+    "publicArchiveSignature": "verified",
+    "channel": "experimental signed preview; not notarized"
+  },
+  "physicalSleepNetworkPower": "deferred by owner",
+  "notarization": "deferred by owner",
+  "unprivilegedStoreHelperDenial": "passed; exited 1 before reading a plan",
+  "productRevision": "8b6d1a354ee15e16c0d1d01cf2064ce45ffcea09",
+  "protocolRegressions": {
+    "automatic": "passed",
+    "legacyPrivate": "passed"
+  },
+  "finalNativeReview": {
+    "version": "0.4.8",
+    "build": "14",
+    "sourceRevision": "8b6d1a354ee15e16c0d1d01cf2064ce45ffcea09",
+    "cleanSourceSignedArtifact": true,
+    "receiptMetadataCheck": "Shazam 2.11.0 (821) checked current",
+    "checkAndUpdateAction": "present",
+    "singleApplicationReview": "passed; exact Shazam target and Store limitations displayed",
+    "finalAuthenticatedExecution": "passed; verified current receipt and native one-completed zero-failure result; current detail preserved"
+  },
+  "earlierCandidateExecution": {
     "application": "Shazam",
     "bundleID": "com.shazam.mac.Shazam",
     "version": "2.11.0",
@@ -47,18 +133,12 @@
     "failureCount": 0,
     "versionChanged": false,
     "actualNewVersionInstallation": "not exercised; no newer release observed",
-    "boundary": "Actual signed-candidate protected helper and Apple Store accurate check returned current. Other daily applications were not included.",
+    "boundary": "Earlier signed dirty-source candidate check returned current. Superseded for delivery acceptance by the clean signed artifact execution below.",
     "candidate": {
       "sourceRevision": "54d1fe0aae2b1d8accfe3b65f171c0f3f0592e36-dirty",
       "mainBinarySHA256": "53060dc292df6e6d79595bb2b4e332f9bcc17cfb80f1c3f076c98b3a0df46a2a",
       "protectedHelperSHA256": "7b4a6110709f5f2949a920f3549d47542bf2756b4ee393e4d6df4c4818bfa706",
       "boundary": "Execution preceded final UI preservation and failure-message edits. Final clean artifact is separate."
     }
-  },
-  "finalProductCI": "pending",
-  "signedUniversalArtifact": "pending clean-source final artifact",
-  "publicRelease": "not published; 0.4.7 remains the public preview",
-  "physicalSleepNetworkPower": "deferred by owner",
-  "notarization": "deferred by owner",
-  "unprivilegedStoreHelperDenial": "passed; exited 1 before reading a plan"
+  }
 }

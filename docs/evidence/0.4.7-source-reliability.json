@@ -116,8 +116,9 @@
     "status": "collector_disappeared_not_accepted",
     "recordedElapsedSeconds": 3120.01,
     "samples": 53,
-    "applicationStillRunning": true,
-    "boundary": "Baseline stopped collecting after its last sample. No duration or acceptance inherited by 0.4.7."
+    "boundary": "Baseline stopped collecting after its last sample. No duration or acceptance inherited by 0.4.7.",
+    "applicationStillRunningAtReview": true,
+    "laterOperatorFollowup": "Original application was normally stopped to launch the 0.4.8 candidate; no observation duration inherited."
   },
   "physicalSleepNetworkPower": "deferred by owner",
   "notarization": "deferred by owner",

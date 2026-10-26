@@ -146,7 +146,7 @@
       "checkIntervalV1": 15,
       "notificationsV1": false
     },
-    "boundary": "About 52 minutes recorded, not 24-hour acceptance. Most samples lacked a visible window. Application exit or crash is not established; the exact original app PID and binary remain present. Raw records are preserved, no application or collector restart and no inherited duration. Baseline applies only to 0.4.6, not 0.4.7.",
+    "boundary": "About 52 minutes recorded, not 24-hour acceptance. Most samples lacked a visible window. Application exit or crash is not established; the exact original app PID and binary were still present at that review. Raw records are preserved, no application or collector restart and no inherited duration. Baseline applies only to 0.4.6, not 0.4.7.",
     "followUpAutomation": "upovi-0-4-6; deleted after recording collector disappearance",
     "reviewedAt": "2026-10-26T10:29:07.725801+00:00",
     "applicationStillRunning": true,
@@ -167,7 +167,8 @@
     "completedSourceChecks": 3,
     "sourceFailuresInCompletedChecks": 0,
     "completedCommunitySyncs": 1,
-    "collectorExitCause": "unknown; raw summary remains stale running and no observer or log-stream collector process exists"
+    "collectorExitCause": "unknown; raw summary remains stale running and no observer or log-stream collector process exists",
+    "laterOperatorFollowup": "Original PID 85261 was normally stopped after observation review to launch the 0.4.8 candidate. No observation duration was inherited or restarted."
   },
   "sleepWake": {
     "status": "deferred_by_owner_this_session",
