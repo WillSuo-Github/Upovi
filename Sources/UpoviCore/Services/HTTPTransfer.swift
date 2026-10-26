@@ -1,6 +1,12 @@
 import Foundation
 import Darwin
 
+public struct HTTPStatusError: LocalizedError, Sendable {
+    public let statusCode: Int
+    public init(statusCode: Int) { self.statusCode = statusCode }
+    public var errorDescription: String? { "HTTP request failed with status \(statusCode)" }
+}
+
 struct DownloadResumeState: Codable {
     let url: URL
     let etag: String
@@ -136,7 +142,8 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
         do {
             guard let http = response as? HTTPURLResponse, response.url?.scheme == "https" else { throw URLError(.badServerResponse) }
             if http.statusCode == 416 && offset > 0 { throw DownloadRestart.required }
-            guard (200..<300).contains(http.statusCode), response.expectedContentLength <= limit else { throw URLError(.badServerResponse) }
+            guard (200..<300).contains(http.statusCode) else { throw HTTPStatusError(statusCode: http.statusCode) }
+            guard response.expectedContentLength <= limit else { throw URLError(.badServerResponse) }
             if let destination {
                 let encoding = http.value(forHTTPHeaderField: "Content-Encoding")?.lowercased()
                 guard encoding == nil || encoding == "identity" else { throw DownloadRestart.required }

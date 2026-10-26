@@ -15,6 +15,8 @@ enum AppSection: String, CaseIterable, Identifiable {
 
 @MainActor @Observable
 final class AppStore {
+    var diagnosticEvents: [DiagnosticEvent] = []
+    var diagnosticsPresentation: DiagnosticSnapshot?
     var updatePolicy = UpdatePolicy()
     var policyClock = Date()
     var additionalScanDirectories: [String] = []
@@ -119,6 +121,9 @@ final class AppStore {
         if let data = preferences.data(forKey: "updatePolicyV1") { updatePolicy = (try? JSONDecoder().decode(UpdatePolicy.self, from: data)) ?? UpdatePolicy() }
         if let data = preferences.data(forKey: "bulkHistoryV1"), let records = try? JSONDecoder().decode([BulkUpdateRecord].self, from: data) {
             batchHistory = Array(records.prefix(10)).map { var record = $0; record.recoverInterrupted(); return record }
+        }
+        if let data = preferences.data(forKey: "diagnosticEventsV1"), let events = try? JSONDecoder().decode([DiagnosticEvent].self, from: data) {
+            diagnosticEvents = Array(events.prefix(50))
         }
         ignored = Set(preferences.stringArray(forKey: "ignoredBundles") ?? [])
         if let data = preferences.data(forKey: "sourceOverridesV1") {

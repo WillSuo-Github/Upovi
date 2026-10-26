@@ -13,7 +13,7 @@ extension AppStore {
                     application: attempt.plan.application, version: attempt.plan.version, build: attempt.plan.build)
                 try await administrator.perform(plan)
                 installationProgress = cleanup ? "管理员保留数据已清理，事务记录已保留" : "管理员备份状态已核对"
-            } catch { errorMessage = "管理员备份操作未完成；原有事务记录已保留，请核对状态：\(error.localizedDescription)" }
+            } catch { recordDiagnostic(cleanup ? .backupCleanup : .backupInspection, appID: attempt.plan.application.id, error: error); errorMessage = "管理员备份操作未完成；原有事务记录已保留，请核对状态：\(error.localizedDescription)" }
         }
     }
 }

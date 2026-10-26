@@ -61,42 +61,45 @@ extension AppStore {
     }
 
     private func installBulkItem(_ item: BulkUpdateItem) async throws {
-        try Task.checkCancellation()
-        guard !bulkPersistenceFailed else { throw PeerError.unavailable("Batch history could not be saved; installation was not started") }
-        guard networkAvailable else { throw PeerError.unavailable("Network unavailable; application was not updated") }
-        let app = item.application, candidate = item.candidate
-        installationProgress = "\(app.name)：正在下载并验证…"; canCancelInstallation = true
-        let progress: @Sendable (Int64, Int64) -> Void = { [weak self] received, expected in
-            Task { @MainActor in
-                guard let self, self.bulkCurrentID == item.id, self.canCancelInstallation else { return }
-                self.installationProgress = expected > 0 ? "\(app.name)：下载中 \(received * 100 / expected)%" : "\(app.name)：已下载 \(received / 1_000_000) MB"
-            }
-        }
-        if candidate.download?.url.pathExtension.lowercased() == "pkg" {
-            let package = try await administrator.preparePackage(candidate, app: app, progress: progress)
-            defer { administrator.discard(package) }
+        var stage: DiagnosticEvent.Stage = .batchPreparation
+        do {
             try Task.checkCancellation()
-            guard saveBulkPhase(item.id, phase: .installing, detail: "等待管理员安装") else { throw PeerError.unavailable("Batch history could not be saved") }
-            canCancelInstallation = false
-            installationProgress = "\(app.name)：等待管理员授权并安装…"
-            try await administrator.perform(package.plan)
-        } else {
-            let prepared = try await installer.prepare(app: app, candidate: candidate, progress: progress)
-            do {
-                try Task.checkCancellation()
-                guard saveBulkPhase(item.id, phase: .installing, detail: "正在安装") else { throw PeerError.unavailable("Batch history could not be saved") }
-                canCancelInstallation = false
-                if !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path) {
-                    installationProgress = "\(app.name)：等待管理员授权并安装…"
-                    try await administrator.perform(.init(operation: .application, application: app,
-                        version: prepared.replacement.version, build: prepared.replacement.build,
-                        artifactPath: prepared.bundle.resolvingSymlinksInPath().path))
-                } else {
-                    installationProgress = "\(app.name)：正在关闭应用并安装…"
-                    _ = try await installer.install(prepared.id)
+            guard !bulkPersistenceFailed else { throw PeerError.unavailable("Batch history could not be saved; installation was not started") }
+            guard networkAvailable else { throw URLError(.notConnectedToInternet) }
+            let app = item.application, candidate = item.candidate
+            installationProgress = "\(app.name)：正在下载并验证…"; canCancelInstallation = true
+            let progress: @Sendable (Int64, Int64) -> Void = { [weak self] received, expected in
+                Task { @MainActor in
+                    guard let self, self.bulkCurrentID == item.id, self.canCancelInstallation else { return }
+                    self.installationProgress = expected > 0 ? "\(app.name)：下载中 \(received * 100 / expected)%" : "\(app.name)：已下载 \(received / 1_000_000) MB"
                 }
-                await installer.discard(prepared.id)
-            } catch { await installer.discard(prepared.id); throw error }
-        }
+            }
+            if candidate.download?.url.pathExtension.lowercased() == "pkg" {
+                let package = try await administrator.preparePackage(candidate, app: app, progress: progress)
+                defer { administrator.discard(package) }
+                try Task.checkCancellation()
+                guard saveBulkPhase(item.id, phase: .installing, detail: "等待管理员安装") else { throw PeerError.unavailable("Batch history could not be saved") }
+                canCancelInstallation = false; stage = .batchInstallation
+                installationProgress = "\(app.name)：等待管理员授权并安装…"
+                try await administrator.perform(package.plan)
+            } else {
+                let prepared = try await installer.prepare(app: app, candidate: candidate, progress: progress)
+                do {
+                    try Task.checkCancellation()
+                    guard saveBulkPhase(item.id, phase: .installing, detail: "正在安装") else { throw PeerError.unavailable("Batch history could not be saved") }
+                    canCancelInstallation = false; stage = .batchInstallation
+                    if !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path) {
+                        installationProgress = "\(app.name)：等待管理员授权并安装…"
+                        try await administrator.perform(.init(operation: .application, application: app,
+                            version: prepared.replacement.version, build: prepared.replacement.build,
+                            artifactPath: prepared.bundle.resolvingSymlinksInPath().path))
+                    } else {
+                        installationProgress = "\(app.name)：正在关闭应用并安装…"
+                        _ = try await installer.install(prepared.id)
+                    }
+                    await installer.discard(prepared.id)
+                } catch { await installer.discard(prepared.id); throw error }
+            }
+        } catch { recordDiagnostic(stage, appID: item.application.id, error: error); throw error }
     }
 }

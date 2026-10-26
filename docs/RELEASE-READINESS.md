@@ -1,3 +1,11 @@
+# Upovi 0.4.5 diagnostics and sources development readiness
+
+Settings now provides local diagnostic preview/export with default inventory redaction and classified source/operation failures. Source coverage adds exact LiveHub and PlayCover repositories, stable VSCodium cask mapping, and correct renamed/platform-specific Homebrew app artifact handling. See [behavior and validation](DIAGNOSTICS-AND-SOURCES.md) and [version-specific evidence](evidence/0.4.5-diagnostics-sources.json).
+
+141 local tests passed (128 core, 13 store). Native export, signed artifact and revision-specific CI results are recorded in the evidence file. Existing PKG execution, interruption/reboot, long-observation and distribution boundaries retain their original scope. Direct commits go to main.
+
+---
+
 # Upovi 0.4.4 download and cleanup development readiness
 
 Verified artifact caching now supports HTTP byte-range resume across retries and restarts. Completed administrator transactions expose protected usage inspection and confirmed authorized cleanup, with durable recovery revocation before deletion. See [behavior and validation](DOWNLOAD-RESUME-AND-CLEANUP.md) and [version-specific evidence](evidence/0.4.4-resume-cleanup.json).

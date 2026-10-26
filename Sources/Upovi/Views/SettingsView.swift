@@ -62,6 +62,12 @@ struct SettingsView: View {
                     Button("添加扫描目录…") { store.chooseScanDirectory() }
                         .disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
                 }
+                Section("诊断与反馈") {
+                    Button("预览并导出诊断报告…") { store.diagnosticsPresentation = store.diagnosticSnapshot() }
+                        .accessibilityIdentifier("open-diagnostics-report")
+                    Text("先预览再保存。默认隐藏软件标识，不读取系统或管理员授权日志。")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Section("Upovi \(AppMetadata.displayVersion)") {
                     Text("SwiftUI · MIT License · macOS 14+")
                     Button("检查 Upovi 自身更新…") { updater.check() }.disabled(!updater.canCheck || store.installationBusy)
@@ -87,6 +93,7 @@ struct SettingsView: View {
             }.formStyle(.grouped).tabItem { Label("P2P", systemImage: "network") }
             InstallationHistoryView(store: store).tabItem { Label("记录与恢复", systemImage: "clock.arrow.circlepath") }
         }.frame(width: 660, height: 620)
+        .sheet(item: $store.diagnosticsPresentation) { DiagnosticsView(snapshot: $0) }
         .onAppear { loginItem.refresh() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { loginItem.refresh() } }
         .sheet(item: $store.backupDeletionConfirmation) { receipt in

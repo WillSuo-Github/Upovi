@@ -1,0 +1,62 @@
+{
+  "version": "0.4.5",
+  "build": "11",
+  "delivery": "direct main; no PR or publication",
+  "automatedTests": {
+    "core": 128,
+    "store": 13,
+    "failures": 0,
+    "isolatedAutomaticDiscovery": "passed",
+    "isolatedDHTExchange": "passed"
+  },
+  "sourceComparison": {
+    "before": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 28,
+      "failed": 1,
+      "partial": 1,
+      "unsupported": 6,
+      "updateCandidates": 14,
+      "updates": 12
+    },
+    "after": {
+      "applications": 71,
+      "appStore": 23,
+      "current": 30,
+      "unsupported": 5,
+      "updateCandidates": 15,
+      "updates": 13
+    },
+    "sameApplicationCount": 71,
+    "unsupportedIncludesOneSyntheticFixture": true,
+    "boundary": "Transient TLS/network behavior differed; fewer failed/partial checks are not attributed entirely to implementation. Source check only; no installation."
+  },
+  "nativeDiagnostics": {
+    "initialExport": {
+      "defaultRedacted": true,
+      "explicitIdentifiersOnly": true,
+      "rawSecretsAbsentInBoth": true,
+      "sameFrozenSnapshot": true,
+      "cancelReturnedWithoutSuccessStatus": true,
+      "newPreviewDefaultsOff": true
+    },
+    "finalAccessibilityRetest": {
+      "defaultExportRedacted": true,
+      "previewEqualsSavedBytes": true,
+      "accessibilityTextRefreshesBothDirections": true,
+      "explicitIdentifiersRemainsOptional": true,
+      "finalSchemaVerifiableCount": true
+    },
+    "boundary": "Synthetic offline fixture with the production store/settings/preview/export views; no actual app inventory or admin operation."
+  },
+  "signedUniversalArtifact": "pending",
+  "finalProductCI": "pending",
+  "remaining": [
+    "actual PKG scripts",
+    "privileged interruption/reboot",
+    "final-candidate long observation",
+    "self-update publication",
+    "notarization (deferred)"
+  ]
+}

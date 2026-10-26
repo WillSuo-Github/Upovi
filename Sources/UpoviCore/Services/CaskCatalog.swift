@@ -12,15 +12,34 @@ public struct CaskMetadata: Decodable, Sendable {
         let version: String?
         let url: URL?
         let sha256: String?
+        let artifacts: [Artifact]?
     }
     public struct Artifact: Decodable, Sendable {
         let app: [String]?
         let uninstall: [Uninstall]?
-        enum CodingKeys: String, CodingKey { case app, uninstall }
+        enum CodingKeys: String, CodingKey { case app, uninstall, target }
         public init(from decoder: any Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
-            app = try? c.decode([String].self, forKey: .app)
+            if let values = try? c.decode([AppValue].self, forKey: .app) {
+                var names = values.compactMap(\.name)
+                if let target = try? c.decode(String.self, forKey: .target), !names.isEmpty { names.append(target) }
+                app = Array(Set(names.compactMap(Self.applicationName))).sorted()
+            } else { app = nil }
             uninstall = try c.decodeIfPresent([Uninstall].self, forKey: .uninstall)
+        }
+        private struct AppValue: Decodable {
+            let name: String?
+            enum CodingKeys: String, CodingKey { case target }
+            init(from decoder: any Decoder) throws {
+                if let string = try? decoder.singleValueContainer().decode(String.self) { name = string }
+                else { name = try? decoder.container(keyedBy: CodingKeys.self).decode(String.self, forKey: .target) }
+            }
+        }
+        private static func applicationName(_ value: String) -> String? {
+            let path = value.hasPrefix("/Applications/") ? String(value.dropFirst("/Applications/".count)) : value
+            guard path.hasSuffix(".app"), !path.contains("/"), !path.contains("\\"), !path.contains(".."),
+                  !path.contains(where: { "*?[]".contains($0) || $0.isNewline }) else { return nil }
+            return path
         }
         struct Uninstall: Decodable, Sendable {
             let quit: [String]
@@ -53,13 +72,16 @@ public struct CaskMetadata: Decodable, Sendable {
             .filter { !$0.isEmpty && !$0.contains(where: { "*?[]/ ".contains($0) }) }
     }
     public var download: DownloadDescriptor? {
-        // A disk image containing a PKG is not a directly replaceable application archive.
-        let directApp = (artifacts ?? []).contains(where: { !($0.app ?? []).isEmpty })
         #if arch(x86_64)
-        let selected = variation(intel: true, osMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion)
+        return download(intel: true, osMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion)
         #else
-        let selected = variation(intel: false, osMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion)
+        return download(intel: false, osMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion)
         #endif
+    }
+    public func download(intel: Bool, osMajor: Int) -> DownloadDescriptor? {
+        let selected = variation(intel: intel, osMajor: osMajor)
+        // The selected platform's artifacts decide whether a DMG/ZIP contains a direct app.
+        let directApp = (selected?.artifacts ?? artifacts ?? []).contains(where: { !($0.app ?? []).isEmpty })
         guard let url = selected?.url ?? url, url.scheme == "https", let sha256 = selected?.sha256 ?? sha256, sha256.count == 64, sha256.allSatisfy(\.isHexDigit),
               ["zip", "dmg", "pkg"].contains(url.pathExtension.lowercased()),
               directApp || url.pathExtension.lowercased() == "pkg" else { return nil }
@@ -80,6 +102,7 @@ public actor CaskCatalog {
     // Explicit identities checked against the official cask's declared application and identity paths.
     // These are never inferred from a display-name search or a peer report.
     public static let curated: [String: String] = [
+        "com.vscodium": "vscodium",
         "org.blenderfoundation.blender": "blender",
         "com.todesktop.230313mzl4w4u92": "cursor",
         "com.github.GitHubClient": "github",

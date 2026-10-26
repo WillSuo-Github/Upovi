@@ -39,8 +39,11 @@ public struct GitHubRelease: Decodable, Sendable {
             && !parts.contains(".") && !parts.contains("..")
     }
     public static func latest(repository: String) async throws -> GitHubRelease {
+        try await latest(repository: repository, fetch: { try await UpdateChecker.fetch($0, limit: $1) })
+    }
+    static func latest(repository: String, fetch: @Sendable (URL, Int) async throws -> Data) async throws -> GitHubRelease {
         guard validRepository(repository) else { throw PeerError.invalid("Invalid GitHub owner/repository") }
-        let data = try await UpdateChecker.fetch(URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!, limit: 3_000_000)
+        let data = try await fetch(URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!, 3_000_000)
         let release = try JSONDecoder().decode(Self.self, from: data)
         guard !release.draft, !release.prerelease, release.page.scheme == "https", release.page.host == "github.com" else {
             throw PeerError.invalid("Invalid stable GitHub release")

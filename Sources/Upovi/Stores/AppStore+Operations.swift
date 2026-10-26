@@ -79,7 +79,7 @@ extension AppStore {
                 preparedUpdate = value
                 administratorInstallRequested = !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path)
                 installationConfirmation = true; installationProgress = "更新已验证，等待安装确认"
-            } catch { installationProgress = "下载或验证未完成"; if !Task.isCancelled { errorMessage = error.localizedDescription } }
+            } catch { recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = "下载或验证未完成"; if !Task.isCancelled { errorMessage = error.localizedDescription } }
         }
     }
     func cancelInstallation() { installationTask?.cancel() }
@@ -110,7 +110,7 @@ extension AppStore {
                 let found = await scanInventory()
                 apps = found; sourceResults[value.application.id] = nil
                 logger.info("installation completed")
-            } catch { errorMessage = error.localizedDescription; installationProgress = "安装未完成，原应用或恢复备份已保留" }
+            } catch { recordDiagnostic(.installation, appID: value.application.id, error: error); errorMessage = error.localizedDescription; installationProgress = "安装未完成，原应用或恢复备份已保留" }
         }
     }
     private func confirmAdministratorInstallation(_ plan: AdministratorInstallPlan) {
@@ -129,7 +129,7 @@ extension AppStore {
                 installationProgress = "管理员安装完成；主应用备份已保留"
                 apps = await scanInventory()
                 sourceResults[plan.application.id] = nil
-            } catch { errorMessage = "管理员安装未完成或授权已取消。请在记录中检查恢复选项：\(error.localizedDescription)" }
+            } catch { recordDiagnostic(.installation, appID: plan.application.id, error: error); errorMessage = "管理员安装未完成或授权已取消。请在记录中检查恢复选项：\(error.localizedDescription)" }
         }
     }
     func restoreAdministratorInstallation(_ attempt: AdministratorInstallAttempt) {
@@ -143,7 +143,7 @@ extension AppStore {
                 try await administrator.perform(plan)
                 apps = await scanInventory(); sourceResults = [:]
                 installationProgress = "主应用已恢复；安装包的其他系统改动未回滚"
-            } catch { errorMessage = "主应用未恢复：\(error.localizedDescription)" }
+            } catch { recordDiagnostic(.recovery, appID: attempt.plan.application.id, error: error); errorMessage = "主应用未恢复：\(error.localizedDescription)" }
         }
     }
     func refreshInstallations() async {
@@ -167,7 +167,7 @@ extension AppStore {
                 }
                 return sizes
             }.value
-        } catch { errorMessage = "安装记录无法读取：\(error.localizedDescription)" }
+        } catch { recordDiagnostic(.backupInspection, error: error); errorMessage = "安装记录无法读取：\(error.localizedDescription)" }
     }
     func discardBackup(_ receipt: InstallationReceipt) {
         guard !installationBusy, !refreshing, !checking, !scanning else { return }
@@ -178,7 +178,7 @@ extension AppStore {
                 try await installer.discardBackup(receipt)
                 installationProgress = "旧版本备份已移到废纸篓"
                 await refreshInstallations()
-            } catch { errorMessage = "备份未清理：\(error.localizedDescription)" }
+            } catch { recordDiagnostic(.backupCleanup, appID: receipt.application.id, error: error); errorMessage = "备份未清理：\(error.localizedDescription)" }
         }
     }
     func restoreInstallation(_ receipt: InstallationReceipt) {
@@ -191,7 +191,7 @@ extension AppStore {
                 try await installer.restore(receipt); await refreshInstallations()
                 apps = await scanInventory()
                 sourceResults = [:]; installationProgress = "旧版本已恢复"
-            } catch { errorMessage = error.localizedDescription }
+            } catch { recordDiagnostic(.recovery, appID: receipt.application.id, error: error); errorMessage = error.localizedDescription }
         }
     }
 

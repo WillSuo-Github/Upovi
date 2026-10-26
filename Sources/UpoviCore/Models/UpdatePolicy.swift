@@ -21,6 +21,6 @@ public struct UpdatePolicy: Codable, Sendable {
     }
     public func filtering(_ result: SourceResult, app: InstalledApp, now: Date = Date()) -> SourceResult {
         .init(appID: result.appID, candidates: result.candidates.filter { allows($0, app: app, now: now) },
-              note: result.note, status: result.status, manualURL: result.manualURL)
+              note: result.note, status: result.status, manualURL: result.manualURL, checks: result.checks)
     }
 }
