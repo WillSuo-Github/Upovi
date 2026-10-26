@@ -61,16 +61,72 @@
       "state": "backupDiscarded",
       "transactionID": "A103033A-4B6D-4957-AD16-F569521CAF0F"
     },
-    "restoreDenial": "pending",
-    "boundary": "Native cleanup exercised before final explicit receipt file/directory synchronization hardening; final-helper inspection pending."
+    "restoreDenial": {
+      "passed": true,
+      "reason": "Recovery is unavailable after backup cleanup or completed restoration",
+      "authorizationCompleted": true
+    },
+    "boundary": "Native install, cleanup and restore denial ran before final explicit receipt synchronization hardening; the exact final signed helper then inspected and successfully synchronized the protected cleaned receipt. No reboot or power-loss injection was performed.",
+    "finalHelperInspection": {
+      "passed": true,
+      "state": "backupDiscarded",
+      "cleanupComplete": true,
+      "backupBytes": 0,
+      "productSourceRevision": "1318b7fa6c6da0245a0f24adba866d38630ed119"
+    },
+    "coldRestartHistory": {
+      "cleanedStatus": true,
+      "noRestoreAction": true,
+      "noCleanupAction": true
+    },
+    "isolatedTargetRemovedFromApplications": true
   },
-  "finalProductCI": "pending",
-  "signedUniversalArtifact": "pending",
+  "finalProductCI": {
+    "runID": 40285891803,
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40285891803",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "tests (macos-26)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-14)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-15-intel)",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "signedUniversalArtifact": {
+    "version": "0.4.4",
+    "build": "10",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "e5caa0a3ece9a7c53a7ab9f9124ece159b7eb2fd06a63d672ed5196829a7c066",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "not_checked",
+    "embeddedSourceRevision": "1318b7fa6c6da0245a0f24adba866d38630ed119",
+    "freshExtractedSignature": "passed",
+    "published": false,
+    "notarized": false
+  },
   "remaining": [
     "actual PKG scripts",
     "administrator interruption/reboot",
     "0.4.4 long observation",
     "feed and release publication",
     "Apple notarization (deferred)"
-  ]
+  ],
+  "productSourceRevision": "1318b7fa6c6da0245a0f24adba866d38630ed119"
 }

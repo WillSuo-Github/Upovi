@@ -2,7 +2,7 @@
 
 Verified artifact caching now supports HTTP byte-range resume across retries and restarts. Completed administrator transactions expose protected usage inspection and confirmed authorized cleanup, with durable recovery revocation before deletion. See [behavior and validation](DOWNLOAD-RESUME-AND-CLEANUP.md) and [version-specific evidence](evidence/0.4.4-resume-cleanup.json).
 
-127 local tests and a real public HTTPS cancel/resume passed. Administrator acceptance, signed artifact and revision-specific CI results are recorded in the evidence file. Actual PKG execution, administrator interruption/reboot, newer-version long observation, publication and notarization retain their separate boundaries. Direct commits go to main.
+127 local tests, a real public HTTPS cancel/resume and isolated authorized administrator cleanup passed. Product revision 1318b7f passed CI on macOS 14 ARM, macOS 15 Intel and macOS 26 ARM; the signed universal bundle, fresh ZIP extraction and signed feed/archive verification passed. Exact native helper lineage and boundaries are recorded in the evidence file. Actual PKG execution, administrator interruption/reboot, newer-version long observation, publication and notarization retain their separate boundaries. Direct commits go to main.
 
 ---
 
