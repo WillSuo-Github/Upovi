@@ -93,6 +93,7 @@ final class AppStore {
     var notificationsEnabled: Bool
     @ObservationIgnored let preferences: AppPreferences
     @ObservationIgnored lazy var notifications = NotificationService()
+    @ObservationIgnored var installStoreUpdate: @MainActor (UpdateCandidate, InstalledApp) async throws -> Void = { try await AppStoreInstallationService().perform($0, app: $1) }
     @ObservationIgnored let installer: UpdateInstaller
     @ObservationIgnored let scanApplications: @Sendable ([URL]) async -> [InstalledApp]
     @ObservationIgnored let revalidateSources: @Sendable () async -> Void
@@ -111,7 +112,7 @@ final class AppStore {
     init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
          scanApplications: @escaping @Sendable ([URL]) async -> [InstalledApp] = { roots in await Task.detached { AppScanner.scan(roots: roots) }.value },
          revalidateSources: @escaping @Sendable () async -> Void = { @Sendable in
-             await SourceHTTPClient.shared.revalidate(); await CaskCatalog.shared.invalidate()
+             await SourceHTTPClient.shared.revalidate(); await CaskCatalog.shared.invalidate(); await AppStoreCatalog.shared.invalidate()
          },
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
         self.downloadCenter = DownloadCenterService(coordinator: installer.downloads)
@@ -166,7 +167,7 @@ final class AppStore {
     var visibleApps: [InstalledApp] {
         apps.filter { app in
             let matches = search.isEmpty || app.name.localizedCaseInsensitiveContains(search) || app.bundleID.localizedCaseInsensitiveContains(search)
-            guard matches, sourceFilter.includes(sourceResults[app.id]?.status) else { return false }
+            guard matches, sourceFilter.includes(sourceResults[app.id]?.status, isAppStore: app.isAppStore) else { return false }
             switch section {
             case .updates: return !ignored.contains(app.bundleID) && assessment(for: app).hasUpdate
             case .ignored: return ignored.contains(app.bundleID)

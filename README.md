@@ -2,7 +2,7 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.7 preview**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.8 development**
 
 [Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.7). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
@@ -14,6 +14,7 @@ A native, open-source macOS application update detector with globally controlled
 - Provides a download task center with pause/continue, network-reconnect continuation, bounded automatic retry and private history. Interrupted tasks require fresh source checks after restart; installation confirmation is preserved. See [download center and acceptance](docs/DOWNLOAD-CENTER-AND-ACCEPTANCE.md).
 - Exports a previewable local diagnostic JSON with source outcomes, classified errors and operation phases. Application identifiers are optional; paths, URLs, raw logs and credentials are excluded. See [diagnostics and source coverage](docs/DIAGNOSTICS-AND-SOURCES.md).
 - Manual refresh revalidates source metadata instead of reusing a day-old catalog. Source requests use bounded memory caching, conditional validation, per-origin queues and server-directed cooldowns. Failures never silently become successful stale checks.
+- Checks supported Mac App Store installations and offers in-application check/update and shared batch review through Apple Store services. Store updates require the owning Apple Account, may require native authentication, and have no Upovi rollback/pause. See [Store integration and acceptance](docs/APP-STORE-UPDATES.md).
 - Checks developer Sparkle appcasts, Homebrew's official catalog using exact declared bundle IDs, curated identity mappings, and supported GitHub releases. Unknown apps can be assigned an HTTPS appcast or official GitHub repository in the detail panel.
 - Distinguishes source-reported updates, community leads, unsupported sources, and failed checks. An empty result is never proof that all applications are current.
 - Downloads eligible ZIP/DMG updates, verifies archive integrity, matching application/developer identity, nested code signatures, version and native executable compatibility, and Gatekeeper acceptance. Installation requires an explicit individual or batch confirmation and retains the old app for recovery.
@@ -34,7 +35,7 @@ Install Xcode with Swift 6 command-line tools, then:
 
 This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive and Upovi embeds the pinned Sparkle framework. Header notices are in `THIRD-PARTY-NOTICES.md`.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.7 signed preview and public feed are published; genuine Sparkle old-to-new update results remain version-specific. The 0.4.6 baseline collector disappeared after about 52 minutes; the original app remains running, but the observation is not accepted and does not validate later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.7 signed preview and public feed are published; genuine Sparkle old-to-new update results remain version-specific. The 0.4.6 baseline collector disappeared after about 52 minutes; the original app was still running at review and was later normally stopped to launch the 0.4.8 candidate; the observation is not accepted and does not validate later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
 
 ## Public community discovery
 
@@ -62,7 +63,7 @@ Eligible sources offer **Download and verify update**. After verification, a sep
 
 HTTPS ZIP/DMG application updates and direct PKG downloads need a SHA-256 or verifiable installed Sparkle Ed25519 key. PKGs additionally need a matching Developer ID Installer signature, Gatekeeper acceptance and a matching signed app payload; administrator destinations are restricted to direct children of /Applications. The incoming bundle ID and Team ID must match, its code signature and version must validate, its native executable must support this Mac and OS, and Gatekeeper must accept it. Archive extraction rejects traversal, unsafe symlinks, duplicate members, and bounded size/time violations. DMGs are mounted read-only. Quarantine is retained.
 
-App Store updates, unsigned/unverifiable artifacts, script-only or uninspectable packages, unsupported administrator destinations, and ambiguous assets use the official source/manual workflow. The normal app replacement path refuses Upovi self-replacement; Upovi uses its dedicated Sparkle updater. Community reports cannot offer installation. Rolling back an app does not roll back its data format; save documents first. A restore refuses to overwrite a newer external update.
+Unsupported Store installations, unsigned/unverifiable artifacts, script-only or uninspectable packages, unsupported administrator destinations, and ambiguous assets use the official source/manual workflow. The normal app replacement path refuses Upovi self-replacement; Upovi uses its dedicated Sparkle updater. Community reports cannot offer installation. Rolling back an app does not roll back its data format; save documents first. A restore refuses to overwrite a newer external update.
 
 ## Checks and evidence
 

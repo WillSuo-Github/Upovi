@@ -23,10 +23,13 @@ struct AppDetailView: View {
                         detail("Team ID", app.teamID ?? "未识别")
                         detail("安装位置", app.path)
                     }
-                    if app.isAppStore {
-                        Button("打开 App Store 更新") { store.open(URL(string: "macappstore://showUpdatesPage")) }
-                    }
                     let assessment = store.fullAssessment(for: app)
+                    if app.isAppStore, assessment.sourceUpdates.isEmpty, let id = store.sourceResults[app.id]?.appStoreID {
+                        Button("检查并更新此应用") {
+                            store.reviewStoreUpdate(app, candidate: .init(version: app.version, source: "App Store", isCommunity: false, url: nil, appStoreID: id))
+                        }.disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
+                            .accessibilityIdentifier("check-update-store-application")
+                    }
                     if !assessment.sourceUpdates.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("来源更新").font(.headline)
@@ -47,7 +50,11 @@ struct AppDetailView: View {
                                         Button("一周后") { store.deferUpdates(for: app, until: Date().addingTimeInterval(604800)) }
                                         Button("取消稍后提醒") { store.deferUpdates(for: app, until: nil) }
                                     }.help("到期后，在下一次来源检查时恢复提醒；需要应用正在运行且通知已启用。")
-                                    if candidate.download?.hasIntegrityProof == true, app.teamID != nil, app.bundleID != "app.upovi.Upovi" {
+                                    if app.isAppStore, candidate.appStoreID != nil {
+                                        Button("在 Upovi 中更新") { store.reviewStoreUpdate(app, candidate: candidate) }
+                                            .buttonStyle(.borderedProminent).disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
+                                            .accessibilityIdentifier("update-store-application")
+                                    } else if candidate.download?.hasIntegrityProof == true, app.teamID != nil, app.bundleID != "app.upovi.Upovi" {
                                         Button("下载并验证更新") { store.prepareInstallation(candidate, app: app) }
                                             .buttonStyle(.borderedProminent).disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
                                     } else {

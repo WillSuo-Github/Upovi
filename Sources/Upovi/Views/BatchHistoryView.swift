@@ -22,7 +22,7 @@ struct BatchHistoryView: View {
                             .disabled(store.installationBusy || store.refreshing || store.checking || store.scanning)
                     }
                 } label: {
-                    Text("\(record.startedAt.formatted()) · 完成 \(record.entries.filter { $0.phase == .installed }.count)/\(record.entries.count) · \(record.finishedAt == nil ? "未完成" : "已结束")")
+                    Text("\(record.startedAt.formatted()) · 完成 \(record.entries.filter { $0.phase == .installed || $0.phase == .current }.count)/\(record.entries.count) · \(record.finishedAt == nil ? "未完成" : "已结束")")
                         .font(.callout)
                 }
             }

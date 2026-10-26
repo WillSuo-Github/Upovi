@@ -1,7 +1,7 @@
 import Foundation
 
 public struct BulkUpdateRecord: Identifiable, Codable, Sendable {
-    public enum Phase: String, Codable, Sendable { case pending, preparing, installing, installed, failed, cancelled, manual, interrupted }
+    public enum Phase: String, Codable, Sendable { case pending, preparing, installing, installed, current, failed, cancelled, manual, interrupted }
     public struct Entry: Codable, Sendable {
         public let item: BulkUpdateItem
         public var phase: Phase

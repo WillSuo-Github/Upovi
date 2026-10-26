@@ -1,0 +1,64 @@
+{
+  "version": "0.4.8",
+  "build": "14",
+  "automatedTests": {
+    "core": 156,
+    "store": 17,
+    "failures": 0
+  },
+  "storeBridge": {
+    "version": "7.0.0",
+    "architectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "architecturePackagesSHA256": {
+      "arm64": "bc218a854c85d9e1c95496a96b26287bb66056b95688b90f91d04fa62ed21b75",
+      "x86_64": "9bca1de1fb6ea19c9e0b9d7b7c85249020c9ed65a9d434c2ef40896a2f3395f9"
+    },
+    "requiresHomebrewOrJQ": false,
+    "usesPrivateAppleFrameworks": true
+  },
+  "liveReadOnlyStoreCheck": {
+    "receiptInstallations": 23,
+    "confirmedCurrent": 21,
+    "missingStoreIDManual": 2,
+    "applicationsInstalled": 0
+  },
+  "nativeReview": {
+    "application": "Shazam",
+    "version": "2.11.0",
+    "build": "821",
+    "singleApplicationReviewDisplayed": true,
+    "noInstallationStarted": false,
+    "candidateSignature": "Developer ID universal; deep/strict/all-architecture passed",
+    "executionStartedAfterExplicitOwnerAuthorization": true
+  },
+  "authenticatedStoreExecution": {
+    "application": "Shazam",
+    "bundleID": "com.shazam.mac.Shazam",
+    "version": "2.11.0",
+    "build": "821",
+    "result": "current",
+    "userAuthorizedSpecificDailyApp": true,
+    "productionReviewAndStartButton": true,
+    "protectedHelperReturnedVerifiedStoreReceipt": true,
+    "completedCount": 1,
+    "failureCount": 0,
+    "versionChanged": false,
+    "actualNewVersionInstallation": "not exercised; no newer release observed",
+    "boundary": "Actual signed-candidate protected helper and Apple Store accurate check returned current. Other daily applications were not included.",
+    "candidate": {
+      "sourceRevision": "54d1fe0aae2b1d8accfe3b65f171c0f3f0592e36-dirty",
+      "mainBinarySHA256": "53060dc292df6e6d79595bb2b4e332f9bcc17cfb80f1c3f076c98b3a0df46a2a",
+      "protectedHelperSHA256": "7b4a6110709f5f2949a920f3549d47542bf2756b4ee393e4d6df4c4818bfa706",
+      "boundary": "Execution preceded final UI preservation and failure-message edits. Final clean artifact is separate."
+    }
+  },
+  "finalProductCI": "pending",
+  "signedUniversalArtifact": "pending clean-source final artifact",
+  "publicRelease": "not published; 0.4.7 remains the public preview",
+  "physicalSleepNetworkPower": "deferred by owner",
+  "notarization": "deferred by owner",
+  "unprivilegedStoreHelperDenial": "passed; exited 1 before reading a plan"
+}

@@ -8,6 +8,7 @@ let package = Package(
         .executable(name: "Upovi", targets: ["Upovi"]),
         .executable(name: "UpoviPeer", targets: ["UpoviPeer"]),
         .executable(name: "UpoviInstaller", targets: ["UpoviInstaller"]),
+        .executable(name: "UpoviStoreInstaller", targets: ["UpoviStoreInstaller"]),
         .library(name: "UpoviCore", targets: ["UpoviCore"])
     ],
     dependencies: [
@@ -20,6 +21,7 @@ let package = Package(
                           linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]),
         .executableTarget(name: "UpoviPeer", dependencies: ["UpoviCore"]),
         .executableTarget(name: "UpoviInstaller", dependencies: ["UpoviCore"]),
+        .executableTarget(name: "UpoviStoreInstaller", dependencies: ["UpoviCore"]),
         .testTarget(name: "UpoviCoreTests", dependencies: ["UpoviCore"]),
         .testTarget(name: "UpoviTests", dependencies: ["Upovi"])
     ]

@@ -6,6 +6,9 @@ public struct BulkUpdateItem: Identifiable, Codable, Sendable {
     public let candidate: UpdateCandidate
     public let manualReason: String?
     public var canInstall: Bool { manualReason == nil }
+    public init(application: InstalledApp, candidate: UpdateCandidate, manualReason: String?) {
+        self.application = application; self.candidate = candidate; self.manualReason = manualReason
+    }
 }
 
 public enum BulkUpdatePlan {
@@ -27,7 +30,11 @@ public enum BulkUpdatePlan {
     }
 
     private static func manualReason(app: InstalledApp, candidate: UpdateCandidate) -> String? {
-        if app.isAppStore { return "请通过 App Store 更新" }
+        if app.isAppStore {
+            guard let id = candidate.appStoreID else { return "商店更新尚未取得可核对的应用标识" }
+            do { try AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: 501).validate(); return nil }
+            catch { return "此商店应用的位置或身份不支持由 Upovi 发起更新" }
+        }
         if app.bundleID == "app.upovi.Upovi" { return "请使用 Upovi 自身更新" }
         guard let team = app.teamID, !team.isEmpty else { return "无法确认已安装应用的开发者，请使用官方更新" }
         guard let download = candidate.download, download.hasIntegrityProof else { return "来源未提供可验证的下载，请使用官方更新" }
@@ -37,7 +44,7 @@ public enum BulkUpdatePlan {
 }
 
 public struct BulkUpdateOutcome: Sendable {
-    public enum Status: String, Codable, Sendable { case installed, failed, cancelled, manual }
+    public enum Status: String, Codable, Sendable { case installed, current, failed, cancelled, manual }
     public let item: BulkUpdateItem
     public let status: Status
     public let detail: String
@@ -67,7 +74,9 @@ public enum BulkUpdateRunner {
                 do {
                     try await operation(item)
                     // Once an installation commits, report success even if stop was requested meanwhile.
-                    outcome = .init(item: item, status: .installed, detail: "更新完成，主应用备份已保留")
+                    outcome = .init(item: item, status: .installed, detail: item.application.isAppStore ? "商店更新完成，不提供 Upovi 旧版备份" : "更新完成，主应用备份已保留")
+                } catch is AppStoreAlreadyCurrent {
+                    outcome = .init(item: item, status: .current, detail: "商店确认已经最新，未执行升级")
                 } catch {
                     outcome = .init(item: item, status: Task.isCancelled || error is CancellationError ? .cancelled : .failed,
                                     detail: Task.isCancelled || error is CancellationError ? "已取消，未完成安装" : error.localizedDescription)

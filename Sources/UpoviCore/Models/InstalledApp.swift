@@ -33,12 +33,14 @@ public struct UpdateCandidate: Identifiable, Hashable, Codable, Sendable {
     public var expiresAt: Date? = nil
     public var download: DownloadDescriptor? = nil
     public var releaseNotes: String? = nil
+    public var appStoreID: UInt64? = nil
 
     public init(version: String, build: String = "", source: String, isCommunity: Bool, url: URL?, usesBuildVersion: Bool = false,
-                observedAt: Date = Date(), peerID: String? = nil, expiresAt: Date? = nil, download: DownloadDescriptor? = nil, releaseNotes: String? = nil) {
+                observedAt: Date = Date(), peerID: String? = nil, expiresAt: Date? = nil, download: DownloadDescriptor? = nil, releaseNotes: String? = nil, appStoreID: UInt64? = nil) {
         self.version = version; self.build = build; self.source = source; self.isCommunity = isCommunity; self.url = url
         self.usesBuildVersion = usesBuildVersion; self.observedAt = observedAt; self.peerID = peerID
         self.expiresAt = expiresAt; self.download = isCommunity ? nil : download
         self.releaseNotes = isCommunity ? nil : releaseNotes.map { String($0.prefix(20_000)) }
+        self.appStoreID = isCommunity ? nil : appStoreID
     }
 }

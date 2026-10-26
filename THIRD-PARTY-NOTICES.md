@@ -15,3 +15,9 @@ Upovi embeds Sparkle 2.10.0 (MIT license) for updating Upovi itself:
 - https://github.com/sparkle-project/Sparkle/tree/2.10.0
 
 The distribution includes Sparkle's license in `Contents/Resources/Sparkle-LICENSE`.
+
+Upovi embeds the mas 7.0.0 command-line executable as `UpoviStoreBridge` for Mac App Store operations:
+
+- https://github.com/mas-cli/mas/tree/v7.0.0
+
+The original MIT license is retained in `Vendor/mas-LICENSE`. Licenses/notices for the upstream pinned Swift dependencies are retained in `Vendor/mas-dependency-licenses`, with source revisions in `SOURCES.json`. The application distribution includes both sets under `Contents/Resources`. Packaging extracts checksum-pinned official architecture packages without executing their installers or shell wrappers, combines the executables, and signs the embedded helper with Upovi's identity. No Homebrew, jq or shell wrapper is required by end users. mas uses Apple's private store frameworks; compatibility is version-specific.

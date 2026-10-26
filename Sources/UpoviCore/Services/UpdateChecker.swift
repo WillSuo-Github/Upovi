@@ -7,8 +7,9 @@ public struct SourceResult: Sendable {
     public let status: SourceStatus
     public let manualURL: URL?
     public let checks: [SourceCheckDetail]
-    public init(appID: String, candidates: [UpdateCandidate], note: String, status: SourceStatus = .current, manualURL: URL? = nil, checks: [SourceCheckDetail] = []) {
-        self.appID = appID; self.candidates = candidates; self.note = note; self.status = status; self.manualURL = manualURL; self.checks = checks
+    public let appStoreID: UInt64?
+    public init(appID: String, candidates: [UpdateCandidate], note: String, status: SourceStatus = .current, manualURL: URL? = nil, checks: [SourceCheckDetail] = [], appStoreID: UInt64? = nil) {
+        self.appID = appID; self.candidates = candidates; self.note = note; self.status = status; self.manualURL = manualURL; self.checks = checks; self.appStoreID = appStoreID
     }
 }
 
@@ -36,7 +37,8 @@ public enum UpdateChecker {
     ]
 
     public static func check(_ app: InstalledApp, override: SourceOverride? = nil) async -> SourceResult {
-        await check(app, override: override, fetch: { try await fetch($0, limit: $1) }, catalog: { try await CaskCatalog.shared.metadata(for: $0) })
+        if app.isAppStore { return await AppStoreCatalog.shared.check(app) }
+        return await check(app, override: override, fetch: { try await fetch($0, limit: $1) }, catalog: { try await CaskCatalog.shared.metadata(for: $0) })
     }
 
     static func check(_ app: InstalledApp, override: SourceOverride? = nil,

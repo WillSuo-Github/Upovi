@@ -16,24 +16,30 @@ fi
 if [[ "${UPOVI_UNIVERSAL:-0}" == "1" ]]; then
   swift build -c "$CONFIGURATION" --product Upovi --arch arm64 --arch x86_64
   swift build -c "$CONFIGURATION" --product UpoviInstaller --arch arm64 --arch x86_64
+  swift build -c "$CONFIGURATION" --product UpoviStoreInstaller --arch arm64 --arch x86_64
   BINARY_DIR="$(swift build -c "$CONFIGURATION" --arch arm64 --arch x86_64 --show-bin-path)"
 else
   swift build -c "$CONFIGURATION" --product Upovi
   swift build -c "$CONFIGURATION" --product UpoviInstaller
+  swift build -c "$CONFIGURATION" --product UpoviStoreInstaller
   BINARY_DIR="$(swift build -c "$CONFIGURATION" --show-bin-path)"
 fi
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 cp "$BINARY_DIR/Upovi" "$APP_BUNDLE/Contents/MacOS/Upovi"
 cp "$BINARY_DIR/UpoviInstaller" "$APP_BUNDLE/Contents/MacOS/UpoviInstaller"
+cp "$BINARY_DIR/UpoviStoreInstaller" "$APP_BUNDLE/Contents/MacOS/UpoviStoreInstaller"
 cp Resources/Upovi.icns "$APP_BUNDLE/Contents/Resources/Upovi.icns"
 python3 script/write_bundle_info.py "$APP_BUNDLE/Contents/Info.plist" "$SOURCE_REVISION"
 python3 script/embed_sparkle.py "$APP_BUNDLE" "$SIGNING_IDENTITY"
+python3 script/embed_store_bridge.py "$APP_BUNDLE" "$SIGNING_IDENTITY"
 cp .build/artifacts/sparkle/Sparkle/LICENSE "$APP_BUNDLE/Contents/Resources/Sparkle-LICENSE"
 if [[ "$SIGNING_IDENTITY" == "-" ]]; then
   codesign --force --identifier app.upovi.Installer --sign - "$APP_BUNDLE/Contents/MacOS/UpoviInstaller"
+  codesign --force --identifier app.upovi.StoreInstaller --sign - "$APP_BUNDLE/Contents/MacOS/UpoviStoreInstaller"
   codesign --force --sign - "$APP_BUNDLE"
 else
   codesign --force --identifier app.upovi.Installer --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_BUNDLE/Contents/MacOS/UpoviInstaller"
+  codesign --force --identifier app.upovi.StoreInstaller --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_BUNDLE/Contents/MacOS/UpoviStoreInstaller"
   codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_BUNDLE"
 fi
 codesign --verify --deep --strict --all-architectures "$APP_BUNDLE"

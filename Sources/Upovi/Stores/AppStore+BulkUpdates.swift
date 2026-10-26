@@ -4,7 +4,7 @@ import UpoviCore
 
 extension AppStore {
     var bulkInstallableCount: Int { bulkItems.filter(\.canInstall).count }
-    var bulkCompletedCount: Int { bulkOutcomes.values.filter { $0.status == .installed }.count }
+    var bulkCompletedCount: Int { bulkOutcomes.values.filter { $0.status == .installed || $0.status == .current }.count }
     var bulkFailedCount: Int { bulkOutcomes.values.filter { $0.status == .failed }.count }
 
     func reviewAllUpdates() {
@@ -14,6 +14,17 @@ extension AppStore {
         guard !bulkItems.isEmpty else { return }
         bulkOutcomes = [:]; bulkCurrentID = nil; bulkHasRun = false; bulkStopRequested = false
         bulkUpdatePresented = true
+    }
+
+    func reviewStoreUpdate(_ app: InstalledApp, candidate: UpdateCandidate) {
+        guard app.isAppStore, candidate.appStoreID != nil, !installationBusy, !checking, !scanning, !refreshing,
+              !SelfUpdateService.shared.sessionInProgress else { return }
+        guard !ignored.contains(app.bundleID), let id = candidate.appStoreID else { return }
+        do { try AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: 501).validate() }
+        catch { errorMessage = "此商店安装的位置或签名暂不支持 Upovi 更新，请使用原分发渠道。"; return }
+        bulkItems = [.init(application: app, candidate: candidate, manualReason: nil)]
+        guard !bulkItems.isEmpty else { return }
+        bulkOutcomes = [:]; bulkCurrentID = nil; bulkHasRun = false; bulkStopRequested = false; bulkUpdatePresented = true
     }
 
     func startAllUpdates() {
@@ -57,6 +68,10 @@ extension AppStore {
             bulkOutcomes[outcome.item.id] = outcome
             saveBulkPhase(outcome.item.id, phase: .init(rawValue: outcome.status.rawValue) ?? .failed, detail: outcome.detail)
             if outcome.status == .installed { sourceResults[outcome.item.id] = nil }
+            if outcome.status == .current {
+                sourceResults[outcome.item.id] = .init(appID: outcome.item.id, candidates: [], note: "商店确认已经最新。", status: .current,
+                    checks: [.init(.appStore, .checked)], appStoreID: outcome.item.candidate.appStoreID)
+            }
         }
     }
 
@@ -74,7 +89,13 @@ extension AppStore {
                     self.installationProgress = expected > 0 ? "\(app.name)：下载中 \(received * 100 / expected)%" : "\(app.name)：已下载 \(received / 1_000_000) MB"
                 }
             }
-            if candidate.download?.url.pathExtension.lowercased() == "pkg" {
+            if app.isAppStore {
+                try Task.checkCancellation()
+                guard saveBulkPhase(item.id, phase: .installing, detail: "等待商店下载和管理员认证") else { throw PeerError.unavailable("Batch history could not be saved") }
+                canCancelInstallation = false; stage = .batchInstallation
+                installationProgress = "\(app.name)：等待 Apple 商店服务完成更新，可能需要账户或管理员认证…"
+                try await installStoreUpdate(candidate, app)
+            } else if candidate.download?.url.pathExtension.lowercased() == "pkg" {
                 let package = try await administrator.preparePackage(candidate, app: app, progress: progress)
                 defer { administrator.discard(package) }
                 try Task.checkCancellation()
@@ -100,6 +121,9 @@ extension AppStore {
                     await installer.discard(prepared.id)
                 } catch { await installer.discard(prepared.id); throw error }
             }
-        } catch { recordDiagnostic(stage, appID: item.application.id, error: error); throw error }
+        } catch {
+            if !(error is AppStoreAlreadyCurrent) { recordDiagnostic(stage, appID: item.application.id, error: error) }
+            throw error
+        }
     }
 }

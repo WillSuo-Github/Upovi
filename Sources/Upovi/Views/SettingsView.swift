@@ -48,7 +48,7 @@ struct SettingsView: View {
                 }
                 Section("应用扫描与安装") {
                     Text("扫描 /Applications 和 ~/Applications，不执行被扫描应用。当前识别 \(store.apps.count) 个应用。")
-                    Text("支持验证后的 ZIP／DMG 应用更新，以及经负载检查的签名 PKG。管理员安装会显示系统授权窗口；App Store 和无法验证的安装包使用官方渠道。")
+                    Text("支持验证后的 ZIP／DMG 应用更新，以及经负载检查的签名 PKG。管理员安装会显示系统授权窗口。App Store 应用可在 Upovi 内发起商店更新，可能需要 Apple 账户认证；商店更新不提供 Upovi 旧版备份或暂停。无法验证的其他安装包仍使用官方渠道。")
                         .font(.caption).foregroundStyle(.secondary)
                     Button("刷新并检查") { store.refreshAll() }.disabled(store.refreshing || store.scanning || store.checking || store.installationBusy)
                     ForEach(store.additionalScanDirectories, id: \.self) { path in

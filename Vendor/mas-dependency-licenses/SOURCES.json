@@ -1,0 +1,92 @@
+[
+  {
+    "name": "bigint",
+    "repository": "https://github.com/attaswift/BigInt.git",
+    "revision": "e07e00fa1fd435143a2dcf8b7eec9a7710b2fdfe",
+    "files": [
+      "bigint-LICENSE.md"
+    ]
+  },
+  {
+    "name": "chronometer",
+    "repository": "https://github.com/KittyMac/Chronometer.git",
+    "revision": "99d4f4137837a28e1e294eb69ac66ad53c0934d3",
+    "files": [
+      "chronometer-LICENSE"
+    ]
+  },
+  {
+    "name": "gram",
+    "repository": "https://github.com/rarestype/gram",
+    "revision": "d9276e23523174cd04213e945f146dd9a553a571",
+    "files": [
+      "gram-LICENSE",
+      "gram-NOTICE"
+    ]
+  },
+  {
+    "name": "hitch",
+    "repository": "https://github.com/KittyMac/Hitch.git",
+    "revision": "067a1e36837a8e62461841665715028bf3b48f5f",
+    "files": [
+      "hitch-LICENSE-from-README.md"
+    ]
+  },
+  {
+    "name": "sextant",
+    "repository": "https://github.com/KittyMac/Sextant.git",
+    "revision": "6e83a22ceb31a59fc76333f5c2346d989f78a309",
+    "files": [
+      "sextant-LICENSE"
+    ]
+  },
+  {
+    "name": "spanker",
+    "repository": "https://github.com/KittyMac/Spanker.git",
+    "revision": "ff05ac41aea633ca7a9fd966d3164373247ee8dd",
+    "files": [
+      "spanker-LICENSE"
+    ]
+  },
+  {
+    "name": "swift-argument-parser",
+    "repository": "https://github.com/apple/swift-argument-parser.git",
+    "revision": "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
+    "files": [
+      "swift-argument-parser-LICENSE.txt"
+    ]
+  },
+  {
+    "name": "swift-atomics",
+    "repository": "https://github.com/apple/swift-atomics.git",
+    "revision": "b601256eab081c0f92f059e12818ac1d4f178ff7",
+    "files": [
+      "swift-atomics-LICENSE.txt"
+    ]
+  },
+  {
+    "name": "swift-collections",
+    "repository": "https://github.com/apple/swift-collections.git",
+    "revision": "6675bc0ff86e61436e615df6fc5174e043e57924",
+    "files": [
+      "swift-collections-LICENSE.txt"
+    ]
+  },
+  {
+    "name": "swift-json",
+    "repository": "https://github.com/mas-cli/swift-json.git",
+    "revision": "7f39f41878ed56acccc3634d917022737c82e030",
+    "files": [
+      "swift-json-LICENSE",
+      "swift-json-NOTICE"
+    ]
+  },
+  {
+    "name": "swiftsoup",
+    "repository": "https://github.com/scinfu/SwiftSoup.git",
+    "revision": "6c7915e16f729857aec3e99068c361e58a00ed68",
+    "files": [
+      "swiftsoup-LICENSE"
+    ]
+  }
+]

@@ -58,8 +58,20 @@ jobs:
           cat .build/helper-denial.log
           test "$UPOVI_HELPER_STATUS" -eq 1
           /usr/bin/grep -F 'Administrator authorization is required' .build/helper-denial.log
+      - name: Verify Store helper refuses unprivileged execution
+        run: |
+          swift build --product UpoviStoreInstaller
+          UPOVI_BIN_DIR="$(swift build --show-bin-path)"
+          set +e
+          "$UPOVI_BIN_DIR/UpoviStoreInstaller" /dev/null /dev/null > .build/store-helper-denial.log 2>&1
+          UPOVI_HELPER_STATUS=$?
+          set -e
+          test "$UPOVI_HELPER_STATUS" -eq 1
+          /usr/bin/grep -F 'Administrator authorization is required' .build/store-helper-denial.log
       - name: Build native bundle
-        run: CONFIGURATION=release UPOVI_STAGE_ONLY=1 ./script/package_release.sh
+        run: |
+          CONFIGURATION=release UPOVI_STAGE_ONLY=1 ./script/package_release.sh
+          test "$(dist/Upovi.app/Contents/MacOS/UpoviStoreBridge version)" = "7.0.0"
       - name: Read synthetic report from independent publisher
         if: github.event_name == 'workflow_dispatch' && inputs.public_topic != ''
         env:
