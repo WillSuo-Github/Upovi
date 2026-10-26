@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.7 development**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.7 preview**
 
-[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.6). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
+[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.7). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
 
 ## What it does
 
@@ -20,7 +20,7 @@ A native, open-source macOS application update detector with globally controlled
 - Provides a menu bar entry, opt-in scheduled checks and notifications, system-backed login-at-startup settings, source filters/settings, recent-check history, and installation/recovery history.
 - Resumes canceled/interrupted ZIP, DMG and PKG downloads when the HTTPS server provides a strong validator; retry revalidates the final artifact before installation. See [download recovery](docs/DOWNLOAD-RESUME-AND-CLEANUP.md).
 - Shows retained-copy sizes and moves eligible copies to Trash only after confirmation. Interrupted recovery material is protected.
-- Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. The public feed and genuine 0.4.5 → 0.4.6 replacement/relaunch have been accepted; newer artifacts keep separate evidence.
+- Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. The public feed and genuine 0.4.5 → 0.4.6 and 0.4.6 → 0.4.7 replacement/relaunch have been accepted; artifacts keep separate evidence.
 - Offers Upovi-managed administrator installation for signed application replacements and inspectable signed PKGs. Each operation requests macOS authorization, uses a verified protected helper, and retains a protected main-app backup. Completed protected backups can be inspected and permanently cleaned after confirmation and authorization; failed/interrupted transactions remain protected. PKG script side effects are not rolled back; see [the administrator design](docs/ADMINISTRATOR-INSTALLATION.md).
 - Automatically discovers opted-in public publishers using BitTorrent DHT. No invitation, account, publisher-key exchange, or Upovi relay is required.
 
@@ -34,7 +34,7 @@ Install Xcode with Swift 6 command-line tools, then:
 
 This builds and ad-hoc signs `dist/Upovi.app` for local development. The Codex Run action uses the same entrypoint. Open `Package.swift` in Xcode to edit. The installed end-user app does not require Homebrew, Python, or Xcode; ZIP extraction links Apple's system libarchive and Upovi embeds the pinned Sparkle framework. Header notices are in `THIRD-PARTY-NOTICES.md`.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.6 signed preview and public feed are published, with a genuine 0.4.5 → 0.4.6 Sparkle update accepted. The 0.4.6 background observation continues as a version-specific baseline, not acceptance of later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.7 signed preview and public feed are published; genuine Sparkle old-to-new update results remain version-specific. The 0.4.6 background observation continues as a version-specific baseline, not acceptance of later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
 
 ## Public community discovery
 

@@ -10,28 +10,28 @@
     "result": "passed",
     "requests": [
       {
-        "conditional": false,
+        "host": "formulae.brew.sh",
         "status": 200,
-        "bytes": 19238103,
-        "host": "formulae.brew.sh"
+        "bytes": 19237893,
+        "conditional": false
       },
       {
-        "conditional": true,
+        "host": "formulae.brew.sh",
         "status": 304,
         "bytes": 0,
-        "host": "formulae.brew.sh"
+        "conditional": true
       },
       {
-        "conditional": false,
+        "host": "api.github.com",
         "status": 200,
         "bytes": 17202,
-        "host": "api.github.com"
+        "conditional": false
       },
       {
-        "conditional": true,
+        "host": "api.github.com",
         "status": 304,
         "bytes": 0,
-        "host": "api.github.com"
+        "conditional": true
       }
     ],
     "manualCatalogRefreshContactedOrigin": true
@@ -71,13 +71,79 @@
     "automatic": "passed",
     "legacyPrivate": "passed"
   },
-  "finalProductCI": "pending",
-  "signedUniversalArtifact": "pending",
-  "publicRelease": "pending",
+  "finalProductCI": {
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40304053614",
+    "jobs": [
+      {
+        "name": "tests (macos-14)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-15-intel)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-26)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "signedUniversalArtifact": {
+    "version": "0.4.7",
+    "build": "13",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "64deeabe562251159baedc42348087317d457d1cd8f58f8af131331770dd4c1e",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "not_checked",
+    "freshExtractedSignature": "passed"
+  },
+  "publicRelease": {
+    "status": "published",
+    "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.7",
+    "publicLatestFeedBuild": "13",
+    "publicLatestFeedSignature": "verified",
+    "channel": "experimental signed preview; not notarized"
+  },
   "observation": {
     "version": "0.4.6",
     "status": "continuing baseline; no duration inherited by 0.4.7"
   },
   "physicalSleepNetworkPower": "deferred by owner",
-  "notarization": "deferred by owner"
+  "notarization": "deferred by owner",
+  "productRevision": "a5adf1b83212cb580acf1a72dfd03b3ca1bce19e",
+  "genuineSelfUpdate": {
+    "result": "passed",
+    "fromVersion": "0.4.6",
+    "fromBuild": "12",
+    "fromProcessID": 383,
+    "toVersion": "0.4.7",
+    "toBuild": "13",
+    "toProcessID": 828,
+    "sourceRevision": "a5adf1b83212cb580acf1a72dfd03b3ca1bce19e",
+    "feedURL": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+    "environment": "disposable macOS 26.6.2 ARM virtual machine",
+    "signature": "deep strict all architectures passed",
+    "boundary": "Actual public Sparkle download/install/relaunch in guest. New application was not manually copied. Host baseline process unchanged."
+  },
+  "nativeSourceRefresh": {
+    "environment": "shipping signed 0.4.7 in disposable macOS 26.6.2 VM",
+    "manualRefreshes": 2,
+    "applications": 4,
+    "updatesEachRun": 1,
+    "failedChecksEachRun": 0,
+    "manualFixtureRows": 2,
+    "officialEntryButtonsAndHonestUnconfirmedNotesObserved": true,
+    "sampleCheckTimesGuestLocal": [
+      "2026-10-26 10:11:04.272",
+      "2026-10-26 10:12:47.147"
+    ],
+    "boundary": "Two metadata-only synthetic app identities plus real Upovi and old vendor Zoom. Native source scan and display only; vendor apps were not updated and external manual-entry pages were not opened. Guest P2P disabled; host preferences and baseline unchanged."
+  }
 }
