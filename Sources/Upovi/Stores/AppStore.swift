@@ -110,7 +110,7 @@ final class AppStore {
 
     init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
          scanApplications: @escaping @Sendable ([URL]) async -> [InstalledApp] = { roots in await Task.detached { AppScanner.scan(roots: roots) }.value },
-         revalidateSources: @escaping @Sendable () async -> Void = {
+         revalidateSources: @escaping @Sendable () async -> Void = { @Sendable in
              await SourceHTTPClient.shared.revalidate(); await CaskCatalog.shared.invalidate()
          },
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {

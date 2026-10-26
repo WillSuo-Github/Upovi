@@ -21,12 +21,12 @@ public actor SourceHTTPClient {
 
     public init() {
         transport = { try await HTTPTransfer.metadata(from: $0, limit: $1, headers: $2) }
-        now = { Date() }; sleep = { try await Task.sleep(for: $0) }
+        now = { @Sendable in Date() }; sleep = { @Sendable duration in try await Task.sleep(for: duration) }
         byteLimit = 64_000_000; entryLimit = 128
     }
     init(byteLimit: Int = 64_000_000, entryLimit: Int = 128,
-         now: @escaping @Sendable () -> Date = { Date() },
-         sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
+         now: @escaping @Sendable () -> Date = { @Sendable in Date() },
+         sleep: @escaping @Sendable (Duration) async throws -> Void = { @Sendable duration in try await Task.sleep(for: duration) },
          transport: @escaping @Sendable (URL, Int, [String: String]) async throws -> HTTPMetadataResponse) {
         self.transport = transport; self.now = now; self.sleep = sleep
         self.byteLimit = byteLimit; self.entryLimit = entryLimit
@@ -57,7 +57,7 @@ public actor SourceHTTPClient {
         }
         let requestGeneration = generation
         let previous = entries[url]
-        var headers: [String: String] = [:]
+        var headers: [String: String] = ["Cache-Control": "no-cache"]
         if let etag = Self.validator(previous?.response.headers["etag"]) { headers["If-None-Match"] = etag }
         else if let date = Self.validator(previous?.response.headers["last-modified"]) { headers["If-Modified-Since"] = date }
         if host.lowercased() == "api.github.com" { headers["Accept"] = "application/vnd.github+json" }

@@ -19,6 +19,7 @@ final class SourceHTTPClientTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(unchanged, first)
         let headers = await replies.requests
         XCTAssertEqual(headers.count, 2); XCTAssertEqual(headers[1]["If-None-Match"], "\"1\"")
+        XCTAssertEqual(headers[1]["Cache-Control"], "no-cache")
         await client.revalidate()
         do { _ = try await client.data(from: url, limit: 100); XCTFail("Stale result must not hide failure") }
         catch { XCTAssertEqual((error as? HTTPStatusError)?.statusCode, 403) }
