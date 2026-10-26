@@ -1,236 +1,118 @@
-import AppKit
 import SwiftUI
 import UpoviCore
 
-/// Own the native table so its complete document height is known before any row is visited.
-/// SwiftUI still owns the inventory, status, selection and cell presentation.
-struct ApplicationTable: NSViewRepresentable {
+/// Fixed-height, eagerly laid-out rows keep the complete scroll extent deterministic.
+struct ApplicationTable: View {
     struct Row: Equatable {
         let app: InstalledApp
         let status: AppStatus
     }
 
+    static let rowHeight: CGFloat = 46
     let rows: [Row]
     @Binding var selection: String?
     let reveal: (InstalledApp) -> Void
     let toggleIgnored: (InstalledApp) -> Void
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    func makeNSView(context: Context) -> NSScrollView {
-        let table = NSTableView()
-        table.style = .inset
-        table.usesAlternatingRowBackgroundColors = false
-        table.allowsMultipleSelection = false
-        table.allowsEmptySelection = true
-        table.autoresizingMask = [.width]
-        table.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
-        table.gridStyleMask = [.solidHorizontalGridLineMask]
-        table.rowSizeStyle = .custom
-        table.rowHeight = 44
-        table.intercellSpacing = NSSize(width: 0, height: 2)
-        table.usesAutomaticRowHeights = false
-        table.setAccessibilityIdentifier("application-table")
-        table.setAccessibilityLabel("全部应用")
-        for column in Column.allCases {
-            let native = NSTableColumn(identifier: column.identifier)
-            native.title = column.title
-            native.minWidth = column.minimumWidth
-            native.resizingMask = [.autoresizingMask, .userResizingMask]
-            native.width = column == .application ? 280 : 120
-            native.maxWidth = column == .application ? .greatestFiniteMagnitude : column == .status ? 180 : 160
-            table.addTableColumn(native)
-        }
-        table.delegate = context.coordinator
-        table.dataSource = context.coordinator
-        let menu = NSMenu()
-        menu.delegate = context.coordinator
-        table.menu = menu
-        let scroll = NSScrollView()
-        scroll.hasVerticalScroller = true
-        scroll.hasHorizontalScroller = true
-        scroll.autohidesScrollers = true
-        scroll.borderType = .noBorder
-        scroll.documentView = table
-        context.coordinator.table = table
-        return scroll
-    }
-
-    func updateNSView(_ scroll: NSScrollView, context: Context) {
-        context.coordinator.update(self)
-    }
-
-    enum Column: String, CaseIterable {
-        case application, current, available, status
-        var identifier: NSUserInterfaceItemIdentifier { .init(rawValue) }
-        var title: String {
-            switch self {
-            case .application: "应用"
-            case .current: "当前版本"
-            case .available: "可用版本"
-            case .status: "状态"
-            }
-        }
-        var minimumWidth: CGFloat { self == .application ? 200 : self == .status ? 100 : 80 }
-    }
-
-    @MainActor final class Coordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
-        private var parent: ApplicationTable
-        private var rows: [Row] = []
-        private var updating = false
-        weak var table: NSTableView?
-
-        init(_ parent: ApplicationTable) { self.parent = parent }
-
-        func update(_ parent: ApplicationTable) {
-            self.parent = parent
-            guard let table else { return }
-            updating = true
-            defer { updating = false }
-            if rows != parent.rows {
-                let sameIdentity = rows.map(\.app.id) == parent.rows.map(\.app.id)
-                let oldRows = rows
-                let topRow = table.row(at: table.visibleRect.origin)
-                let anchor = oldRows.indices.contains(topRow) ? oldRows[topRow].app.id : nil
-                let offset = topRow >= 0 ? table.visibleRect.minY - table.rect(ofRow: topRow).minY : 0
-                rows = parent.rows
-                if sameIdentity {
-                    let changed = IndexSet(rows.indices.filter { rows[$0] != oldRows[$0] })
-                    table.reloadData(forRowIndexes: changed, columnIndexes: IndexSet(integersIn: 0..<table.numberOfColumns))
-                } else {
-                    table.reloadData()
-                    if let anchor, let index = rows.firstIndex(where: { $0.app.id == anchor }),
-                       let scroll = table.enclosingScrollView {
-                        let maximum = max(0, table.frame.height - scroll.contentView.bounds.height)
-                        scroll.contentView.scroll(to: NSPoint(x: scroll.contentView.bounds.minX,
-                            y: min(maximum, max(0, table.rect(ofRow: index).minY + offset))))
-                        scroll.reflectScrolledClipView(scroll.contentView)
-                    }
-                }
-            }
-            let index = rows.firstIndex { $0.app.id == parent.selection }
-            let selected = index.map { IndexSet(integer: $0) } ?? []
-            if table.selectedRowIndexes != selected { table.selectRowIndexes(selected, byExtendingSelection: false) }
-        }
-
-        func numberOfRows(in tableView: NSTableView) -> Int { rows.count }
-
-        func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-            guard rows.indices.contains(row), let id = tableColumn?.identifier,
-                  let column = Column(rawValue: id.rawValue) else { return nil }
-            let cell = tableView.makeView(withIdentifier: id, owner: nil) as? ApplicationTableCell ?? ApplicationTableCell()
-            cell.identifier = id
-            cell.configure(row: rows[row], column: column)
-            return cell
-        }
-
-        func tableViewSelectionDidChange(_ notification: Notification) {
-            guard !updating, let table else { return }
-            let id = rows.indices.contains(table.selectedRow) ? rows[table.selectedRow].app.id : nil
-            if parent.selection != id { parent.selection = id }
-            table.window?.makeFirstResponder(table)
-        }
-
-        func menuNeedsUpdate(_ menu: NSMenu) {
-            menu.removeAllItems()
-            guard let table else { return }
-            let index = table.clickedRow >= 0 ? table.clickedRow : table.selectedRow
-            guard rows.indices.contains(index) else { return }
-            let row = rows[index]
-            for (title, action) in [("在 Finder 中显示", #selector(reveal(_:))),
-                                    (row.status == .ignored ? "恢复更新提醒" : "忽略更新提醒", #selector(toggleIgnored(_:)))] {
-                let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
-                item.target = self
-                item.representedObject = row.app.id
-                menu.addItem(item)
-            }
-        }
-
-        private func app(for item: NSMenuItem) -> InstalledApp? {
-            rows.first { $0.app.id == item.representedObject as? String }?.app
-        }
-        @objc private func reveal(_ item: NSMenuItem) { if let app = app(for: item) { parent.reveal(app) } }
-        @objc private func toggleIgnored(_ item: NSMenuItem) { if let app = app(for: item) { parent.toggleIgnored(app) } }
-    }
-}
-
-/// Cell hosting never participates in table sizing; AppKit lays out the reusable fixed-height rows.
-private final class ApplicationTableCell: NSTableCellView {
-    private var row: ApplicationTable.Row?
-    private var column: ApplicationTable.Column = .application
-    private let host = NSHostingView<TableCellContent?>(rootView: nil)
-
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        host.sizingOptions = []
-        host.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(host)
-        NSLayoutConstraint.activate([
-            host.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
-            host.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
-            host.topAnchor.constraint(equalTo: topAnchor),
-            host.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    // All cell content is read-only. Let the native table receive clicks and become
-    // first responder instead of the embedded hosting view consuming mouse events.
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
-
-    override var backgroundStyle: NSView.BackgroundStyle {
-        didSet { refresh() }
-    }
-
-    func configure(row: ApplicationTable.Row, column: ApplicationTable.Column) {
-        self.row = row
-        self.column = column
-        refresh()
-        toolTip = column == .current ? "Build: \(row.app.build)" : column == .application ? "\(row.app.name)\n\(row.app.bundleID)" : nil
-        setAccessibilityLabel(column == .application ? "\(row.app.name), \(row.app.bundleID)"
-                              : column == .current ? row.app.version
-                              : column == .available ? row.status.targetVersion ?? "无可用版本" : row.status.label)
-    }
-
-    private func refresh() {
-        guard let row else { return }
-        host.rootView = TableCellContent(row: row, column: column, emphasized: backgroundStyle == .emphasized)
-    }
-}
-
-private struct TableCellContent: View {
-    let row: ApplicationTable.Row
-    let column: ApplicationTable.Column
-    let emphasized: Bool
+    @State private var columns = ApplicationTableColumns()
+    @State private var dragStart: ApplicationTableColumns?
+    @FocusState private var focused: Bool
 
     var body: some View {
-        content
-            .font(.body)
-            .foregroundStyle(emphasized ? Color.white : Color.primary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .environment(\.backgroundProminence, emphasized ? .increased : .standard)
+        GeometryReader { geometry in
+            let layout = columns.fitted(to: geometry.size.width - 32)
+            ScrollView(.horizontal) {
+                VStack(spacing: 0) {
+                    header(layout: layout)
+                    Divider()
+                    ScrollViewReader { reader in
+                        ScrollView(.vertical) {
+                            // Do not use lazy rows here: their estimated heights can change the scroll extent.
+                            VStack(spacing: 0) {
+                                ForEach(rows, id: \.app.id) { row in
+                                    ApplicationTableRow(row: row, widths: layout.widths,
+                                        selected: selection == row.app.id, focused: focused,
+                                        select: { selection = row.app.id; focused = true },
+                                        reveal: { reveal(row.app) }, toggleIgnored: { toggleIgnored(row.app) })
+                                        .id(row.app.id)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .accessibilityIdentifier("application-table-scroll")
+                        .focusable()
+                        .focusEffectDisabled()
+                        .focused($focused)
+                        .onMoveCommand { direction in
+                            guard direction == .up || direction == .down else { return }
+                            move(by: direction == .up ? -1 : 1, reader: reader)
+                        }
+                        .onKeyPress(keys: [.home, .end, .pageUp, .pageDown]) { key in
+                            guard !rows.isEmpty else { return .ignored }
+                            let page = max(1, Int((geometry.size.height - 29) / Self.rowHeight))
+                            switch key.key {
+                            case .home: select(index: 0, reader: reader)
+                            case .end: select(index: rows.count - 1, reader: reader)
+                            case .pageUp: move(by: -page, reader: reader)
+                            default: move(by: page, reader: reader)
+                            }
+                            return .handled
+                        }
+                        .onChange(of: rows.map(\.app.id)) { _, ids in
+                            if let selection, !ids.contains(selection) { self.selection = ids.first }
+                        }
+                    }
+                }
+                .frame(width: layout.totalWidth, height: geometry.size.height)
+                .padding(.horizontal, 16)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("全部应用")
+        .accessibilityIdentifier("application-table")
     }
 
-    @ViewBuilder private var content: some View {
-        switch column {
-        case .application:
-            HStack(spacing: 10) {
-                AppIcon(path: row.app.path, size: 28)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(row.app.name).lineLimit(1)
-                    Text(row.app.bundleID).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                }
+    private func header(layout: ApplicationTableColumns) -> some View {
+        HStack(spacing: 0) {
+            ForEach(0..<4) { index in
+                Text(["应用", "当前版本", "可用版本", "状态"][index])
+                    .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .frame(width: layout.widths[index], height: 28, alignment: .leading)
+                    .overlay(alignment: .trailing) {
+                        if index < 3 { resizeHandle(index: index, layout: layout) }
+                    }
             }
-        case .current:
-            Text(row.app.version).font(.callout.monospacedDigit()).foregroundStyle(.secondary)
-                .lineLimit(1).help("Build: \(row.app.build)")
-        case .available:
-            if let version = row.status.targetVersion {
-                ToneText(text: version, tone: row.status.tone).font(.callout.monospacedDigit().weight(.semibold)).lineLimit(1)
-            } else { Text("—").foregroundStyle(.tertiary) }
-        case .status:
-            StatusBadge(text: row.status.shortLabel, symbol: row.status.symbol, tone: row.status.tone)
         }
+    }
+
+    private func resizeHandle(index: Int, layout: ApplicationTableColumns) -> some View {
+        Rectangle().fill(.separator).frame(width: 1, height: 12)
+            .frame(width: 10, height: 28).contentShape(Rectangle())
+            .help("拖动调整列宽")
+            .gesture(DragGesture(minimumDistance: 1)
+                .onChanged { value in
+                    if dragStart == nil { dragStart = layout }
+                    columns = (dragStart ?? layout).resizingBoundary(index, by: value.translation.width)
+                }
+                .onEnded { _ in dragStart = nil })
+            .accessibilityElement()
+            .accessibilityLabel("调整\(["应用", "当前版本", "可用版本"][index])列宽")
+            .accessibilityValue("\(Int(layout.widths[index]))")
+            .accessibilityAdjustableAction { direction in
+                columns = layout.resizingBoundary(index, by: direction == .increment ? 10 : -10)
+            }
+    }
+
+    private func move(by offset: Int, reader: ScrollViewProxy) {
+        let current = rows.firstIndex { $0.app.id == selection }
+        let next = current.map { $0 + offset } ?? (offset < 0 ? rows.count - 1 : 0)
+        select(index: next, reader: reader)
+    }
+
+    private func select(index: Int, reader: ScrollViewProxy) {
+        guard !rows.isEmpty else { return }
+        let id = rows[min(rows.count - 1, max(0, index))].app.id
+        selection = id
+        reader.scrollTo(id)
     }
 }

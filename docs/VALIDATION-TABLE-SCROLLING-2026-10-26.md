@@ -18,27 +18,33 @@ A separate experiment gave all four SwiftUI column cells an explicit 44-point he
 10679, 10807, 10935, 11063, 11191, 11311, 11399, 11399
 ```
 
-The final implementation owns an NSTableView through NSViewRepresentable, uses `rowSizeStyle = .custom`, `rowHeight = 44`, and disables `usesAutomaticRowHeights`. It uses public AppKit APIs without reaching into SwiftUI's private view hierarchy. SwiftUI retains application state and cell presentation. Reusable hosting cells do not report intrinsic sizes to the table. Updates reload only changed rows when identities are unchanged, preserving the viewport and selection; inventory/filter changes retain the visible application anchor when it survives.
+An intermediate AppKit implementation disabled automatic row heights and stabilized this sequence at 11050 points. The owner subsequently requested a pure SwiftUI implementation, so that table bridge has been removed.
+
+## Current pure SwiftUI implementation
+
+`ApplicationTable` now composes horizontal and vertical ScrollViews, an independent header, and an eager VStack of 46-point rows. All rows participate in layout immediately, so the content extent does not depend on which rows have been visited. Header and rows share the same column widths; dragging a header boundary resizes its two adjacent columns within their minimum/maximum bounds. Narrow windows can scroll horizontally. The header stays above the vertical scrolling area.
+
+The table, row and column-layout files contain no NSViewRepresentable, NSTableView or NSHostingView. SwiftUI manages selection, focus, arrow/Home/End/Page navigation, context menus, selection styling and accessibility labels. Inventory, filtering and update status retain the same store and stable application-path identities. System operations such as revealing an application in Finder and retrieving its icon remain separate existing services.
 
 ## Verification
 
-The final document heights for the same scrolling sequence were:
+The current pure SwiftUI document heights for the same 240-row scrolling sequence are:
 
 ```text
-11050, 11050, 11050, 11050, 11050, 11050, 11050, 11050
+11048, 11048, 11048, 11048, 11048, 11048, 11048, 11048
 ```
 
 The regression also checks:
 
-- A source-result change updates the available-version cell while preserving document height, viewport and selection.
-- Filtering and externally changed selection retain the application's stable path identity.
-- Native down-arrow navigation updates SwiftUI selection.
-- The context menu changes from Ignore to Restore after acting on the selected synthetic application.
+- A source-result change preserves document height, viewport and selection.
+- Filtering retains a selected application that remains in the filtered results.
 - Narrowing the window and revisiting the last row do not change the document height.
+- There is no NSTableView in the mounted application list.
+- Column resizing fits the available width, preserves total width and honors both adjacent columns' limits.
 
-Full native suite: **174 tests passed**, comprising 156 core tests and 18 application tests. Final result bundle: `.local/table-jitter/DeliveryTests.xcresult`. Original and experimental failure logs are retained under `.local/table-jitter/`.
+Full native suite: **175 tests passed**, comprising 156 core tests and 19 application tests. Result bundle: `.local/pure-swiftui/FinalTests.xcresult`. The SwiftPM suite also passed all 175 tests. Original failure logs remain under `.local/table-jitter/`; current logs are under `.local/pure-swiftui/`.
 
-The final foreground app was also exercised through native UI control: selecting the second application with the mouse and pressing Down selected the third application and updated its inspector. Scrolling four pages down reached the bottom, and four pages up returned to the top without changing the selected application. Columns fit the existing window without a horizontal scrollbar. Read-only hosting cells pass mouse events to the native table; user selection explicitly establishes the table as first responder, while programmatic SwiftUI updates do not steal focus. These checks used the local application inventory; no screenshots or inventory details are committed.
+The pure SwiftUI foreground app was exercised through UI control: clicking the second application and pressing Down selected the third application and updated its inspector. Its context menu exposed Reveal in Finder and Ignore. Dragging the first header boundary increased the application column from 227 to 247 points while reducing the adjacent version column from 110 to 90 points. Four pages down reached the bottom (scrollbar value 1), and four pages up returned to the top (value 0). These checks used the local application inventory; no screenshots or inventory details are committed.
 
 ```sh
 xcodebuild -project Upovi.xcodeproj -scheme Upovi -destination 'platform=macOS' \

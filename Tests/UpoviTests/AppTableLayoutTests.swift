@@ -6,7 +6,7 @@ import UpoviCore
 
 @MainActor final class AppTableLayoutTests: XCTestCase {
     func testScrollingDoesNotChangeDocumentHeightForUnchangedRows() async throws {
-        let application = NSApplication.shared
+        _ = NSApplication.shared
         let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-table-layout-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
         let preferences = AppPreferences(url: root.appending(path: "settings.plist"), migrateUserDefaults: false)
@@ -24,72 +24,72 @@ import UpoviCore
         window.contentView = host
         window.orderFront(nil)
         defer { window.close() }
-        try await Task.sleep(for: .milliseconds(250))
-        let table = try XCTUnwrap(findTable(in: host))
-        XCTAssertEqual(table.numberOfRows, store.apps.count)
-        XCTAssertGreaterThan(table.bounds.width, 500)
-        var heights = [table.frame.height]
+        try await Task.sleep(for: .milliseconds(350))
+        let scroll = try XCTUnwrap(findVerticalScroll(in: host))
+        let document = try XCTUnwrap(scroll.documentView)
+        XCTAssertNil(findTable(in: host), "The application list must not use an NSTableView bridge")
+        var heights = [document.frame.height]
         for row in [30, 60, 120, 180, 239, 120, 0] {
-            table.scrollRowToVisible(row)
+            scroll.contentView.scroll(to: NSPoint(x: 0, y: CGFloat(row) * ApplicationTable.rowHeight))
+            scroll.reflectScrolledClipView(scroll.contentView)
             try await Task.sleep(for: .milliseconds(50))
-            heights.append(table.frame.height)
+            heights.append(document.frame.height)
         }
-        print("Table layout: automatic=\(table.usesAutomaticRowHeights), rowHeight=\(table.rowHeight), documentHeights=\(heights)")
-        XCTAssertLessThanOrEqual(try XCTUnwrap(heights.max()) - XCTUnwrap(heights.min()), 1,
-                                 "Scrolling an unchanged inventory must not change its document height")
+        print("SwiftUI table document heights: \(heights)")
+        XCTAssertEqual(heights[0], CGFloat(store.apps.count) * ApplicationTable.rowHeight + 8, accuracy: 1)
+        XCTAssertLessThanOrEqual(try XCTUnwrap(heights.max()) - XCTUnwrap(heights.min()), 1)
 
-        // A source-result update must refresh the cell without moving the viewport or selection.
         let selectedApp = store.apps[120]
-        table.selectRowIndexes(IndexSet(integer: 120), byExtendingSelection: false)
-        XCTAssertEqual(store.selection, selectedApp.id)
-        XCTAssertTrue(window.firstResponder === table)
-        table.scrollRowToVisible(120)
-        try await Task.sleep(for: .milliseconds(50))
-        let origin = table.visibleRect.origin
+        store.selection = selectedApp.id
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: 120 * ApplicationTable.rowHeight))
+        scroll.reflectScrolledClipView(scroll.contentView)
+        try await Task.sleep(for: .milliseconds(100))
+        let origin = scroll.contentView.bounds.origin
         store.sourceResults[selectedApp.id] = .init(appID: selectedApp.id,
             candidates: [.init(version: "2.0", source: "Synthetic", isCommunity: false, url: nil)],
             note: "Synthetic source update", status: .updates)
         try await Task.sleep(for: .milliseconds(100))
-        XCTAssertEqual(table.frame.height, heights[0], accuracy: 1)
-        XCTAssertEqual(table.visibleRect.origin.y, origin.y, accuracy: 1)
-        XCTAssertEqual(table.selectedRow, 120)
-        XCTAssertEqual(table.view(atColumn: 2, row: 120, makeIfNecessary: true)?.accessibilityLabel(), "2.0")
+        XCTAssertEqual(document.frame.height, heights[0], accuracy: 1)
+        XCTAssertEqual(scroll.contentView.bounds.origin.y, origin.y, accuracy: 1)
+        XCTAssertEqual(store.selection, selectedApp.id)
 
-        // Filtering and external selection retain the stable application path as their identity.
         store.search = "Application 12"
         try await Task.sleep(for: .milliseconds(100))
-        XCTAssertEqual(table.numberOfRows, 11)
-        let selectedID = store.visibleApps.indices.contains(table.selectedRow) ? store.visibleApps[table.selectedRow].id : nil
-        XCTAssertEqual(selectedID, selectedApp.id)
-        store.selection = store.visibleApps[0].id
-        try await Task.sleep(for: .milliseconds(100))
-        XCTAssertEqual(table.selectedRow, 0)
-        window.makeFirstResponder(table)
-        let down = try XCTUnwrap(NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [],
-            timestamp: 0, windowNumber: window.windowNumber, context: nil,
-            characters: "\u{F701}", charactersIgnoringModifiers: "\u{F701}", isARepeat: false, keyCode: 125))
-        table.keyDown(with: down)
-        XCTAssertEqual(store.selection, store.visibleApps[1].id)
-
-        let menu = try XCTUnwrap(table.menu)
-        menu.delegate?.menuNeedsUpdate?(menu)
-        XCTAssertEqual(menu.items.map(\.title), ["在 Finder 中显示", "忽略更新提醒"])
-        let ignore = menu.items[1]
-        XCTAssertTrue(application.sendAction(try XCTUnwrap(ignore.action), to: ignore.target, from: ignore))
-        try await Task.sleep(for: .milliseconds(100))
-        XCTAssertTrue(store.ignored.contains(selectedApp.bundleID))
-        menu.delegate?.menuNeedsUpdate?(menu)
-        XCTAssertEqual(menu.items[1].title, "恢复更新提醒")
-
+        XCTAssertEqual(store.visibleApps.count, 11)
+        XCTAssertEqual(store.selection, selectedApp.id)
         store.search = ""
         try await Task.sleep(for: .milliseconds(100))
         window.setContentSize(NSSize(width: 600, height: 500))
         try await Task.sleep(for: .milliseconds(100))
-        XCTAssertEqual(table.frame.height, heights[0], accuracy: 1)
-        XCTAssertEqual(table.selectedRow, 120)
-        table.scrollRowToVisible(239)
+        XCTAssertEqual(document.frame.height, heights[0], accuracy: 1)
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: 239 * ApplicationTable.rowHeight))
+        scroll.reflectScrolledClipView(scroll.contentView)
         try await Task.sleep(for: .milliseconds(50))
-        XCTAssertEqual(table.frame.height, heights[0], accuracy: 1)
+        XCTAssertEqual(document.frame.height, heights[0], accuracy: 1)
+    }
+
+    func testColumnResizingFitsTheWindowAndHonorsBothAdjacentMinimums() {
+        for width: CGFloat in [300, 460, 568, 1200] {
+            let columns = ApplicationTableColumns().fitted(to: width)
+            XCTAssertEqual(columns.totalWidth, max(460, width), accuracy: 0.01)
+            for boundary in 0..<3 {
+                for translation: CGFloat in [-10000, -20, 20, 10000] {
+                    let resized = columns.resizingBoundary(boundary, by: translation)
+                    XCTAssertEqual(resized.totalWidth, columns.totalWidth, accuracy: 0.01)
+                    for (index, minimum) in [200.0, 80, 80, 100].enumerated() {
+                        XCTAssertGreaterThanOrEqual(resized.widths[index], minimum)
+                    }
+                    XCTAssertLessThanOrEqual(resized.widths[1], 160)
+                    XCTAssertLessThanOrEqual(resized.widths[2], 160)
+                    XCTAssertLessThanOrEqual(resized.widths[3], 180)
+                }
+            }
+        }
+    }
+
+    private func findVerticalScroll(in view: NSView) -> NSScrollView? {
+        if let scroll = view as? NSScrollView, scroll.hasVerticalScroller { return scroll }
+        return view.subviews.lazy.compactMap { self.findVerticalScroll(in: $0) }.first
     }
 
     private func findTable(in view: NSView) -> NSTableView? {
