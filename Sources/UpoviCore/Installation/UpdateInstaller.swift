@@ -9,6 +9,7 @@ public struct PreparedUpdate: Identifiable, Sendable {
     public let workspace: URL
     public let bundle: URL
     public let archiveIntegrityVerified: Bool
+    public var usesLegacyMigration: Bool { ApplicationSourceCatalog.legacyMigration(for: application) != nil }
 }
 
 public actor UpdateInstaller {
@@ -26,7 +27,7 @@ public actor UpdateInstaller {
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedUpdate {
         guard !busy else { throw PeerError.unavailable("An installation operation is already running") }
         guard !candidate.isCommunity, !app.isAppStore, let descriptor = candidate.download, descriptor.canVerify(for: app),
-              let team = app.teamID, !team.isEmpty, app.bundleID != "app.upovi.Upovi" else {
+              ApplicationSourceCatalog.replacementTeam(for: app) != nil, app.bundleID != "app.upovi.Upovi" else {
             throw PeerError.invalid("Use the official source or in-app updater for this application")
         }
         busy = true; defer { busy = false }
@@ -36,6 +37,10 @@ public actor UpdateInstaller {
         let archive = workspace.appending(path: "update." + descriptor.url.pathExtension.lowercased())
         var downloadID: UUID?
         do {
+            if ApplicationSourceCatalog.legacyMigration(for: app) != nil {
+                let check = Task.detached { try BundleVerifier.checkSignature(URL(fileURLWithPath: app.path), like: app) }
+                try await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
+            }
             downloadID = try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: archive, progress: progress)
             let verification = Task.detached { try BundleVerifier.validateDownload(archive, descriptor: descriptor, app: app) }
             try await withTaskCancellationHandler { try await verification.value } onCancel: { verification.cancel() }
@@ -101,7 +106,7 @@ public actor UpdateInstaller {
                 _ = try BundleVerifier.validate(url, replacing: value.application,
                     expectedVersion: value.replacement.version, expectedBuild: value.replacement.build)
                 if !value.archiveIntegrityVerified { try BundleVerifier.checkDeveloperIDSignature(url, like: value.application) }
-            }).commit(prepared: value.bundle, replacing: value.application,
+            }, validateOriginal: { url in try BundleVerifier.checkSignature(url, like: value.application) }).commit(prepared: value.bundle, replacing: value.application,
                       newVersion: value.replacement.version, newBuild: value.replacement.build)
         }.value
         try? FileManager.default.removeItem(at: value.workspace); prepared = nil
@@ -123,6 +128,10 @@ public actor UpdateInstaller {
         busy = true; defer { busy = false }
         try await Self.quit(receipt.application)
         try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.backupPath), like: receipt.application)
+        if ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil,
+           FileManager.default.fileExists(atPath: receipt.application.path) {
+            try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
+        }
         let journal = journalDirectory
         _ = try await Task.detached {
             try BundleTransaction(journalDirectory: journal, validate: { _ in }).restore(receipt)
@@ -135,6 +144,10 @@ public actor UpdateInstaller {
         busy = true; defer { busy = false }
         guard let retainedPath = receipt.retainedPath else { throw PeerError.invalid("Keep interrupted installation backups for recovery") }
         let backup = URL(fileURLWithPath: retainedPath)
+        if ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil {
+            try BundleVerifier.checkSignature(backup, like: receipt.application)
+            try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
+        }
         let running = await MainActor.run {
             NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL.path == backup.path }
         }

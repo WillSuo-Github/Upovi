@@ -1,0 +1,91 @@
+{
+  "version": "0.4.10",
+  "build": "202610270003",
+  "published": false,
+  "legacyOfficialRelease": "https://github.com/Caldis/Mos/releases/tag/3.5.0",
+  "legacyArchiveURL": "https://github.com/Caldis/Mos/releases/download/3.5.0/Mos.Versions.3.5.0.dmg",
+  "legacyArchiveObservedSHA256": "a361f871f32e763a101df29e57839188ef7fb33a289853f420fe83e9e70c008e",
+  "legacyArchiveHashIsIndependentSourceProof": false,
+  "legacySignature": "valid ad hoc / no Team ID",
+  "legacyExecutableSHA256": "14e4f8367192273f8b95b8df90c63d471841a71bbc250500c648e78fc5709fe0",
+  "successorDeveloperTeamID": "N7Z52F27XK",
+  "tests": {
+    "result": "Passed",
+    "totalTestCount": 195,
+    "passedTests": 195,
+    "failedTests": 0
+  },
+  "realInstallationAndRestore": {
+    "archiveIntegrityVerified": true,
+    "backupRetained": true,
+    "bundleID": "com.caldis.Mos",
+    "candidates": [
+      {
+        "archiveProof": true,
+        "build": "20260531.1",
+        "download": "https://github.com/Caldis/Mos/releases/download/4.2.1/Mos.Versions.4.2.1-20260531.1.zip",
+        "source": "Homebrew",
+        "version": "4.2.1"
+      }
+    ],
+    "developerIDPassed": true,
+    "downloadVerified": true,
+    "gatekeeperPassed": true,
+    "installationPassed": true,
+    "installedBuild": "20260531.1",
+    "installedVersion": "4.2.1",
+    "isolatedCopiesOnly": true,
+    "legacyOfficialIdentityVerified": true,
+    "originalBuild": "2024.01.11",
+    "originalTeamID": "not set",
+    "originalVersion": "3.5.0",
+    "path": ".local/mos-migration-202610270003/Applications/Mos.app",
+    "postInstallSourceStatus": "partial",
+    "postInstallUpdateCount": 0,
+    "preparedBuild": "20260531.1",
+    "preparedVersion": "4.2.1",
+    "restoredBuild": "2024.01.11",
+    "restoredVersion": "3.5.0",
+    "restorePassed": true,
+    "sourceNote": "\u5df2\u68c0\u67e5 Homebrew \u00b7 GitHub\uff1a\u670d\u52a1\u5668\u9650\u5236\u4e86\u8bf7\u6c42\u9891\u7387\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\uff08HTTP 403\uff09",
+    "sourceStatus": "partial",
+    "systemComponentsTested": false
+  },
+  "identityRejectionChecks": [
+    {
+      "scenario": "original",
+      "accepted": true,
+      "detail": "Verified official identity: com.caldis.Mos 3.5.0 (2024.01.11)"
+    },
+    {
+      "scenario": "modified-resource",
+      "accepted": false,
+      "detail": "Acceptance failed: Application code signature is invalid"
+    },
+    {
+      "scenario": "resigned-modified-resource",
+      "accepted": false,
+      "detail": "Acceptance failed: Legacy application does not match the reviewed official executable"
+    }
+  ],
+  "nativeUI": {
+    "isolatedCopiesOnly": true,
+    "liveOfficialSources": true,
+    "installableCount": 1,
+    "manualOnlyCount": 0,
+    "downloadAndVerifyButtonObserved": true,
+    "legacyMigrationExplanationObserved": true,
+    "installButtonClicked": true,
+    "installedHistoryObserved": true,
+    "restoreButtonClicked": true,
+    "restoredHistoryObserved": true,
+    "restoredVersion": "3.5.0",
+    "restoredBuild": "2024.01.11",
+    "receiptStates": [
+      "restored"
+    ]
+  },
+  "normalInstalledMosReplaced": false,
+  "privilegedExecutionTested": false,
+  "accessibilityPermissionsGranted": false
+}

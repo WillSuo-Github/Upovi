@@ -13,10 +13,10 @@ def run(command, **kwargs):
 def main():
     root = pathlib.Path(__file__).resolve().parents[2]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=['bulk', 'admin-cleanup', 'diagnostics', 'downloads', 'design', 'startup'], default='bulk')
+    parser.add_argument('--mode', choices=['bulk', 'admin-cleanup', 'diagnostics', 'downloads', 'design', 'startup', 'mos'], default='bulk')
     parser.add_argument('--replacement', type=pathlib.Path)
     parser.add_argument('--helper-bundle', type=pathlib.Path)
-    parser.add_argument('--original', type=pathlib.Path, help='Official signed Rectangle 2.0.3 application to copy read-only.')
+    parser.add_argument('--original', type=pathlib.Path, help='Official old app to copy read-only: Rectangle 2.0.3, or Mos 3.5.0 in mos mode.')
     parser.add_argument('--output', type=pathlib.Path, default=root / '.local/bulk-acceptance')
     parser.add_argument('--signing-identity', default='-')
     options = parser.parse_args()
@@ -28,11 +28,18 @@ def main():
         parser.error('Choose a new directory below this repository .local folder; existing evidence is never overwritten.')
     if original is not None:
         info = plistlib.loads((original / 'Contents/Info.plist').read_bytes())
-        if info.get('CFBundleIdentifier') != 'com.knollsoft.Rectangle' or info.get('CFBundleShortVersionString') != '2.0.3':
-            parser.error('Use the official Rectangle 2.0.3 fixture.')
+        expected = ('com.caldis.Mos', '3.5.0') if options.mode == 'mos' else ('com.knollsoft.Rectangle', '2.0.3')
+        if (info.get('CFBundleIdentifier'), info.get('CFBundleShortVersionString')) != expected:
+            parser.error('Use the official old application for the selected fixture mode.')
         run(['codesign', '--verify', '--deep', '--strict', '--all-architectures', str(original)])
     output.mkdir(parents=True, mode=0o700)
-    if options.mode == 'bulk':
+    if options.mode == 'mos':
+        if original is None:
+            parser.error('Mos mode requires --original.')
+        target = output / 'Applications/Mos.app'
+        target.parent.mkdir()
+        run(['ditto', str(original), str(target)])
+    elif options.mode == 'bulk':
         for name in ['A.app', 'B.app', 'C.app']:
             target = output / 'Applications' / name
             target.parent.mkdir(exist_ok=True)
@@ -53,7 +60,7 @@ def main():
     modules = output / 'modules'; modules.mkdir()
     header = root / 'Sources/ArchiveSupport/include/ArchiveSupport.h'
     (modules / 'module.modulemap').write_text('module ArchiveSupport { header "' + str(header) + '" export * }\n')
-    app = output / {'bulk': 'UpoviBulkAcceptance.app', 'admin-cleanup': 'UpoviCleanupAcceptance.app', 'diagnostics': 'UpoviDiagnosticsAcceptance.app', 'downloads': 'UpoviDownloadAcceptance.app', 'design': 'UpoviDesignPreview.app', 'startup': 'UpoviStartupAcceptance.app'}[options.mode]
+    app = output / {'bulk': 'UpoviBulkAcceptance.app', 'admin-cleanup': 'UpoviCleanupAcceptance.app', 'diagnostics': 'UpoviDiagnosticsAcceptance.app', 'downloads': 'UpoviDownloadAcceptance.app', 'design': 'UpoviDesignPreview.app', 'startup': 'UpoviStartupAcceptance.app', 'mos': 'UpoviMosAcceptance.app'}[options.mode]
     executable = app / 'Contents/MacOS/UpoviFixture'
     executable.parent.mkdir(parents=True)
     sources = [str(path) for path in (root / 'Sources/Upovi').rglob('*.swift') if path.name != 'UpoviApp.swift']
@@ -66,11 +73,11 @@ def main():
     if not objects:
         raise RuntimeError('No compiled core objects found; inspect the SwiftPM product layout.')
     command = ['swiftc', '-swift-version', '6', '-parse-as-library', '-I', str(products), '-I', str(modules), '-F', str(products)]
-    command += sources + [str(root / 'script/acceptance' / {'bulk': 'bulk_install.swift', 'admin-cleanup': 'admin_cleanup.swift', 'diagnostics': 'diagnostics.swift', 'downloads': 'download_center.swift', 'design': 'design_preview.swift', 'startup': 'startup.swift'}[options.mode])] + objects
+    command += sources + [str(root / 'script/acceptance' / {'bulk': 'bulk_install.swift', 'admin-cleanup': 'admin_cleanup.swift', 'diagnostics': 'diagnostics.swift', 'downloads': 'download_center.swift', 'design': 'design_preview.swift', 'startup': 'startup.swift', 'mos': 'mos_migration.swift'}[options.mode])] + objects
     command += ['-larchive', '-framework', 'Sparkle', '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks', '-o', str(executable)]
     run(command, cwd=root)
     info = dict(CFBundleExecutable='UpoviFixture', CFBundleIdentifier='app.upovi.TrustAcceptance',
-                CFBundleName={'bulk': 'Upovi Bulk Acceptance', 'admin-cleanup': 'Upovi Cleanup Acceptance', 'diagnostics': 'Upovi Diagnostics Acceptance', 'downloads': 'Upovi Download Acceptance', 'design': 'Upovi Design Preview', 'startup': 'Upovi Startup Acceptance'}[options.mode], CFBundlePackageType='APPL',
+                CFBundleName={'bulk': 'Upovi Bulk Acceptance', 'admin-cleanup': 'Upovi Cleanup Acceptance', 'diagnostics': 'Upovi Diagnostics Acceptance', 'downloads': 'Upovi Download Acceptance', 'design': 'Upovi Design Preview', 'startup': 'Upovi Startup Acceptance', 'mos': 'Upovi Mos Acceptance'}[options.mode], CFBundlePackageType='APPL',
                 CFBundleShortVersionString='0.4.6', CFBundleVersion='12', LSMinimumSystemVersion='14.0', NSPrincipalClass='NSApplication')
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
     run(['python3', 'script/embed_sparkle.py', str(app), options.signing_identity], cwd=root)
@@ -88,6 +95,8 @@ def main():
     elif options.mode == 'admin-cleanup':
         print('Isolated administrator target:', target)
         print('No administrator operation runs until explicitly selected in the fixture UI.')
+    elif options.mode == 'mos':
+        print('Official legacy Mos copy with live sources; preferences, downloads and replacements stay isolated.')
     else:
         print('Synthetic offline ' + options.mode + ' only; no applications are copied or replaced.')
 

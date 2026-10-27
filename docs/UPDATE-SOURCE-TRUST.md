@@ -5,7 +5,7 @@
 ## Maintenance
 
 - Add an identity exception only after confirming the official product and exact bundle ID. Never match an application by display name alone.
-- Add a signature-only download rule only after verifying the official origin, path scope and Developer ID Team ID. Missing or changed installed developer identity stays manual.
+- Add a signature-only download rule only after verifying the official origin, path scope and Developer ID Team ID. Unreviewed missing or changed installed developer identity stays manual; the narrowly pinned legacy Mos migration is documented separately in `docs/MOS-LEGACY-MIGRATION.md`.
 - A packaging identity exception must bind the exact source version and official URL to the actual signed bundle version and build. Never strip arbitrary patch components or accept a mismatched version generically.
 - Prefer an existing archive proof. A malformed or failing checksum/signature cannot fall back to developer-only validation.
 - Community reports never authorize downloading or installing an update.

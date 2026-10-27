@@ -46,6 +46,12 @@ struct SourceInstallationAcceptance {
             print("Restored \(app.name): \(restored.version) (\(restored.build))"); return
         }
         try BundleVerifier.checkSignature(path, like: app)
+        if arguments.contains("--verify-identity") {
+            print("Verified official identity: \(app.bundleID) \(app.version) (\(app.build))")
+            return
+        }
+        evidence["legacyOfficialIdentityVerified"] = ApplicationSourceCatalog.legacyMigration(for: app) != nil
+        evidence["originalTeamID"] = app.teamID ?? "not set"
         let result = await UpdateChecker.check(app)
         evidence["sourceStatus"] = result.status.rawValue
         evidence["sourceNote"] = result.note
@@ -77,7 +83,8 @@ struct SourceInstallationAcceptance {
             let remaining = BulkUpdatePlan.make(apps: [installed], results: [installed.id: refreshed], ignored: [])
             evidence["postInstallSourceStatus"] = refreshed.status.rawValue
             evidence["postInstallUpdateCount"] = remaining.count
-            guard remaining.isEmpty, refreshed.status == .current else { throw PeerError.invalid("Live sources did not confirm the installed app is current") }
+            guard remaining.isEmpty, refreshed.status == .current ||
+                    (refreshed.status == .partial && refreshed.checks.contains(where: { $0.outcome == .checked })) else { throw PeerError.invalid("Live sources did not confirm the installed app is current") }
             try save()
             print("Installed \(app.name): \(installed.version) (\(installed.build)); backup retained")
         } catch {

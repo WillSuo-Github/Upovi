@@ -5,7 +5,7 @@ import CryptoKit
 public enum BundleVerifier {
     /// Apple-anchored Developer ID, rather than just an embedded team string, binds signature-only downloads.
     public static func checkDeveloperIDSignature(_ url: URL, like app: InstalledApp) throws {
-        guard let team = app.teamID, team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,
+        guard let team = ApplicationSourceCatalog.replacementTeam(for: app), team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,
               app.bundleID.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) != nil else {
             throw PeerError.invalid("Invalid developer identity")
         }
@@ -26,7 +26,7 @@ public enum BundleVerifier {
     }
     public static func validate(_ url: URL, replacing app: InstalledApp, expectedVersion: String, expectedBuild: String) throws -> InstalledApp {
         guard let incoming = AppScanner.read(url), incoming.bundleID == app.bundleID,
-              let team = app.teamID, !team.isEmpty, incoming.teamID == team,
+              let team = ApplicationSourceCatalog.replacementTeam(for: app), incoming.teamID == team,
               !incoming.isAppStore, !app.isAppStore else { throw PeerError.invalid("Application identity or developer Team ID mismatch") }
         try checkSignature(url, like: app)
         let info = (try? Data(contentsOf: url.appending(path: "Contents/Info.plist"))).flatMap { try? PropertyListSerialization.propertyList(from: $0, format: nil) as? [String: Any] } ?? [:]
@@ -45,8 +45,24 @@ public enum BundleVerifier {
         return incoming
     }
     public static func checkSignature(_ url: URL, like app: InstalledApp) throws {
-        guard let metadata = AppScanner.read(url), metadata.bundleID == app.bundleID,
-              let team = app.teamID, metadata.teamID == team else { throw PeerError.invalid("Backup signature identity mismatch") }
+        guard let metadata = AppScanner.read(url), metadata.bundleID == app.bundleID else { throw PeerError.invalid("Backup signature identity mismatch") }
+        if let legacy = ApplicationSourceCatalog.legacyMigration(for: app) {
+            if metadata.teamID == nil {
+                guard metadata.version == legacy.version, metadata.build == legacy.build,
+                      let executable = Bundle(url: url)?.executableURL,
+                      try executable.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]).isRegularFile == true,
+                      try executable.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink != true,
+                      try sha256(of: executable) == legacy.executableSHA256 else {
+                    throw PeerError.invalid("Legacy application does not match the reviewed official executable")
+                }
+            } else {
+                guard metadata.teamID == legacy.successorTeamID else { throw PeerError.invalid("Legacy migration developer mismatch") }
+                try checkDeveloperIDSignature(url, like: app)
+                return
+            }
+        } else {
+            guard let team = app.teamID, !team.isEmpty, metadata.teamID == team else { throw PeerError.invalid("Backup signature identity mismatch") }
+        }
         var code: SecStaticCode?
         guard SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code,
               SecStaticCodeCheckValidity(code, SecCSFlags(rawValue: kSecCSStrictValidate | kSecCSCheckAllArchitectures | kSecCSCheckNestedCode), nil) == errSecSuccess else {

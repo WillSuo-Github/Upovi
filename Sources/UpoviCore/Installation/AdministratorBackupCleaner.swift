@@ -12,8 +12,9 @@ public enum AdministratorBackupCleaner {
         guard ["installed", "restored"].contains(stored.state), let current, !current.isAppStore else { return false }
         let original = stored.plan.application
         guard current.path == original.path, current.bundleID == original.bundleID,
-              current.teamID != nil, current.teamID == original.teamID else { return false }
-        if stored.state == "restored" { return current.version == original.version && current.build == original.build }
+              let team = ApplicationSourceCatalog.replacementTeam(for: original) else { return false }
+        if stored.state == "restored" { return current.teamID == original.teamID && current.version == original.version && current.build == original.build }
+        guard current.teamID == team else { return false }
         if let installed = stored.installedApplication { return current == installed }
         return !stored.plan.build.isEmpty && VersionOrder.compare(current.version, stored.plan.version) == .orderedSame && current.build == stored.plan.build
     }

@@ -13,3 +13,7 @@ For a vulnerability, use the repository's private vulnerability reporting when a
 ## Global participation defaults
 
 A fresh 0.4.1 installation enables public discovery and sharing for all scanned apps through one Settings switch. The settings UI describes the public fields and IP visibility. Earlier app-specific consent migrates to off; existing explicit global choices persist. Corrupt/unreadable settings fail closed. Disabling the global switch cancels active synchronization and closes the UDP transport, but cannot recall already cached public records. See `docs/GLOBAL-P2P.md`.
+
+## Reviewed legacy developer migration
+
+Mos 3.5.0 (2024.01.11) has a valid ad hoc signature and no Team ID. Its sole reviewed migration pins the complete universal executable SHA-256 and requires strict validation of sealed resources and all architectures. The incoming app must have an Apple-anchored Developer ID for the explicitly pinned successor team, the same bundle ID, the selected version/build and Gatekeeper acceptance. Installed metadata alone never authenticates this migration. The old identity is rechecked during replacement and its backup is checked before restoration. Unreviewed missing or changed developer identities stay manual. This exception does not support PKG installation, bypass Gatekeeper or grant Accessibility permissions. See `docs/MOS-LEGACY-MIGRATION.md`.

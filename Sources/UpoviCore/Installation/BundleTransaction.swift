@@ -24,6 +24,7 @@ public struct InstallationReceipt: Codable, Identifiable, Sendable {
 struct BundleTransaction {
     let journalDirectory: URL
     let validate: @Sendable (URL) throws -> Void
+    var validateOriginal: @Sendable (URL) throws -> Void = { _ in }
     var afterBackup: @Sendable () throws -> Void = { }
     private let files = FileManager.default
 
@@ -48,8 +49,10 @@ struct BundleTransaction {
         try files.copyItem(at: prepared, to: incoming)
         do {
             try validate(incoming)
+            try validateOriginal(target)
             try write(receipt)
             try files.moveItem(at: target, to: backup)
+            try validateOriginal(backup)
             receipt.state = .backedUp; try write(receipt)
             try afterBackup()
             try files.moveItem(at: incoming, to: target)
@@ -83,7 +86,7 @@ struct BundleTransaction {
         var displaced: URL?
         if let current = AppScanner.read(target) {
             guard current.bundleID == old.bundleID, current.version == receipt.newVersion, current.build == receipt.newBuild,
-                  current.teamID == old.teamID else { throw PeerError.invalid("Current application has changed since this installation; automatic restore refused") }
+                  current.teamID == (ApplicationSourceCatalog.replacementTeam(for: receipt.application) ?? old.teamID) else { throw PeerError.invalid("Current application has changed since this installation; automatic restore refused") }
             let saved = parent.appending(path: ".upovi-replaced-\(receipt.id).app")
             try files.moveItem(at: target, to: saved); displaced = saved
         } else if files.fileExists(atPath: target.path) { throw PeerError.invalid("Destination is occupied by an unknown file") }
@@ -109,15 +112,16 @@ struct BundleTransaction {
               stored.newBuild == receipt.newBuild else { throw PeerError.invalid("Installation receipt has changed") }
         let target = URL(fileURLWithPath: receipt.application.path).standardizedFileURL
         let restored = receipt.state == .restored
+        let replacementTeam = ApplicationSourceCatalog.replacementTeam(for: receipt.application) ?? receipt.application.teamID
         let backup = target.deletingLastPathComponent().appending(path: ".upovi-\(restored ? "replaced" : "backup")-\(receipt.id).app")
         guard target.resolvingSymlinksInPath().path == target.path,
               backup.path == receipt.retainedPath, backup.resolvingSymlinksInPath().path == backup.path,
               let old = AppScanner.read(backup), old.bundleID == receipt.application.bundleID,
               old.version == (restored ? receipt.newVersion : receipt.application.version),
               old.build == (restored ? receipt.newBuild : receipt.application.build),
-              old.teamID == receipt.application.teamID,
+              old.teamID == (restored ? replacementTeam : receipt.application.teamID),
               let current = AppScanner.read(target), current.bundleID == old.bundleID,
-              current.teamID == old.teamID,
+              current.teamID == (restored ? receipt.application.teamID : replacementTeam),
               current.version == (restored ? receipt.application.version : receipt.newVersion),
               current.build == (restored ? receipt.application.build : receipt.newBuild) else {
             throw PeerError.invalid("Backup or installed application changed; keep this backup for recovery")

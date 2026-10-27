@@ -9,6 +9,10 @@ struct InstallationConfirmationView: View {
                 header(path: update.application.path, title: update.application.name, badge: "更新已验证",
                        from: update.application.version, to: update.replacement.version)
                 checklist((update.archiveIntegrityVerified ? ["下载完整性"] : []) + ["应用标识与 Apple 开发者签名", "嵌套代码签名与架构兼容", "macOS Gatekeeper 信任"])
+                if update.usesLegacyMigration {
+                    Label("旧版官方文件与资源签名已核对，将升级为开发者签名版本。首次打开时可能需要重新确认系统权限。", systemImage: "checkmark.shield")
+                        .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
                 Label("安装会请求关闭应用，并保留旧版本以便在“历史与恢复”中恢复。请先保存正在编辑的文稿。", systemImage: "doc.badge.clock")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Text("本次更新主应用。如应用首次打开时提示更新后台组件，请按应用内指引操作。")

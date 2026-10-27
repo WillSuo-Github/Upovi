@@ -24,6 +24,7 @@ public enum ApplicationSourceCatalog {
     ]
 
     public static let catalogExceptions: [String: String] = [
+        "com.caldis.Mos": "mos",
         "abnerworks.Typora": "typora",
         "com.vscodium": "vscodium",
         "org.blenderfoundation.blender": "blender",
@@ -52,6 +53,29 @@ public enum ApplicationSourceCatalog {
         "com.bjango.istatmenus": .init(teamID: "Y93TK974AT", host: "cdn.istatmenus.app",
                                        pathPrefix: "/files/istatmenus7/versions/iStatMenus")
     ]
+
+    public struct LegacyMigrationRule: Sendable {
+        public let version: String
+        public let build: String
+        public let executableSHA256: String
+        public let successorTeamID: String
+    }
+    // The official Mos 3.5.0 universal DMG contains a valid ad hoc signature, without a Team ID.
+    // Pin its complete executable (including both code directories) and validate sealed resources at use time.
+    public static let legacyMigrations: [String: LegacyMigrationRule] = [
+        "com.caldis.Mos": .init(version: "3.5.0", build: "2024.01.11",
+                               executableSHA256: "14e4f8367192273f8b95b8df90c63d471841a71bbc250500c648e78fc5709fe0",
+                               successorTeamID: "N7Z52F27XK")
+    ]
+    public static func legacyMigration(for app: InstalledApp) -> LegacyMigrationRule? {
+        guard !app.isAppStore, app.teamID == nil || app.teamID?.isEmpty == true,
+              let rule = legacyMigrations[app.bundleID], app.version == rule.version, app.build == rule.build else { return nil }
+        return rule
+    }
+    public static func replacementTeam(for app: InstalledApp) -> String? {
+        if let team = app.teamID, !team.isEmpty { return team }
+        return legacyMigration(for: app)?.successorTeamID
+    }
 
     /// The official 7.50.1 ZIP contains a signed 7.50 / 2356 app. Keep this exact reviewed
     /// packaging exception instead of accepting arbitrary version mismatches or altering scanned versions.
