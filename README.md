@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610270003)**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610270004)**
 
-[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202610270003 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
+[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202610270004 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
 ## What it does
 
@@ -40,7 +40,7 @@ This uses `xcodebuild` and stages the built, ad-hoc signed application at `dist/
 
 The checked-in project opens directly without XcodeGen. `project.yml` is its reproducible specification; after changing project structure, run `xcodegen generate` and commit both files. Existing SwiftPM tools and tests remain available through `Package.swift` for diagnostic/acceptance scripts. The main app development entrypoint is `Upovi.xcodeproj`. See [Xcode project details](docs/XCODE-PROJECT.md) for targets and build settings.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md). The 0.4.10 build 202610270003 notarized preview and signed public latest feed are published. All three macOS CI jobs passed; public assets and extracted signature, ticket and Gatekeeper checks passed. Official Mos 3.5.0 can now migrate directly to its signed developer identity; real isolated core and native UI installation/recovery and tamper rejection passed. See [Mos migration](docs/MOS-LEGACY-MIGRATION.md) and [release evidence](docs/evidence/0.4.10-build-202610270003.json). Prior Typora/iStat acceptance and its Typora first-launch UI gap remain recorded separately in [source/trust acceptance](docs/UPDATE-SOURCE-TRUST.md). Normal installed applications and Accessibility grants were not changed by this acceptance. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md). The 0.4.10 build 202610270004 notarized preview and signed public latest feed are published. The sidebar now contains Updates, All Applications, Downloads and History & Recovery; P2P functionality and settings remain available. Native inspection confirmed the sidebar, fallback from a remembered P2P page and Downloads navigation. All 195 local tests, 8 release-numbering tests and three macOS CI jobs passed; public asset bytes and extracted signature, ticket and Gatekeeper checks passed. See [release evidence](docs/evidence/0.4.10-build-202610270004.json). The prior [Mos migration](docs/MOS-LEGACY-MIGRATION.md) and [source/trust acceptance](docs/UPDATE-SOURCE-TRUST.md) retain their recorded scope, including the Typora first-launch UI gap. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
 
 ## Public community discovery
 

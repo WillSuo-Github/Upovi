@@ -1,3 +1,11 @@
+# Upovi 0.4.10 build 202610270004
+
+Product revision `4460527` removes the sidebar P2P entry and Community heading, leaving Updates, All Applications, Downloads and History & Recovery. A remembered P2P destination now opens Updates on startup. P2P behavior and settings are unchanged. Native UI inspection using an isolated fixture confirmed all four entries, migration from the remembered P2P page and working Downloads navigation. All 195 local Xcode tests, 8 release-metadata tests and three macOS CI jobs passed.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270004) and signed public latest feed are published. Apple notarization, ticket stapling and Gatekeeper passed. All five public assets match the verified local bytes; the extracted public app, archive and feed signatures, notarization ticket and Gatekeeper checks passed. See [release evidence](evidence/0.4.10-build-202610270004.json). The normal installed Upovi copy was not replaced and no new self-update or long-run runtime acceptance was performed by this publication.
+
+---
+
 # Upovi 0.4.10 build 202610270003
 
 Product revision `d9fb561` adds exact official Mos 3.5.0 ad hoc-signature migration to its pinned signed developer identity, preserves strict archive/payload validation and extends recovery to both identities. All 195 local Xcode tests, 8 release-metadata tests and three macOS CI jobs passed. Real isolated core and native UI upgrade/restore acceptance passed; resource-modified and re-signed modified legacy copies were rejected. The normal installed Mos copy and Accessibility permissions were unchanged; actual privileged migration execution was not exercised.
