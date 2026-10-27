@@ -53,7 +53,7 @@ targets:
     platform: macOS
     sources: [Sources/UpoviCore]
     settings:
-      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+      SWIFT_INCLUDE_PATHS: "$(BUILT_PRODUCTS_DIR)/include"
       SKIP_INSTALL: YES
     dependencies:
       - target: ArchiveSupport
@@ -87,7 +87,7 @@ targets:
       ENABLE_APP_SANDBOX: NO
       ENABLE_HARDENED_RUNTIME: YES
       LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
-      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+      SWIFT_INCLUDE_PATHS: "$(BUILT_PRODUCTS_DIR)/include"
     dependencies:
       - target: UpoviCore
       - package: Sparkle
@@ -122,7 +122,7 @@ targets:
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: app.upovi.CoreTests
       GENERATE_INFOPLIST_FILE: YES
-      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+      SWIFT_INCLUDE_PATHS: "$(BUILT_PRODUCTS_DIR)/include"
     dependencies:
       - target: UpoviCore
   UpoviTests:
@@ -132,7 +132,7 @@ targets:
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: app.upovi.Tests
       GENERATE_INFOPLIST_FILE: YES
-      SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Sources/ArchiveSupport/include"
+      SWIFT_INCLUDE_PATHS: "$(BUILT_PRODUCTS_DIR)/include"
     dependencies:
       - target: Upovi
 schemes:
