@@ -49,6 +49,17 @@ private struct GeneralSettings: View {
             }
 
             Section {
+                Stepper(value: $store.bulkConcurrency, in: BulkUpdateRunner.concurrencyRange) {
+                    LabeledContent("同时下载和安装", value: "\(store.bulkConcurrency) 个应用")
+                }
+                .disabled(store.bulkUpdating)
+                .accessibilityIdentifier("bulk-concurrency")
+            } header: { Text("批量更新") } footer: {
+                Text("全部更新时最多同时处理的应用数。需要管理员授权或 App Store 的安装会依次进行，避免同时弹出多个系统授权窗口。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
                 Toggle("发现来源更新时通知我", isOn: Binding(get: { store.notificationsEnabled }, set: { enabled in
                     Task { await store.setNotifications(enabled) }
                 }))

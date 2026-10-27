@@ -10,6 +10,7 @@ public actor ArtifactDownloadCache {
     private let directory: URL
     private let configuration: URLSessionConfiguration
     private var busy = Set<String>()
+    private var waiters: [String: [(id: UUID, continuation: CheckedContinuation<Void, Never>)]] = [:]
     public init(directory: URL = URL.cachesDirectory.appending(path: "Upovi/Downloads")) {
         self.directory = directory.standardizedFileURL; configuration = .ephemeral
     }
@@ -42,6 +43,30 @@ public actor ArtifactDownloadCache {
         return fd
     }
     private func unlock(_ fd: Int32) { _ = flock(fd, LOCK_UN); close(fd) }
+    private func acquire(_ key: String) async throws {
+        while busy.contains(key) {
+            let id = UUID()
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { continuation in
+                    if Task.isCancelled { continuation.resume() } else { waiters[key, default: []].append((id, continuation)) }
+                }
+            } onCancel: { Task { await self.abandon(key, id) } }
+            try Task.checkCancellation()
+        }
+        busy.insert(key)
+    }
+    private func release(_ key: String) {
+        busy.remove(key)
+        guard var queue = waiters[key], !queue.isEmpty else { return }
+        let next = queue.removeFirst()
+        waiters[key] = queue.isEmpty ? nil : queue
+        next.continuation.resume()
+    }
+    private func abandon(_ key: String, _ id: UUID) {
+        guard let index = waiters[key]?.firstIndex(where: { $0.id == id }) else { return }
+        waiters[key]?.remove(at: index).continuation.resume()
+        if waiters[key]?.isEmpty == true { waiters[key] = nil }
+    }
     public func download(_ descriptor: DownloadDescriptor, app: InstalledApp, to destination: URL,
                          onPhase: @escaping @Sendable (ArtifactDownloadPhase) -> Void = { _ in },
                          onResume: @escaping @Sendable (Int64) -> Void = { _ in },
@@ -51,8 +76,9 @@ public actor ArtifactDownloadCache {
         try Task.checkCancellation()
         try ensureDirectory(directory)
         let key = Self.key(descriptor)
-        guard busy.insert(key).inserted else { throw PeerError.unavailable("This artifact is already being downloaded") }
-        defer { busy.remove(key) }
+        // Concurrent updates of identical copies share one transfer; later callers reuse the verified entry.
+        try await acquire(key)
+        defer { release(key) }
         let fd = try lockEntry(key); defer { unlock(fd) }
         let entry = directory.appending(path: key); try ensureDirectory(entry)
         try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: entry.path)

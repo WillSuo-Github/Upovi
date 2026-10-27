@@ -16,8 +16,11 @@ public actor UpdateInstaller {
     public static let defaultJournalDirectory = URL.applicationSupportDirectory.appending(path: "Upovi/Installations")
     private let journalDirectory: URL
     public nonisolated let downloads: DownloadCoordinator
-    private var busy = false
-    private var prepared: PreparedUpdate?
+    /// Applications currently being prepared or installed; different applications may proceed in parallel.
+    private var activePaths = Set<String>()
+    /// Restore and backup cleanup run alone.
+    private var exclusive = false
+    private var prepared: [UUID: PreparedUpdate] = [:]
     public init(journalDirectory: URL = UpdateInstaller.defaultJournalDirectory, downloadCache: ArtifactDownloadCache = .shared, downloads: DownloadCoordinator? = nil) {
         self.journalDirectory = journalDirectory
         self.downloads = downloads ?? (downloadCache === ArtifactDownloadCache.shared ? .shared : DownloadCoordinator(cache: downloadCache))
@@ -25,13 +28,15 @@ public actor UpdateInstaller {
 
     public func prepare(app: InstalledApp, candidate: UpdateCandidate,
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedUpdate {
-        guard !busy else { throw PeerError.unavailable("An installation operation is already running") }
+        guard !exclusive, !activePaths.contains(app.path) else { throw PeerError.unavailable("An installation operation is already running") }
         guard !candidate.isCommunity, !app.isAppStore, let descriptor = candidate.download, descriptor.canVerify(for: app),
               ApplicationSourceCatalog.replacementTeam(for: app) != nil, app.bundleID != "app.upovi.Upovi" else {
             throw PeerError.invalid("Use the official source or in-app updater for this application")
         }
-        busy = true; defer { busy = false }
-        if let prepared { try? FileManager.default.removeItem(at: prepared.workspace); self.prepared = nil }
+        activePaths.insert(app.path); defer { activePaths.remove(app.path) }
+        for stale in prepared.values where stale.application.path == app.path {
+            try? FileManager.default.removeItem(at: stale.workspace); prepared[stale.id] = nil
+        }
         let workspace = FileManager.default.temporaryDirectory.appending(path: "Upovi-install-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false)
         let archive = workspace.appending(path: "update." + descriptor.url.pathExtension.lowercased())
@@ -78,7 +83,7 @@ public actor UpdateInstaller {
                 if let downloadID { await downloads.finishApplicationVerification(downloadID) }
                 let value = PreparedUpdate(id: UUID(), application: app, replacement: replacement, workspace: workspace, bundle: staged,
                                            archiveIntegrityVerified: descriptor.hasIntegrityProof)
-                prepared = value; return value
+                prepared[value.id] = value; return value
             } catch {
                 if let mounted { _ = try? await ProcessCommand().run("/usr/bin/hdiutil", ["detach", mounted.path]) }
                 throw error
@@ -90,13 +95,13 @@ public actor UpdateInstaller {
     }
 
     public func discard(_ id: UUID) {
-        guard !busy, let prepared, prepared.id == id else { return }
-        try? FileManager.default.removeItem(at: prepared.workspace); self.prepared = nil
+        guard let value = prepared[id], !activePaths.contains(value.application.path) else { return }
+        try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
     }
 
     public func install(_ id: UUID) async throws -> InstallationReceipt {
-        guard !busy, let value = prepared, value.id == id else { throw PeerError.invalid("Prepared update is no longer available") }
-        busy = true; defer { busy = false }
+        guard !exclusive, let value = prepared[id], !activePaths.contains(value.application.path) else { throw PeerError.invalid("Prepared update is no longer available") }
+        activePaths.insert(value.application.path); defer { activePaths.remove(value.application.path) }
         try await Self.quit(value.application)
         try Task.checkCancellation()
         // Once the rename transaction starts it runs to completion or recovery, even if the UI task is cancelled.
@@ -109,7 +114,7 @@ public actor UpdateInstaller {
             }, validateOriginal: { url in try BundleVerifier.checkSignature(url, like: value.application) }).commit(prepared: value.bundle, replacing: value.application,
                       newVersion: value.replacement.version, newBuild: value.replacement.build)
         }.value
-        try? FileManager.default.removeItem(at: value.workspace); prepared = nil
+        try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
         return receipt
     }
 
@@ -124,8 +129,8 @@ public actor UpdateInstaller {
     }
 
     public func restore(_ receipt: InstallationReceipt) async throws {
-        guard !busy else { throw PeerError.unavailable("An installation operation is already running") }
-        busy = true; defer { busy = false }
+        guard !exclusive, activePaths.isEmpty else { throw PeerError.unavailable("An installation operation is already running") }
+        exclusive = true; defer { exclusive = false }
         try await Self.quit(receipt.application)
         try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.backupPath), like: receipt.application)
         if ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil,
@@ -140,8 +145,8 @@ public actor UpdateInstaller {
     public static func requestApplicationQuit(_ app: InstalledApp) async throws { try await quit(app) }
 
     public func discardBackup(_ receipt: InstallationReceipt) async throws {
-        guard !busy else { throw PeerError.unavailable("An installation operation is already running") }
-        busy = true; defer { busy = false }
+        guard !exclusive, activePaths.isEmpty else { throw PeerError.unavailable("An installation operation is already running") }
+        exclusive = true; defer { exclusive = false }
         guard let retainedPath = receipt.retainedPath else { throw PeerError.invalid("Keep interrupted installation backups for recovery") }
         let backup = URL(fileURLWithPath: retainedPath)
         if ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil {

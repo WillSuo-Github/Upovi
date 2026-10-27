@@ -34,7 +34,18 @@ final class AppStore {
     var bulkStopRequested = false
     var bulkItems: [BulkUpdateItem] = []
     var bulkOutcomes: [String: BulkUpdateOutcome] = [:]
-    var bulkCurrentID: String?
+    var bulkActiveIDs: Set<String> = []
+    /// Keeps the batch dashboard and its rows on screen after the run until the user dismisses it.
+    var bulkSummaryVisible = false
+    var transfers: [String: TransferProgress] = [:]
+    var bulkBytesPerSecond: Double = 0
+    var bulkConcurrency: Int {
+        didSet { preferences.set(bulkConcurrency, forKey: "bulkConcurrencyV1") }
+    }
+    @ObservationIgnored var bulkCancellers: [String: () -> Void] = [:]
+    @ObservationIgnored var speedWindow: (bytes: Int64, start: Date)?
+    /// Administrator and App Store steps show system prompts; run them one at a time.
+    @ObservationIgnored let authorizationGate = SerialGate()
     @ObservationIgnored var bulkTask: Task<Void, Never>?
     @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
@@ -135,6 +146,9 @@ final class AppStore {
         let interval = preferences.integer(forKey: "checkIntervalV1")
         checkIntervalMinutes = max(15, interval == 0 ? 60 : interval)
         notificationsEnabled = preferences.bool(forKey: "notificationsV1")
+        let concurrency = preferences.integer(forKey: "bulkConcurrencyV1")
+        bulkConcurrency = concurrency == 0 ? BulkUpdateRunner.defaultConcurrency
+            : min(max(concurrency, BulkUpdateRunner.concurrencyRange.lowerBound), BulkUpdateRunner.concurrencyRange.upperBound)
         networkEnabled = preferences.bool(forKey: GlobalP2PSettings.key)
         additionalScanDirectories = ScanLocations.normalized(preferences.stringArray(forKey: "scanDirectoriesV1") ?? [])
         if let data = preferences.data(forKey: "updatePolicyV1") { updatePolicy = (try? JSONDecoder().decode(UpdatePolicy.self, from: data)) ?? UpdatePolicy() }

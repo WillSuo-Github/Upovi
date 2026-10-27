@@ -111,6 +111,62 @@ final class BulkUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertTrue(calls.isEmpty)
         XCTAssertEqual(outcomes.map(\.status), [.manual])
     }
+
+    func testConcurrentRunHonorsLimitAndKeepsOutcomeOrder() async {
+        let items = plan(12), meter = ConcurrencyMeter()
+        let outcomes = await BulkUpdateRunner.run(items, concurrency: 5, shouldStop: { false }, operation: { item in
+            await meter.enter()
+            try await Task.sleep(for: .milliseconds(20))
+            await meter.leave()
+            if item.id == items[3].id { throw PeerError.invalid("Synthetic failure") }
+        }, report: { _ in })
+        let peak = await meter.peak
+        XCTAssertEqual(peak, 5)
+        XCTAssertEqual(outcomes.map(\.item.id), items.map(\.id))
+        XCTAssertEqual(outcomes.filter { $0.status == .failed }.map(\.item.id), [items[3].id])
+        XCTAssertEqual(outcomes.filter { $0.status == .installed }.count, 11)
+    }
+
+    func testConcurrentStopLetsRunningItemsFinishAndSkipsQueuedItems() async {
+        let items = plan(8), tracker = Tracker()
+        let outcomes = await BulkUpdateRunner.run(items, concurrency: 3, shouldStop: { await tracker.stop }, operation: { item in
+            await tracker.append(item.id)
+            // Request stop only once all three slots are occupied, so the expectation is deterministic.
+            if item.id == items[0].id {
+                while await tracker.calls.count < 3 { try await Task.sleep(for: .milliseconds(1)) }
+                await tracker.requestStop()
+            } else {
+                while await !tracker.stop { try await Task.sleep(for: .milliseconds(1)) }
+            }
+        }, report: { _ in })
+        let calls = await tracker.calls
+        XCTAssertEqual(Set(calls), Set(items.prefix(3).map(\.id)))
+        XCTAssertEqual(outcomes.prefix(3).map(\.status), [.installed, .installed, .installed])
+        XCTAssertTrue(outcomes.dropFirst(3).allSatisfy { $0.status == .cancelled })
+    }
+
+    func testSerialGateNeverOverlaps() async throws {
+        let gate = SerialGate(), meter = ConcurrencyMeter()
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for _ in 0..<6 {
+                group.addTask {
+                    try await gate.run {
+                        await meter.enter(); try await Task.sleep(for: .milliseconds(5)); await meter.leave()
+                    }
+                }
+            }
+            try await group.waitForAll()
+        }
+        let peak = await meter.peak
+        XCTAssertEqual(peak, 1)
+    }
+}
+
+private actor ConcurrencyMeter {
+    private var current = 0
+    private(set) var peak = 0
+    func enter() { current += 1; peak = max(peak, current) }
+    func leave() { current -= 1 }
 }
 
 private actor Tracker {

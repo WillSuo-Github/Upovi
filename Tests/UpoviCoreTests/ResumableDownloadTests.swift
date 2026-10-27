@@ -101,6 +101,30 @@ final class ResumableDownloadTests: XCTestCase, @unchecked Sendable {
         try await second.download(descriptor, app: app, to: root.appending(path: "final")) { _, _ in }
         XCTAssertEqual(ResumeRegistry.shared.requests(for: url).count, 2)
     }
+    func testConcurrentRequestsForOneArtifactShareASingleTransfer() async throws {
+        let (root, url, descriptor, config) = try setup([.full(ResumeReply.golden)])
+        let cache = ArtifactDownloadCache(directory: root.appending(path: "Cache"), configuration: config), app = app
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for name in ["a", "b", "c"] {
+                group.addTask { try await cache.download(descriptor, app: app, to: root.appending(path: name)) { _, _ in } }
+            }
+            try await group.waitForAll()
+        }
+        XCTAssertEqual(ResumeRegistry.shared.requests(for: url).count, 1)
+        for name in ["a", "b", "c"] {
+            XCTAssertEqual(try String(contentsOf: root.appending(path: name), encoding: .utf8), ResumeReply.golden)
+        }
+    }
+    func testCancellingAQueuedRequestDoesNotWaitForTheActiveTransfer() async throws {
+        let (root, _, descriptor, config) = try setup([.prefix()])
+        let cache = ArtifactDownloadCache(directory: root.appending(path: "Cache"), configuration: config), app = app
+        try await interrupt(cache, descriptor: descriptor, to: root.appending(path: "first"), whileHeld: {
+            let queued = Task { try await cache.download(descriptor, app: app, to: root.appending(path: "queued")) { _, _ in } }
+            try await Task.sleep(for: .milliseconds(50))
+            queued.cancel()
+            do { try await queued.value; XCTFail("A cancelled queued request must not finish") } catch { XCTAssertTrue(error is CancellationError) }
+        })
+    }
     func testRetentionPrunesOnlyInactiveKnownCacheEntries() async throws {
         let (root, _, _, config) = try setup([])
         let directory = root.appending(path: "Cache"), old = directory.appending(path: String(repeating: "f", count: 64))

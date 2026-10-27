@@ -129,6 +129,15 @@ private struct Sidebar: View {
                     else { Text("尚未检查更新") }
                 }.lineLimit(1)
             }
+            if store.bulkUpdating {
+                Button { store.section = .updates } label: {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("正在更新 \(store.bulkFinishedCount)/\(store.bulkInstallableCount)").monospacedDigit().foregroundStyle(.primary)
+                        FlowProgressBar(value: store.bulkOverallFraction, height: 4)
+                    }.contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).padding(.vertical, 2).help("查看更新进度")
+            }
             if !store.networkAvailable { Text("网络不可用，联网后恢复检查").foregroundStyle(.orange) }
             Text("\(store.apps.count) 个本机应用").foregroundStyle(.tertiary)
         }
@@ -138,22 +147,25 @@ private struct Sidebar: View {
     }
 }
 
-/// Floating progress for scans, checks and installations, visible from every section.
+/// Floating progress for scans, checks and non-download operations; downloads show progress on their rows.
 private struct ActivityPill: View {
     let store: AppStore
 
+    private var visible: Bool {
+        store.refreshing || store.scanning || store.checking || (store.installing && !store.bulkUpdating && store.transfers.isEmpty)
+    }
+
     var body: some View {
         Group {
-            if store.refreshing || store.scanning || store.checking || store.installing {
+            if visible {
                 HStack(spacing: 12) {
                     ProgressView().controlSize(.small)
                     Text(message).font(.callout).monospacedDigit().lineLimit(1)
                     if store.checking || store.refreshing {
                         Button("取消") { store.cancelChecking() }.buttonStyle(.link)
                     }
-                    if store.installing {
-                        if store.bulkUpdating { Button("查看进度") { store.bulkUpdatePresented = true }.buttonStyle(.link) }
-                        else if store.canCancelInstallation { Button("取消下载") { store.cancelInstallation() }.buttonStyle(.link) }
+                    if store.installing, store.canCancelInstallation {
+                        Button("取消下载") { store.cancelInstallation() }.buttonStyle(.link)
                     }
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
@@ -163,7 +175,7 @@ private struct ActivityPill: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.spring(duration: 0.35), value: store.refreshing || store.scanning || store.checking || store.installing)
+        .animation(.spring(duration: 0.35), value: visible)
     }
 
     private var message: String {

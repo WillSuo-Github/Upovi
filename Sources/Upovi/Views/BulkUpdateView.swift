@@ -45,8 +45,7 @@ struct BulkUpdateView: View {
             }
             if store.bulkUpdating {
                 VStack(alignment: .leading, spacing: 6) {
-                    ProgressView(value: Double(store.bulkOutcomes.count), total: Double(max(1, store.bulkItems.count)))
-                    Text(store.installationProgress).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    FlowProgressBar(value: store.bulkOverallFraction, height: 8)
                 }
             } else if !store.bulkHasRun {
                 VStack(alignment: .leading, spacing: 6) {
@@ -94,7 +93,7 @@ struct BulkUpdateView: View {
             } else {
                 let (symbol, tone) = indicator(for: item)
                 Image(systemName: symbol).foregroundStyle(tone.color).font(.title3)
-                    .symbolEffect(.pulse, isActive: store.bulkCurrentID == item.id && store.bulkUpdating)
+                    .symbolEffect(.pulse, isActive: store.bulkActiveIDs.contains(item.id) && store.bulkUpdating)
             }
         }
         .controlSize(.small)
@@ -106,8 +105,8 @@ struct BulkUpdateView: View {
             if store.bulkUpdating {
                 Button(store.bulkStopRequested ? "正在停止…" : "停止后续更新") { store.stopAllUpdates() }
                     .disabled(store.bulkStopRequested)
-                if store.bulkStopRequested && !store.canCancelInstallation {
-                    Text("当前安装结束后停止").font(.caption).foregroundStyle(.secondary)
+                if store.bulkStopRequested {
+                    Text("正在安装的应用完成后停止").font(.caption).foregroundStyle(.secondary)
                 }
             } else {
                 Button(store.bulkHasRun ? "完成" : "取消") { store.bulkUpdatePresented = false }.keyboardShortcut(.cancelAction)
@@ -128,7 +127,7 @@ struct BulkUpdateView: View {
 
     private func status(for item: BulkUpdateItem) -> String {
         if let outcome = store.bulkOutcomes[item.id] { return outcome.detail }
-        if store.bulkUpdating && store.bulkCurrentID == item.id { return "正在处理" }
+        if store.bulkUpdating, let transfer = store.transfers[item.id], transfer.isActive { return transfer.label }
         return item.manualReason ?? (item.application.isAppStore ? "将检查并更新可用的商店版本" : "等待下载与验证")
     }
 
@@ -141,7 +140,7 @@ struct BulkUpdateView: View {
             case .manual: return ("arrow.up.forward.app", .neutral)
             }
         }
-        if store.bulkUpdating && store.bulkCurrentID == item.id { return ("arrow.down.circle.fill", .accent) }
+        if store.bulkUpdating && store.bulkActiveIDs.contains(item.id) { return ("arrow.down.circle.fill", .accent) }
         return ("circle.dashed", .neutral)
     }
 }

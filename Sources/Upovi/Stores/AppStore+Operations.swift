@@ -62,29 +62,31 @@ extension AppStore {
         guard !installationBusy, !refreshing, !checking, !scanning else { return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = "请先完成或关闭 Upovi 自身更新，再安装其他应用。"; return }
         installing = true; canCancelInstallation = true; installationProgress = "正在下载并验证更新…"
+        let id = app.id
+        transfers[id] = TransferProgress(phase: .downloading)
+        let progress: @Sendable (Int64, Int64) -> Void = { [weak self] received, expected in
+            Task { @MainActor in self?.reportDownload(id, received: received, expected: expected) }
+        }
         installationTask = Task { [self] in
             defer { installing = false; canCancelInstallation = false }
             do {
                 if candidate.download?.url.pathExtension.lowercased() == "pkg" {
-                    preparedPackage = try await administrator.preparePackage(candidate, app: app) { [weak self] received, expected in
-                        Task { @MainActor in self?.installationProgress = expected > 0 ? "下载中 \(received * 100 / expected)%" : "已下载 \(received / 1_000_000) MB" }
-                    }
+                    preparedPackage = try await administrator.preparePackage(candidate, app: app, progress: progress)
+                    setTransferPhase(id, .awaitingConfirmation)
                     installationConfirmation = true; installationProgress = "安装包已验证，等待管理员安装确认"
                     return
                 }
-                let value = try await installer.prepare(app: app, candidate: candidate) { [weak self] received, expected in
-                    Task { @MainActor in
-                        self?.installationProgress = expected > 0 ? "下载中 \(received * 100 / expected)%" : "已下载 \(received / 1_000_000) MB"
-                    }
-                }
+                let value = try await installer.prepare(app: app, candidate: candidate, progress: progress)
+                setTransferPhase(id, .awaitingConfirmation)
                 preparedUpdate = value
                 administratorInstallRequested = !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path)
                 installationConfirmation = true; installationProgress = "更新已验证，等待安装确认"
-            } catch { recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = "下载或验证未完成"; if !Task.isCancelled && !(error is CancellationError) { errorMessage = error.localizedDescription } }
+            } catch { transfers[id] = nil; recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = "下载或验证未完成"; if !Task.isCancelled && !(error is CancellationError) { errorMessage = error.localizedDescription } }
         }
     }
     func cancelInstallation() { installationTask?.cancel() }
     func discardInstallation() {
+        for id in [preparedUpdate?.application.id, preparedPackage?.plan.application.id].compactMap({ $0 }) { transfers[id] = nil }
         if let value = preparedUpdate { Task { await installer.discard(value.id) } }
         if let value = preparedPackage { administrator.discard(value); preparedPackage = nil }
         preparedUpdate = nil; installationConfirmation = false; installationProgress = ""
@@ -102,8 +104,9 @@ extension AppStore {
             return
         }
         installationConfirmation = false; installing = true; canCancelInstallation = false; installationProgress = "正在安装，旧版本将保留为备份…"
+        setTransferPhase(value.application.id, .installing)
         installationTask = Task { [self] in
-            defer { installing = false; preparedUpdate = nil }
+            defer { installing = false; preparedUpdate = nil; transfers[value.application.id] = nil }
             do {
                 _ = try await installer.install(value.id)
                 installationProgress = "安装完成，可在安装记录中恢复旧版本"
@@ -118,9 +121,10 @@ extension AppStore {
         guard !installing, !SelfUpdateService.shared.sessionInProgress else { return }
         installationConfirmation = false; installing = true; canCancelInstallation = false
         installationProgress = "正在请求管理员授权并安装，请留意系统授权窗口…"
+        setTransferPhase(plan.application.id, .waitingForAuthorization)
         installationTask = Task { [self] in
             defer {
-                installing = false
+                installing = false; transfers[plan.application.id] = nil
                 if let value = preparedUpdate { Task { await installer.discard(value.id) } }
                 if let value = preparedPackage { administrator.discard(value) }
                 preparedUpdate = nil; preparedPackage = nil

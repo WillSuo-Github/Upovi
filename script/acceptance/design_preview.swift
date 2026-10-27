@@ -157,6 +157,8 @@ actor DesignPreviewTransfer {
                              scanApplications: { _ in apps }, revalidateSources: { },
                              checkApplication: { app, _ in try? await Task.sleep(for: .milliseconds(120)); return results[app.id] ?? .init(appID: app.id, candidates: [], note: "Fixture", status: .current) })
         store.administrator = AdministratorInstallationService(directory: root.appending(path: "Attempts"), downloads: coordinator)
+        // Never reach the real App Store service from the offline preview.
+        store.installStoreUpdate = { _, _ in try await Task.sleep(for: .seconds(3)) }
         // Keep the preview offline: no path monitor, scheduled checks or DHT synchronization.
         store.monitoringTask = Task { }
         store.p2pTransitioning = true
@@ -179,6 +181,7 @@ actor DesignPreviewTransfer {
         _store = State(initialValue: store)
         switch option("--present") {
         case "bulk": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); store.reviewAllUpdates() }
+        case "bulk-demo": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); await BulkDemo.run(store) }
         case "check": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); store.beginChecking() }
         case "diagnostics": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); store.diagnosticsPresentation = store.diagnosticSnapshot() }
         default: break
@@ -210,5 +213,60 @@ private struct SettingsOpener: View {
             guard option("--present") == "settings" else { return }
             try? await Task.sleep(for: .seconds(1)); openSettings()
         }
+    }
+}
+
+/// Scripted batch for visual review: drives the same store state a real concurrent run produces,
+/// without downloading or installing anything.
+@MainActor enum BulkDemo {
+    static func run(_ store: AppStore) async {
+        let apps = Array(store.apps.prefix(12))
+        store.bulkItems = apps.enumerated().map { index, app in
+            .init(application: app, candidate: .init(version: "99.\(index)", source: "Fixture", isCommunity: false, url: nil), manualReason: nil)
+        }
+        store.bulkOutcomes = [:]; store.bulkActiveIDs = []
+        store.bulkHasRun = true; store.bulkUpdating = true; store.installing = true; store.bulkStopRequested = false
+        for item in store.bulkItems { store.transfers[item.id] = TransferProgress() }
+        store.bulkSummaryVisible = true; store.section = .updates
+        let width = store.bulkConcurrency
+        await withTaskGroup(of: Void.self) { group in
+            var running = 0
+            for (index, item) in store.bulkItems.enumerated() {
+                if running >= width { await group.next(); running -= 1 }
+                if store.bulkStopRequested {
+                    store.transfers[item.id]?.finish(.cancelled)
+                    store.bulkOutcomes[item.id] = .init(item: item, status: .cancelled, detail: "已停止，未安装"); continue
+                }
+                running += 1
+                store.bulkActiveIDs.insert(item.id); store.transfers[item.id] = TransferProgress(phase: .downloading)
+                group.addTask { await simulate(store, item, index: index) }
+            }
+            await group.waitForAll()
+        }
+        store.bulkActiveIDs = []; store.bulkBytesPerSecond = 0
+        store.installing = false; store.bulkUpdating = false
+    }
+
+    private static func simulate(_ store: AppStore, _ item: BulkUpdateItem, index: Int) async {
+        let size = Int64(40_000_000 + (index * 37 % 9) * 25_000_000)
+        let step = Int64(Double(size) / Double(18 + (index * 13) % 40))
+        var received: Int64 = 0
+        try? await Task.sleep(for: .milliseconds(400))
+        while received < size, !store.bulkStopRequested {
+            try? await Task.sleep(for: .milliseconds(120))
+            received = min(size, received + step)
+            store.reportDownload(item.id, received: received, expected: size)
+        }
+        let status: BulkUpdateOutcome.Status
+        if store.bulkStopRequested && received < size { status = .cancelled }
+        else {
+            try? await Task.sleep(for: .milliseconds(900))
+            if index == 5 { status = .failed }
+            else { store.setTransferPhase(item.id, .installing); try? await Task.sleep(for: .milliseconds(1200)); status = .installed }
+        }
+        store.bulkActiveIDs.remove(item.id)
+        store.transfers[item.id]?.finish(status == .installed ? .installed : status == .cancelled ? .cancelled : .failed)
+        store.bulkOutcomes[item.id] = .init(item: item, status: status,
+            detail: status == .failed ? "下载内容的 SHA-256 与来源不一致（合成失败）" : status == .cancelled ? "已取消，未完成安装" : "更新完成，主应用备份已保留")
     }
 }

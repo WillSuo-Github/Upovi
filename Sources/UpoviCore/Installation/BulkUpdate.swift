@@ -56,35 +56,77 @@ public enum BulkUpdateEvent: Sendable {
 }
 
 public enum BulkUpdateRunner {
-    /// A failed application does not suppress later updates. Stop is checked between atomic operations.
+    public static let defaultConcurrency = 5
+    public static let concurrencyRange = 1...8
+
+    /// A failed application does not suppress later updates. Stop is checked before each application starts.
+    /// Up to `concurrency` operations run at once; outcomes keep the input order.
     public static func run(_ items: [BulkUpdateItem],
+                           concurrency: Int = 1,
                            shouldStop: @Sendable () async -> Bool,
-                           operation: @Sendable (BulkUpdateItem) async throws -> Void,
-                           report: @Sendable (BulkUpdateEvent) async -> Void) async -> [BulkUpdateOutcome] {
-        var outcomes: [BulkUpdateOutcome] = []
-        for item in items {
-            let outcome: BulkUpdateOutcome
-            let stopped = await shouldStop()
-            if !item.canInstall {
-                outcome = .init(item: item, status: .manual, detail: item.manualReason ?? "请使用官方更新")
-            } else if Task.isCancelled || stopped {
-                outcome = .init(item: item, status: .cancelled, detail: "已停止，未安装")
-            } else {
+                           operation: @escaping @Sendable (BulkUpdateItem) async throws -> Void,
+                           report: @escaping @Sendable (BulkUpdateEvent) async -> Void) async -> [BulkUpdateOutcome] {
+        let width = min(max(1, concurrency), concurrencyRange.upperBound)
+        var outcomes = [BulkUpdateOutcome?](repeating: nil, count: items.count)
+        await withTaskGroup(of: (Int, BulkUpdateOutcome).self) { group in
+            var running = 0
+            for (index, item) in items.enumerated() {
+                if !item.canInstall {
+                    let outcome = BulkUpdateOutcome(item: item, status: .manual, detail: item.manualReason ?? "请使用官方更新")
+                    outcomes[index] = outcome; await report(.finished(outcome)); continue
+                }
+                // Wait for a free slot before deciding whether this item may still start.
+                while running >= width, let (finished, outcome) = await group.next() {
+                    running -= 1; outcomes[finished] = outcome
+                }
+                let stopped = await shouldStop()
+                if Task.isCancelled || stopped {
+                    let outcome = BulkUpdateOutcome(item: item, status: .cancelled, detail: "已停止，未安装")
+                    outcomes[index] = outcome; await report(.finished(outcome)); continue
+                }
                 await report(.started(item))
-                do {
-                    try await operation(item)
-                    // Once an installation commits, report success even if stop was requested meanwhile.
-                    outcome = .init(item: item, status: .installed, detail: item.application.isAppStore ? "商店更新完成，不提供 Upovi 旧版备份" : "更新完成，主应用备份已保留")
-                } catch is AppStoreAlreadyCurrent {
-                    outcome = .init(item: item, status: .current, detail: "商店确认已经最新，未执行升级")
-                } catch {
-                    outcome = .init(item: item, status: Task.isCancelled || error is CancellationError ? .cancelled : .failed,
-                                    detail: Task.isCancelled || error is CancellationError ? "已取消，未完成安装" : error.localizedDescription)
+                running += 1
+                group.addTask {
+                    let outcome = await execute(item, operation: operation)
+                    await report(.finished(outcome))
+                    return (index, outcome)
                 }
             }
-            outcomes.append(outcome)
-            await report(.finished(outcome))
+            for await (finished, outcome) in group { outcomes[finished] = outcome }
         }
-        return outcomes
+        return outcomes.compactMap { $0 }
+    }
+
+    private static func execute(_ item: BulkUpdateItem, operation: @Sendable (BulkUpdateItem) async throws -> Void) async -> BulkUpdateOutcome {
+        do {
+            try await operation(item)
+            // Once an installation commits, report success even if stop was requested meanwhile.
+            return .init(item: item, status: .installed, detail: item.application.isAppStore ? "商店更新完成，不提供 Upovi 旧版备份" : "更新完成，主应用备份已保留")
+        } catch is AppStoreAlreadyCurrent {
+            return .init(item: item, status: .current, detail: "商店确认已经最新，未执行升级")
+        } catch {
+            let cancelled = Task.isCancelled || error is CancellationError
+            return .init(item: item, status: cancelled ? .cancelled : .failed, detail: cancelled ? "已取消，未完成安装" : error.localizedDescription)
+        }
+    }
+}
+
+/// FIFO mutual exclusion for steps that must not overlap, such as system authorization prompts.
+public actor SerialGate {
+    private var held = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    public init() {}
+
+    public func run<T: Sendable>(_ body: @Sendable () async throws -> T) async throws -> T {
+        await acquire(); defer { release() }
+        try Task.checkCancellation()
+        return try await body()
+    }
+    private func acquire() async {
+        if !held { held = true; return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+    private func release() {
+        if waiters.isEmpty { held = false } else { waiters.removeFirst().resume() }
     }
 }
