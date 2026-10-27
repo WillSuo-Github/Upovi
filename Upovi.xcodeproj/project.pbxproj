@@ -331,6 +331,7 @@
 		45B60CAC1968AFF8E694F305 /* admin_cleanup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = admin_cleanup.swift; sourceTree = "<group>"; };
 		465C60399857C49E4C336847 /* UpoviStoreInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpoviStoreInstaller.swift; sourceTree = "<group>"; };
 		4B1ADE0B8107A0477CB48251 /* CanonicalFilePath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalFilePath.swift; sourceTree = "<group>"; };
+		50FDC46E7D9377536DA006AB /* startup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = startup.swift; sourceTree = "<group>"; };
 		52825B7E03F33E932EF5AA49 /* PublisherDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublisherDirectory.swift; sourceTree = "<group>"; };
 		54A14FB0D24F65CDFCC968E1 /* AppStore+AdministratorBackups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+AdministratorBackups.swift"; sourceTree = "<group>"; };
 		5595BC76CC1B3AB15E739208 /* UpoviInstaller */ = {isa = PBXFileReference; includeInIndex = 0; path = UpoviInstaller; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -790,6 +791,7 @@
 				B0E3C9DDBDF4AD1FE0AEF005 /* privileged_vm.swift */,
 				23D901D30CA1ED44CB640969 /* soak.py */,
 				CE3C2AC6D4659FFAED17EB66 /* source_refresh.swift */,
+				50FDC46E7D9377536DA006AB /* startup.swift */,
 			);
 			path = acceptance;
 			sourceTree = "<group>";

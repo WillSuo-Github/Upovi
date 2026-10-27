@@ -13,7 +13,7 @@ def run(command, **kwargs):
 def main():
     root = pathlib.Path(__file__).resolve().parents[2]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=['bulk', 'admin-cleanup', 'diagnostics', 'downloads', 'design'], default='bulk')
+    parser.add_argument('--mode', choices=['bulk', 'admin-cleanup', 'diagnostics', 'downloads', 'design', 'startup'], default='bulk')
     parser.add_argument('--replacement', type=pathlib.Path)
     parser.add_argument('--helper-bundle', type=pathlib.Path)
     parser.add_argument('--original', type=pathlib.Path, help='Official signed Rectangle 2.0.3 application to copy read-only.')
@@ -21,7 +21,7 @@ def main():
     parser.add_argument('--signing-identity', default='-')
     options = parser.parse_args()
     original = options.original.resolve() if options.original else None
-    if options.mode not in ["diagnostics", "downloads", "design"] and original is None:
+    if options.mode not in ["diagnostics", "downloads", "design", "startup"] and original is None:
         parser.error("This fixture mode requires --original.")
     output = options.output.resolve()
     if not output.is_relative_to(root / '.local') or output == root / '.local' or output.exists():
@@ -53,7 +53,7 @@ def main():
     modules = output / 'modules'; modules.mkdir()
     header = root / 'Sources/ArchiveSupport/include/ArchiveSupport.h'
     (modules / 'module.modulemap').write_text('module ArchiveSupport { header "' + str(header) + '" export * }\n')
-    app = output / {'bulk': 'UpoviBulkAcceptance.app', 'admin-cleanup': 'UpoviCleanupAcceptance.app', 'diagnostics': 'UpoviDiagnosticsAcceptance.app', 'downloads': 'UpoviDownloadAcceptance.app', 'design': 'UpoviDesignPreview.app'}[options.mode]
+    app = output / {'bulk': 'UpoviBulkAcceptance.app', 'admin-cleanup': 'UpoviCleanupAcceptance.app', 'diagnostics': 'UpoviDiagnosticsAcceptance.app', 'downloads': 'UpoviDownloadAcceptance.app', 'design': 'UpoviDesignPreview.app', 'startup': 'UpoviStartupAcceptance.app'}[options.mode]
     executable = app / 'Contents/MacOS/UpoviFixture'
     executable.parent.mkdir(parents=True)
     sources = [str(path) for path in (root / 'Sources/Upovi').rglob('*.swift') if path.name != 'UpoviApp.swift']
@@ -66,11 +66,11 @@ def main():
     if not objects:
         raise RuntimeError('No compiled core objects found; inspect the SwiftPM product layout.')
     command = ['swiftc', '-swift-version', '6', '-parse-as-library', '-I', str(products), '-I', str(modules), '-F', str(products)]
-    command += sources + [str(root / 'script/acceptance' / {'bulk': 'bulk_install.swift', 'admin-cleanup': 'admin_cleanup.swift', 'diagnostics': 'diagnostics.swift', 'downloads': 'download_center.swift', 'design': 'design_preview.swift'}[options.mode])] + objects
+    command += sources + [str(root / 'script/acceptance' / {'bulk': 'bulk_install.swift', 'admin-cleanup': 'admin_cleanup.swift', 'diagnostics': 'diagnostics.swift', 'downloads': 'download_center.swift', 'design': 'design_preview.swift', 'startup': 'startup.swift'}[options.mode])] + objects
     command += ['-larchive', '-framework', 'Sparkle', '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks', '-o', str(executable)]
     run(command, cwd=root)
     info = dict(CFBundleExecutable='UpoviFixture', CFBundleIdentifier='app.upovi.TrustAcceptance',
-                CFBundleName={'bulk': 'Upovi Bulk Acceptance', 'admin-cleanup': 'Upovi Cleanup Acceptance', 'diagnostics': 'Upovi Diagnostics Acceptance', 'downloads': 'Upovi Download Acceptance', 'design': 'Upovi Design Preview'}[options.mode], CFBundlePackageType='APPL',
+                CFBundleName={'bulk': 'Upovi Bulk Acceptance', 'admin-cleanup': 'Upovi Cleanup Acceptance', 'diagnostics': 'Upovi Diagnostics Acceptance', 'downloads': 'Upovi Download Acceptance', 'design': 'Upovi Design Preview', 'startup': 'Upovi Startup Acceptance'}[options.mode], CFBundlePackageType='APPL',
                 CFBundleShortVersionString='0.4.6', CFBundleVersion='12', LSMinimumSystemVersion='14.0', NSPrincipalClass='NSApplication')
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
     run(['python3', 'script/embed_sparkle.py', str(app), options.signing_identity], cwd=root)

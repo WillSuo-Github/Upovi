@@ -21,6 +21,99 @@ final class ToolbarWorkflowTests: XCTestCase {
             sha256: String(repeating: "a", count: 64)))], note: "Fixture", status: .updates)
     }
 
+    func testFreshStartupChecksSourcesWithPeriodicChecksDisabledAndDoesNotRepeatOnReappearance() async throws {
+        let fresh = [app(1), app(2)], tracker = RefreshTracker()
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in
+            await tracker.record("scan"); return fresh
+        }, revalidateSources: { await tracker.record("revalidate") }, checkApplication: { app, _ in
+            await tracker.record(app.id)
+            return .init(appID: app.id, candidates: [], note: "Fixture", status: .current)
+        })
+        XCTAssertFalse(store.automaticChecks)
+        store.startInitialCheck()
+        await store.checkTask?.value
+        let first = await tracker.events
+        XCTAssertEqual(Array(first.prefix(2)), ["scan", "revalidate"])
+        XCTAssertEqual(Set(first.dropFirst(2)), Set(fresh.map(\.id)))
+        XCTAssertEqual(store.completedChecks, fresh.count)
+        XCTAssertNotNil(store.lastChecked)
+        XCTAssertFalse(store.operationBusy)
+        store.startInitialCheck()
+        let repeated = await tracker.events
+        XCTAssertEqual(first, repeated)
+        XCTAssertFalse(store.automaticChecks)
+    }
+
+    func testStartupReentryWhileScanningDoesNotCreateAnotherScanOrCheck() async throws {
+        let fresh = [app(1)], gate = ScanGate(), tracker = RefreshTracker()
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in
+            await tracker.record("scan"); await gate.pause(); return fresh
+        }, revalidateSources: { }, checkApplication: { app, _ in
+            await tracker.record("check")
+            return .init(appID: app.id, candidates: [], note: "Fixture", status: .current)
+        })
+        store.startInitialCheck()
+        await gate.waitUntilPaused()
+        store.startInitialCheck()
+        await gate.resume()
+        await store.checkTask?.value
+        let events = await tracker.events
+        XCTAssertEqual(events, ["scan", "check"])
+        XCTAssertEqual(store.checkHistory.count, 1)
+    }
+
+    func testCancelledStartupDoesNotRestartWhenTheViewReappears() async throws {
+        let fresh = [app(1)], gate = ScanGate(), tracker = RefreshTracker()
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in
+            await gate.pause(); return fresh
+        }, revalidateSources: { await tracker.record("revalidate") }, checkApplication: { app, _ in
+            await tracker.record("check")
+            return .init(appID: app.id, candidates: [], note: "Fixture", status: .current)
+        })
+        store.startInitialCheck()
+        await gate.waitUntilPaused()
+        store.cancelChecking()
+        await gate.resume()
+        await store.checkTask?.value
+        store.startInitialCheck()
+        let events = await tracker.events
+        XCTAssertTrue(events.isEmpty)
+        XCTAssertNil(store.lastChecked)
+        XCTAssertFalse(store.operationBusy)
+    }
+
+    func testOfflineStartupScansAndExplainsWhySourceChecksDidNotRun() async throws {
+        let fresh = [app(1)], tracker = RefreshTracker()
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in fresh },
+                             revalidateSources: { await tracker.record("revalidate") }, checkApplication: { app, _ in
+            await tracker.record("check")
+            return .init(appID: app.id, candidates: [], note: "Fixture", status: .current)
+        })
+        store.networkAvailable = false
+        store.startInitialCheck()
+        await store.checkTask?.value
+        let events = await tracker.events
+        XCTAssertEqual(store.apps, fresh)
+        XCTAssertTrue(events.isEmpty)
+        XCTAssertTrue(store.errorMessage?.contains("没有可用网络") == true)
+        XCTAssertNil(store.lastChecked)
+        XCTAssertFalse(store.operationBusy)
+    }
+
+    func testStartupDoesNotReplaceAnAlreadyPopulatedStore() async throws {
+        let tracker = RefreshTracker()
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in
+            await tracker.record("scan"); return []
+        })
+        store.apps = [app(1)]
+        store.sourceResults = [store.apps[0].id: update(for: store.apps[0])]
+        store.startInitialCheck()
+        let events = await tracker.events
+        XCTAssertTrue(events.isEmpty)
+        XCTAssertNil(store.checkTask)
+        XCTAssertEqual(store.sourceResults.count, 1)
+    }
+
     func testRefreshScansThenChecksEntireNewInventoryDespiteFiltersAndBackgroundSync() async throws {
         let fresh = (0..<7).map { app($0) }, tracker = RefreshTracker()
         let store = AppStore(preferences: try preferences(), scanApplications: { _ in

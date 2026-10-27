@@ -23,10 +23,7 @@ struct ContentView: View {
                     .accessibilityIdentifier("refresh-all-apps")
             }
         }
-        .task {
-            if store.apps.isEmpty { await store.scan() }
-            if store.networkEnabled { store.beginSync() }
-        }
+        .task { store.startInitialCheck() }
         .onChange(of: store.visibleApps.map(\.id)) { _, ids in
             if store.section == .all, !ids.contains(store.selection ?? "") { store.selection = ids.first }
         }
@@ -138,7 +135,9 @@ private struct Sidebar: View {
                 Image(systemName: store.networkAvailable ? "checkmark.icloud" : "icloud.slash")
                     .foregroundStyle(store.networkAvailable ? Color.secondary : Color.orange)
                 Group {
-                    if store.checking { Text("正在检查 \(store.completedChecks)/\(store.apps.count)") }
+                    if store.scanning { Text("正在扫描应用…") }
+                    else if store.checking { Text("正在检查 \(store.completedChecks)/\(store.apps.count)") }
+                    else if store.refreshing { Text("正在连接更新来源…") }
                     else if let date = store.lastChecked { Text("上次检查 \(date.relativeDescription)") }
                     else { Text("尚未检查更新") }
                 }.lineLimit(1)
@@ -158,7 +157,7 @@ private struct ActivityPill: View {
 
     var body: some View {
         Group {
-            if store.scanning || store.checking || store.installing {
+            if store.refreshing || store.scanning || store.checking || store.installing {
                 HStack(spacing: 12) {
                     ProgressView().controlSize(.small)
                     Text(message).font(.callout).monospacedDigit().lineLimit(1)
@@ -177,12 +176,13 @@ private struct ActivityPill: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.spring(duration: 0.35), value: store.scanning || store.checking || store.installing)
+        .animation(.spring(duration: 0.35), value: store.refreshing || store.scanning || store.checking || store.installing)
     }
 
     private var message: String {
         if store.scanning { return "正在扫描应用…" }
         if store.checking { return "正在检查更新 \(store.completedChecks)/\(store.apps.count)" }
+        if store.refreshing { return "正在连接更新来源…" }
         return store.installationProgress.isEmpty ? "正在处理更新…" : store.installationProgress
     }
 }

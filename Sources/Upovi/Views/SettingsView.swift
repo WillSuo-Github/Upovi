@@ -37,14 +37,15 @@ private struct GeneralSettings: View {
             } header: { Text("启动") }
 
             Section {
-                Toggle("应用运行时自动检查更新", isOn: $store.automaticChecks)
+                Toggle("应用运行时定时检查更新", isOn: $store.automaticChecks)
                 Picker("检查间隔", selection: $store.checkIntervalMinutes) {
                     Text("每 15 分钟").tag(15)
                     Text("每小时").tag(60)
                     Text("每 6 小时").tag(360)
                 }.disabled(!store.automaticChecks)
             } header: { Text("自动检查") } footer: {
-                Text("休眠或退出应用会暂停检查；醒来后恢复网络连接。").font(.caption).foregroundStyle(.secondary)
+                Text("每次启动会自动扫描并检查一次；开启定时检查后，应用运行期间还会按间隔重复检查。休眠或退出应用会暂停定时检查。")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {

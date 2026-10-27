@@ -1,3 +1,11 @@
+# Upovi 0.4.10 startup update checks
+
+Startup now performs one complete inventory scan and source check even when periodic checks are disabled. Previously the initial view task scanned inventory only, leaving a fresh installation at the unchecked landing page after the activity indicator disappeared. A store-owned one-time entry point starts the existing cancellable refresh pipeline and survives view-task completion; populated stores and repeated view appearances do not start another initial pass. Scanning, source preparation and check progress remain visible. Periodic scheduling keeps its existing opt-in preference. Offline startup retains the scanned inventory and explains why source checking could not run.
+
+Five regression tests cover startup with periodic checks disabled, reentry during scanning, cancellation, offline startup and populated-store preservation. All 180 local tests passed. Independent fresh-settings native acceptance reproduced the original scan-only stop with 72 host applications and zero checks; the fixed view completed 72 real source checks without pressing a check button, with periodic checks and P2P both disabled. Source failures remain source failures; completion does not imply every origin returned an update. Release, notarization and public old-to-new acceptance are recorded separately in version-specific evidence.
+
+---
+
 # Upovi 0.4.9 notarized distribution
 
 Build 15 makes the notarized distribution available to existing installations through Sparkle. Packaging explicitly signs Sparkle's nested services and updater tools, all installation helpers and the outer application with Developer ID, Hardened Runtime and secure timestamps. Each component retains its own entitlements except debugger access. The archive must pass Apple notarization, ticket stapling and Gatekeeper assessment before publication; the final stapled ZIP and appcast are signed together. Publication and actual old-to-new replacement are recorded separately in version-specific evidence. Physical sleep/network/power and long-run acceptance are not established by notarization.

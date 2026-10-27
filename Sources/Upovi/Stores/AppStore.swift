@@ -107,6 +107,7 @@ final class AppStore {
     @ObservationIgnored let checkApplication: @Sendable (InstalledApp, SourceOverride?) async -> SourceResult
     @ObservationIgnored var installationTask: Task<Void, Never>?
     @ObservationIgnored var checkTask: Task<Void, Never>?
+    @ObservationIgnored private var initialCheckStarted = false
     @ObservationIgnored var monitoringTask: Task<Void, Never>?
     @ObservationIgnored let pathMonitor = NWPathMonitor()
     @ObservationIgnored var previousPath: String?
@@ -188,6 +189,15 @@ final class AppStore {
     func assessment(for app: InstalledApp) -> UpdateAssessment {
         UpdateAssessment(app: app, sourceResult: sourceResults[app.id].map { updatePolicy.filtering($0, app: app, now: policyClock) },
             reports: networkEnabled ? communityResults[app.id] ?? [] : [])
+    }
+
+    /// Run once per store lifetime, independently of the optional periodic schedule.
+    func startInitialCheck() {
+        guard !initialCheckStarted else { return }
+        initialCheckStarted = true
+        // A populated store already has an owner-driven refresh or preview data.
+        guard apps.isEmpty, !operationBusy else { return }
+        refreshAll()
     }
 
     func scan() async {

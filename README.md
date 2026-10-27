@@ -2,7 +2,7 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.9**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10**
 
 [Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.9 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
@@ -22,6 +22,7 @@ A native, open-source macOS application update detector with globally controlled
 - Resumes canceled/interrupted ZIP, DMG and PKG downloads when the HTTPS server provides a strong validator; retry revalidates the final artifact before installation. See [download recovery](docs/DOWNLOAD-RESUME-AND-CLEANUP.md).
 - Shows retained-copy sizes and moves eligible copies to Trash only after confirmation. Interrupted recovery material is protected.
 - Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. The public feed and genuine 0.4.5 → 0.4.6, 0.4.6 → 0.4.7 and 0.4.8 → 0.4.9 replacement/relaunch have been accepted; artifacts keep separate evidence.
+- Scans installed applications and checks their update sources once on launch, independently of optional periodic checks. Startup progress remains visible through inventory scanning, source preparation and version checks; opening another window does not repeat the initial check.
 - Offers Upovi-managed administrator installation for signed application replacements and inspectable signed PKGs. Each operation requests macOS authorization, uses a verified protected helper, and retains a protected main-app backup. Completed protected backups can be inspected and permanently cleaned after confirmation and authorization; failed/interrupted transactions remain protected. PKG script side effects are not rolled back; see [the administrator design](docs/ADMINISTRATOR-INSTALLATION.md).
 - Automatically discovers opted-in public publishers using BitTorrent DHT. No invitation, account, publisher-key exchange, or Upovi relay is required.
 

@@ -59,7 +59,8 @@ struct UpdatesView: View {
             }
         } else if store.lastChecked == nil {
             heroCard(colors: [Theme.sky, Theme.cobalt]) {
-                Text(store.checking ? "正在检查更新…" : "检查一下有没有新版本").font(Theme.display(30, weight: .heavy))
+                Text(store.scanning ? "正在扫描本机应用…" : store.checking ? "正在检查更新…" : store.refreshing ? "正在连接更新来源…" : "检查一下有没有新版本")
+                    .font(Theme.display(30, weight: .heavy))
                 Text("Upovi 会扫描 /Applications 与 ~/Applications，再向 Sparkle、Homebrew、GitHub 与 App Store 来源核对版本。")
                     .font(.callout).opacity(0.9)
             } actions: {
