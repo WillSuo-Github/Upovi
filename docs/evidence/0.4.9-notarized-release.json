@@ -1,0 +1,96 @@
+{
+  "version": "0.4.9",
+  "build": "15",
+  "productRevision": "316067f347103ea44dd8de74e4ae28b4c2d4f0e8",
+  "automatedTests": {
+    "core": 156,
+    "application": 19,
+    "failures": 0
+  },
+  "ci": {
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40462723383",
+    "headRevision": "316067f347103ea44dd8de74e4ae28b4c2d4f0e8",
+    "jobs": [
+      {
+        "name": "tests (macos-14)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-26)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-15-intel)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifact": {
+    "version": "0.4.9",
+    "build": "15",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "c3135c2aa563f37708b77defb2e86153cd978b028fadc0efa42b083c05b4d1ae",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "notarization": {
+    "submissionID": "6706f766-3433-4065-9553-10cf4a0e0771",
+    "status": "Accepted",
+    "stapledTicket": "passed",
+    "gatekeeper": "accepted / Notarized Developer ID"
+  },
+  "publicRelease": {
+    "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.9",
+    "publishedAt": "2026-10-27T06:50:32Z",
+    "latest": true,
+    "publicArchiveFeedChecksumBytesMatchLocal": true,
+    "freshExtractedSignature": "passed",
+    "freshExtractedTicket": "passed",
+    "freshExtractedGatekeeper": "accepted / Notarized Developer ID",
+    "feedURL": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+    "feedBuild": "15",
+    "feedSignature": "verified",
+    "archiveSignature": "verified"
+  },
+  "genuineSelfUpdate": {
+    "result": "passed",
+    "environment": "host macOS /Applications/Upovi.app",
+    "fromVersion": "0.4.8",
+    "fromBuild": "14",
+    "fromProcessID": 13078,
+    "toVersion": "0.4.9",
+    "toBuild": "15",
+    "toProcessID": 29730,
+    "publicFeedCheck": "native Sparkle alert offered 0.4.9 to 0.4.8",
+    "downloadInstallRelaunch": "native Install Update then Install and Relaunch",
+    "aboutPanel": "Upovi Version 0.4.9 (15)",
+    "signature": "deep strict all architectures passed",
+    "ticket": "passed",
+    "gatekeeper": "accepted / Notarized Developer ID",
+    "allFourExecutableBytesMatchPublishedArchive": true,
+    "executableSHA256": {
+      "Upovi": "96c4b091438aa4c9c31394cce8cf06e01ffea35b047def0a2c095d06759e4e1d",
+      "UpoviInstaller": "0549526025db365784def9d492ee9b9b0ac5ea5e5acbbdae877d6d302f6957a4",
+      "UpoviStoreInstaller": "8d173228e28fc98af7e57bf8905e733168672346f55dee1ce9b9a3734d1d2005",
+      "UpoviStoreBridge": "120d5e4d7c0727a8d834fff5a0ec0c152de48f463588234ebc103561fcd36a6c"
+    },
+    "boundary": "Old notarized 0.4.8 was staged before this test. The new bundle was downloaded and replaced by Sparkle; 0.4.9 was not manually copied to /Applications."
+  },
+  "localProjectBundle": {
+    "path": "dist/Upovi.app",
+    "version": "0.4.9",
+    "build": "15",
+    "gatekeeper": "accepted / Notarized Developer ID"
+  },
+  "remainingAcceptance": [
+    "physical sleep/wake",
+    "host interface switching",
+    "privileged energy sampling",
+    "new-candidate long-run observation"
+  ]
+}

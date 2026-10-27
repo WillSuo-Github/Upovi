@@ -4,7 +4,7 @@ A native, open-source macOS application update detector with globally controlled
 
 **SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.9**
 
-[Download the universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.9 distribution requires Developer ID signing, Apple notarization, a stapled ticket and Gatekeeper acceptance. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
+[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.9 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
 ## What it does
 
@@ -21,7 +21,7 @@ A native, open-source macOS application update detector with globally controlled
 - Provides a menu bar entry, opt-in scheduled checks and notifications, system-backed login-at-startup settings, source filters/settings, recent-check history, and installation/recovery history.
 - Resumes canceled/interrupted ZIP, DMG and PKG downloads when the HTTPS server provides a strong validator; retry revalidates the final artifact before installation. See [download recovery](docs/DOWNLOAD-RESUME-AND-CLEANUP.md).
 - Shows retained-copy sizes and moves eligible copies to Trash only after confirmation. Interrupted recovery material is protected.
-- Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. The public feed and genuine 0.4.5 → 0.4.6 and 0.4.6 → 0.4.7 replacement/relaunch have been accepted; artifacts keep separate evidence.
+- Uses Sparkle 2.10.0 for Upovi itself, with signed feeds and archives, opt-in automatic checks, and installation-aware relaunch deferral. The public feed and genuine 0.4.5 → 0.4.6, 0.4.6 → 0.4.7 and 0.4.8 → 0.4.9 replacement/relaunch have been accepted; artifacts keep separate evidence.
 - Offers Upovi-managed administrator installation for signed application replacements and inspectable signed PKGs. Each operation requests macOS authorization, uses a verified protected helper, and retains a protected main-app backup. Completed protected backups can be inspected and permanently cleaned after confirmation and authorization; failed/interrupted transactions remain protected. PKG script side effects are not rolled back; see [the administrator design](docs/ADMINISTRATOR-INSTALLATION.md).
 - Automatically discovers opted-in public publishers using BitTorrent DHT. No invitation, account, publisher-key exchange, or Upovi relay is required.
 
@@ -39,7 +39,7 @@ This uses `xcodebuild` and stages the built, ad-hoc signed application at `dist/
 
 The checked-in project opens directly without XcodeGen. `project.yml` is its reproducible specification; after changing project structure, run `xcodegen generate` and commit both files. Existing SwiftPM tools and tests remain available through `Package.swift` for diagnostic/acceptance scripts. The main app development entrypoint is `Upovi.xcodeproj`. See [Xcode project details](docs/XCODE-PROJECT.md) for targets and build settings.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The linked 0.4.8 signed preview and public feed are published; genuine Sparkle old-to-new update results remain version-specific. The 0.4.6 baseline collector disappeared after about 52 minutes; the original app was still running at review and was later normally stopped to launch the 0.4.8 candidate; the observation is not accepted and does not validate later code. Physical sleep/wake, interface switching and energy sampling are deferred until the owner is available.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The 0.4.9 notarized preview and public latest feed are published. A genuine host Sparkle 0.4.8 → 0.4.9 download/install/relaunch, public archive re-download, signatures, stapled tickets and Gatekeeper acceptance passed; see [version-specific evidence](docs/evidence/0.4.9-notarized-release.json). The interrupted 0.4.6 observation is not accepted and does not validate later code. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
 
 ## Public community discovery
 

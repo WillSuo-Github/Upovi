@@ -2,6 +2,8 @@
 
 Build 15 makes the notarized distribution available to existing installations through Sparkle. Packaging explicitly signs Sparkle's nested services and updater tools, all installation helpers and the outer application with Developer ID, Hardened Runtime and secure timestamps. Each component retains its own entitlements except debugger access. The archive must pass Apple notarization, ticket stapling and Gatekeeper assessment before publication; the final stapled ZIP and appcast are signed together. Publication and actual old-to-new replacement are recorded separately in version-specific evidence. Physical sleep/network/power and long-run acceptance are not established by notarization.
 
+Product revision `316067f` passed all three macOS CI jobs after fixing duplicate C module-map discovery on older Xcode versions. All 175 local tests passed. The [0.4.9 release](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.9) and public latest signed feed are published. Re-downloaded public ZIP/feed/checksum bytes match the verified artifact; the extracted universal app passes nested signature, stapled-ticket and Gatekeeper checks. Actual host Sparkle 0.4.8 build 14 → 0.4.9 build 15 download/install/relaunch passed at `/Applications/Upovi.app`, and the resulting executable bytes match the public artifact. The project-local `dist/Upovi.app` also contains this notarized version. See [version-specific evidence](evidence/0.4.9-notarized-release.json). This completes notarization for 0.4.9; earlier deferred-notarization notes below describe their original historical artifacts.
+
 ---
 
 # Upovi 0.4.8 in-application Store update preview
