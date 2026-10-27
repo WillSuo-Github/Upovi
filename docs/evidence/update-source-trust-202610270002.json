@@ -1,7 +1,7 @@
 {
   "build": "202610270002",
   "marketingVersion": "0.4.10",
-  "published": false,
+  "published": true,
   "tests": {
     "result": "Passed",
     "totalTestCount": 189,
@@ -96,5 +96,6 @@
   "iStatObservedArchiveSHA256": "3e1807f2e7ba6790267fb3c8036a10103c90227d5722ebba41e7917a544c72e5",
   "iStatArchiveHashIsIndependentSourceProof": false,
   "normalInstalledApplicationsReplaced": false,
-  "systemComponentsTested": false
+  "systemComponentsTested": false,
+  "publicReleaseURL": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270002"
 }

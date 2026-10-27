@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610270001)**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610270002)**
 
-[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202610270001 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
+[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202610270002 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
 ## What it does
 
@@ -17,7 +17,7 @@ A native, open-source macOS application update detector with globally controlled
 - Checks supported Mac App Store installations and offers in-application check/update and shared batch review through Apple Store services. Store updates require the owning Apple Account, may require native authentication, and have no Upovi rollback/pause. See [Store integration and acceptance](docs/APP-STORE-UPDATES.md).
 - Checks developer Sparkle appcasts, Homebrew's official catalog using exact declared bundle IDs, curated identity mappings, and supported GitHub releases. Unknown apps can be assigned an HTTPS appcast or official GitHub repository in the detail panel.
 - Distinguishes source-reported updates, community leads, unsupported sources, and failed checks. An empty result is never proof that all applications are current.
-- Downloads eligible ZIP/DMG updates, verifies archive integrity, matching application/developer identity, nested code signatures, version and native executable compatibility, and Gatekeeper acceptance. Installation requires an explicit individual or batch confirmation and retains the old app for recovery.
+- Downloads eligible ZIP/DMG updates using source archive proofs or a reviewed official-origin/Apple Developer ID route. Both paths check application/developer identity, nested code signatures, exact version/build, native executable compatibility and Gatekeeper acceptance. Installation requires individual or batch confirmation and retains the old main app for recovery. See [source and trust rules](docs/UPDATE-SOURCE-TRUST.md).
 - Provides a menu bar entry, opt-in scheduled checks and notifications, system-backed login-at-startup settings, source filters/settings, recent-check history, and installation/recovery history.
 - Resumes canceled/interrupted ZIP, DMG and PKG downloads when the HTTPS server provides a strong validator; retry revalidates the final artifact before installation. See [download recovery](docs/DOWNLOAD-RESUME-AND-CLEANUP.md).
 - Shows retained-copy sizes and moves eligible copies to Trash only after confirmation. Interrupted recovery material is protected.
@@ -40,7 +40,7 @@ This uses `xcodebuild` and stages the built, ad-hoc signed application at `dist/
 
 The checked-in project opens directly without XcodeGen. `project.yml` is its reproducible specification; after changing project structure, run `xcodegen generate` and commit both files. Existing SwiftPM tools and tests remain available through `Package.swift` for diagnostic/acceptance scripts. The main app development entrypoint is `Upovi.xcodeproj`. See [Xcode project details](docs/XCODE-PROJECT.md) for targets and build settings.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The 0.4.10 build 202610270001 notarized preview and public latest feed are published. A genuine host Sparkle update from 0.4.10 build 16 to date build 202610270001 passed without changing the marketing version; public archive re-download, signatures, stapled tickets and Gatekeeper acceptance also passed. See [date-build evidence](docs/evidence/0.4.10-build-202610270001.json). Independent fresh-settings startup completed 72 real source checks with periodic checks disabled and no check-button click; see [startup evidence](docs/evidence/0.4.10-startup-checks.json). The interrupted 0.4.6 observation is not accepted and does not validate later code. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md). The 0.4.10 build 202610270002 notarized preview and signed public latest feed are published. All three macOS CI jobs passed; public archive/feed/checksum bytes and extracted signature, ticket and Gatekeeper checks passed. Real isolated Typora and iStat Menus main-app upgrades, fresh current-version checks and restores passed. Typora first-launch window acceptance remains unverified; background components and drivers are outside this feature. See [source/trust rules](docs/UPDATE-SOURCE-TRUST.md) and [release evidence](docs/evidence/0.4.10-build-202610270002.json). The earlier host Sparkle build 16 to 202610270001 update remains separate [historical evidence](docs/evidence/0.4.10-build-202610270001.json); this publication did not update the normal installed Upovi copy. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
 
 ## Public community discovery
 

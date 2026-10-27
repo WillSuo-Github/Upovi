@@ -27,7 +27,7 @@ An appcast candidate with no download may use an unambiguous download from anoth
 
 ## Acceptance
 
-See `docs/evidence/update-source-trust-202610270002.json` for observed results. Tests passed: 189 Xcode tests and 8 release-metadata tests. The native development bundle built and passed nested code-signature verification. These changes are not published.
+See `docs/evidence/update-source-trust-202610270002.json` for observed results. Tests passed: 189 Xcode tests and 8 release-metadata tests. The native development bundle built and passed nested code-signature verification. The signed and notarized build `202610270002` and its signed public latest feed are published; see `docs/evidence/0.4.10-build-202610270002.json` for CI, notarization and public-byte verification.
 
 Real official packages were installed into isolated copies under `.local/update-source-acceptance-202610270002/Applications`:
 

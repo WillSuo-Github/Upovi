@@ -1,3 +1,11 @@
+# Upovi 0.4.10 build 202610270002
+
+Product revision `0b049fd` adds centralized source mappings, matching-source download supplementation and a reviewed Apple Developer ID verification route for official direct-application downloads without archive proofs. All 189 local Xcode tests, 8 release-numbering tests and all three macOS CI jobs passed. The universal Developer ID package passed Apple notarization, ticket stapling and Gatekeeper assessment. The [release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270002) and signed public latest feed are published. Re-downloaded public archive, feed, checksum, source revision and artifact-validation bytes match the verified local artifact; the extracted public bundle passes nested signatures, ticket and Gatekeeper checks.
+
+Real isolated Typora `1.14.9 (7785)` to `1.14.15 (7789)` and iStat Menus `7.30 (2282)` to `7.50 (2356)` main-application replacement, fresh current-version checks and old-version restores passed. The exact iStat package/source-version exception preserves strict bundle/build checking. Typora's upgraded executable launched, but first-launch window inspection timed out and remains unverified. Background components, drivers and scripts were not installed or tested. This publication did not replace the normal installed Upovi app or exercise a new Sparkle self-update. See [source/trust acceptance](UPDATE-SOURCE-TRUST.md) and [release evidence](evidence/0.4.10-build-202610270002.json). Long-run, physical sleep/network and energy acceptance remain separate unfinished checks.
+
+---
+
 # Upovi 0.4.10 build 202610270001
 
 The marketing version remains 0.4.10. Routine updates now use Shanghai-date build numbers and separate `build-<build>` GitHub tags and version/build archive filenames. Product revision `d164d01` passed the numbering tests and all three macOS CI jobs. Its Developer ID universal package passed Apple notarization, ticket stapling and Gatekeeper assessment. The [date-build release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270001) and signed public latest feed are published; public ZIP/feed/checksum bytes match the verified final artifact, and the extracted app passes signature, ticket and Gatekeeper checks.

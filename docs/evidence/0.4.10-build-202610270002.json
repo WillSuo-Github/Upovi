@@ -1,0 +1,198 @@
+{
+  "version": "0.4.10",
+  "build": "202610270002",
+  "productRevision": "0b049fdca12b7810faf4c23ebc195a550e57c08e",
+  "artifact": {
+    "version": "0.4.10",
+    "build": "202610270002",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "4f77516fac80441b07d4fb52072365273159333261740f1467d31a35839a9f32",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "notarization": {
+    "submissionID": "277039c8-0de8-466c-bfd7-0e52fee9c44d",
+    "status": "Accepted",
+    "stapledTicket": "passed",
+    "gatekeeper": "accepted / Notarized Developer ID"
+  },
+  "freshLocalExtraction": {
+    "nestedSignature": "passed",
+    "stapledTicket": "passed",
+    "gatekeeper": "accepted / Notarized Developer ID"
+  },
+  "localTests": {
+    "result": "Passed",
+    "totalTestCount": 189,
+    "passedTests": 189,
+    "failedTests": 0
+  },
+  "releaseMetadataTests": 8,
+  "applicationAcceptance": [
+    {
+      "archiveIntegrityVerified": true,
+      "backupRetained": true,
+      "bundleID": "abnerworks.Typora",
+      "candidates": [
+        {
+          "archiveProof": true,
+          "build": "7789",
+          "download": "https://downloads.typora.io/mac/Typora-1.14.15.dmg",
+          "source": "Developer appcast",
+          "version": "1.14.15"
+        },
+        {
+          "archiveProof": true,
+          "build": "",
+          "download": "https://downloads.typora.io/mac/Typora-1.14.15.dmg",
+          "source": "Homebrew",
+          "version": "1.14.15"
+        }
+      ],
+      "developerIDPassed": true,
+      "downloadVerified": true,
+      "gatekeeperPassed": true,
+      "installationPassed": true,
+      "installedBuild": "7789",
+      "installedVersion": "1.14.15",
+      "isolatedCopiesOnly": true,
+      "originalBuild": "7785",
+      "originalVersion": "1.14.9",
+      "path": ".local/update-source-acceptance-202610270002/Applications/Typora.app",
+      "postInstallSourceStatus": "current",
+      "postInstallUpdateCount": 0,
+      "preparedBuild": "7789",
+      "preparedVersion": "1.14.15",
+      "restoredBuild": "7785",
+      "restoredVersion": "1.14.9",
+      "restorePassed": true,
+      "sourceNote": "\u5df2\u68c0\u67e5\u5f00\u53d1\u8005 appcast \u00b7 \u5df2\u68c0\u67e5 Homebrew",
+      "sourceStatus": "updates",
+      "systemComponentsTested": false
+    },
+    {
+      "archiveIntegrityVerified": false,
+      "backupRetained": true,
+      "bundleID": "com.bjango.istatmenus",
+      "candidates": [
+        {
+          "archiveProof": false,
+          "build": "2356",
+          "download": "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.1.zip",
+          "source": "Homebrew",
+          "version": "7.50"
+        }
+      ],
+      "developerIDPassed": true,
+      "downloadVerified": true,
+      "gatekeeperPassed": true,
+      "installationPassed": true,
+      "installedBuild": "2356",
+      "installedVersion": "7.50",
+      "isolatedCopiesOnly": true,
+      "originalBuild": "2282",
+      "originalVersion": "7.30",
+      "path": ".local/update-source-acceptance-202610270002/Applications/iStat Menus.app",
+      "postInstallSourceStatus": "current",
+      "postInstallUpdateCount": 0,
+      "preparedBuild": "2356",
+      "preparedVersion": "7.50",
+      "restoredBuild": "2282",
+      "restoredVersion": "7.30",
+      "restorePassed": true,
+      "sourceNote": "\u5df2\u68c0\u67e5 Homebrew",
+      "sourceStatus": "updates",
+      "systemComponentsTested": false
+    }
+  ],
+  "typoraLaunch": {
+    "launchedExecutableSHA256": "036737946036784f539a3554716f23954e3fe2b7a6c819dd7fb41fcff0943875",
+    "launchProcessObserved": true,
+    "uiAcceptanceIssue": "AppleEvent and Computer Use timeout while reading the translocated app window",
+    "uiAcceptancePassed": false
+  },
+  "publicRelease": {
+    "published": true,
+    "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270002",
+    "tag": "build-202610270002",
+    "publishedAt": "2026-10-27T09:15:58Z",
+    "latest": true,
+    "publicArchiveFeedChecksumBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202610270002.zip",
+        "size": 15501024,
+        "sha256": "4f77516fac80441b07d4fb52072365273159333261740f1467d31a35839a9f32",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202610270002.zip.sha256",
+        "size": 96,
+        "sha256": "2337c55e9b19919e9cc1676952f850e6dbadbc301fd91459cf554bc44db0fb50",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "fec8a63346eb56e6103b11f1f6a7161623b35880c4050ce755891ccb59ced217",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "0dfda20882c92a9e7441270767db3e02de40948c71fa7a781cd4072a177bfa93",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "232fe292bc4d4ae9d5f3b9267bf4249494648f8bb7f6cdeabcd1cd9633528408",
+        "matchesLocal": true
+      }
+    ],
+    "freshExtractedSignature": "passed",
+    "freshExtractedTicket": "passed",
+    "freshExtractedGatekeeper": "accepted / Notarized Developer ID",
+    "feedURL": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+    "feedBuild": "202610270002",
+    "feedMarketingVersion": "0.4.10",
+    "feedSignature": "verified",
+    "archiveSignature": "verified"
+  },
+  "genuineSelfUpdate": {
+    "tested": false,
+    "reason": "This publication does not replace the normal installed Upovi application."
+  },
+  "remainingAcceptance": [
+    "Typora first-launch UI",
+    "background components and drivers outside supported scope",
+    "physical sleep/wake",
+    "host interface switching",
+    "privileged energy sampling",
+    "new-candidate long-run observation"
+  ],
+  "ci": {
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40478276251",
+    "headRevision": "0b049fdca12b7810faf4c23ebc195a550e57c08e",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "tests (macos-14)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-15-intel)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-26)",
+        "conclusion": "success"
+      }
+    ]
+  }
+}
