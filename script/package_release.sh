@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
-VERSION="$(python3 -c 'import json; print(json.load(open("Resources/Release.json"))["version"])')"
+ARCHIVE_NAME="$(python3 script/release_metadata.py show --field archive)"
 CONFIGURATION="${CONFIGURATION:-release}"
 case "$CONFIGURATION" in
   debug|Debug) CONFIGURATION=Debug ;;
@@ -45,7 +45,7 @@ with open(sys.argv[1], 'rb') as handle:
 if (info['CFBundleShortVersionString'], info['CFBundleVersion']) != (release['version'], release['build']):
     raise SystemExit('Synchronize Xcode version/build settings with Resources/Release.json before packaging a release.')
 PY
-ARCHIVE="$OUTPUT_DIR/Upovi-$VERSION.zip"
+ARCHIVE="$OUTPUT_DIR/$ARCHIVE_NAME"
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ARCHIVE"
 if [[ -n "${UPOVI_NOTARY_PROFILE:-}" ]]; then
   if [[ "$SIGNING_IDENTITY" == "-" ]]; then echo "Notarization requires a Developer ID signature." >&2; exit 2; fi
@@ -56,5 +56,5 @@ if [[ -n "${UPOVI_NOTARY_PROFILE:-}" ]]; then
   spctl --assess --type execute -vv "$APP_BUNDLE"
   /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ARCHIVE"
 fi
-(cd "$OUTPUT_DIR" && shasum -a 256 "Upovi-$VERSION.zip" > "Upovi-$VERSION.zip.sha256")
+(cd "$OUTPUT_DIR" && shasum -a 256 "$ARCHIVE_NAME" > "$ARCHIVE_NAME.sha256")
 echo "Packaged: $ARCHIVE"

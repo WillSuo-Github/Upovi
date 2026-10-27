@@ -23,6 +23,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
+      - name: Release numbering and archive identity tests
+        run: python3 -m unittest discover -s script/tests -p 'test_release_metadata.py'
       - name: Select newest installed Xcode
         run: |
           python3 - <<'PY'

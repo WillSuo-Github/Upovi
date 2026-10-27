@@ -287,6 +287,7 @@
 		0752EE762D9878EED96DAED8 /* DiagnosticsWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsWorkflowTests.swift; sourceTree = "<group>"; };
 		0AB8321F7F1C08EFE6557E75 /* GlobalP2PScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalP2PScope.swift; sourceTree = "<group>"; };
 		0C5A0C04B93B24DA60D92D46 /* AdministratorRecoveryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorRecoveryPolicy.swift; sourceTree = "<group>"; };
+		0FD00828D9FC7F5AF6EF26FC /* test_release_metadata.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = test_release_metadata.py; sourceTree = "<group>"; };
 		0FDEDFA03B7204433AC94147 /* AdministratorInstallationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorInstallationTests.swift; sourceTree = "<group>"; };
 		10C3186A78FC7CF98D6A82AA /* DownloadWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadWorkflowTests.swift; sourceTree = "<group>"; };
 		126D63E5E3B898343D14A823 /* AppStore+UpdateControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+UpdateControls.swift"; sourceTree = "<group>"; };
@@ -334,6 +335,7 @@
 		50FDC46E7D9377536DA006AB /* startup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = startup.swift; sourceTree = "<group>"; };
 		52825B7E03F33E932EF5AA49 /* PublisherDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublisherDirectory.swift; sourceTree = "<group>"; };
 		54A14FB0D24F65CDFCC968E1 /* AppStore+AdministratorBackups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+AdministratorBackups.swift"; sourceTree = "<group>"; };
+		55039B7B6D37A051C8A82B47 /* release_metadata.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = release_metadata.py; sourceTree = "<group>"; };
 		5595BC76CC1B3AB15E739208 /* UpoviInstaller */ = {isa = PBXFileReference; includeInIndex = 0; path = UpoviInstaller; sourceTree = BUILT_PRODUCTS_DIR; };
 		564086B40D4FF1345865886F /* DownloadCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadCoordinatorTests.swift; sourceTree = "<group>"; };
 		5863B940E28780A1C414786E /* build_and_run.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_and_run.sh; sourceTree = "<group>"; };
@@ -624,6 +626,14 @@
 			path = P2P;
 			sourceTree = "<group>";
 		};
+		3422FB28E793F99D89568B2D /* tests */ = {
+			isa = PBXGroup;
+			children = (
+				0FD00828D9FC7F5AF6EF26FC /* test_release_metadata.py */,
+			);
+			path = tests;
+			sourceTree = "<group>";
+		};
 		354D49445461A5B8E59C3373 /* Stores */ = {
 			isa = PBXGroup;
 			children = (
@@ -656,6 +666,7 @@
 			isa = PBXGroup;
 			children = (
 				C621057D472F73B86DBEF4B6 /* acceptance */,
+				3422FB28E793F99D89568B2D /* tests */,
 				5863B940E28780A1C414786E /* build_and_run.sh */,
 				97EDD6E02F519B093F242370 /* embed_sparkle.py */,
 				AF04C5BB957703EE1740DC83 /* embed_store_bridge.py */,
@@ -664,6 +675,7 @@
 				2D504B9C32E904A8D533428C /* make_icon.swift */,
 				5D0C330923ACCCC4EA457BB7 /* package_release.sh */,
 				2B791C5412D24D98FF4DBDFC /* prepare_xcode_info.sh */,
+				55039B7B6D37A051C8A82B47 /* release_metadata.py */,
 				3D977F5A3452F35779D98538 /* sign_release.py */,
 				633A0DBCD7F03C958DD753C4 /* test_automatic_discovery.py */,
 				E83E985861F36F1572B6EA92 /* test_dht_exchange.py */,

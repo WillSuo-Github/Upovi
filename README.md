@@ -99,13 +99,22 @@ App preferences are stored atomically with private permissions in `~/Library/App
 
 ## Distribution
 
+Routine updates keep the marketing version unchanged. Build numbers use Shanghai time in `YYYYMMDDNNNN` form: `202610270001`, `202610270002`, then `202610280001` on the next day. Only change the marketing version when the owner explicitly prepares a new formal version. Allocate one build per update; rebuilding or retrying the same update keeps that number:
+
+```sh
+python3 script/release_metadata.py bump-build
+python3 script/release_metadata.py show
+```
+
+The bump command synchronizes `Resources/Release.json` and `Config/Release.xcconfig` while preserving the marketing version. Use `bump-build --dry-run` to preview the next number. Routine GitHub tags use `build-<build>` and archives use `Upovi-<version>-<build>.zip`, so multiple updates under one marketing version have separate download URLs. The stable latest appcast URL stays unchanged; Sparkle compares `sparkle:version` (the build) while displaying `sparkle:shortVersionString` (the marketing version). Preparing a build does not publish it.
+
 ```sh
 UPOVI_UNIVERSAL=1 UPOVI_SIGNING_IDENTITY='Developer ID Application: …' ./script/package_release.sh
 ```
 
 This produces a signed universal app and ZIP. Set `UPOVI_OUTPUT_DIR` to an absolute alternative output directory to stage another version without replacing a running test bundle. Add `UPOVI_NOTARY_PROFILE=<existing-keychain-profile>` to submit the app to Apple, require an Accepted result, staple its ticket, and verify Gatekeeper. Credentials remain in Keychain. A signed-only artifact is not a notarized release; do not bypass macOS security warnings to run it.
 
-Version/build settings are in `Config/Release.xcconfig`; keep them synchronized with `Resources/Release.json` when preparing a release. Feed URL and public key come from `Resources/Release.json`. After producing the signed ZIP, run `script/generate_update_feed.sh` and `python3 script/verify_release.py <output-directory>` to generate and verify the signed feed and archive. The feed script resolves the pinned Sparkle package tools when needed. The private Sparkle key remains in Keychain under the configured account. Publish the ZIP and feed together only after acceptance.
+Version/build settings are in `Config/Release.xcconfig`; release tooling rejects drift from `Resources/Release.json`. Read the exact archive name and publication tag with `python3 script/release_metadata.py show --field archive` and `show --field tag`. Feed URL and public key come from `Resources/Release.json`. After producing the signed ZIP, run `script/generate_update_feed.sh` and `python3 script/verify_release.py <output-directory> --require-notarization` to generate and verify the signed feed and archive. The feed script resolves the pinned Sparkle package tools when needed. The private Sparkle key remains in Keychain under the configured account. Publish the ZIP and feed together only within the owner's requested distribution scope and after acceptance.
 
 ## Contributing
 

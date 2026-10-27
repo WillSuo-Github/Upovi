@@ -7,13 +7,15 @@ import pathlib
 import plistlib
 import subprocess
 import xml.etree.ElementTree as ET
+from release_metadata import load_release, metadata
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('directory', type=pathlib.Path)
 parser.add_argument('--require-notarization', action='store_true')
 options = parser.parse_args()
 root = pathlib.Path(__file__).resolve().parent.parent
-release = json.loads((root / 'Resources/Release.json').read_text())
+release = load_release(root)
+distribution = metadata(release)
 folder = options.directory.resolve()
 bundle = folder / 'Upovi.app'
 info = plistlib.loads((bundle / 'Contents/Info.plist').read_bytes())
@@ -35,7 +37,7 @@ for name, identifier in [("UpoviStoreInstaller", "app.upovi.StoreInstaller"), ("
     subprocess.run(["codesign", "--verify", "--strict", "--all-architectures", "-R",
                     '=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier "' + identifier + '"', str(executable)], check=True)
 assert subprocess.check_output([str(bundle / "Contents/MacOS/UpoviStoreBridge"), "version"], text=True).strip() == "7.0.0"
-archive = folder / ('Upovi-' + release['version'] + '.zip')
+archive = folder / distribution['archive']
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 assert digest == archive.with_suffix('.zip.sha256').read_text().split()[0]
 tools = root / '.build/artifacts/sparkle/Sparkle/bin'
@@ -49,9 +51,10 @@ xml = ET.parse(feed)
 item = xml.find('./channel/item')
 ns = '{http://www.andymatuschak.org/xml-namespaces/sparkle}'
 assert item.findtext(ns + 'version') == release['build']
+assert item.findtext(ns + 'shortVersionString') == release['version']
 enclosure = item.find('enclosure')
 assert int(enclosure.attrib['length']) == archive.stat().st_size
-assert enclosure.attrib['url'] == 'https://github.com/WillSuo-Github/Upovi/releases/download/v' + release['version'] + '/' + archive.name
+assert enclosure.attrib['url'] == distribution['download-url']
 subprocess.run([str(tools / 'sign_update'), '--account', release['keychainAccount'], '--verify', str(archive), enclosure.attrib[ns + 'edSignature']], check=True)
 if options.require_notarization:
     subprocess.run(['xcrun', 'stapler', 'validate', str(bundle)], check=True)
