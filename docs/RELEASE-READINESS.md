@@ -1,3 +1,9 @@
+# Upovi 0.4.9 notarized distribution
+
+Build 15 makes the notarized distribution available to existing installations through Sparkle. Packaging explicitly signs Sparkle's nested services and updater tools, all installation helpers and the outer application with Developer ID, Hardened Runtime and secure timestamps. Each component retains its own entitlements except debugger access. The archive must pass Apple notarization, ticket stapling and Gatekeeper assessment before publication; the final stapled ZIP and appcast are signed together. Publication and actual old-to-new replacement are recorded separately in version-specific evidence. Physical sleep/network/power and long-run acceptance are not established by notarization.
+
+---
+
 # Upovi 0.4.8 in-application Store update preview
 
 Supported native Mac App Store installations now have in-application source checks, explicit check-and-update and shared batch review. A protected signed helper verifies the installed Store identity and selected product before initiating only an update through Apple's existing account/services. Current/no-op results are distinct from installed upgrades. Store operations have no Upovi retained-copy rollback or download pause; failed handoffs remain unconfirmed. The normal flow no longer opens the App Store window for supported apps.

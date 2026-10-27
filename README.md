@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.8**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.9**
 
-[Download the signed universal test preview](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.8). Apple notarization is deferred; this is an experimental test package. The release includes its source revision, checksum, validation results, and remaining acceptance boundaries.
+[Download the universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.9 distribution requires Developer ID signing, Apple notarization, a stapled ticket and Gatekeeper acceptance. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
 ## What it does
 

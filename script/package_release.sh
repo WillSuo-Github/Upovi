@@ -29,6 +29,11 @@ xcodebuild -project Upovi.xcodeproj -scheme Upovi -configuration "$CONFIGURATION
 mkdir -p "$OUTPUT_DIR"
 rm -rf "$APP_BUNDLE"
 /usr/bin/ditto "$DERIVED_DATA/Build/Products/$CONFIGURATION/Upovi.app" "$APP_BUNDLE"
+if [[ "$SIGNING_IDENTITY" != "-" ]]; then
+  # A build/copy only re-signs Sparkle's outer framework. Distribution also
+  # requires its nested tools, secure timestamps and no debugger entitlement.
+  python3 script/sign_release.py "$APP_BUNDLE" "$SIGNING_IDENTITY"
+fi
 codesign --verify --deep --strict --all-architectures "$APP_BUNDLE"
 if [[ "${UPOVI_STAGE_ONLY:-0}" == "1" ]]; then echo "Staged: $APP_BUNDLE"; exit 0; fi
 python3 - "$APP_BUNDLE/Contents/Info.plist" <<'PY'
