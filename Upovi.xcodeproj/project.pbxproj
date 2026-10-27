@@ -316,6 +316,7 @@
 		2D504B9C32E904A8D533428C /* make_icon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = make_icon.swift; sourceTree = "<group>"; };
 		2F10B58AE04671131099F978 /* AppStoreInstallationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreInstallationService.swift; sourceTree = "<group>"; };
 		3016361EE365223CE6C67139 /* InstalledApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledApp.swift; sourceTree = "<group>"; };
+		306D1B32531D55133E179537 /* mos_migration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mos_migration.swift; sourceTree = "<group>"; };
 		3114C73AC54D9605C9B6EDC5 /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
 		31D0F626104891D99B43C281 /* ManualUpdateSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualUpdateSource.swift; sourceTree = "<group>"; };
 		328E42000B2CAE75FB022503 /* MachOTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachOTests.swift; sourceTree = "<group>"; };
@@ -809,6 +810,7 @@
 				1A5C52D77C97EAE4F9CCFF4D /* diagnostics.swift */,
 				8ADF7F48526B389A1E4119C8 /* download_center.swift */,
 				8F95914548CDC62E28D8B89F /* download_resume.swift */,
+				306D1B32531D55133E179537 /* mos_migration.swift */,
 				AF2F9DE11662C826329F91FF /* native_ui.swift */,
 				B0E3C9DDBDF4AD1FE0AEF005 /* privileged_vm.swift */,
 				23D901D30CA1ED44CB640969 /* soak.py */,

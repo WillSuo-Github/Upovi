@@ -22,7 +22,7 @@ All 195 local Xcode tests and 8 release-metadata tests passed. Real isolated off
 
 The real native Upovi views displayed one installable Mos update, its download/verify button and the legacy identity explanation. Actual install, installed history, restore confirmation and restored history passed. Filesystem metadata and the restored journal independently confirmed the old version. Modified-resource and re-signed modified-resource copies were rejected. Normal `/Applications/Mos.app` was not replaced; actual privileged execution and Accessibility grants were not performed.
 
-See [machine-readable evidence](evidence/mos-legacy-migration-202610270003.json). This source change allocates build `202610270003`; publication is recorded separately after distribution validation.
+See [machine-readable evidence](evidence/mos-legacy-migration-202610270003.json). Build `202610270003` and its signed public latest feed are published. All three macOS CI jobs, notarization, ticket stapling, public asset-byte comparison and extracted signature/Gatekeeper checks passed; see [release evidence](evidence/0.4.10-build-202610270003.json).
 
 To repeat native acceptance with an official old copy:
 

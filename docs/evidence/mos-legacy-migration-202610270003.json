@@ -1,7 +1,7 @@
 {
   "version": "0.4.10",
   "build": "202610270003",
-  "published": false,
+  "published": true,
   "legacyOfficialRelease": "https://github.com/Caldis/Mos/releases/tag/3.5.0",
   "legacyArchiveURL": "https://github.com/Caldis/Mos/releases/download/3.5.0/Mos.Versions.3.5.0.dmg",
   "legacyArchiveObservedSHA256": "a361f871f32e763a101df29e57839188ef7fb33a289853f420fe83e9e70c008e",
@@ -87,5 +87,6 @@
   },
   "normalInstalledMosReplaced": false,
   "privilegedExecutionTested": false,
-  "accessibilityPermissionsGranted": false
+  "accessibilityPermissionsGranted": false,
+  "publicReleaseURL": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270003"
 }

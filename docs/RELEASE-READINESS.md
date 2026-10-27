@@ -1,3 +1,11 @@
+# Upovi 0.4.10 build 202610270003
+
+Product revision `d9fb561` adds exact official Mos 3.5.0 ad hoc-signature migration to its pinned signed developer identity, preserves strict archive/payload validation and extends recovery to both identities. All 195 local Xcode tests, 8 release-metadata tests and three macOS CI jobs passed. Real isolated core and native UI upgrade/restore acceptance passed; resource-modified and re-signed modified legacy copies were rejected. The normal installed Mos copy and Accessibility permissions were unchanged; actual privileged migration execution was not exercised.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270003) and signed public latest feed are published. Apple notarization, ticket stapling and Gatekeeper passed. All six public assets match the verified local bytes; the extracted public bundle, archive and feed signatures, notarization ticket and Gatekeeper checks passed. See [migration design and acceptance](MOS-LEGACY-MIGRATION.md) and [release evidence](evidence/0.4.10-build-202610270003.json). Current-host Upovi self-update, physical sleep/network, energy and long-run acceptance remain separate checks.
+
+---
+
 # Upovi 0.4.10 build 202610270002
 
 Product revision `0b049fd` adds centralized source mappings, matching-source download supplementation and a reviewed Apple Developer ID verification route for official direct-application downloads without archive proofs. All 189 local Xcode tests, 8 release-numbering tests and all three macOS CI jobs passed. The universal Developer ID package passed Apple notarization, ticket stapling and Gatekeeper assessment. The [release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270002) and signed public latest feed are published. Re-downloaded public archive, feed, checksum, source revision and artifact-validation bytes match the verified local artifact; the extracted public bundle passes nested signatures, ticket and Gatekeeper checks.
