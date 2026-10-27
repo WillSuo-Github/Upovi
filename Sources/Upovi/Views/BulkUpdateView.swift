@@ -45,7 +45,7 @@ struct BulkUpdateView: View {
             }
             if store.bulkUpdating {
                 VStack(alignment: .leading, spacing: 6) {
-                    FlowProgressBar(value: store.bulkOverallFraction, height: 8)
+                    FlowProgressBar(value: store.bulkOverallFraction, height: 6)
                 }
             } else if !store.bulkHasRun {
                 VStack(alignment: .leading, spacing: 6) {

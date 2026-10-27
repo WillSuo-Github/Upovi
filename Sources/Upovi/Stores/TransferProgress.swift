@@ -8,6 +8,10 @@ struct TransferProgress: Equatable {
     var phase: Phase = .queued
     var received: Int64 = 0
     var expected: Int64 = 0
+    /// Smoothed transfer rate of this application's download.
+    var bytesPerSecond: Double = 0
+    var sampleTime: Date?
+    var sampleBytes: Int64 = 0
     /// Fraction kept when a transfer stops early, so a failed bar does not jump.
     private var settled: Double?
 
@@ -42,8 +46,13 @@ struct TransferProgress: Equatable {
         case .queued: return "排队中"
         case .downloading:
             // The row's single percentage covers the whole update, so the status line shows bytes only.
-            guard expected > 0 else { return received > 0 ? "下载中 · \(Self.megabytes(received))" : "正在连接…" }
-            return "下载中 · \(Self.megabytes(received)) / \(Self.megabytes(expected))"
+            guard received > 0 else { return "正在连接…" }
+            var parts = [expected > 0 ? "\(Self.megabytes(received)) / \(Self.megabytes(expected))" : Self.megabytes(received)]
+            if bytesPerSecond > 0 {
+                parts.append(Self.rate(bytesPerSecond))
+                if expected > received { parts.append(Self.remaining(Double(expected - received) / bytesPerSecond)) }
+            }
+            return parts.joined(separator: " · ")
         case .verifying: return "正在校验签名与完整性"
         case .awaitingConfirmation: return "已验证，等待确认安装"
         case .waitingForAuthorization: return "等待授权"
@@ -52,6 +61,18 @@ struct TransferProgress: Equatable {
         case .failed: return "失败"
         case .cancelled: return "已停止"
         }
+    }
+
+    static func rate(_ bytesPerSecond: Double) -> String {
+        bytesPerSecond >= 1_000_000 ? String(format: "%.1f MB/s", bytesPerSecond / 1_000_000)
+            : String(format: "%.0f KB/s", bytesPerSecond / 1_000)
+    }
+
+    static func remaining(_ seconds: Double) -> String {
+        guard seconds.isFinite else { return "" }
+        if seconds < 60 { return "剩余 \(max(1, Int(seconds.rounded()))) 秒" }
+        if seconds < 3600 { return "剩余约 \(Int((seconds / 60).rounded())) 分钟" }
+        return "剩余约 \(Int((seconds / 3600).rounded())) 小时"
     }
 
     static func megabytes(_ bytes: Int64) -> String {

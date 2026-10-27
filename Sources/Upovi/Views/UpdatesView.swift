@@ -266,76 +266,67 @@ private struct UpdateRow: View {
 
 // MARK: Batch progress
 
-/// Replaces the hero while a batch runs: one big overall bar plus live counts and throughput.
+/// Replaces the hero while a batch runs: a plain card with the overall bar and live counts.
 private struct BulkProgressHero: View {
     let store: AppStore
 
     var body: some View {
         let running = store.bulkUpdating, failed = store.bulkFailedCount
-        let total = store.bulkInstallableCount, done = store.bulkFinishedCount
         let fraction = store.bulkOverallFraction
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(Int((fraction * 100).rounded()))").font(Theme.display(64, weight: .heavy)).monospacedDigit()
-                        .contentTransition(.numericText(value: fraction)).animation(.snappy, value: Int(fraction * 100))
-                    Text("%").font(Theme.display(28, weight: .heavy)).opacity(0.85)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(running ? (store.bulkStopRequested ? "正在停止…" : "正在更新应用") : failed > 0 ? "更新已结束" : "全部更新完成")
-                        .font(Theme.display(20, weight: .semibold))
-                    Text(subtitle(done: done, total: total)).font(.callout).monospacedDigit().opacity(0.9)
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    title(running: running, failed: failed).font(.title3.weight(.semibold))
+                    Text(subtitle).font(.callout).monospacedDigit().foregroundStyle(.secondary)
                         .contentTransition(.numericText())
                 }
-                .padding(.leading, 6)
                 Spacer()
-                if !running {
-                    Image(systemName: failed > 0 ? "exclamationmark.triangle.fill" : "checkmark.seal.fill")
-                        .font(.system(size: 34, weight: .semibold)).symbolEffect(.bounce, value: running)
-                        .transition(.scale.combined(with: .opacity))
-                }
+                Text("\(Int((fraction * 100).rounded()))%")
+                    .font(.title3.weight(.medium)).monospacedDigit().foregroundStyle(.secondary)
+                    .contentTransition(.numericText(value: fraction)).animation(.snappy, value: Int(fraction * 100))
             }
-            FlowProgressBar(value: fraction, tone: running ? .accent : failed > 0 ? .danger : .success,
-                            active: running, height: 12, onAccent: true)
+            FlowProgressBar(value: fraction, tone: running ? .accent : failed > 0 ? .warning : .success,
+                            active: running, height: 6)
             HStack(spacing: 10) {
                 if running {
-                    Button { store.stopAllUpdates() } label: { Label(store.bulkStopRequested ? "正在停止…" : "停止更新", systemImage: "stop.circle") }
-                        .buttonStyle(HeroButtonStyle(prominent: false)).disabled(store.bulkStopRequested)
-                    if store.bulkStopRequested { Text("正在安装的应用完成后停止").font(.caption).opacity(0.85) }
+                    Button(store.bulkStopRequested ? "正在停止…" : "停止更新") { store.stopAllUpdates() }
+                        .disabled(store.bulkStopRequested)
+                    if store.bulkStopRequested { Text("正在安装的应用完成后停止").font(.caption).foregroundStyle(.secondary) }
+                    Spacer()
                 } else {
-                    Button { withAnimation(.snappy) { store.dismissBulkSummary() } } label: { Label("完成", systemImage: "checkmark") }
-                        .buttonStyle(HeroButtonStyle()).keyboardShortcut(.defaultAction)
+                    Spacer()
                     if let record = store.batchHistory.first(where: { $0.id == store.bulkRecordID }), !record.retryIDs.isEmpty {
-                        Button { store.retryBatch(record) } label: { Label("重试未完成项", systemImage: "arrow.clockwise") }
-                            .buttonStyle(HeroButtonStyle(prominent: false))
+                        Button("重试未完成项") { store.retryBatch(record) }
                     }
+                    Button("完成") { withAnimation(.snappy) { store.dismissBulkSummary() } }
+                        .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
                 }
             }
-            .padding(.top, 2)
+            .controlSize(.regular)
         }
-        .foregroundStyle(.white)
-        .padding(28)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(HeroBackground(colors: colors(running: running, failed: failed)))
-        .shadow(color: (colors(running: running, failed: failed).last ?? .clear).opacity(0.25), radius: 18, y: 8)
-        .animation(.smooth(duration: 0.5), value: running)
+        .card(padding: 20)
+        .animation(.smooth(duration: 0.3), value: running)
     }
 
-    private func colors(running: Bool, failed: Int) -> [Color] {
-        if running { return [Theme.sky, Theme.cobalt] }
-        return failed > 0 ? [Color(red: 0.96, green: 0.56, blue: 0.26), Color(red: 0.84, green: 0.30, blue: 0.30)]
-            : [Color(red: 0.20, green: 0.74, blue: 0.62), Color(red: 0.09, green: 0.50, blue: 0.62)]
+    @ViewBuilder private func title(running: Bool, failed: Int) -> some View {
+        if running {
+            Text(store.bulkStopRequested ? "正在停止…" : "正在更新 \(store.bulkInstallableCount) 个应用")
+        } else if failed > 0 {
+            Label("更新已结束", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.primary)
+                .symbolRenderingMode(.multicolor)
+        } else {
+            Label { Text("全部更新完成") } icon: { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
+        }
     }
 
-    private func subtitle(done: Int, total: Int) -> String {
-        var parts = ["\(done) / \(total) 个"]
+    private var subtitle: String {
+        var parts = ["已完成 \(store.bulkFinishedCount) / \(store.bulkInstallableCount)"]
         if store.bulkUpdating {
             let downloading = store.bulkDownloadingCount
             if downloading > 0 { parts.append("\(downloading) 个下载中") }
             if downloading > 0, store.bulkBytesPerSecond > 1000 { parts.append(TransferProgress.megabytes(Int64(store.bulkBytesPerSecond)) + "/s") }
-            parts.append("同时 \(store.bulkConcurrency) 个")
-        } else {
-            parts.append("完成 \(store.bulkCompletedCount)")
+        } else if store.bulkCompletedCount != store.bulkFinishedCount {
+            parts.append("成功 \(store.bulkCompletedCount)")
         }
         if store.bulkFailedCount > 0 { parts.append("失败 \(store.bulkFailedCount)") }
         return parts.joined(separator: " · ")
@@ -370,7 +361,6 @@ private struct TransferRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 14) {
                 AppIcon(path: item.application.path, size: 44)
-                    .saturation(transfer.phase == .queued ? 0.4 : 1).opacity(transfer.phase == .queued ? 0.7 : 1)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.application.name).font(.headline).lineLimit(1)
                     VersionTransition(from: item.application.version, to: item.candidate.version)
@@ -394,15 +384,15 @@ private struct TransferMeter: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             FlowProgressBar(value: transfer.fraction, tone: tone, active: transfer.isActive, indeterminate: transfer.indeterminate)
-            Text(detail ?? transfer.label).font(.caption).monospacedDigit().foregroundStyle(transfer.phase == .failed ? AnyShapeStyle(Color.red) : AnyShapeStyle(.secondary))
-                .lineLimit(2).textSelection(.enabled).contentTransition(.numericText())
+            Text(detail ?? transfer.label).font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                .lineLimit(2).textSelection(.enabled)
         }
     }
 
     private var tone: Tone {
         switch transfer.phase {
         case .installed: .success
-        case .failed: .danger
+        case .failed: .warning
         case .cancelled, .queued: .neutral
         default: .accent
         }
@@ -418,19 +408,19 @@ private struct TransferAccessory: View {
         HStack(spacing: 8) {
             switch transfer.phase {
             case .installed:
-                Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(.green)
-                    .symbolEffect(.bounce, value: transfer.phase).transition(.scale.combined(with: .opacity))
+                Image(systemName: "checkmark.circle.fill").font(.title3).foregroundStyle(.green)
+                    .transition(.opacity)
             case .failed:
-                Image(systemName: "exclamationmark.triangle.fill").font(.title2).foregroundStyle(.red)
+                Image(systemName: "exclamationmark.triangle.fill").font(.title3).foregroundStyle(.orange)
             case .cancelled:
-                Image(systemName: "minus.circle").font(.title2).foregroundStyle(.secondary)
+                Image(systemName: "minus.circle").font(.title3).foregroundStyle(.secondary)
             case .queued:
                 Image(systemName: "clock").font(.title3).foregroundStyle(.tertiary)
             case .waitingForAuthorization:
-                Image(systemName: "lock.shield").font(.title2).foregroundStyle(Theme.accent).symbolEffect(.pulse)
+                Image(systemName: "lock.shield").font(.title3).foregroundStyle(.secondary)
             default:
                 Text("\(Int((transfer.fraction * 100).rounded()))%")
-                    .font(Theme.display(17, weight: .heavy)).monospacedDigit().foregroundStyle(Theme.accent)
+                    .font(.callout).monospacedDigit().foregroundStyle(.secondary)
                     .contentTransition(.numericText(value: transfer.fraction))
                     .animation(.snappy, value: Int(transfer.fraction * 100))
                     .frame(minWidth: 48, alignment: .trailing)

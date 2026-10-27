@@ -133,7 +133,7 @@ private struct Sidebar: View {
                 Button { store.section = .updates } label: {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("正在更新 \(store.bulkFinishedCount)/\(store.bulkInstallableCount)").monospacedDigit().foregroundStyle(.primary)
-                        FlowProgressBar(value: store.bulkOverallFraction, height: 4)
+                        FlowProgressBar(value: store.bulkOverallFraction, height: 3)
                     }.contentShape(Rectangle())
                 }
                 .buttonStyle(.plain).padding(.vertical, 2).help("查看更新进度")

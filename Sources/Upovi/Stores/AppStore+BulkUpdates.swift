@@ -128,7 +128,20 @@ extension AppStore {
         if expected > 0, received >= expected { value.phase = .verifying }
         else if value.phase == .verifying { value.phase = .downloading }
         sampleSpeed(max(0, received - previous))
-        if value.phase == transfers[id]?.phase, let before, let after = value.downloadFraction, after - before < 0.004, after < 1 { return }
+        // Per-row rate, sampled at most twice a second and smoothed so the label does not flicker.
+        let now = Date()
+        var rateChanged = false
+        if let start = value.sampleTime {
+            let elapsed = now.timeIntervalSince(start)
+            if elapsed >= 0.5 {
+                let rate = Double(max(0, received - value.sampleBytes)) / elapsed
+                value.bytesPerSecond = value.bytesPerSecond == 0 ? rate : value.bytesPerSecond * 0.6 + rate * 0.4
+                value.sampleTime = now; value.sampleBytes = received; rateChanged = true
+            }
+        } else {
+            value.sampleTime = now; value.sampleBytes = received
+        }
+        if !rateChanged, value.phase == transfers[id]?.phase, let before, let after = value.downloadFraction, after - before < 0.004, after < 1 { return }
         transfers[id] = value
     }
 
