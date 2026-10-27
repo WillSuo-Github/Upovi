@@ -54,7 +54,7 @@ public struct DiagnosticSnapshot: Sendable, Identifiable {
                          build: includingApplicationIdentifiers ? Self.version(app.build) : nil,
                          channel: app.isAppStore ? .appStore : .developer, status: result?.status,
                          checks: Array((result?.checks ?? []).prefix(8)), sourceCandidateCount: candidates.count,
-                         verifiableDownloadCount: candidates.filter { $0.download?.hasIntegrityProof == true }.count)
+                         verifiableDownloadCount: candidates.filter { $0.download?.canVerify(for: app) == true }.count)
         }
         let counts = Dictionary(grouping: summaries, by: { $0.status?.rawValue ?? "notChecked" }).mapValues(\.count)
         let report = Report(schemaVersion: 1, generatedAt: generatedAt, includingApplicationIdentifiers: includingApplicationIdentifiers,

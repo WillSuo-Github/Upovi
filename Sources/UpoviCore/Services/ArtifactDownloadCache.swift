@@ -46,7 +46,7 @@ public actor ArtifactDownloadCache {
                          onPhase: @escaping @Sendable (ArtifactDownloadPhase) -> Void = { _ in },
                          onResume: @escaping @Sendable (Int64) -> Void = { _ in },
                          progress: @escaping @Sendable (Int64, Int64) -> Void) async throws {
-        guard descriptor.hasIntegrityProof, descriptor.url.scheme == "https", descriptor.url.host != nil,
+        guard descriptor.canVerify(for: app), descriptor.url.scheme == "https", descriptor.url.host != nil,
               descriptor.url.user == nil, descriptor.url.password == nil else { throw PeerError.invalid("A verified HTTPS download is required") }
         try Task.checkCancellation()
         try ensureDirectory(directory)
@@ -58,7 +58,7 @@ public actor ArtifactDownloadCache {
         try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: entry.path)
         try prune()
         let partial = entry.appending(path: "Download.part"), complete = entry.appending(path: "Complete.bin")
-        if FileManager.default.fileExists(atPath: complete.path) {
+        if descriptor.hasIntegrityProof, FileManager.default.fileExists(atPath: complete.path) {
             onPhase(.verifying)
             var verified = false
             do {
@@ -82,6 +82,12 @@ public actor ArtifactDownloadCache {
             throw error
         }
         try Task.checkCancellation()
+        // Signature-only downloads cannot be treated as verified archive cache entries.
+        if !descriptor.hasIntegrityProof {
+            try FileManager.default.moveItem(at: partial, to: destination)
+            try? FileManager.default.removeItem(at: DownloadResumeState.metadata(for: partial))
+            return
+        }
         try FileManager.default.moveItem(at: partial, to: complete)
         try? FileManager.default.removeItem(at: DownloadResumeState.metadata(for: partial))
         try FileManager.default.copyItem(at: complete, to: destination)
@@ -92,7 +98,7 @@ public actor ArtifactDownloadCache {
               (a[.referenceCount] as? NSNumber)?.intValue == 1, (a[.size] as? NSNumber)?.int64Value ?? Int64.max <= 2_000_000_000 else {
             throw PeerError.invalid("Unsafe cached artifact")
         }
-        let work = Task.detached { try BundleVerifier.verifyArchive(file, descriptor: descriptor, app: app) }
+        let work = Task.detached { try BundleVerifier.validateDownload(file, descriptor: descriptor, app: app) }
         try await withTaskCancellationHandler { try await work.value } onCancel: { work.cancel() }
         try Task.checkCancellation()
     }

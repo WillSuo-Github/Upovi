@@ -13,7 +13,7 @@ extension AppStore {
             guard let app = apps.first(where: { $0.id == record.applicationID && $0.bundleID == record.bundleID && $0.teamID == record.teamID && !$0.isAppStore }), !ignored.contains(app.bundleID) else {
                 errorMessage = "原应用已移动或开发者身份变化，请从最新应用清单重新选择。"; return
             }
-            let candidates = assessment(for: app).sourceUpdates.filter { !$0.isCommunity && $0.download?.hasIntegrityProof == true }
+            let candidates = assessment(for: app).sourceUpdates.filter { !$0.isCommunity && $0.download?.canVerify(for: app) == true }
                 .sorted {
                     let order = VersionOrder.compare($0.version, $1.version)
                     return order == .orderedSame ? VersionOrder.compare($0.build, $1.build) == .orderedDescending : order == .orderedDescending

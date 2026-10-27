@@ -22,4 +22,9 @@ public struct DownloadDescriptor: Hashable, Codable, Sendable {
     public var hasIntegrityProof: Bool {
         sha256.map { $0.count == 64 && $0.allSatisfy(\.isHexDigit) } == true || edSignature?.count == 64
     }
+    /// A signature-only download remains unverified until the extracted app passes the installer checks.
+    public func canVerify(for app: InstalledApp) -> Bool {
+        hasIntegrityProof || (sha256 == nil && edSignature == nil &&
+            ApplicationSourceCatalog.permitsDeveloperDownload(url, for: app))
+    }
 }

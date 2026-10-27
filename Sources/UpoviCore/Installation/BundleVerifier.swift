@@ -3,6 +3,27 @@ import Security
 import CryptoKit
 
 public enum BundleVerifier {
+    /// Apple-anchored Developer ID, rather than just an embedded team string, binds signature-only downloads.
+    public static func checkDeveloperIDSignature(_ url: URL, like app: InstalledApp) throws {
+        guard let team = app.teamID, team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,
+              app.bundleID.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) != nil else {
+            throw PeerError.invalid("Invalid developer identity")
+        }
+        let expression = "anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = \"\(team)\" and identifier \"\(app.bundleID)\""
+        var code: SecStaticCode?, requirement: SecRequirement?
+        guard SecRequirementCreateWithString(expression as CFString, [], &requirement) == errSecSuccess, let requirement,
+              SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code,
+              SecStaticCodeCheckValidity(code, SecCSFlags(rawValue: kSecCSStrictValidate | kSecCSCheckAllArchitectures | kSecCSCheckNestedCode), requirement) == errSecSuccess else {
+            throw PeerError.invalid("Application does not have the expected Apple Developer ID signature")
+        }
+    }
+
+    public static func validateDownload(_ archive: URL, descriptor: DownloadDescriptor, app: InstalledApp) throws {
+        if descriptor.hasIntegrityProof { try verifyArchive(archive, descriptor: descriptor, app: app); return }
+        guard descriptor.canVerify(for: app) else { throw PeerError.invalid("Missing download verification method") }
+        // No archive proof exists. Revalidate the installed trust anchor now; the incoming app is checked after extraction.
+        try checkDeveloperIDSignature(URL(fileURLWithPath: app.path), like: app)
+    }
     public static func validate(_ url: URL, replacing app: InstalledApp, expectedVersion: String, expectedBuild: String) throws -> InstalledApp {
         guard let incoming = AppScanner.read(url), incoming.bundleID == app.bundleID,
               let team = app.teamID, !team.isEmpty, incoming.teamID == team,
@@ -19,7 +40,7 @@ public enum BundleVerifier {
                 (expectedVersion == incoming.build && expectedBuild == incoming.build),
               expectedBuild.isEmpty || incoming.build == expectedBuild,
               VersionOrder.isNewer(version: incoming.version, build: incoming.build, than: app) else {
-            throw PeerError.invalid("Downloaded application version does not match the selected update")
+            throw PeerError.invalid("Downloaded application \(incoming.version) (\(incoming.build)) does not match selected update \(expectedVersion) (\(expectedBuild))")
         }
         return incoming
     }

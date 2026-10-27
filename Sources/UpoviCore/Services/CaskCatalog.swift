@@ -87,6 +87,22 @@ public struct CaskMetadata: Decodable, Sendable {
               directApp || url.pathExtension.lowercased() == "pkg" else { return nil }
         return .init(url: url, sha256: sha256)
     }
+
+    public func download(for app: InstalledApp) -> DownloadDescriptor? {
+        if let download { return download }
+        #if arch(x86_64)
+        let intel = true
+        #else
+        let intel = false
+        #endif
+        let selected = variation(intel: intel, osMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion)
+        let proof = selected?.sha256 ?? sha256
+        guard proof == nil || proof == "no_check",
+              (selected?.artifacts ?? artifacts ?? []).contains(where: { !($0.app ?? []).isEmpty }),
+              let url = selected?.url ?? url,
+              ApplicationSourceCatalog.permitsDeveloperDownload(url, for: app) else { return nil }
+        return .init(url: url)
+    }
 }
 
 /// Match only exact bundle IDs explicitly declared in official cask metadata.
@@ -111,21 +127,7 @@ public actor CaskCatalog {
 
     // Explicit identities checked against the official cask's declared application and identity paths.
     // These are never inferred from a display-name search or a peer report.
-    public static let curated: [String: String] = [
-        "com.vscodium": "vscodium",
-        "org.blenderfoundation.blender": "blender",
-        "com.todesktop.230313mzl4w4u92": "cursor",
-        "com.github.GitHubClient": "github",
-        "com.github.githubapp": "github-copilot-app",
-        "com.bjango.istatmenus": "istat-menus",
-        "com.janhuelsmann.SaneSideButtons": "sanesidebuttons",
-        "com.yetone.magpie": "magpie",
-        "com.soda.music": "sodamusic",
-        "org.pqrs.Karabiner-Elements.Settings": "karabiner-elements",
-        "org.pqrs.Karabiner-EventViewer": "karabiner-elements",
-        "wang.jianing.app.OpenInTerminal": "openinterminal",
-        "us.zoom.xos": "zoom"
-    ]
+    public static let curated = ApplicationSourceCatalog.catalogExceptions
 
     public static func resolve(_ app: InstalledApp, in casks: [CaskMetadata]) -> CaskMetadata? {
         let eligible = casks.filter { $0.disabled != true && !$0.token.contains("@") }

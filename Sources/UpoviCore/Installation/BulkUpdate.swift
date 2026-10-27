@@ -37,7 +37,7 @@ public enum BulkUpdatePlan {
         }
         if app.bundleID == "app.upovi.Upovi" { return "请使用 Upovi 自身更新" }
         guard let team = app.teamID, !team.isEmpty else { return "无法确认已安装应用的开发者，请使用官方更新" }
-        guard let download = candidate.download, download.hasIntegrityProof else { return "来源未提供可验证的下载，请使用官方更新" }
+        guard let download = candidate.download, download.canVerify(for: app) else { return "来源未提供可验证的下载，请使用官方更新" }
         guard ["zip", "dmg", "pkg"].contains(download.url.pathExtension.lowercased()) else { return "此安装格式需使用官方更新" }
         return nil
     }

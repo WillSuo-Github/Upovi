@@ -15,26 +15,8 @@ public struct SourceResult: Sendable {
 
 public enum UpdateChecker {
     // Exact bundle identifiers only. A similar display name is not an application identity.
-    public static let casks = [
-        "com.google.Chrome": "google-chrome", "org.mozilla.firefox": "firefox",
-        "com.microsoft.VSCode": "visual-studio-code", "com.microsoft.VSCodeInsiders": "visual-studio-code@insiders",
-        "com.sublimetext.4": "sublime-text", "org.videolan.vlc": "vlc",
-        "com.colliderli.iina": "iina", "com.googlecode.iterm2": "iterm2",
-        "com.tinyspeck.slackmacgap": "slack", "com.spotify.client": "spotify",
-        "com.figma.Desktop": "figma", "com.hnc.Discord": "discord", "com.raycast.macos": "raycast",
-        "com.1password.1password": "1password", "com.docker.docker": "docker-desktop"
-    ]
-
-
-    public static let githubRepositories = [
-        "com.knollsoft.Rectangle": "rxhanson/Rectangle", "eu.exelban.Stats": "exelban/stats",
-        "com.caldis.Mos": "Caldis/Mos", "com.colliderli.iina": "iina/iina",
-        "com.aone.keka": "aonez/Keka", "com.ranchero.NetNewsWire-Evergreen": "Ranchero-Software/NetNewsWire",
-        "com.steipete.codexbar": "steipete/CodexBar", "app.upovi.Upovi": "WillSuo-Github/Upovi",
-        "com.willsuo.livehub": "WillSuo-Github/livehub-desktop",
-        "io.playcover.PlayCover": "PlayCover/PlayCover",
-        "com.stablyai.orca": "stablyai/orca", "com.audiout.Audiout": "aa-hh/Audiout"
-    ]
+    public static let casks = ApplicationSourceCatalog.casks
+    public static let githubRepositories = ApplicationSourceCatalog.githubRepositories
 
     public static func check(_ app: InstalledApp, override: SourceOverride? = nil) async -> SourceResult {
         if app.isAppStore { return await AppStoreCatalog.shared.check(app) }
@@ -67,20 +49,27 @@ public enum UpdateChecker {
         if Task.isCancelled { return .init(appID: app.id, candidates: [], note: "检测已取消", status: .failed) }
         do {
             let metadata: CaskMetadata?
-            if let cask = casks[app.bundleID] {
-                metadata = try JSONDecoder().decode(CaskMetadata.self, from: await fetch(URL(string: "https://formulae.brew.sh/api/cask/\(cask).json")!, 2_000_000))
+            if let cask = casks[app.bundleID] ?? ApplicationSourceCatalog.catalogExceptions[app.bundleID] {
+                let value = try JSONDecoder().decode(CaskMetadata.self, from: await fetch(URL(string: "https://formulae.brew.sh/api/cask/\(cask).json")!, 2_000_000))
+                guard value.token == cask, value.disabled != true else { throw PeerError.invalid("Homebrew source identity is unavailable or mismatched") }
+                metadata = value
             } else { metadata = try await catalog(app) }
             if let metadata {
                 let pieces = metadata.currentVersion.split(separator: ",", maxSplits: 1).map(String.init)
-                let version = SourceVersion.normalize(pieces.first ?? "")
+                let sourceVersion = SourceVersion.normalize(pieces.first ?? "")
+                let download = metadata.download(for: app)
+                let identity = ApplicationSourceCatalog.bundleRelease(for: app, sourceVersion: sourceVersion, download: download?.url)
+                let version = identity?.version ?? sourceVersion
                 let declaredBuild = pieces.count > 1 ? pieces[1] : ""
-                let build = app.build != app.version && declaredBuild.range(of: #"^\d+(?:\.\d+)*$"#, options: .regularExpression) != nil ? declaredBuild : ""
+                let sourceBuild = app.build != app.version && declaredBuild.range(of: #"^\d+(?:\.\d+)*$"#, options: .regularExpression) != nil ? declaredBuild : ""
+                let build = identity?.build ?? sourceBuild
                 let comparable = SourceVersion.comparable(version, installed: app.version)
                 let installed = InstalledApp(name: app.name, bundleID: app.bundleID, version: SourceVersion.normalize(app.version),
                                              build: app.build, path: app.path, teamID: app.teamID)
                 if comparable && VersionOrder.isNewer(version: version, build: build, than: installed) {
                     candidates.append(.init(version: version, build: build, source: "Homebrew", isCommunity: false,
-                        url: URL(string: "https://formulae.brew.sh/cask/\(metadata.token)"), download: metadata.download))
+                        url: URL(string: "https://formulae.brew.sh/cask/\(metadata.token)"), download: download,
+                        releaseNotes: identity == nil ? nil : "来源发布版本：\(sourceVersion)；主应用版本：\(version)（\(build)）。"))
                 }
                 if comparable { checked += 1; notes.append("已检查 Homebrew"); checks.append(.init(.homebrew, .checked)) }
                 else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append("Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新") }
@@ -96,10 +85,30 @@ public enum UpdateChecker {
                 checked += 1; notes.append("已检查 GitHub Release"); checks.append(.init(.github, .checked))
             } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
         }
+        candidates = supplementDownloads(candidates, for: app)
         let status: SourceStatus = failed > 0 ? (checked > 0 ? .partial : .failed)
             : !candidates.isEmpty ? .updates : checked > 0 ? (uncomparable > 0 ? .partial : .current) : .unsupported
         let hint = ManualUpdateSource.forBundle(app.bundleID)
         return .init(appID: app.id, candidates: candidates, note: notes.isEmpty ? hint?.note ?? "暂未适配更新来源，可手动设置开发者 appcast 或 GitHub 仓库" : notes.joined(separator: " · "), status: status, manualURL: hint?.url, checks: checks)
+    }
+
+    /// Preserve the source's target/build. A second source may fill a missing download for that version;
+    /// the installer still checks the downloaded bundle against the original target, including its build.
+    static func supplementDownloads(_ candidates: [UpdateCandidate], for app: InstalledApp) -> [UpdateCandidate] {
+        candidates.map { candidate in
+            guard !candidate.isCommunity, candidate.download == nil, !candidate.usesBuildVersion else { return candidate }
+            let matches = candidates.filter {
+                !$0.isCommunity && !$0.usesBuildVersion && $0.download?.canVerify(for: app) == true &&
+                    VersionOrder.compare($0.version, candidate.version) == .orderedSame &&
+                    ($0.build.isEmpty || $0.build == candidate.build)
+            }
+            // Prefer independent archive proof. Ambiguous download URLs remain manual.
+            let proven = matches.filter { $0.download?.hasIntegrityProof == true }
+            let choices = proven.isEmpty ? matches : proven
+            guard Set(choices.compactMap(\.download)).count == 1, let download = choices.first?.download else { return candidate }
+            var result = candidate; result.download = download
+            return result
+        }
     }
 
     private static func failureDescription(_ error: any Error) -> String {

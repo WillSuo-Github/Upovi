@@ -46,7 +46,7 @@ public actor DownloadCoordinator {
         var seen = Set<UUID>()
         let records = values.filter { seen.insert($0.id).inserted }.prefix(50).map {
             var value = $0
-            if value.state.active { value.state = .interrupted; value.updatedAt = Date() }
+            if value.state.active || value.state == .downloaded { value.state = .interrupted; value.updatedAt = Date() }
             return value
         }
         return (records, true)
@@ -112,8 +112,9 @@ public actor DownloadCoordinator {
         return value.domain == NSURLErrorDomain && [NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost,
             NSURLErrorNotConnectedToInternet, NSURLErrorCannotConnectToHost, NSURLErrorDNSLookupFailed, NSURLErrorCannotFindHost].contains(value.code)
     }
+    @discardableResult
     public func download(_ descriptor: DownloadDescriptor, app: InstalledApp, targetVersion: String = "", to destination: URL,
-                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws {
+                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> UUID {
         try Task.checkCancellation()
         guard !FileManager.default.fileExists(atPath: destination.path),
               (try? FileManager.default.attributesOfItem(atPath: destination.path)) == nil else { throw PeerError.invalid("Download destination already exists") }
@@ -131,11 +132,17 @@ public actor DownloadCoordinator {
             } onCancel: { Task { await self.cancel(id) } }
             try Task.checkCancellation()
             let bytes = ((try? FileManager.default.attributesOfItem(atPath: destination.path)[.size]) as? NSNumber)?.int64Value
-            update(id) { $0.state = .verified; $0.issue = nil; if let bytes { $0.received = bytes; $0.expected = bytes } }
+            update(id) { $0.state = descriptor.hasIntegrityProof ? .verified : .downloaded; $0.issue = nil; if let bytes { $0.received = bytes; $0.expected = bytes } }
+            return id
         } catch {
             update(id) { $0.state = error is CancellationError || Task.isCancelled ? .cancelled : .failed; $0.issue = .init(error) }
             throw error
         }
+    }
+    /// Only the installer calls this after checking the extracted payload and Gatekeeper.
+    public func finishApplicationVerification(_ id: UUID, error: (any Error)? = nil) {
+        guard records.contains(where: { $0.id == id && $0.state == .downloaded }) else { return }
+        update(id) { $0.state = error == nil ? .verified : error is CancellationError ? .cancelled : .failed; $0.issue = error.map(DiagnosticIssue.init) }
     }
     private func run(_ id: UUID, descriptor: DownloadDescriptor, app: InstalledApp, destination: URL,
                      progress: @escaping @Sendable (Int64, Int64) -> Void) async throws {

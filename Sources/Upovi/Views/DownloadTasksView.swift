@@ -117,6 +117,7 @@ private struct DownloadTaskRow: View {
         case .waitingForNetwork: "等待网络"
         case .retrying: "稍后自动重试"
         case .verifying: "正在校验"
+        case .downloaded: "已下载，待应用验证"
         case .verified: "已校验"
         case .failed: "下载失败"
         case .cancelled: "已取消"
@@ -130,6 +131,7 @@ private struct DownloadTaskRow: View {
         case .waitingForNetwork: "wifi.slash"
         case .retrying: "arrow.clockwise"
         case .verifying: "checkmark.shield"
+        case .downloaded: "shippingbox"
         case .verified: "checkmark.seal.fill"
         case .failed: "exclamationmark.triangle.fill"
         case .cancelled: "xmark"
@@ -142,7 +144,7 @@ private struct DownloadTaskRow: View {
         case .verified: .success
         case .failed: .danger
         case .waitingForNetwork, .retrying, .interrupted: .warning
-        case .paused, .cancelled: .neutral
+        case .paused, .cancelled, .downloaded: .neutral
         }
     }
 }

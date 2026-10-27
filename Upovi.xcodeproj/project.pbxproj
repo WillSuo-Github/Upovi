@@ -70,6 +70,7 @@
 		70B3A454984F6C1F6523B99E /* AppStore+Operations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F5DDC26AB7FF14352E5B0B /* AppStore+Operations.swift */; };
 		70D4981A6964BCCAA50D72FD /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9852F29027C045968D3FCCF /* NotificationService.swift */; };
 		71596D9C3D2A3A8006134763 /* ArchiveSupport.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FE9A617CDB2CD27CB4E4FD9D /* ArchiveSupport.h */; };
+		720E14EA2A8D7F619390A791 /* ApplicationSourceCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEE1B7832BCB1388BA0FBB27 /* ApplicationSourceCatalog.swift */; };
 		7250875140101A9DDC091941 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C639F0D895F5D903E35CC25 /* AppPreferences.swift */; };
 		74F64AEB1AB4247119674570 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DE37D90F5CC2C99251E05F1 /* ContentView.swift */; };
 		754354A7E92F64E33555DF9E /* GlobalP2PSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4FA060891A3D22186996B58 /* GlobalP2PSettings.swift */; };
@@ -114,6 +115,7 @@
 		C1B520D7DC615369C0F7A83D /* DownloadTasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0242521892B617E903F91134 /* DownloadTasksView.swift */; };
 		C2091C86BDE62E99168425C6 /* DownloadCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564086B40D4FF1345865886F /* DownloadCoordinatorTests.swift */; };
 		C4A592F4054543585EE96E21 /* UpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E16F11787601C86A1217B362 /* UpdatesView.swift */; };
+		C5F79E108513EA934B3D393C /* DownloadTrustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1B8D4A15B28335B53815F5 /* DownloadTrustTests.swift */; };
 		C80A6C76037A008C22E0F40A /* UpoviStoreInstaller in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = D9DBBF382FB7882DFEA9A4E2 /* UpoviStoreInstaller */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C815C68956C789B47F73F7E3 /* UpdatePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26D3A900F0572B152C5234F0 /* UpdatePolicy.swift */; };
 		CB2C3EFB8A7CD20A8689460B /* CheckScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA44BC2BB0AFD10B029DBEE6 /* CheckScheduleTests.swift */; };
@@ -345,9 +347,11 @@
 		5E6179EA13E95F294582D151 /* SourceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceFilter.swift; sourceTree = "<group>"; };
 		6196FD40E923119FB208259F /* AppStoreUpdateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreUpdateTests.swift; sourceTree = "<group>"; };
 		624F7E5B8CCD9EE8E97601B1 /* SourceHTTPClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHTTPClientTests.swift; sourceTree = "<group>"; };
+		6290B032D074120E19226B31 /* source_installation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = source_installation.swift; sourceTree = "<group>"; };
 		633A0DBCD7F03C958DD753C4 /* test_automatic_discovery.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = test_automatic_discovery.py; sourceTree = "<group>"; };
 		650B76C3BA64A17025749BA1 /* ResumableDownloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumableDownloadTests.swift; sourceTree = "<group>"; };
 		66C112EC6F12D64AEFC45A6D /* test_public_dht.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = test_public_dht.py; sourceTree = "<group>"; };
+		6B1B8D4A15B28335B53815F5 /* DownloadTrustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTrustTests.swift; sourceTree = "<group>"; };
 		6DE37D90F5CC2C99251E05F1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		711527FF6982CB9347F4B701 /* CheckHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckHistory.swift; sourceTree = "<group>"; };
 		724712475346CB121C0893F5 /* DiagnosticIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticIssue.swift; sourceTree = "<group>"; };
@@ -428,6 +432,7 @@
 		EA9D35A522B86C75D7DBC8A4 /* BulkUpdateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkUpdateTests.swift; sourceTree = "<group>"; };
 		EAC68D72E34FCACCDDF68909 /* GitHubRelease.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubRelease.swift; sourceTree = "<group>"; };
 		EED59B85008A503D4CA5F90F /* ArchiveSupport.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ArchiveSupport.c; sourceTree = "<group>"; };
+		EEE1B7832BCB1388BA0FBB27 /* ApplicationSourceCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationSourceCatalog.swift; sourceTree = "<group>"; };
 		EF6DE0926B15291CA0D14592 /* UpdateControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateControlsTests.swift; sourceTree = "<group>"; };
 		F02C7E5B62F6594028563603 /* AdministratorInstallationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorInstallationService.swift; sourceTree = "<group>"; };
 		F0600F25FA5F74872B94E099 /* DiagnosticTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticTests.swift; sourceTree = "<group>"; };
@@ -770,6 +775,7 @@
 			isa = PBXGroup;
 			children = (
 				A5FB16EAA4DCCED6343CFC73 /* AppcastReader.swift */,
+				EEE1B7832BCB1388BA0FBB27 /* ApplicationSourceCatalog.swift */,
 				E9BCD00BD5A601B4D086273B /* AppScanner.swift */,
 				1B0E57326DC102CD55D63803 /* AppStoreCatalog.swift */,
 				3B49120A9E9D6E74DA52D9B3 /* ArtifactDownloadCache.swift */,
@@ -802,6 +808,7 @@
 				AF2F9DE11662C826329F91FF /* native_ui.swift */,
 				B0E3C9DDBDF4AD1FE0AEF005 /* privileged_vm.swift */,
 				23D901D30CA1ED44CB640969 /* soak.py */,
+				6290B032D074120E19226B31 /* source_installation.swift */,
 				CE3C2AC6D4659FFAED17EB66 /* source_refresh.swift */,
 				50FDC46E7D9377536DA006AB /* startup.swift */,
 			);
@@ -886,6 +893,7 @@
 				04D62D357ECB9559B00B391C /* CoreTests.swift */,
 				F0600F25FA5F74872B94E099 /* DiagnosticTests.swift */,
 				564086B40D4FF1345865886F /* DownloadCoordinatorTests.swift */,
+				6B1B8D4A15B28335B53815F5 /* DownloadTrustTests.swift */,
 				5C2BDA2F56AC3A043CC187DF /* GlobalP2PTests.swift */,
 				43667E5DF78D7C5FBCE26B18 /* InstallationTests.swift */,
 				328E42000B2CAE75FB022503 /* MachOTests.swift */,
@@ -1223,6 +1231,7 @@
 				10A41D6D5EB93F928097732C /* AppStoreCatalog.swift in Sources */,
 				542EFF4EE0FD0B68DEDDCB48 /* AppStoreUpdatePlan.swift in Sources */,
 				19807E6ECF8A45DF490B5BB8 /* AppcastReader.swift in Sources */,
+				720E14EA2A8D7F619390A791 /* ApplicationSourceCatalog.swift in Sources */,
 				1ECF2E3FEFFCC952BB7718B8 /* ArchiveExtractor.swift in Sources */,
 				806AAF45D02E5BAF776B28D3 /* ArtifactDownloadCache.swift in Sources */,
 				E450DEE493140199E0F93D6E /* Bencode.swift in Sources */,
@@ -1299,6 +1308,7 @@
 				9502FFF610A142C48A81AD7C /* CoreTests.swift in Sources */,
 				876D1007E2D44E81C1A02F47 /* DiagnosticTests.swift in Sources */,
 				C2091C86BDE62E99168425C6 /* DownloadCoordinatorTests.swift in Sources */,
+				C5F79E108513EA934B3D393C /* DownloadTrustTests.swift in Sources */,
 				6BE83E402538EFE8C965AEAC /* GlobalP2PTests.swift in Sources */,
 				A2A240FBC8ED4F9DB9A7A98C /* InstallationTests.swift in Sources */,
 				040AB2F9E6B4515BE8B45D48 /* MachOTests.swift in Sources */,

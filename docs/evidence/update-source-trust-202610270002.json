@@ -1,0 +1,100 @@
+{
+  "build": "202610270002",
+  "marketingVersion": "0.4.10",
+  "published": false,
+  "tests": {
+    "result": "Passed",
+    "totalTestCount": 189,
+    "passedTests": 189,
+    "failedTests": 0
+  },
+  "releaseMetadataTests": 8,
+  "nativeDevelopmentBuild": "BUILD SUCCEEDED; nested code signature verified",
+  "applications": [
+    {
+      "archiveIntegrityVerified": true,
+      "backupRetained": true,
+      "bundleID": "abnerworks.Typora",
+      "candidates": [
+        {
+          "archiveProof": true,
+          "build": "7789",
+          "download": "https://downloads.typora.io/mac/Typora-1.14.15.dmg",
+          "source": "Developer appcast",
+          "version": "1.14.15"
+        },
+        {
+          "archiveProof": true,
+          "build": "",
+          "download": "https://downloads.typora.io/mac/Typora-1.14.15.dmg",
+          "source": "Homebrew",
+          "version": "1.14.15"
+        }
+      ],
+      "developerIDPassed": true,
+      "downloadVerified": true,
+      "gatekeeperPassed": true,
+      "installationPassed": true,
+      "installedBuild": "7789",
+      "installedVersion": "1.14.15",
+      "isolatedCopiesOnly": true,
+      "originalBuild": "7785",
+      "originalVersion": "1.14.9",
+      "path": ".local/update-source-acceptance-202610270002/Applications/Typora.app",
+      "postInstallSourceStatus": "current",
+      "postInstallUpdateCount": 0,
+      "preparedBuild": "7789",
+      "preparedVersion": "1.14.15",
+      "restoredBuild": "7785",
+      "restoredVersion": "1.14.9",
+      "restorePassed": true,
+      "sourceNote": "\u5df2\u68c0\u67e5\u5f00\u53d1\u8005 appcast \u00b7 \u5df2\u68c0\u67e5 Homebrew",
+      "sourceStatus": "updates",
+      "systemComponentsTested": false
+    },
+    {
+      "archiveIntegrityVerified": false,
+      "backupRetained": true,
+      "bundleID": "com.bjango.istatmenus",
+      "candidates": [
+        {
+          "archiveProof": false,
+          "build": "2356",
+          "download": "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.1.zip",
+          "source": "Homebrew",
+          "version": "7.50"
+        }
+      ],
+      "developerIDPassed": true,
+      "downloadVerified": true,
+      "gatekeeperPassed": true,
+      "installationPassed": true,
+      "installedBuild": "2356",
+      "installedVersion": "7.50",
+      "isolatedCopiesOnly": true,
+      "originalBuild": "2282",
+      "originalVersion": "7.30",
+      "path": ".local/update-source-acceptance-202610270002/Applications/iStat Menus.app",
+      "postInstallSourceStatus": "current",
+      "postInstallUpdateCount": 0,
+      "preparedBuild": "2356",
+      "preparedVersion": "7.50",
+      "restoredBuild": "2282",
+      "restoredVersion": "7.30",
+      "restorePassed": true,
+      "sourceNote": "\u5df2\u68c0\u67e5 Homebrew",
+      "sourceStatus": "updates",
+      "systemComponentsTested": false
+    }
+  ],
+  "typoraLaunch": {
+    "launchedExecutableSHA256": "036737946036784f539a3554716f23954e3fe2b7a6c819dd7fb41fcff0943875",
+    "launchProcessObserved": true,
+    "uiAcceptanceIssue": "AppleEvent and Computer Use timeout while reading the translocated app window",
+    "uiAcceptancePassed": false
+  },
+  "iStatObservedArchiveSHA256": "3e1807f2e7ba6790267fb3c8036a10103c90227d5722ebba41e7917a544c72e5",
+  "iStatArchiveHashIsIndependentSourceProof": false,
+  "normalInstalledApplicationsReplaced": false,
+  "systemComponentsTested": false
+}

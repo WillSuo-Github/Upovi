@@ -81,7 +81,7 @@ extension AppStore {
 
     func action(for candidate: UpdateCandidate, app: InstalledApp) -> UpdateAction {
         if app.isAppStore, candidate.appStoreID != nil { return .store }
-        if candidate.download?.hasIntegrityProof == true, app.teamID != nil, app.bundleID != "app.upovi.Upovi" { return .verifiedDownload }
+        if candidate.download?.canVerify(for: app) == true, app.teamID != nil, app.bundleID != "app.upovi.Upovi" { return .verifiedDownload }
         return .official
     }
 

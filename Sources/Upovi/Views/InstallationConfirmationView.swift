@@ -8,9 +8,11 @@ struct InstallationConfirmationView: View {
             if let update = store.preparedUpdate {
                 header(path: update.application.path, title: update.application.name, badge: "更新已验证",
                        from: update.application.version, to: update.replacement.version)
-                checklist(["下载完整性", "应用标识与开发者签名", "嵌套代码签名与架构兼容", "macOS Gatekeeper 信任"])
+                checklist((update.archiveIntegrityVerified ? ["下载完整性"] : []) + ["应用标识与 Apple 开发者签名", "嵌套代码签名与架构兼容", "macOS Gatekeeper 信任"])
                 Label("安装会请求关闭应用，并保留旧版本以便在“历史与恢复”中恢复。请先保存正在编辑的文稿。", systemImage: "doc.badge.clock")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text("本次更新主应用。如应用首次打开时提示更新后台组件，请按应用内指引操作。")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 VStack(alignment: .leading, spacing: 4) {
                     Toggle("使用管理员权限安装", isOn: $store.administratorInstallRequested)
                     if store.administratorInstallRequested {

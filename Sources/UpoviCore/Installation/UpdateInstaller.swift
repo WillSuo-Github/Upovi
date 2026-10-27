@@ -8,6 +8,7 @@ public struct PreparedUpdate: Identifiable, Sendable {
     public let replacement: InstalledApp
     public let workspace: URL
     public let bundle: URL
+    public let archiveIntegrityVerified: Bool
 }
 
 public actor UpdateInstaller {
@@ -24,7 +25,7 @@ public actor UpdateInstaller {
     public func prepare(app: InstalledApp, candidate: UpdateCandidate,
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedUpdate {
         guard !busy else { throw PeerError.unavailable("An installation operation is already running") }
-        guard !candidate.isCommunity, !app.isAppStore, let descriptor = candidate.download, descriptor.hasIntegrityProof,
+        guard !candidate.isCommunity, !app.isAppStore, let descriptor = candidate.download, descriptor.canVerify(for: app),
               let team = app.teamID, !team.isEmpty, app.bundleID != "app.upovi.Upovi" else {
             throw PeerError.invalid("Use the official source or in-app updater for this application")
         }
@@ -33,9 +34,10 @@ public actor UpdateInstaller {
         let workspace = FileManager.default.temporaryDirectory.appending(path: "Upovi-install-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false)
         let archive = workspace.appending(path: "update." + descriptor.url.pathExtension.lowercased())
+        var downloadID: UUID?
         do {
-            try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: archive, progress: progress)
-            let verification = Task.detached { try BundleVerifier.verifyArchive(archive, descriptor: descriptor, app: app) }
+            downloadID = try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: archive, progress: progress)
+            let verification = Task.detached { try BundleVerifier.validateDownload(archive, descriptor: descriptor, app: app) }
             try await withTaskCancellationHandler { try await verification.value } onCancel: { verification.cancel() }
             try Task.checkCancellation()
             let extracted: URL
@@ -58,6 +60,7 @@ public actor UpdateInstaller {
                 try FileManager.default.copyItem(at: source, to: staged)
                 if let mounted { _ = try await ProcessCommand().run("/usr/bin/hdiutil", ["detach", mounted.path]) }
                 let replacement = try BundleVerifier.validate(staged, replacing: app, expectedVersion: candidate.version, expectedBuild: candidate.build)
+                if !descriptor.hasIntegrityProof { try BundleVerifier.checkDeveloperIDSignature(staged, like: app) }
                 if let executable = Bundle(url: staged)?.executableURL { try MachOCompatibility.validate(executable) }
                 else { throw PeerError.invalid("Update has no application executable") }
                 // Preserve the normal macOS trust boundary; never remove quarantine or bypass Gatekeeper.
@@ -67,13 +70,18 @@ public actor UpdateInstaller {
                 }
                 guard status == 0 else { throw PeerError.unavailable("Cannot quarantine the downloaded application") }
                 _ = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", staged.path])
-                let value = PreparedUpdate(id: UUID(), application: app, replacement: replacement, workspace: workspace, bundle: staged)
+                if let downloadID { await downloads.finishApplicationVerification(downloadID) }
+                let value = PreparedUpdate(id: UUID(), application: app, replacement: replacement, workspace: workspace, bundle: staged,
+                                           archiveIntegrityVerified: descriptor.hasIntegrityProof)
                 prepared = value; return value
             } catch {
                 if let mounted { _ = try? await ProcessCommand().run("/usr/bin/hdiutil", ["detach", mounted.path]) }
                 throw error
             }
-        } catch { try? FileManager.default.removeItem(at: workspace); throw error }
+        } catch {
+            if let downloadID { await downloads.finishApplicationVerification(downloadID, error: error) }
+            try? FileManager.default.removeItem(at: workspace); throw error
+        }
     }
 
     public func discard(_ id: UUID) {
@@ -92,6 +100,7 @@ public actor UpdateInstaller {
             try BundleTransaction(journalDirectory: journal, validate: { url in
                 _ = try BundleVerifier.validate(url, replacing: value.application,
                     expectedVersion: value.replacement.version, expectedBuild: value.replacement.build)
+                if !value.archiveIntegrityVerified { try BundleVerifier.checkDeveloperIDSignature(url, like: value.application) }
             }).commit(prepared: value.bundle, replacing: value.application,
                       newVersion: value.replacement.version, newBuild: value.replacement.build)
         }.value

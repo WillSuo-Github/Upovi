@@ -2,7 +2,7 @@ import Foundation
 
 public struct DownloadRecord: Codable, Sendable, Identifiable, Equatable {
     public enum State: String, Codable, Sendable {
-        case queued, downloading, paused, waitingForNetwork, retrying, verifying, verified, failed, cancelled, interrupted
+        case queued, downloading, paused, waitingForNetwork, retrying, verifying, downloaded, verified, failed, cancelled, interrupted
         public var active: Bool { [.queued, .downloading, .paused, .waitingForNetwork, .retrying, .verifying].contains(self) }
         public var canPause: Bool { [.queued, .downloading, .waitingForNetwork, .retrying].contains(self) }
     }
