@@ -1,3 +1,11 @@
+# Upovi 0.4.10 build 202610270005
+
+Product revision `bfd5be3` runs batch updates concurrently (default five, Settings range 1–8), shows per-row progress, transferred size, speed and remaining time, and replaces the floating download pill with an overall progress card. Administrator and App Store steps pass through a serial gate. Concurrent requests for one artifact now share a single download. All 200 local Xcode tests, 8 release-metadata tests and three macOS CI jobs passed. Isolated real-application acceptance updated three official Rectangle 2.0.3 copies to 2.0.4 concurrently, including checksum failure and retry; see [concurrent update validation](VALIDATION-CONCURRENT-UPDATES-2026-10-27.md).
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270005) and signed public latest feed are published. Apple notarization, ticket stapling and Gatekeeper passed. All five public assets match the verified local bytes; the extracted public app, archive and feed signatures, notarization ticket and Gatekeeper checks passed. See [release evidence](evidence/0.4.10-build-202610270005.json). Concurrent administrator/App Store installation with real prompts, light appearance, Reduce Motion, self-update and long-run runtime acceptance were not performed by this publication.
+
+---
+
 # Upovi 0.4.10 build 202610270004
 
 Product revision `4460527` removes the sidebar P2P entry and Community heading, leaving Updates, All Applications, Downloads and History & Recovery. A remembered P2P destination now opens Updates on startup. P2P behavior and settings are unchanged. Native UI inspection using an isolated fixture confirmed all four entries, migration from the remembered P2P page and working Downloads navigation. All 195 local Xcode tests, 8 release-metadata tests and three macOS CI jobs passed.
