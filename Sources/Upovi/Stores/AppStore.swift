@@ -128,7 +128,8 @@ final class AppStore {
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
         self.revalidateSources = revalidateSources
-        section = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .updates
+        let rememberedSection = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .updates
+        section = rememberedSection == .community ? .updates : rememberedSection
         libraryInspectorPresented = preferences.bool(forKey: "libraryInspectorPresentedV1")
         automaticChecks = preferences.bool(forKey: "automaticChecksV1")
         let interval = preferences.integer(forKey: "checkIntervalV1")

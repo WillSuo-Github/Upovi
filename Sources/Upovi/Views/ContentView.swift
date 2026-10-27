@@ -91,19 +91,6 @@ private struct Sidebar: View {
                         .tag(section)
                 }
             }
-            Section("社区") {
-                Button { store.section = .community } label: {
-                    HStack {
-                        Label(AppSection.community.rawValue, systemImage: AppSection.community.symbol)
-                        Spacer()
-                        Circle().fill(store.networkEnabled ? Color.green : Color.secondary.opacity(0.5)).frame(width: 7, height: 7)
-                            .help(store.networkEnabled ? "P2P 已开启" : "P2P 已关闭")
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .tag(AppSection.community)
-            }
         }
         .listStyle(.sidebar)
         .safeAreaInset(edge: .bottom, spacing: 0) { footer }
