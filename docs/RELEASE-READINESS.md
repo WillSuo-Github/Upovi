@@ -4,6 +4,8 @@ Startup now performs one complete inventory scan and source check even when peri
 
 Five regression tests cover startup with periodic checks disabled, reentry during scanning, cancellation, offline startup and populated-store preservation. All 180 local tests passed. Independent fresh-settings native acceptance reproduced the original scan-only stop with 72 host applications and zero checks; the fixed view completed 72 real source checks without pressing a check button, with periodic checks and P2P both disabled. Source failures remain source failures; completion does not imply every origin returned an update. Release, notarization and public old-to-new acceptance are recorded separately in version-specific evidence.
 
+Product revision `52bf864` passed all three macOS CI jobs. The Developer ID universal archive passed Apple notarization and ticket stapling; the [0.4.10 release](https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.10) and signed public latest feed (build 16) are published. Re-downloaded public ZIP/feed/checksum bytes match the verified artifact, and the extracted app passes signature, ticket and Gatekeeper checks. Actual host Sparkle 0.4.9 build 15 → 0.4.10 build 16 download/install/relaunch passed. The new application automatically checked all 72 host applications on relaunch, and its executable bytes match the published archive. `/Applications/Upovi.app` and the project-local `dist/Upovi.app` contain this notarized build. See [version-specific evidence](evidence/0.4.10-startup-checks.json).
+
 ---
 
 # Upovi 0.4.9 notarized distribution

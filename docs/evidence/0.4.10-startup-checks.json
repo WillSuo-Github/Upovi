@@ -1,0 +1,121 @@
+{
+  "version": "0.4.10",
+  "build": "16",
+  "productRevision": "52bf864ed2ab2f3ac741a75448033cab7bf8f791",
+  "automatedTests": {
+    "core": 156,
+    "application": 24,
+    "failures": 0,
+    "startupRegressionTests": 5
+  },
+  "nativeFreshStartup": {
+    "beforeFix": {
+      "applications": 72,
+      "checked": false,
+      "completedChecks": 0,
+      "p2pEnabled": false,
+      "periodicChecksEnabled": false,
+      "sourceResults": 0
+    },
+    "afterFix": {
+      "applications": 72,
+      "checked": true,
+      "completedChecks": 72,
+      "p2pEnabled": false,
+      "periodicChecksEnabled": false,
+      "sourceResults": 72
+    },
+    "checkButtonPressed": false,
+    "productionScannerAndSources": true,
+    "productionContentView": true,
+    "isolatedSettingsJournalAndDownloads": true,
+    "applicationsInstalled": 0,
+    "boundary": "Separate fresh settings roots; P2P and periodic checks disabled. The before-fix view stopped after scanning. The fixed view automatically progressed through real source checks and displayed the results. Source failures remain visible and do not prove an application is current."
+  },
+  "ci": {
+    "url": "https://github.com/WillSuo-Github/Upovi/actions/runs/40465890734",
+    "headRevision": "52bf864ed2ab2f3ac741a75448033cab7bf8f791",
+    "jobs": [
+      {
+        "name": "tests (macos-26)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-14)",
+        "conclusion": "success"
+      },
+      {
+        "name": "tests (macos-15-intel)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifact": {
+    "version": "0.4.10",
+    "build": "16",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "ba3dcc7e86a83ba603a4b6ecaa318d75e9632512e8008b08629c133dfd263654",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "notarization": {
+    "submissionID": "013227d5-d394-4384-9075-b6ca2808178f",
+    "status": "Accepted",
+    "stapledTicket": "passed",
+    "gatekeeper": "accepted / Notarized Developer ID"
+  },
+  "publicRelease": {
+    "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/v0.4.10",
+    "publishedAt": "2026-10-27T07:20:38Z",
+    "latest": true,
+    "publicArchiveFeedChecksumBytesMatchLocal": true,
+    "freshExtractedSignature": "passed",
+    "freshExtractedTicket": "passed",
+    "freshExtractedGatekeeper": "accepted / Notarized Developer ID",
+    "feedURL": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+    "feedBuild": "16",
+    "feedSignature": "verified",
+    "archiveSignature": "verified"
+  },
+  "genuineSelfUpdate": {
+    "result": "passed",
+    "environment": "host macOS /Applications/Upovi.app",
+    "fromVersion": "0.4.9",
+    "fromBuild": "15",
+    "fromProcessID": 29730,
+    "toVersion": "0.4.10",
+    "toBuild": "16",
+    "toProcessID": 75556,
+    "publicFeedCheck": "native Sparkle alert offered 0.4.10 to 0.4.9",
+    "downloadInstallRelaunch": "native Install Update then Install and Relaunch",
+    "signature": "deep strict all architectures passed",
+    "ticket": "passed",
+    "gatekeeper": "accepted / Notarized Developer ID",
+    "allFourExecutableBytesMatchPublishedArchive": true,
+    "executableSHA256": {
+      "Upovi": "01f293d2f0722ee2ae1e53b84a9df1758ed6ae7c8dd3e9bad65fd9b806e1226b",
+      "UpoviInstaller": "f76d5ee6dfe64d828283455ad5d31d31e9a57fe5f30e37629de5ae3d8a349b76",
+      "UpoviStoreInstaller": "3116dcc68402782cef4edcfc49f7dbfc8c8a66a6a4f80df0e8736780af6de014",
+      "UpoviStoreBridge": "0aacf86da8701366306db6c74ddeaef56fbc0f751542000c507bd8deb68ba651"
+    },
+    "startupAfterRelaunch": "72 applications checked automatically; last check time and 15 source updates visible without manually starting a source check",
+    "boundary": "The new bundle was downloaded and replaced by Sparkle; 0.4.10 was not manually copied to /Applications."
+  },
+  "localProjectBundle": {
+    "path": "dist/Upovi.app",
+    "version": "0.4.10",
+    "build": "16",
+    "gatekeeper": "accepted / Notarized Developer ID"
+  },
+  "remainingAcceptance": [
+    "physical sleep/wake",
+    "host interface switching",
+    "privileged energy sampling",
+    "new-candidate long-run observation"
+  ]
+}
