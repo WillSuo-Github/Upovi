@@ -1,3 +1,11 @@
+# Upovi 0.4.10 build 202610270001
+
+The marketing version remains 0.4.10. Routine updates now use Shanghai-date build numbers and separate `build-<build>` GitHub tags and version/build archive filenames. Product revision `d164d01` passed the numbering tests and all three macOS CI jobs. Its Developer ID universal package passed Apple notarization, ticket stapling and Gatekeeper assessment. The [date-build release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610270001) and signed public latest feed are published; public ZIP/feed/checksum bytes match the verified final artifact, and the extracted app passes signature, ticket and Gatekeeper checks.
+
+Actual host Sparkle replacement/relaunch from 0.4.10 build 16 to 0.4.10 build 202610270001 passed. The native alert distinguished both builds under the unchanged marketing version; the About panel shows `0.4.10 (202610270001)`. All four installed executable files match the public artifact. `/Applications/Upovi.app` and the project-local `dist/Upovi.app` contain this notarized date build. See [version-specific evidence](evidence/0.4.10-build-202610270001.json). Notarization and this update do not complete the separate long-run, physical sleep/network or energy checks.
+
+---
+
 # Upovi 0.4.10 startup update checks
 
 Startup now performs one complete inventory scan and source check even when periodic checks are disabled. Previously the initial view task scanned inventory only, leaving a fresh installation at the unchecked landing page after the activity indicator disappeared. A store-owned one-time entry point starts the existing cancellable refresh pipeline and survives view-task completion; populated stores and repeated view appearances do not start another initial pass. Scanning, source preparation and check progress remain visible. Periodic scheduling keeps its existing opt-in preference. Offline startup retains the scanned inventory and explains why source checking could not run.

@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610270001)**
 
-[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
+[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202610270001 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
 ## What it does
 
@@ -40,7 +40,7 @@ This uses `xcodebuild` and stages the built, ad-hoc signed application at `dist/
 
 The checked-in project opens directly without XcodeGen. `project.yml` is its reproducible specification; after changing project structure, run `xcodegen generate` and commit both files. Existing SwiftPM tools and tests remain available through `Package.swift` for diagnostic/acceptance scripts. The main app development entrypoint is `Upovi.xcodeproj`. See [Xcode project details](docs/XCODE-PROJECT.md) for targets and build settings.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The 0.4.10 notarized preview and public latest feed are published. A genuine host Sparkle 0.4.9 → 0.4.10 download/install/relaunch, public archive re-download, signatures, stapled tickets and Gatekeeper acceptance passed. Independent fresh-settings startup completed 72 real source checks with periodic checks disabled and no check-button click; see [version-specific evidence](docs/evidence/0.4.10-startup-checks.json). The interrupted 0.4.6 observation is not accepted and does not validate later code. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md) and [source refresh/reliability](docs/SOURCE-REFRESH-AND-RELIABILITY.md). The 0.4.10 build 202610270001 notarized preview and public latest feed are published. A genuine host Sparkle update from 0.4.10 build 16 to date build 202610270001 passed without changing the marketing version; public archive re-download, signatures, stapled tickets and Gatekeeper acceptance also passed. See [date-build evidence](docs/evidence/0.4.10-build-202610270001.json). Independent fresh-settings startup completed 72 real source checks with periodic checks disabled and no check-button click; see [startup evidence](docs/evidence/0.4.10-startup-checks.json). The interrupted 0.4.6 observation is not accepted and does not validate later code. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
 
 ## Public community discovery
 
