@@ -1,110 +1,164 @@
 import SwiftUI
 
-/// Page header: large title with actions, then a single status line. Progress replaces the
-/// tail of that line, so the header keeps its height when an update or batch starts.
+/// Page header: a large title above one fixed-height status card, in the spirit of
+/// System Settings › Software Update. Every state (scanning, checking, batch, idle) fills the
+/// same three slots — glyph, title/detail, action — so the header never changes height.
 struct UpdatesOverview: View {
     let store: AppStore
     let total: Int
     let installable: Int
 
-    private var batch: Bool { store.bulkSummaryVisible }
-    private var transfers: [TransferProgress] { Array(store.transfers.values) }
-    /// Single downloads show progress on their own row; the header only tracks batches and checks.
-    private var checkProgress: Bool { !batch && store.checking && !store.apps.isEmpty }
-    /// A finished batch keeps only its text summary; the bar and rate would read as stale.
-    private var active: Bool { (batch && store.bulkUpdating) || checkProgress }
-    private var fraction: Double {
-        batch ? store.bulkOverallFraction
-            : checkProgress ? Double(store.completedChecks) / Double(store.apps.count) : 0
-    }
-
-    private var tone: Tone {
-        guard batch, !store.bulkUpdating else { return .accent }
-        if store.bulkFailedCount > 0 { return .warning }
-        return store.bulkCompletedCount == store.bulkInstallableCount ? .success : .neutral
-    }
+    private var status: UpdatesStatus { UpdatesStatus(store: store, total: total, installable: installable) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .center, spacing: 16) {
-                Text("可用更新").font(.system(size: 28, weight: .bold)).lineLimit(1)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 12)
+        let status = status
+        VStack(alignment: .leading, spacing: 12) {
+            Text("可用更新").font(.system(size: 28, weight: .bold)).lineLimit(1)
+                .frame(height: 34, alignment: .leading)
+                .accessibilityAddTraits(.isHeader)
+            HStack(spacing: 14) {
+                StatusGlyph(glyph: status.glyph)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(status.title).font(.system(size: 14, weight: .semibold))
+                        .monospacedDigit().lineLimit(1)
+                    HStack(spacing: 0) {
+                        Text(status.detail).foregroundStyle(.secondary).monospacedDigit()
+                            .lineLimit(1).truncationMode(.tail).help(status.detail)
+                        if status.showsRate {
+                            Text(verbatim: " · ").foregroundStyle(.tertiary)
+                            DownloadRate(transfers: Array(store.transfers.values), total: true, compact: true)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.system(size: 12))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .animation(nil, value: status.title)
                 UpdatesOverviewActions(store: store, total: total)
             }
-            .frame(height: 38)
-            HStack(spacing: 6) {
-                title.font(.system(size: 13, weight: .medium)).foregroundStyle(.primary).layoutPriority(1)
-                let subtitle = subtitle
-                if !subtitle.isEmpty {
-                    Text(verbatim: "·").foregroundStyle(.tertiary)
-                    Text(subtitle).foregroundStyle(.secondary).truncationMode(.tail).help(subtitle)
-                }
-                if active {
-                    Spacer(minLength: 20)
-                    FlowProgressBar(value: fraction, tone: tone,
-                                    active: store.bulkUpdating || checkProgress, height: 4)
-                        .frame(minWidth: 120, maxWidth: 240)
-                    if checkProgress {
-                        Text(verbatim: "\(store.completedChecks)/\(store.apps.count)")
-                            .monospacedDigit().foregroundStyle(.secondary)
-                            .frame(minWidth: 60, alignment: .trailing)
-                    } else {
-                        Text(fraction, format: .percent.precision(.fractionLength(0)))
-                            .monospacedDigit().foregroundStyle(.secondary)
-                            .frame(width: 44, alignment: .trailing)
-                        DownloadRate(transfers: transfers, total: true, compact: true)
-                            .frame(width: 84, alignment: .trailing)
-                    }
-                }
-            }
-            .font(.system(size: 13)).lineLimit(1)
-            .frame(height: 18)
+            .padding(.horizontal, 16)
+            .frame(height: 60)
+            .modifier(UpdatesSurface())
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("updates-overview")
     }
+}
 
-    @ViewBuilder private var title: some View {
-        if batch {
-            if store.bulkUpdating {
-                Text(store.bulkStopRequested ? "正在停止…" : "正在更新 \(store.bulkInstallableCount) 个应用")
-            } else { Text(store.bulkCompletedCount == store.bulkInstallableCount ? "全部更新完成" : "更新已结束") }
-        } else if total > 0 { Text("\(total) 个应用有来源更新") }
-        else if store.scanning { Text("正在扫描本机应用…") }
-        else if store.checking { Text("正在检查更新…") }
-        else if store.refreshing { Text("正在连接更新来源…") }
-        else if store.lastChecked == nil { Text("检查一下有没有新版本") }
-        else { Text("没有来源报告的更新") }
+/// Everything the header shows, derived from store state in one place.
+private struct UpdatesStatus {
+    enum Glyph: Equatable {
+        case spinner
+        case progress(Double, Tone)
+        case symbol(String, Tone)
     }
 
-    private var subtitle: String {
-        if batch {
+    var glyph: Glyph
+    var title: String
+    var detail: String
+    var showsRate = false
+
+    @MainActor init(store: AppStore, total: Int, installable: Int) {
+        let apps = store.apps.count
+        if store.bulkSummaryVisible {
             var parts = [String(localized: "已完成 \(store.bulkFinishedCount) / \(store.bulkInstallableCount)")]
             if !store.bulkUpdating, store.bulkCompletedCount != store.bulkFinishedCount {
                 parts.append(String(localized: "成功 \(store.bulkCompletedCount)"))
             }
             if store.bulkFailedCount > 0 { parts.append(String(localized: "失败 \(store.bulkFailedCount)")) }
-            return parts.joined(separator: " · ")
-        }
-        if total > 0 {
+            detail = parts.joined(separator: " · ")
+            if store.bulkUpdating {
+                glyph = .progress(store.bulkOverallFraction, .accent)
+                title = store.bulkStopRequested ? String(localized: "正在停止…")
+                    : String(localized: "正在更新 \(store.bulkInstallableCount) 个应用")
+                showsRate = !store.bulkStopRequested
+            } else if store.bulkCompletedCount == store.bulkInstallableCount {
+                glyph = .symbol("checkmark.circle.fill", .success)
+                title = String(localized: "全部更新完成")
+            } else {
+                glyph = .symbol("exclamationmark.circle.fill", .warning)
+                title = String(localized: "更新已结束")
+            }
+        } else if store.scanning {
+            glyph = .spinner
+            title = String(localized: "正在扫描本机应用…")
+            detail = apps > 0 ? String(localized: "\(apps) 个本机应用") : ""
+        } else if store.refreshing && !store.checking {
+            glyph = .spinner
+            title = String(localized: "正在连接更新来源…")
+            detail = String(localized: "\(apps) 个本机应用")
+        } else if store.checking {
+            glyph = apps > 0 ? .progress(Double(store.completedChecks) / Double(apps), .accent) : .spinner
+            title = String(localized: "正在检查更新…")
+            var parts = [String(localized: "完成 \(store.completedChecks)/\(apps)")]
+            if total > 0 { parts.append(String(localized: "\(total) 个应用有来源更新")) }
+            detail = parts.joined(separator: " · ")
+        } else if total > 0 {
+            glyph = .symbol("arrow.down.circle.fill", .accent)
+            title = String(localized: "\(total) 个应用有来源更新")
             var parts = [String(localized: "\(installable) 个可由 Upovi 验证并安装")]
             if total > installable { parts.append(String(localized: "\(total - installable) 个需官方渠道")) }
-            return parts.joined(separator: " · ")
+            if let date = store.lastChecked { parts.append(String(localized: "上次检查 \(date.relativeDescription)")) }
+            detail = parts.joined(separator: " · ")
+        } else if let date = store.lastChecked {
+            glyph = .symbol("checkmark.circle.fill", .success)
+            title = String(localized: "没有来源报告的更新")
+            var parts = [String(localized: "上次检查 \(date.relativeDescription)")]
+            if store.incompleteCheckCount > 0 {
+                parts.append(String(localized: "\(store.incompleteCheckCount) 个应用未能完整检查"))
+            }
+            parts.append(String(localized: "结果为空并不代表所有应用都已是最新"))
+            detail = parts.joined(separator: " · ")
+        } else {
+            glyph = .symbol("arrow.down.circle", .neutral)
+            title = String(localized: "检查一下有没有新版本")
+            detail = String(localized: "Upovi 会扫描 /Applications 与 ~/Applications，再向 Sparkle、Homebrew、GitHub 与 App Store 来源核对版本。")
         }
-        // While busy, the empty-state placeholder carries the explanation instead of this line.
-        if store.scanning || store.checking || store.refreshing { return "" }
-        var parts: [String] = []
-        if let date = store.lastChecked { parts.append(String(localized: "上次检查 \(date.relativeDescription)")) }
-        if store.incompleteCheckCount > 0 { parts.append(String(localized: "\(store.incompleteCheckCount) 个应用未能完整检查")) }
-        if store.lastChecked != nil { parts.append(String(localized: "结果为空并不代表所有应用都已是最新")) }
-        else { parts.append(String(localized: "Upovi 会扫描 /Applications 与 ~/Applications，再向 Sparkle、Homebrew、GitHub 与 App Store 来源核对版本。")) }
-        return parts.joined(separator: " · ")
     }
 }
 
-/// Keep header actions on the same line as the title and transfer rate.
+/// 32 pt leading glyph: an indeterminate spinner, a determinate ring, or a filled symbol.
+private struct StatusGlyph: View {
+    let glyph: UpdatesStatus.Glyph
+    private let size: CGFloat = 32
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            switch glyph {
+            case .spinner:
+                Circle().stroke(.quaternary, lineWidth: 3)
+                if reduceMotion {
+                    ProgressView().controlSize(.small)
+                } else {
+                    TimelineView(.animation) { context in
+                        Circle().trim(from: 0, to: 0.28)
+                            .stroke(Theme.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .rotationEffect(.degrees(context.date.timeIntervalSinceReferenceDate
+                                .truncatingRemainder(dividingBy: 1) * 360))
+                    }
+                }
+            case let .progress(value, tone):
+                Circle().stroke(.quaternary, lineWidth: 3)
+                Circle().trim(from: 0, to: min(1, max(0.02, value.isFinite ? value : 0)))
+                    .stroke(tone.color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 0.35), value: value)
+            case let .symbol(name, tone):
+                Image(systemName: name).font(.system(size: size - 2))
+                    .foregroundStyle(tone == .neutral ? AnyShapeStyle(.secondary) : AnyShapeStyle(tone.color))
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+        }
+        .frame(width: size - 4, height: size - 4)
+        .frame(width: size, height: size)
+        .animation(.spring(duration: 0.3), value: glyph)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The single action slot on the right of the status card.
 private struct UpdatesOverviewActions: View {
     let store: AppStore
     let total: Int
@@ -123,22 +177,20 @@ private struct UpdatesOverviewActions: View {
                     Button("完成") { store.dismissBulkSummary() }
                         .buttonStyle(PillButtonStyle(prominent: true)).keyboardShortcut(.defaultAction)
                 }
+            } else if store.checking || store.refreshing {
+                Button("取消") { store.cancelChecking() }
+            } else if store.scanning {
+                EmptyView()
+            } else if total > 0 {
+                Button("全部更新…") { store.reviewAllUpdates() }
+                    .buttonStyle(PillButtonStyle(prominent: true)).disabled(store.operationBusy)
+                    .help("下载并安装所有可验证的来源更新；需官方更新的应用将单独列出")
+                    .accessibilityIdentifier("update-all-apps")
             } else {
-                if store.checking || store.refreshing {
-                    Button("取消") { store.cancelChecking() }
+                if store.incompleteCheckCount > 0 {
+                    Button("查看检测异常") { store.section = .all; store.sourceFilter = .incomplete }
                 }
-                if total > 0 {
-                    Button("全部更新…") { store.reviewAllUpdates() }
-                        .buttonStyle(PillButtonStyle(prominent: true)).disabled(store.operationBusy)
-                        .help("下载并安装所有可验证的来源更新；需官方更新的应用将单独列出")
-                        .accessibilityIdentifier("update-all-apps")
-                } else if !store.checking, !store.refreshing {
-                    // The toolbar already offers refresh; only surface it here when there is nothing else to do.
-                    if store.incompleteCheckCount > 0 {
-                        Button("查看检测异常") { store.section = .all; store.sourceFilter = .incomplete }
-                    }
-                    Button("重新检查") { store.refreshAll() }.disabled(store.operationBusy)
-                }
+                Button("重新检查") { store.refreshAll() }.disabled(store.operationBusy)
             }
         }
         .buttonStyle(PillButtonStyle())

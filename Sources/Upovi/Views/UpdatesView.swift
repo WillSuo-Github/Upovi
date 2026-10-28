@@ -21,12 +21,13 @@ struct UpdatesView: View {
         let installable = visible.filter { $0.canInstall && !batchIDs.contains($0.id) }
         let manual = visible.filter { !$0.canInstall && !batchIDs.contains($0.id) }
         let postponed = store.postponedApps.filter { store.matchesSearch($0) }
+        // Installed batch rows leave the list; only running, queued and failed ones stay.
+        let pending = batch.filter { store.matchesSearch($0.application) && store.transfers[$0.id]?.phase != .installed }
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 UpdatesOverview(store: store, total: plan.count, installable: plan.filter(\.canInstall).count)
-                    .padding(.bottom, 4)
-                if store.bulkSummaryVisible {
-                    TransferGroup(store: store, items: batch.filter { store.matchesSearch($0.application) }, available: installable)
+                if store.bulkSummaryVisible, !pending.isEmpty || !installable.isEmpty {
+                    TransferGroup(store: store, items: pending, available: installable)
                 }
                 if !store.bulkSummaryVisible, !installable.isEmpty {
                     group(String(localized: "可在 Upovi 中更新"), items: installable, showTitle: false)
@@ -37,9 +38,9 @@ struct UpdatesView: View {
                 if !plan.isEmpty, visible.isEmpty, batch.isEmpty {
                     ContentUnavailableView.search(text: store.search)
                 }
-                if plan.isEmpty, batch.isEmpty { UpdatesPlaceholder(store: store) }
                 if !postponed.isEmpty { postponedSection(postponed).entrance(3) }
             }
+            .animation(.snappy(duration: 0.35), value: pending.map(\.id))
             .padding(.horizontal, 32).padding(.top, 14).padding(.bottom, 48)
             .frame(maxWidth: 980).frame(maxWidth: .infinity)
         }
@@ -97,47 +98,6 @@ struct UpdatesView: View {
             store.setSkipped(candidate, app: app, skipped: false)
         }
         store.deferUpdates(for: app, until: nil)
-    }
-}
-
-/// Fills the page while nothing has been found, instead of leaving it blank.
-private struct UpdatesPlaceholder: View {
-    let store: AppStore
-
-    private var busy: Bool { store.scanning || store.checking || store.refreshing }
-
-    var body: some View {
-        VStack(spacing: 14) {
-            ZStack {
-                Circle().fill(.fill.tertiary).frame(width: 72, height: 72)
-                if busy {
-                    ProgressView().controlSize(.regular)
-                } else {
-                    Image(systemName: store.lastChecked == nil ? "arrow.down.app" : "checkmark.seal")
-                        .font(.system(size: 30, weight: .regular)).foregroundStyle(.secondary)
-                }
-            }
-            VStack(spacing: 6) {
-                Text(headline).font(.system(size: 15, weight: .semibold))
-                Text(detail).font(.system(size: 12)).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center).frame(maxWidth: 380)
-            }
-        }
-        .frame(maxWidth: .infinity).padding(.top, 96)
-        .animation(.easeOut(duration: 0.2), value: busy)
-    }
-
-    private var headline: String {
-        if store.scanning { return String(localized: "正在扫描本机应用…") }
-        if busy { return String(localized: "正在检查更新…") }
-        return store.lastChecked == nil ? String(localized: "检查一下有没有新版本") : String(localized: "没有来源报告的更新")
-    }
-
-    private var detail: String {
-        if busy || store.lastChecked == nil {
-            return String(localized: "Upovi 会扫描 /Applications 与 ~/Applications，再向 Sparkle、Homebrew、GitHub 与 App Store 来源核对版本。")
-        }
-        return String(localized: "结果为空并不代表所有应用都已是最新")
     }
 }
 
@@ -294,8 +254,11 @@ private struct TransferGroup: View {
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { UpdateRow.separator }
-                UpdateRow(store: store, item: item, isBatch: true)
+                VStack(spacing: 0) {
+                    if index > 0 { UpdateRow.separator }
+                    UpdateRow(store: store, item: item, isBatch: true)
+                }
+                .transition(.asymmetric(insertion: .identity, removal: .opacity.combined(with: .move(edge: .top))))
             }
             ForEach(Array(available.enumerated()), id: \.element.id) { index, item in
                 if !items.isEmpty || index > 0 { UpdateRow.separator }

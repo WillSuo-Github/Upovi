@@ -17,8 +17,8 @@ struct DownloadRate: View {
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 }
                 Text(TransferProgress.rate(rate))
-                    .font(.system(size: compact ? 13 : total ? 20 : 16, weight: .medium))
-                    .monospacedDigit().foregroundStyle(.primary).lineLimit(1).fixedSize()
+                    .font(.system(size: compact ? 12 : total ? 20 : 16, weight: compact ? .regular : .medium))
+                    .monospacedDigit().foregroundStyle(compact ? .secondary : .primary).lineLimit(1).fixedSize()
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(total ? Text("总下载速度") : Text("下载速度"))
