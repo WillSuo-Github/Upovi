@@ -20,6 +20,8 @@ extension AppStore {
         let ids = record.retryIDs
         guard !ids.isEmpty else { return }
         bulkUpdatePresented = false
+        // Leave the finished summary so the header shows the recheck progress and its Cancel button.
+        dismissBulkSummary()
         refreshAll()
         let refresh = checkTask
         retryTask = Task {

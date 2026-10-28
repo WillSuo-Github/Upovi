@@ -177,7 +177,7 @@ struct BulkUpdateView: View {
                     Text("正在安装的应用完成后停止").font(.caption).foregroundStyle(.secondary)
                 }
             } else if store.bulkHasRun, let record = store.batchHistory.first(where: { $0.id == store.bulkRecordID }), !record.retryIDs.isEmpty {
-                Button("重新检测并重试未完成项") { store.retryBatch(record) }
+                Button("重新检测并重试未完成项") { store.retryBatch(record) }.disabled(store.operationBusy)
             }
             Spacer()
             if !store.bulkHasRun, !store.networkAvailable {

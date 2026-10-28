@@ -172,7 +172,7 @@ private struct UpdatesOverviewActions: View {
                         .help(store.bulkStopRequested ? "正在安装的应用完成后停止" : "停止更新")
                 } else {
                     if let record = store.batchHistory.first(where: { $0.id == store.bulkRecordID }), !record.retryIDs.isEmpty {
-                        Button("重试未完成项") { store.retryBatch(record) }
+                        Button("重试未完成项") { store.retryBatch(record) }.disabled(store.operationBusy)
                     }
                     Button("完成") { store.dismissBulkSummary() }
                         .buttonStyle(PillButtonStyle(prominent: true)).keyboardShortcut(.defaultAction)

@@ -237,3 +237,32 @@ private actor ScanGate {
     }
     func resume() { scanner?.resume(); scanner = nil }
 }
+
+@MainActor
+final class BatchRetryTests: XCTestCase {
+    func testRetryLeavesTheFinishedSummaryAndReopensConfirmationAfterRechecking() async throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-retry-test-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(at: root) }
+        let preferences = AppPreferences(url: root.appending(path: "settings.plist"), migrateUserDefaults: false)
+        XCTAssertTrue(preferences.set(false, forKey: GlobalP2PSettings.key))
+        let app = InstalledApp(name: "Retry fixture", bundleID: "app.synthetic.retry", version: "1.0",
+                               path: "/synthetic/retry.app", teamID: "SYNTHETIC")
+        let candidate = UpdateCandidate(version: "2.0", source: "Fixture source", isCommunity: false,
+            url: URL(string: "https://example.invalid/"),
+            download: .init(url: URL(string: "https://example.invalid/update.zip")!, sha256: String(repeating: "a", count: 64)))
+        let store = AppStore(preferences: preferences, scanApplications: { _ in [app] }, revalidateSources: { },
+            checkApplication: { app, _ in .init(appID: app.id, candidates: [candidate], note: "Fixture", status: .updates) })
+        let item = BulkUpdateItem(application: app, candidate: candidate, manualReason: nil)
+        let record = BulkUpdateRecord(items: [item])
+        store.apps = [app]; store.bulkItems = [item]; store.batchHistory = [record]; store.bulkRecordID = record.id
+        store.bulkHasRun = true; store.bulkSummaryVisible = true
+
+        store.retryBatch(record)
+        XCTAssertFalse(store.bulkSummaryVisible, "The header must switch to recheck progress immediately")
+        XCTAssertTrue(store.operationBusy)
+        await store.retryTask?.value
+        XCTAssertTrue(store.bulkUpdatePresented)
+        XCTAssertFalse(store.bulkHasRun)
+        XCTAssertEqual(store.bulkItems.map(\.id), [app.id])
+    }
+}
