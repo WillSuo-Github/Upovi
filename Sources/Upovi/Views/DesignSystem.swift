@@ -230,13 +230,15 @@ struct HeroButtonStyle: ButtonStyle {
 /// App Store-style capsule action: accent text on a soft fill, or a solid accent fill when prominent.
 struct PillButtonStyle: ButtonStyle {
     var prominent = false
+    /// Dialog-footer size; the default fits list rows.
+    var large = false
     @Environment(\.isEnabled) private var enabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
             .lineLimit(1)
-            .padding(.horizontal, 14).frame(minWidth: 64, minHeight: 26)
+            .padding(.horizontal, large ? 18 : 14).frame(minWidth: large ? 80 : 64, minHeight: large ? 32 : 26)
             // Disabled pills turn neutral grey rather than a washed-out accent.
             .foregroundStyle(!enabled ? AnyShapeStyle(.tertiary) : prominent ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.accent))
             .background(!enabled ? AnyShapeStyle(.fill.quaternary) : prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.fill.tertiary), in: Capsule())
