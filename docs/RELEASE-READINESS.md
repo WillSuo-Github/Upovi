@@ -1,3 +1,11 @@
+# Upovi 0.4.10 build 202610280001
+
+Product revision `cfaaab5` localizes the interface into 34 languages with Xcode String Catalogs (Simplified Chinese source; other languages machine-translated and not natively reviewed), follows the system locale, mirrors version arrows and disclosure chevrons in right-to-left layouts, renames the per-app action to “Update”, and accepts Google Chrome updates through a reviewed Developer ID–bound download rule (Team `EQHXZ8M8AV`, `dl.google.com/chrome/mac/universal/stable/`). Test-only revision `d59e8f0` makes two message assertions language-independent after they failed on the macos-14 runner. All 201 local Xcode tests passed with the test language set to both zh-Hans and en; 8 release-metadata tests and three macOS CI jobs passed. Isolated real-application acceptance updated an official Chrome 156.0.8078.48 copy to 156.0.8078.74 from Google’s DMG, confirmed it current, and restored it.
+
+[The signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610280001) and signed public latest feed are published. Apple notarization, ticket stapling and Gatekeeper passed. All five public assets match the verified local bytes; the extracted public app, archive and feed signatures, notarization ticket and Gatekeeper checks passed. See [release evidence](evidence/0.4.10-build-202610280001.json). Automatic right-to-left mirroring under a real Arabic/Hebrew system language, native translation review, self-update and long-run runtime acceptance were not performed by this publication.
+
+---
+
 # Upovi 0.4.10 build 202610270005
 
 Product revision `bfd5be3` runs batch updates concurrently (default five, Settings range 1–8), shows per-row progress, transferred size, speed and remaining time, and replaces the floating download pill with an overall progress card. Administrator and App Store steps pass through a serial gate. Concurrent requests for one artifact now share a single download. All 200 local Xcode tests, 8 release-metadata tests and three macOS CI jobs passed. Isolated real-application acceptance updated three official Rectangle 2.0.3 copies to 2.0.4 concurrently, including checksum failure and retry; see [concurrent update validation](VALIDATION-CONCURRENT-UPDATES-2026-10-27.md).

@@ -2,9 +2,9 @@
 
 A native, open-source macOS application update detector with globally controlled public P2P version discovery and sharing and verified application replacement.
 
-**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610270005)**
+**SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610280001)**
 
-[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202610270005 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
+[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202610280001 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
 ## What it does
 
@@ -40,7 +40,7 @@ This uses `xcodebuild` and stages the built, ad-hoc signed application at `dist/
 
 The checked-in project opens directly without XcodeGen. `project.yml` is its reproducible specification; after changing project structure, run `xcodegen generate` and commit both files. Existing SwiftPM tools and tests remain available through `Package.swift` for diagnostic/acceptance scripts. The main app development entrypoint is `Upovi.xcodeproj`. See [Xcode project details](docs/XCODE-PROJECT.md) for targets and build settings.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md). The 0.4.10 build 202610270005 notarized preview and signed public latest feed are published. Batch updates run up to five applications concurrently with per-row progress, speed and remaining time; administrator and App Store steps remain serialized. All 200 local tests, 8 release-numbering tests and three macOS CI jobs passed; isolated real Rectangle concurrent acceptance passed (see [concurrent update validation](docs/VALIDATION-CONCURRENT-UPDATES-2026-10-27.md)). Public asset bytes and extracted signature, ticket and Gatekeeper checks passed. See [release evidence](docs/evidence/0.4.10-build-202610270005.json). The prior [Mos migration](docs/MOS-LEGACY-MIGRATION.md) and [source/trust acceptance](docs/UPDATE-SOURCE-TRUST.md) retain their recorded scope, including the Typora first-launch UI gap. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md). The 0.4.10 build 202610280001 notarized preview and signed public latest feed are published. The interface is localized into 34 languages through String Catalogs (machine translations, not natively reviewed) and mirrors in right-to-left layouts; Google Chrome updates are now accepted through a Developer ID–bound download rule. All 201 local tests passed in both Simplified Chinese and English, plus 8 release-numbering tests and three macOS CI jobs; an isolated real Chrome 156.0.8078.48 → 156.0.8078.74 update and restore passed. Public asset bytes and extracted signature, ticket and Gatekeeper checks passed. See [release evidence](docs/evidence/0.4.10-build-202610280001.json). The prior [Mos migration](docs/MOS-LEGACY-MIGRATION.md) and [source/trust acceptance](docs/UPDATE-SOURCE-TRUST.md) retain their recorded scope, including the Typora first-launch UI gap. Physical sleep/wake, interface switching, energy sampling and long-run acceptance remain separate unfinished checks.
 
 ## Public community discovery
 
