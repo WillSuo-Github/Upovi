@@ -60,7 +60,7 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         let item = try XCTUnwrap(BulkUpdatePlan.make(apps:[app],results:[app.id:.init(appID:app.id,candidates:[candidate()],note:"",status:.updates)],ignored:[]).first)
         XCTAssertTrue(item.canInstall)
         let outcomes = await BulkUpdateRunner.run([item],shouldStop:{false},operation:{_ in},report:{_ in})
-        XCTAssertEqual(outcomes.first?.status,.installed); XCTAssertTrue(outcomes.first?.detail.contains("不提供") == true)
+        XCTAssertEqual(outcomes.first?.status,.installed); XCTAssertEqual(outcomes.first?.detail, String(localized: "商店更新完成，不提供 Upovi 旧版备份"))
         let saved = BulkUpdateRecord(items:[item]); XCTAssertEqual(saved.entries.first?.item.candidate.appStoreID,12345)
         XCTAssertNil(saved.entries.first?.item.candidate.download)
     }

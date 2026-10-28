@@ -95,7 +95,7 @@ final class ToolbarWorkflowTests: XCTestCase {
         let events = await tracker.events
         XCTAssertEqual(store.apps, fresh)
         XCTAssertTrue(events.isEmpty)
-        XCTAssertTrue(store.errorMessage?.contains("没有可用网络") == true)
+        XCTAssertEqual(store.errorMessage, String(localized: "应用已重新扫描；当前没有可用网络，联网后再检查更新。"))
         XCTAssertNil(store.lastChecked)
         XCTAssertFalse(store.operationBusy)
     }

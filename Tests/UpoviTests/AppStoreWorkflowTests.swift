@@ -19,7 +19,7 @@ import UpoviCore
         store.startAllUpdates(); await store.bulkTask?.value
         XCTAssertTrue(invoked); XCTAssertEqual(store.bulkCompletedCount,1); XCTAssertFalse(store.installationBusy)
         XCTAssertEqual(store.batchHistory.first?.entries.first?.phase,.installed)
-        XCTAssertTrue(store.batchHistory.first?.entries.first?.detail.contains("不提供") == true)
+        XCTAssertEqual(store.batchHistory.first?.entries.first?.detail, String(localized: "商店更新完成，不提供 Upovi 旧版备份"))
         XCTAssertTrue(SourceFilter.appStore.includes(.updates,isAppStore:true))
         XCTAssertFalse(SourceFilter.appStore.includes(.updates,isAppStore:false))
     }
