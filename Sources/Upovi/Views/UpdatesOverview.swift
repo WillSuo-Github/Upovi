@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// One header keeps its position and height when an individual update or batch starts.
+/// Page header: large title with actions, then a single status line. Progress replaces the
+/// tail of that line, so the header keeps its height when an update or batch starts.
 struct UpdatesOverview: View {
     let store: AppStore
     let total: Int
@@ -20,31 +21,35 @@ struct UpdatesOverview: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            HStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 4) {
-                    title.font(.system(size: 16, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
-                    Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2).help(subtitle)
-                }
-                .frame(width: min(200, geometry.size.width * 0.26), alignment: .leading)
-                HStack(spacing: 10) {
-                    FlowProgressBar(value: fraction, tone: tone,
-                                    active: store.bulkUpdating || transfers.contains(where: \.isActive), height: 5)
-                    Text(fraction, format: .percent.precision(.fractionLength(0)))
-                        .font(.callout).monospacedDigit().foregroundStyle(.secondary)
-                        .frame(width: 36, alignment: .trailing)
-                }
-                .opacity(active ? 1 : 0).accessibilityHidden(!active)
-                DownloadRate(transfers: transfers, total: true)
-                    .frame(width: 112, alignment: .leading)
-                    .opacity(active ? 1 : 0).accessibilityHidden(!active)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 16) {
+                Text("可用更新").font(.system(size: 28, weight: .bold)).lineLimit(1)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 12)
                 UpdatesOverviewActions(store: store, total: total)
             }
-            .frame(height: 52)
+            .frame(height: 38)
+            HStack(spacing: 6) {
+                title.font(.system(size: 13, weight: .medium)).foregroundStyle(.primary).layoutPriority(1)
+                Text(verbatim: "·").foregroundStyle(.tertiary)
+                Text(subtitle).foregroundStyle(.secondary).truncationMode(.tail).help(subtitle)
+                if active {
+                    Spacer(minLength: 20)
+                    FlowProgressBar(value: fraction, tone: tone,
+                                    active: store.bulkUpdating || transfers.contains(where: \.isActive), height: 4)
+                        .frame(minWidth: 120, maxWidth: 240)
+                    Text(fraction, format: .percent.precision(.fractionLength(0)))
+                        .monospacedDigit().foregroundStyle(.secondary)
+                        .frame(width: 36, alignment: .trailing)
+                    DownloadRate(transfers: transfers, total: true, compact: true)
+                        .frame(width: 84, alignment: .trailing)
+                }
+            }
+            .font(.system(size: 13)).lineLimit(1)
+            .frame(height: 18)
         }
-        .frame(height: 52)
-        .padding(.horizontal, 20).padding(.vertical, 14)
-        .modifier(UpdatesSurface())
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("updates-overview")
     }
 
@@ -103,7 +108,7 @@ private struct UpdatesOverviewActions: View {
                         Button("重试未完成项") { store.retryBatch(record) }
                     }
                     Button("完成") { store.dismissBulkSummary() }
-                        .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+                        .buttonStyle(PillButtonStyle(prominent: true)).keyboardShortcut(.defaultAction)
                 }
             } else if !store.transfers.isEmpty {
                 Button("取消下载") { store.cancelInstallation() }
@@ -111,17 +116,19 @@ private struct UpdatesOverviewActions: View {
             } else {
                 if total > 0 {
                     Button("全部更新…") { store.reviewAllUpdates() }
-                        .buttonStyle(.borderedProminent).disabled(store.operationBusy)
+                        .buttonStyle(PillButtonStyle(prominent: true)).disabled(store.operationBusy)
                         .help("下载并安装所有可验证的来源更新；需官方更新的应用将单独列出")
                         .accessibilityIdentifier("update-all-apps")
+                } else {
+                    // The toolbar already offers refresh; only surface it here when there is nothing else to do.
+                    if store.incompleteCheckCount > 0 {
+                        Button("查看检测异常") { store.section = .all; store.sourceFilter = .incomplete }
+                    }
+                    Button("重新检查") { store.refreshAll() }.disabled(store.operationBusy)
                 }
-                if total == 0, store.incompleteCheckCount > 0 {
-                    Button("查看检测异常") { store.section = .all; store.sourceFilter = .incomplete }
-                }
-                Button { store.refreshAll() } label: { Label("重新检查", systemImage: "arrow.clockwise") }
-                    .labelStyle(.iconOnly).help("重新检查").disabled(store.operationBusy)
             }
         }
-        .controlSize(.regular).fixedSize()
+        .buttonStyle(PillButtonStyle())
+        .fixedSize()
     }
 }

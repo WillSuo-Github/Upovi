@@ -227,6 +227,24 @@ struct HeroButtonStyle: ButtonStyle {
     }
 }
 
+/// App Store-style capsule action: accent text on a soft fill, or a solid accent fill when prominent.
+struct PillButtonStyle: ButtonStyle {
+    var prominent = false
+    @Environment(\.isEnabled) private var enabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .semibold))
+            .lineLimit(1)
+            .padding(.horizontal, 14).frame(minWidth: 64, minHeight: 26)
+            .foregroundStyle(prominent ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.accent))
+            .background(prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.fill.tertiary), in: Capsule())
+            .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.45)
+            .contentShape(Capsule())
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 /// Uniform confirmation sheet for destructive or system-changing operations.
 struct ConfirmationSheet: View {
     let symbol: String

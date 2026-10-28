@@ -5,17 +5,19 @@ import AppKit
 struct DownloadRate: View {
     let transfers: [TransferProgress]
     var total = false
+    /// Single-line variant for inline status rows.
+    var compact = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.5)) { context in
             let rate = transfers.reduce(0) { $0 + $1.liveBytesPerSecond(at: context.date) }
             VStack(alignment: .leading, spacing: 4) {
-                if total {
+                if total, !compact {
                     Text("总下载速度").font(.caption).foregroundStyle(.secondary)
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 }
                 Text(TransferProgress.rate(rate))
-                    .font(.system(size: total ? 20 : 16, weight: .medium))
+                    .font(.system(size: compact ? 13 : total ? 20 : 16, weight: .medium))
                     .monospacedDigit().foregroundStyle(.primary).lineLimit(1).fixedSize()
             }
             .accessibilityElement(children: .ignore)
@@ -97,12 +99,13 @@ struct UpdatesSurface: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(maxWidth: .infinity)
-            .background(UpdatesPalette.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(UpdatesPalette.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(.separator.opacity(0.45), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(.separator.opacity(0.35), lineWidth: 0.5)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: .black.opacity(0.04), radius: 1, y: 1)
     }
 }
 

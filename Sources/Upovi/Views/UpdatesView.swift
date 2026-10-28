@@ -22,10 +22,9 @@ struct UpdatesView: View {
         let manual = visible.filter { !$0.canInstall && !batchIDs.contains($0.id) }
         let postponed = store.postponedApps.filter { store.matchesSearch($0) }
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("可用更新").font(.system(size: 32, weight: .bold))
-                    .frame(height: 40, alignment: .leading)
+            VStack(alignment: .leading, spacing: 24) {
                 UpdatesOverview(store: store, total: plan.count, installable: plan.filter(\.canInstall).count)
+                    .padding(.bottom, 4)
                 if store.bulkSummaryVisible {
                     TransferGroup(store: store, items: batch.filter { store.matchesSearch($0.application) }, available: installable)
                 }
@@ -40,8 +39,8 @@ struct UpdatesView: View {
                 }
                 if !postponed.isEmpty { postponedSection(postponed).entrance(3) }
             }
-            .padding(.horizontal, 28).padding(.top, 8).padding(.bottom, 40)
-            .frame(maxWidth: 1100).frame(maxWidth: .infinity)
+            .padding(.horizontal, 32).padding(.top, 14).padding(.bottom, 48)
+            .frame(maxWidth: 980).frame(maxWidth: .infinity)
         }
         .background(UpdatesPalette.page)
         .navigationTitle(Text(verbatim: "Upovi"))
@@ -50,11 +49,11 @@ struct UpdatesView: View {
     // MARK: Lists
 
     private func group(_ title: String, items: [BulkUpdateItem], showTitle: Bool = true) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if showTitle { SectionTitle(title: title, count: items.count) }
+        VStack(alignment: .leading, spacing: 8) {
+            if showTitle { UpdatesSectionHeader(title: title, count: items.count) }
             VStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { Divider().opacity(0.5) }
+                    if index > 0 { UpdateRow.separator }
                     UpdateRow(store: store, item: item)
                 }
             }.modifier(UpdatesSurface())
@@ -62,31 +61,32 @@ struct UpdatesView: View {
     }
 
     private func postponedSection(_ apps: [InstalledApp]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Button { withAnimation(.snappy) { showPostponed.toggle() } } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "chevron.forward").font(.caption.weight(.bold))
+                    UpdatesSectionHeader(title: String(localized: "已跳过或稍后提醒"), count: apps.count)
+                    Image(systemName: "chevron.forward").font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
                         .rotationEffect(.degrees(showPostponed ? (layoutDirection == .rightToLeft ? -90 : 90) : 0))
-                    SectionTitle(title: String(localized: "已跳过或稍后提醒"), count: apps.count)
+                    Spacer()
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain)
             if showPostponed {
                 VStack(spacing: 0) {
                     ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
-                        if index > 0 { Divider().padding(.leading, 64) }
+                        if index > 0 { Divider().padding(.leading, 60) }
                         HStack(spacing: 12) {
                             AppIcon(path: app.path, size: 32)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(app.name).fontWeight(.medium)
+                                Text(app.name).font(.system(size: 13, weight: .medium))
                                 if let candidate = store.fullAssessment(for: app).sourceUpdates.first {
                                     VersionTransition(from: app.version, to: candidate.version, tone: .neutral, font: .caption)
                                 }
                             }
                             Spacer()
-                            Button("恢复提醒") { restore(app) }
+                            Button("恢复提醒") { restore(app) }.buttonStyle(PillButtonStyle())
                         }.padding(.horizontal, 16).padding(.vertical, 10)
                     }
-                }.card(padding: 0).transition(.opacity.combined(with: .move(edge: .top)))
+                }.modifier(UpdatesSurface()).transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
@@ -99,11 +99,35 @@ struct UpdatesView: View {
     }
 }
 
+/// Grouped-list section header in the System Settings style.
+private struct UpdatesSectionHeader: View {
+    let title: String
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(title)
+            Text(count.formatted()).monospacedDigit().foregroundStyle(.tertiary)
+        }
+        .font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+        .padding(.leading, 4)
+    }
+}
+
 struct UpdateRow: View {
     let store: AppStore
     let item: BulkUpdateItem
     var isBatch = false
     @State private var notesExpanded = false
+
+    private static let iconSize: CGFloat = 44
+    private static let inset: CGFloat = 16
+    private static let spacing: CGFloat = 14
+
+    /// Hairline aligned with the row text, as in inset grouped lists.
+    static var separator: some View {
+        Divider().padding(.leading, inset + iconSize + spacing)
+    }
 
     private var app: InstalledApp { item.application }
     private var candidate: UpdateCandidate { item.candidate }
@@ -113,56 +137,52 @@ struct UpdateRow: View {
         let candidate = candidate
         let lead = store.assessment(for: app).communityLeads.first { $0.confirmation == .sourceMatched }
         VStack(alignment: .leading, spacing: 0) {
-            GeometryReader { geometry in
-                HStack(spacing: 16) {
-                    HStack(spacing: 24) {
-                        AppIcon(path: app.path, size: 48)
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 8) {
-                                Text(app.name).font(.system(size: 16, weight: .semibold)).lineLimit(1)
-                                Text(candidate.source).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
-                                if lead != nil {
-                                    Image(systemName: "person.2").font(.caption).foregroundStyle(.secondary)
-                                        .help(String(localized: "相同版本也出现在 P2P 社区报告中"))
-                                }
-                            }
-                            HStack(spacing: 8) {
-                                VersionTransition(from: app.version, to: candidate.version, font: .system(size: 14))
-                                if let notes = candidate.releaseNotes, !notes.isEmpty {
-                                    ReleaseNotesControl(expanded: $notesExpanded).labelStyle(.iconOnly).help("更新说明")
-                                }
-                            }
-                            if let reason = item.manualReason {
-                                Text(reason).font(.caption).foregroundStyle(.secondary).lineLimit(2).help(reason)
-                            }
+            HStack(spacing: Self.spacing) {
+                AppIcon(path: app.path, size: Self.iconSize)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(app.name).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                        if lead != nil {
+                            Image(systemName: "person.2.fill").font(.system(size: 10)).foregroundStyle(.tertiary)
+                                .help(String(localized: "相同版本也出现在 P2P 社区报告中"))
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    Group {
-                        if let transfer {
-                            TransferMeter(transfer: transfer,
-                                detail: transfer.phase == .failed ? store.bulkOutcomes[item.id]?.detail : nil,
-                                cancel: isBatch ? nil : { store.cancelInstallation() })
-                        } else {
-                            HStack { Spacer(minLength: 0); primaryButton(candidate) }.padding(.trailing, 24)
+                    HStack(spacing: 6) {
+                        VersionTransition(from: app.version, to: candidate.version, font: .system(size: 12))
+                        Text(verbatim: "·").foregroundStyle(.tertiary)
+                        Text(candidate.source).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
+                        if let notes = candidate.releaseNotes, !notes.isEmpty {
+                            ReleaseNotesControl(expanded: $notesExpanded).labelStyle(.iconOnly).help("更新说明")
                         }
                     }
-                    .frame(width: min(380, max(260, geometry.size.width * 0.40)), height: 56)
-                    .overlay(alignment: .topTrailing) {
-                        moreMenu(candidate).frame(width: 14).padding(.top, 4)
+                    .font(.system(size: 12))
+                    if let reason = item.manualReason {
+                        Text(reason).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2).help(reason)
                     }
                 }
-                .frame(height: item.manualReason == nil ? 56 : 72)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // Fixed-height trailing column: starting a transfer swaps its content without moving the row.
+                Group {
+                    if let transfer {
+                        TransferMeter(transfer: transfer,
+                            detail: transfer.phase == .failed ? store.bulkOutcomes[item.id]?.detail : nil,
+                            cancel: isBatch ? nil : { store.cancelInstallation() })
+                            .frame(width: 280)
+                    } else {
+                        primaryButton(candidate).buttonStyle(PillButtonStyle())
+                    }
+                }
+                .frame(height: 52)
+                moreMenu(candidate)
             }
-            .frame(height: item.manualReason == nil ? 56 : 72)
             if notesExpanded, let notes = candidate.releaseNotes, !notes.isEmpty {
                 ScrollView { Text(notes).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
                     .frame(maxHeight: 220).padding(12)
-                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .padding(.leading, 58).padding(.top, 10)
+                    .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .padding(.leading, Self.iconSize + Self.spacing).padding(.top, 8)
             }
         }
-        .padding(.horizontal, 20).padding(.vertical, 15)
+        .padding(.horizontal, Self.inset).padding(.vertical, 12)
         .contentShape(Rectangle())
         .accessibilityIdentifier("update-row-\(app.bundleID)")
         .contextMenu { menuItems(candidate) }
@@ -173,7 +193,6 @@ struct UpdateRow: View {
             Button("更新") {
                 if app.isAppStore { store.reviewStoreUpdate(app, candidate: candidate) } else { store.prepareInstallation(candidate, app: app) }
             }
-            .buttonStyle(.bordered).controlSize(.regular)
             .disabled(store.operationBusy)
             .accessibilityIdentifier(app.isAppStore ? "update-store-application" : "download-verify-\(app.bundleID)")
         } else if app.isAppStore {
@@ -186,8 +205,11 @@ struct UpdateRow: View {
     }
 
     private func moreMenu(_ candidate: UpdateCandidate) -> some View {
-        Menu { menuItems(candidate) } label: { Image(systemName: "ellipsis") }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        Menu { menuItems(candidate) } label: {
+            Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                .frame(width: 26, height: 26).background(.fill.tertiary, in: Circle())
+        }
+            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             .help("更多操作")
     }
 
@@ -218,11 +240,11 @@ private struct TransferGroup: View {
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { Divider().opacity(0.5) }
+                if index > 0 { UpdateRow.separator }
                 UpdateRow(store: store, item: item, isBatch: true)
             }
             ForEach(Array(available.enumerated()), id: \.element.id) { index, item in
-                if !items.isEmpty || index > 0 { Divider().opacity(0.5) }
+                if !items.isEmpty || index > 0 { UpdateRow.separator }
                 UpdateRow(store: store, item: item)
             }
         }
