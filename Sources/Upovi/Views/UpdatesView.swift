@@ -37,6 +37,7 @@ struct UpdatesView: View {
                 if !plan.isEmpty, visible.isEmpty, batch.isEmpty {
                     ContentUnavailableView.search(text: store.search)
                 }
+                if plan.isEmpty, batch.isEmpty { UpdatesPlaceholder(store: store) }
                 if !postponed.isEmpty { postponedSection(postponed).entrance(3) }
             }
             .padding(.horizontal, 32).padding(.top, 14).padding(.bottom, 48)
@@ -99,6 +100,47 @@ struct UpdatesView: View {
     }
 }
 
+/// Fills the page while nothing has been found, instead of leaving it blank.
+private struct UpdatesPlaceholder: View {
+    let store: AppStore
+
+    private var busy: Bool { store.scanning || store.checking || store.refreshing }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ZStack {
+                Circle().fill(.fill.tertiary).frame(width: 72, height: 72)
+                if busy {
+                    ProgressView().controlSize(.regular)
+                } else {
+                    Image(systemName: store.lastChecked == nil ? "arrow.down.app" : "checkmark.seal")
+                        .font(.system(size: 30, weight: .regular)).foregroundStyle(.secondary)
+                }
+            }
+            VStack(spacing: 6) {
+                Text(headline).font(.system(size: 15, weight: .semibold))
+                Text(detail).font(.system(size: 12)).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).frame(maxWidth: 380)
+            }
+        }
+        .frame(maxWidth: .infinity).padding(.top, 96)
+        .animation(.easeOut(duration: 0.2), value: busy)
+    }
+
+    private var headline: String {
+        if store.scanning { return String(localized: "正在扫描本机应用…") }
+        if busy { return String(localized: "正在检查更新…") }
+        return store.lastChecked == nil ? String(localized: "检查一下有没有新版本") : String(localized: "没有来源报告的更新")
+    }
+
+    private var detail: String {
+        if busy || store.lastChecked == nil {
+            return String(localized: "Upovi 会扫描 /Applications 与 ~/Applications，再向 Sparkle、Homebrew、GitHub 与 App Store 来源核对版本。")
+        }
+        return String(localized: "结果为空并不代表所有应用都已是最新")
+    }
+}
+
 /// Grouped-list section header in the System Settings style.
 private struct UpdatesSectionHeader: View {
     let title: String
@@ -147,27 +189,39 @@ struct UpdateRow: View {
                                 .help(String(localized: "相同版本也出现在 P2P 社区报告中"))
                         }
                     }
-                    HStack(spacing: 6) {
-                        VersionTransition(from: app.version, to: candidate.version, font: .system(size: 12))
-                        Text(verbatim: "·").foregroundStyle(.tertiary)
-                        Text(candidate.source).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
-                        if let notes = candidate.releaseNotes, !notes.isEmpty {
-                            ReleaseNotesControl(expanded: $notesExpanded).labelStyle(.iconOnly).help("更新说明")
+                    // A running transfer takes over the version line, so the row never changes height.
+                    Group {
+                        if let transfer, transfer.phase != .installed {
+                            TransferStatusLine(transfer: transfer,
+                                               detail: store.bulkOutcomes[item.id]?.detail)
+                        } else {
+                            // Installed rows keep their version line so the result stays readable.
+                            HStack(spacing: 6) {
+                                VersionTransition(from: app.version, to: candidate.version,
+                                                  tone: transfer == nil ? .accent : .success, font: .system(size: 12))
+                                Text(verbatim: "·").foregroundStyle(.tertiary)
+                                if transfer != nil {
+                                    Text("已完成").foregroundStyle(.green).lineLimit(1)
+                                } else {
+                                    Text(candidate.source).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
+                                    if let notes = candidate.releaseNotes, !notes.isEmpty {
+                                        ReleaseNotesControl(expanded: $notesExpanded).labelStyle(.iconOnly).help("更新说明")
+                                    }
+                                }
+                            }
                         }
                     }
-                    .font(.system(size: 12))
+                    .font(.system(size: 12)).frame(height: 16, alignment: .leading)
                     if let reason = item.manualReason {
                         Text(reason).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2).help(reason)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                // Fixed-height trailing column: starting a transfer swaps its content without moving the row.
+                // Fixed-height trailing slot: the Update pill turns into a progress ring in place.
                 Group {
                     if let transfer {
-                        TransferMeter(transfer: transfer,
-                            detail: transfer.phase == .failed ? store.bulkOutcomes[item.id]?.detail : nil,
-                            cancel: isBatch ? nil : { store.cancelInstallation() })
-                            .frame(width: 280)
+                        TransferRing(transfer: transfer, cancel: isBatch ? nil : { store.cancelInstallation() })
+                            .frame(minWidth: 64)
                     } else {
                         primaryButton(candidate).buttonStyle(PillButtonStyle())
                     }

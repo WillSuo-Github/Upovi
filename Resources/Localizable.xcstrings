@@ -2271,9 +2271,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld apps"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld app"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld apps"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -2473,9 +2485,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld apps have source updates"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld app has a source update"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld apps have source updates"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -2675,9 +2699,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld apps could not be fully checked"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld app could not be fully checked"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld apps could not be fully checked"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -2877,9 +2913,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld updates"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld update"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld updates"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -3079,9 +3127,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld apps on this Mac"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld app on this Mac"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld apps on this Mac"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -3483,9 +3543,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld peers · %@"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld peer · %@"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld peers · %@"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -3685,9 +3757,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld need the official channel"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld needs the official channel"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld need the official channel"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -23118,9 +23202,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld app updates found"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld app update found"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld app updates found"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -46358,9 +46454,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Update %lld Apps"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Update %lld App"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Update %lld Apps"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -69806,9 +69914,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Updating %lld Apps"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Updating %lld App"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Updating %lld Apps"
+                }
+              }
+            }
           }
         },
         "es": {

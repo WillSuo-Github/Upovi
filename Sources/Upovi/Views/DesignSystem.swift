@@ -237,9 +237,10 @@ struct PillButtonStyle: ButtonStyle {
             .font(.system(size: 13, weight: .semibold))
             .lineLimit(1)
             .padding(.horizontal, 14).frame(minWidth: 64, minHeight: 26)
-            .foregroundStyle(prominent ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.accent))
-            .background(prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.fill.tertiary), in: Capsule())
-            .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.45)
+            // Disabled pills turn neutral grey rather than a washed-out accent.
+            .foregroundStyle(!enabled ? AnyShapeStyle(.tertiary) : prominent ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.accent))
+            .background(!enabled ? AnyShapeStyle(.fill.quaternary) : prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.fill.tertiary), in: Capsule())
+            .opacity(configuration.isPressed ? 0.7 : 1)
             .contentShape(Capsule())
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }

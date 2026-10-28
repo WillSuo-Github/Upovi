@@ -152,7 +152,9 @@ private struct ActivityPill: View {
     let store: AppStore
 
     private var visible: Bool {
-        store.refreshing || store.scanning || store.checking || (store.installing && !store.bulkUpdating && store.transfers.isEmpty)
+        // The Updates header shows scan/check progress itself.
+        (store.section != .updates && (store.refreshing || store.scanning || store.checking))
+            || (store.installing && !store.bulkUpdating && store.transfers.isEmpty)
     }
 
     var body: some View {
