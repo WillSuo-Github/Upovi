@@ -51,7 +51,10 @@ public enum ApplicationSourceCatalog {
     }
     public static let developerDownloads: [String: DeveloperDownloadRule] = [
         "com.bjango.istatmenus": .init(teamID: "Y93TK974AT", host: "cdn.istatmenus.app",
-                                       pathPrefix: "/files/istatmenus7/versions/iStatMenus")
+                                       pathPrefix: "/files/istatmenus7/versions/iStatMenus"),
+        // The cask points at Google's unversioned stable DMG; a newer payload fails the exact version check.
+        "com.google.Chrome": .init(teamID: "EQHXZ8M8AV", host: "dl.google.com",
+                                   pathPrefix: "/chrome/mac/universal/stable/")
     ]
 
     public struct LegacyMigrationRule: Sendable {

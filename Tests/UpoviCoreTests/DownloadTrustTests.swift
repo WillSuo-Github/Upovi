@@ -35,6 +35,22 @@ final class DownloadTrustTests: XCTestCase {
         XCTAssertFalse(DownloadDescriptor(url: official, sha256: "malformed").canVerify(for: app()))
         XCTAssertFalse(DownloadDescriptor(url: official, edSignature: Data([0])).canVerify(for: app()))
     }
+    func testChromeNoCheckCaskBindsGoogleTeamAndStableDownloadPath() throws {
+        let json = #"{"token":"google-chrome","version":"156.0.8078.74","url":"https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg","sha256":"no_check","artifacts":[{"app":["Google Chrome.app"]}]}"#
+        let cask = try JSONDecoder().decode(CaskMetadata.self, from: Data(json.utf8))
+        let chrome = app(team: "EQHXZ8M8AV", bundle: "com.google.Chrome")
+        XCTAssertNil(cask.download)
+        XCTAssertNotNil(cask.download(for: chrome))
+        for installed in [app(team: "Y93TK974AT", bundle: "com.google.Chrome"), app(team: nil, bundle: "com.google.Chrome"),
+                          app(team: "EQHXZ8M8AV", bundle: "com.google.Chrome.canary")] {
+            XCTAssertNil(cask.download(for: installed))
+        }
+        for text in ["https://dl.google.com/chrome/mac/universal/beta/googlechrome.dmg",
+                     "https://dl.google.com.evil.example/chrome/mac/universal/stable/GGRO/googlechrome.dmg",
+                     "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.pkg"] {
+            XCTAssertFalse(DownloadDescriptor(url: URL(string: text)!).canVerify(for: chrome), text)
+        }
+    }
     func testCaskNoCheckRequiresReviewedDirectApplicationAndNeverDowngradesMalformedProof() throws {
         let json = #"{"token":"istat-menus","version":"7.50.1","url":"https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.1.zip","sha256":"no_check","artifacts":[{"app":["iStat Menus.app"]}]}"#
         let cask = try JSONDecoder().decode(CaskMetadata.self, from: Data(json.utf8))
