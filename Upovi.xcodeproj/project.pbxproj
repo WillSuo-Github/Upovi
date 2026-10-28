@@ -32,6 +32,7 @@
 		26301ECC6E9EDD3AD41DD2E3 /* UpdateInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0F5062F6A88189F1B52141 /* UpdateInstaller.swift */; };
 		272B49653647DBA49D22431B /* DownloadRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D871E08ADBCD68A74F5B69B /* DownloadRecord.swift */; };
 		2D9518E77EC6243E3A598BB0 /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
+		2E54C16B5CB94546B7F356E2 /* TransferViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ABD141C086C1CA02015C7ED /* TransferViews.swift */; };
 		2EF6240926E82EC8DD37F3F8 /* UpdateAssessmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370492760240B5D431368A08 /* UpdateAssessmentTests.swift */; };
 		2F18D10DCFD2C78B502F7522 /* HTTPTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E754C62169969C33D38BFB04 /* HTTPTransfer.swift */; };
 		2F37A01CC9BE8C94C7F0316E /* UpdateControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6DE0926B15291CA0D14592 /* UpdateControlsTests.swift */; };
@@ -98,8 +99,10 @@
 		8F7AD206F5A91DCECB0278B0 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25102D3CE4A21F8F511A8FF2 /* DiagnosticsView.swift */; };
 		9423D50A02811FCF748397EC /* CommunityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA7C5CD32C37E1CFC6024A1 /* CommunityTests.swift */; };
 		9502FFF610A142C48A81AD7C /* CoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D62D357ECB9559B00B391C /* CoreTests.swift */; };
+		96B517174DF32592096EB4B5 /* UpdatesOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F69221DF91BCA0111F29FA /* UpdatesOverview.swift */; };
 		98410AE03A6D0D2733F43950 /* SourceEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B323BDE71CE1C122683B76 /* SourceEditorView.swift */; };
 		99AABCF59892E4AF9700B012 /* ManualUpdateSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31D0F626104891D99B43C281 /* ManualUpdateSource.swift */; };
+		9C9DE9DDE15984A0D4552B6B /* TransferProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592184E69E573346D40B7653 /* TransferProgressTests.swift */; };
 		9D7536A7BD31F08E3B35506A /* AppStore+UpdateControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126D63E5E3B898343D14A823 /* AppStore+UpdateControls.swift */; };
 		9F281F35B473759734B63AD6 /* AppTableLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC734DED28ABA73C21BAC18D /* AppTableLayoutTests.swift */; };
 		A0D782F2A08A5AE66CDA1257 /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
@@ -349,6 +352,7 @@
 		5595BC76CC1B3AB15E739208 /* UpoviInstaller */ = {isa = PBXFileReference; includeInIndex = 0; path = UpoviInstaller; sourceTree = BUILT_PRODUCTS_DIR; };
 		564086B40D4FF1345865886F /* DownloadCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadCoordinatorTests.swift; sourceTree = "<group>"; };
 		5863B940E28780A1C414786E /* build_and_run.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_and_run.sh; sourceTree = "<group>"; };
+		592184E69E573346D40B7653 /* TransferProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferProgressTests.swift; sourceTree = "<group>"; };
 		5B6E212A17340ABD88EBE75D /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		5C2BDA2F56AC3A043CC187DF /* GlobalP2PTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalP2PTests.swift; sourceTree = "<group>"; };
 		5C639F0D895F5D903E35CC25 /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
@@ -383,12 +387,14 @@
 		8F95914548CDC62E28D8B89F /* download_resume.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = download_resume.swift; sourceTree = "<group>"; };
 		8FA9CD365BA01E4752CD9546 /* design_preview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = design_preview.swift; sourceTree = "<group>"; };
 		901F4F65105E27B17674A144 /* UpdateSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateSource.swift; sourceTree = "<group>"; };
+		93F69221DF91BCA0111F29FA /* UpdatesOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesOverview.swift; sourceTree = "<group>"; };
 		94F5DDC26AB7FF14352E5B0B /* AppStore+Operations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+Operations.swift"; sourceTree = "<group>"; };
 		97B67A996FBE2329129F6687 /* VersionOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionOrder.swift; sourceTree = "<group>"; };
 		97EDD6E02F519B093F242370 /* embed_sparkle.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = embed_sparkle.py; sourceTree = "<group>"; };
 		97F27BB60A1ACB9A22805311 /* AppStoreWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreWorkflowTests.swift; sourceTree = "<group>"; };
 		9912FDEA4B8914CA1B3013DD /* AppStoreUpdatePlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreUpdatePlan.swift; sourceTree = "<group>"; };
 		9AAA551604B781EEEBFD1297 /* AppMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMetadata.swift; sourceTree = "<group>"; };
+		9ABD141C086C1CA02015C7ED /* TransferViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferViews.swift; sourceTree = "<group>"; };
 		9D54348A624F4C6167D6B407 /* PeerIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerIdentity.swift; sourceTree = "<group>"; };
 		9E95AB8BF3C88D7589475DC2 /* build_bulk_fixture.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = build_bulk_fixture.py; sourceTree = "<group>"; };
 		9F074CD4B1B204AF3F98EB63 /* ApplicationTableColumns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationTableColumns.swift; sourceTree = "<group>"; };
@@ -557,6 +563,7 @@
 				0752EE762D9878EED96DAED8 /* DiagnosticsWorkflowTests.swift */,
 				10C3186A78FC7CF98D6A82AA /* DownloadWorkflowTests.swift */,
 				B3453C7074ED60A9804CA828 /* ToolbarWorkflowTests.swift */,
+				592184E69E573346D40B7653 /* TransferProgressTests.swift */,
 				FA1D001925A9B0AE1A1A8E99 /* UpdateControlsWorkflowTests.swift */,
 			);
 			path = UpoviTests;
@@ -594,6 +601,8 @@
 				C3B39E00B3A49880BEF03153 /* LibraryView.swift */,
 				A975C10358CBA7959D1A8E2A /* SettingsView.swift */,
 				F3B323BDE71CE1C122683B76 /* SourceEditorView.swift */,
+				9ABD141C086C1CA02015C7ED /* TransferViews.swift */,
+				93F69221DF91BCA0111F29FA /* UpdatesOverview.swift */,
 				E16F11787601C86A1217B362 /* UpdatesView.swift */,
 			);
 			path = Views;
@@ -1354,6 +1363,7 @@
 				DB06422D74838FD02B017862 /* DiagnosticsWorkflowTests.swift in Sources */,
 				BD69C72ECD40DFA3803E17BC /* DownloadWorkflowTests.swift in Sources */,
 				5CF3ACD5EEAC3490D7468014 /* ToolbarWorkflowTests.swift in Sources */,
+				9C9DE9DDE15984A0D4552B6B /* TransferProgressTests.swift in Sources */,
 				A8B8785BB8DD42DD2068541C /* UpdateControlsWorkflowTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1407,6 +1417,8 @@
 				98410AE03A6D0D2733F43950 /* SourceEditorView.swift in Sources */,
 				0E3C370FF5AF9E6689C94245 /* SourceFilter.swift in Sources */,
 				CEE8F8C6D13C6EBD2B706356 /* TransferProgress.swift in Sources */,
+				2E54C16B5CB94546B7F356E2 /* TransferViews.swift in Sources */,
+				96B517174DF32592096EB4B5 /* UpdatesOverview.swift in Sources */,
 				C4A592F4054543585EE96E21 /* UpdatesView.swift in Sources */,
 				55D3C1F4B3DDC1C978DCF51F /* UpoviApp.swift in Sources */,
 			);

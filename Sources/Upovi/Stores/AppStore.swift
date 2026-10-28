@@ -45,12 +45,11 @@ final class AppStore {
     /// Keeps the batch dashboard and its rows on screen after the run until the user dismisses it.
     var bulkSummaryVisible = false
     var transfers: [String: TransferProgress] = [:]
-    var bulkBytesPerSecond: Double = 0
     var bulkConcurrency: Int {
         didSet { preferences.set(bulkConcurrency, forKey: "bulkConcurrencyV1") }
     }
     @ObservationIgnored var bulkCancellers: [String: () -> Void] = [:]
-    @ObservationIgnored var speedWindow: (bytes: Int64, start: Date)?
+    @ObservationIgnored var transferSamples: [String: TransferProgress.Sample] = [:]
     /// Administrator and App Store steps show system prompts; run them one at a time.
     @ObservationIgnored let authorizationGate = SerialGate()
     @ObservationIgnored var bulkTask: Task<Void, Never>?

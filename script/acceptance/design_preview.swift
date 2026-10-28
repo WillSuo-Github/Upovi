@@ -178,9 +178,12 @@ actor DesignPreviewTransfer {
         store.checkHistory = (0..<6).map { .init(date: Date().addingTimeInterval(-Double($0) * 3 * 3600 - 1080), applications: 20, updates: 7 - $0 % 3, failed: $0 % 2) }
         store.selection = option("--select").flatMap { name in apps.first { $0.name == name }?.id } ?? apps[0].id
         if let section = option("--section") { store.section = AppSection.allCases.first { "\($0)" == section } }
+        if option("--present") == "selected-preview" { SelectedLayoutDemo.configure(store) }
         _store = State(initialValue: store)
         switch option("--present") {
+        case "selected-preview": Task { @MainActor in await SelectedLayoutDemo.run(store) }
         case "bulk": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); store.reviewAllUpdates() }
+        case "single-demo": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); await SingleDemo.run(store) }
         case "bulk-demo": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); await BulkDemo.run(store) }
         case "check": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); store.beginChecking() }
         case "diagnostics": Task { @MainActor in try? await Task.sleep(for: .seconds(1)); store.diagnosticsPresentation = store.diagnosticSnapshot() }
@@ -189,8 +192,12 @@ actor DesignPreviewTransfer {
     }
 
     var body: some Scene {
-        WindowGroup("Upovi", id: "main") { ContentView(store: store).frame(minWidth: 1000, minHeight: 650).background(SettingsOpener()) }
-            .defaultSize(width: 1240, height: 780)
+        WindowGroup("Upovi", id: CommandLine.arguments.contains("--compact") ? "compact" : "main") {
+            ContentView(store: store).frame(minWidth: 1000, minHeight: 650).background(SettingsOpener())
+                .preferredColorScheme(CommandLine.arguments.contains("--dark") ? .dark : .light)
+        }
+        .defaultSize(width: CommandLine.arguments.contains("--compact") ? 1000 : 1240,
+                     height: CommandLine.arguments.contains("--compact") ? 650 : 780)
             .commands {
                 CommandMenu("Fixture") {
                     Button("Start synthetic download") {
@@ -198,6 +205,8 @@ actor DesignPreviewTransfer {
                         Task { try? await coordinator.download(.init(url: URL(string: "https://example.invalid/Figma.zip")!, sha256: String(repeating: "a", count: 64)),
                                                                app: app, targetVersion: "126.1.4", to: root.appending(path: "Output-\(UUID().uuidString).zip"), progress: { _, _ in }) }
                     }
+                    Button("Preview single download") { Task { await SingleDemo.run(store) } }
+                    Button("Preview concurrent downloads") { Task { await BulkDemo.run(store) } }
                     Button("Show bulk review") { store.reviewAllUpdates() }
                     Button("Show diagnostics") { store.diagnosticsPresentation = store.diagnosticSnapshot() }
                 }
@@ -238,12 +247,12 @@ private struct SettingsOpener: View {
                     store.bulkOutcomes[item.id] = .init(item: item, status: .cancelled, detail: "已停止，未安装"); continue
                 }
                 running += 1
-                store.bulkActiveIDs.insert(item.id); store.transfers[item.id] = TransferProgress(phase: .downloading)
+                store.bulkActiveIDs.insert(item.id); store.beginTransfer(item.id)
                 group.addTask { await simulate(store, item, index: index) }
             }
             await group.waitForAll()
         }
-        store.bulkActiveIDs = []; store.bulkBytesPerSecond = 0
+        store.bulkActiveIDs = []
         store.installing = false; store.bulkUpdating = false
     }
 
@@ -253,7 +262,7 @@ private struct SettingsOpener: View {
         var received: Int64 = 0
         try? await Task.sleep(for: .milliseconds(400))
         while received < size, !store.bulkStopRequested {
-            try? await Task.sleep(for: .milliseconds(120))
+            try? await Task.sleep(for: .milliseconds(CommandLine.arguments.contains("--slow-transfers") ? 900 : 120))
             received = min(size, received + step)
             store.reportDownload(item.id, received: received, expected: size)
         }
@@ -268,5 +277,85 @@ private struct SettingsOpener: View {
         store.transfers[item.id]?.finish(status == .installed ? .installed : status == .cancelled ? .cancelled : .failed)
         store.bulkOutcomes[item.id] = .init(item: item, status: status,
             detail: status == .failed ? "下载内容的 SHA-256 与来源不一致（合成失败）" : status == .cancelled ? "已取消，未完成安装" : "更新完成，主应用备份已保留")
+    }
+}
+
+/// Visual-only individual transfer; no downloader, installer or filesystem target is invoked.
+@MainActor private enum SingleDemo {
+    static func run(_ store: AppStore) async {
+        guard !store.bulkUpdating, store.transfers.isEmpty else { return }
+        let app = store.apps[0]
+        store.section = .updates
+        store.installing = true; store.canCancelInstallation = true
+        store.installationTask = Task { @MainActor in
+            defer {
+                store.transfers[app.id] = nil
+                store.installing = false; store.canCancelInstallation = false
+            }
+            store.beginTransfer(app.id)
+            let size: Int64 = 240_000_000
+            do {
+                for step in 1...100 {
+                    try await Task.sleep(for: .milliseconds(500))
+                    store.reportDownload(app.id, received: Int64(step) * size / 100, expected: size)
+                }
+                try await Task.sleep(for: .seconds(2))
+                store.setTransferPhase(app.id, .awaitingConfirmation)
+                try await Task.sleep(for: .seconds(2))
+            } catch { }
+        }
+        await store.installationTask?.value
+        store.installationTask = nil
+    }
+}
+
+/// Frozen transfer samples for comparing the selected visual target with the real SwiftUI page.
+/// No download or installation operation is called, including when stopping the preview.
+@MainActor private enum SelectedLayoutDemo {
+    static func configure(_ store: AppStore) {
+        let bundles = ["com.google.Chrome", "com.microsoft.VSCode", "com.tinyspeck.slackmacgap", "com.figma.Desktop", "com.colliderli.iina"]
+        let apps = bundles.compactMap { bundle in store.apps.first { $0.bundleID == bundle } }
+        let root = URL(fileURLWithPath: option("--root")!).deletingLastPathComponent().deletingLastPathComponent()
+        let rectanglePath = ["/Applications/Rectangle.app", root.appending(path: ".local/installer-acceptance/Applications/Rectangle.app").path]
+            .first { FileManager.default.fileExists(atPath: $0) } ?? "/synthetic/Rectangle.app"
+        let rectangle = InstalledApp(name: "Rectangle", bundleID: "com.knollsoft.Rectangle", version: "0.84",
+            path: rectanglePath, teamID: "SYNTHETIC")
+        store.apps = apps + [rectangle]
+        let versions = ["141.0.7390.108", "1.105.0", "4.47.59", "126.1.4", "1.4.0", "0.85"]
+        let sources = ["Homebrew", "Sparkle appcast", "Homebrew", "Sparkle appcast", "GitHub Release", "GitHub Release"]
+        store.sourceResults = [:]; store.communityResults = [:]; store.ignored = []
+        var items: [BulkUpdateItem] = []
+        for (index, app) in store.apps.enumerated() {
+            let candidate = UpdateCandidate(version: versions[index], source: sources[index], isCommunity: false,
+                url: URL(string: "https://example.invalid/release"),
+                download: .init(url: URL(string: "https://example.invalid/update.zip")!, sha256: String(repeating: "a", count: 64)),
+                releaseNotes: Fixture.notes)
+            store.sourceResults[app.id] = .init(appID: app.id, candidates: [candidate], note: "Offline visual fixture", status: .updates)
+            items.append(.init(application: app, candidate: candidate, manualReason: nil))
+        }
+        store.bulkItems = Array(items.prefix(5)); store.bulkActiveIDs = Set(store.bulkItems.map(\.id))
+        store.bulkOutcomes = [:]; store.bulkHasRun = true; store.bulkUpdating = true
+        store.bulkSummaryVisible = true; store.installing = true; store.bulkStopRequested = false
+        store.section = .updates
+        let sizes: [Int64] = [80_000_000, 65_000_000, 90_000_000, 115_000_000, 140_000_000]
+        let fractions = [0.64, 0.42, 0.78, 0.26, 0.55], rates = [5.8, 4.2, 3.6, 2.9, 5.1]
+        for (index, item) in store.bulkItems.enumerated() {
+            var progress = TransferProgress(phase: .downloading)
+            progress.expected = sizes[index]; progress.received = Int64(Double(sizes[index]) * fractions[index])
+            progress.bytesPerSecond = rates[index] * 1_000_000; progress.sampleTime = Date()
+            store.transfers[item.id] = progress
+        }
+    }
+
+    static func run(_ store: AppStore) async {
+        while !store.bulkStopRequested, !Task.isCancelled {
+            for id in store.bulkActiveIDs { store.transfers[id]?.sampleTime = Date() }
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        for item in store.bulkItems {
+            store.transfers[item.id]?.finish(.cancelled)
+            store.bulkOutcomes[item.id] = .init(item: item, status: .cancelled, detail: "Stopped offline preview")
+        }
+        store.bulkActiveIDs = []; store.bulkUpdating = false; store.installing = false
     }
 }

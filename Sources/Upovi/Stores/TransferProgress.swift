@@ -11,7 +11,6 @@ struct TransferProgress: Equatable {
     /// Smoothed transfer rate of this application's download.
     var bytesPerSecond: Double = 0
     var sampleTime: Date?
-    var sampleBytes: Int64 = 0
     /// Fraction kept when a transfer stops early, so a failed bar does not jump.
     private var settled: Double?
 
@@ -44,15 +43,7 @@ struct TransferProgress: Equatable {
     var label: String {
         switch phase {
         case .queued: return String(localized: "排队中")
-        case .downloading:
-            // The row's single percentage covers the whole update, so the status line shows bytes only.
-            guard received > 0 else { return String(localized: "正在连接…") }
-            var parts = [expected > 0 ? "\(Self.megabytes(received)) / \(Self.megabytes(expected))" : Self.megabytes(received)]
-            if bytesPerSecond > 0 {
-                parts.append(Self.rate(bytesPerSecond))
-                if expected > received { parts.append(Self.remaining(Double(expected - received) / bytesPerSecond)) }
-            }
-            return parts.joined(separator: " · ")
+        case .downloading: return downloadDetail(at: Date())
         case .verifying: return String(localized: "正在校验签名与完整性")
         case .awaitingConfirmation: return String(localized: "已验证，等待确认安装")
         case .waitingForAuthorization: return String(localized: "等待授权")
@@ -63,9 +54,53 @@ struct TransferProgress: Equatable {
         }
     }
 
+    /// Ignore old samples after a stall, cancellation or the transition to verification.
+    func liveBytesPerSecond(at now: Date) -> Double {
+        guard phase == .downloading, let sampleTime,
+              now.timeIntervalSince(sampleTime) < 2, bytesPerSecond.isFinite else { return 0 }
+        return max(0, bytesPerSecond)
+    }
+
+    func downloadDetail(at now: Date) -> String {
+        guard received > 0 else { return String(localized: "正在连接…") }
+        let bytes = expected > 0 ? "\(Self.megabytes(received)) / \(Self.megabytes(expected))" : Self.megabytes(received)
+        let rate = liveBytesPerSecond(at: now)
+        return rate > 0 && expected > received
+            ? bytes + " · " + Self.remaining(Double(expected - received) / rate) : bytes
+    }
+
     static func rate(_ bytesPerSecond: Double) -> String {
-        bytesPerSecond >= 1_000_000 ? String(format: "%.1f MB/s", bytesPerSecond / 1_000_000)
-            : String(format: "%.0f KB/s", bytesPerSecond / 1_000)
+        let parts = rateComponents(bytesPerSecond)
+        return parts.value + " " + parts.unit
+    }
+
+    static func rateComponents(_ bytesPerSecond: Double) -> (value: String, unit: String) {
+        let rate = bytesPerSecond.isFinite ? max(0, bytesPerSecond) : 0
+        let megabytes = rate >= 1_000_000
+        let number = (rate / (megabytes ? 1_000_000 : 1_000)).formatted(
+            .number.locale(.interface).precision(.fractionLength(megabytes ? 1 : 0)))
+        return (number, megabytes ? "MB/s" : "KB/s")
+    }
+
+    /// Sampling state is independent of UI publication, so suppressed progress callbacks are
+    /// never counted twice in the total rate. Each new transfer starts with a fresh sample.
+    struct Sample {
+        var startedAt: Date
+        var received: Int64 = 0
+        var bytesPerSecond: Double = 0
+
+        mutating func record(_ bytes: Int64, at now: Date) -> Bool {
+            guard bytes >= received else {
+                self = Sample(startedAt: now, received: bytes)
+                return true
+            }
+            let elapsed = now.timeIntervalSince(startedAt)
+            guard elapsed >= 0.5 else { return false }
+            let rate = Double(bytes - received) / elapsed
+            bytesPerSecond = bytesPerSecond == 0 || elapsed >= 2 ? rate : bytesPerSecond * 0.6 + rate * 0.4
+            startedAt = now; received = bytes
+            return true
+        }
     }
 
     static func remaining(_ seconds: Double) -> String {

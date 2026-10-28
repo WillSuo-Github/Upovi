@@ -46,7 +46,7 @@ extension AppStore {
 
     func clearBulkTransfers() {
         for item in bulkItems { transfers[item.id] = nil }
-        bulkBytesPerSecond = 0; speedWindow = nil
+        transferSamples = [:]
     }
 
     /// Hides the finished batch dashboard and returns the Updates page to its normal list.
@@ -73,7 +73,7 @@ extension AppStore {
         bulkTask = Task { [self] in
             _ = await BulkUpdateRunner.run(items, concurrency: width, shouldStop: { await self.bulkStopRequested },
                 operation: { try await self.installBulkItem($0) }, report: { await self.recordBulkEvent($0) })
-            bulkActiveIDs = []; bulkCancellers = [:]; bulkBytesPerSecond = 0
+            bulkActiveIDs = []; bulkCancellers = [:]
             await refreshInstallations()
             apps = await scanInventory()
             if let index = batchHistory.firstIndex(where: { $0.id == bulkRecordID }) {
@@ -96,7 +96,7 @@ extension AppStore {
         switch event {
         case .started(let item):
             bulkActiveIDs.insert(item.id)
-            transfers[item.id] = TransferProgress(phase: .downloading)
+            beginTransfer(item.id)
             saveBulkPhase(item.id, phase: .preparing, detail: String(localized: "正在下载并验证"))
         case .finished(let outcome):
             let id = outcome.item.id
@@ -119,43 +119,22 @@ extension AppStore {
         }
     }
 
-    /// Applies a download callback, skipping sub-percent changes so many concurrent rows stay cheap to render.
-    func reportDownload(_ id: String, received: Int64, expected: Int64) {
-        guard var value = transfers[id], [.downloading, .verifying].contains(value.phase) else { return }
-        let previous = value.received
-        let before = value.downloadFraction
-        value.received = received; value.expected = expected
-        if expected > 0, received >= expected { value.phase = .verifying }
-        else if value.phase == .verifying { value.phase = .downloading }
-        sampleSpeed(max(0, received - previous))
-        // Per-row rate, sampled at most twice a second and smoothed so the label does not flicker.
-        let now = Date()
-        var rateChanged = false
-        if let start = value.sampleTime {
-            let elapsed = now.timeIntervalSince(start)
-            if elapsed >= 0.5 {
-                let rate = Double(max(0, received - value.sampleBytes)) / elapsed
-                value.bytesPerSecond = value.bytesPerSecond == 0 ? rate : value.bytesPerSecond * 0.6 + rate * 0.4
-                value.sampleTime = now; value.sampleBytes = received; rateChanged = true
-            }
-        } else {
-            value.sampleTime = now; value.sampleBytes = received
-        }
-        if !rateChanged, value.phase == transfers[id]?.phase, let before, let after = value.downloadFraction, after - before < 0.004, after < 1 { return }
-        transfers[id] = value
+    func beginTransfer(_ id: String, at now: Date = Date()) {
+        transfers[id] = TransferProgress(phase: .downloading)
+        transferSamples[id] = .init(startedAt: now)
     }
 
-    private func sampleSpeed(_ bytes: Int64) {
-        let now = Date()
-        var window = speedWindow ?? (0, now)
-        window.bytes += bytes
-        let elapsed = now.timeIntervalSince(window.start)
-        if elapsed >= 0.5 {
-            let rate = Double(window.bytes) / elapsed
-            bulkBytesPerSecond = bulkBytesPerSecond == 0 ? rate : bulkBytesPerSecond * 0.6 + rate * 0.4
-            window = (0, now)
-        }
-        speedWindow = window
+    /// Publish at most twice a second, except for phase changes and the final byte count.
+    func reportDownload(_ id: String, received: Int64, expected: Int64, at now: Date = Date()) {
+        guard var value = transfers[id], [.downloading, .verifying].contains(value.phase) else { return }
+        var sample = transferSamples[id] ?? .init(startedAt: now)
+        let sampled = sample.record(received, at: now)
+        transferSamples[id] = sample
+        let phase: TransferProgress.Phase = expected > 0 && received >= expected ? .verifying : .downloading
+        guard sampled || phase != value.phase || expected != value.expected else { return }
+        value.received = received; value.expected = expected; value.phase = phase
+        value.bytesPerSecond = sample.bytesPerSecond; value.sampleTime = now
+        transfers[id] = value
     }
 
     func setTransferPhase(_ id: String, _ phase: TransferProgress.Phase) {

@@ -22,113 +22,42 @@ struct UpdatesView: View {
         let manual = visible.filter { !$0.canInstall && !batchIDs.contains($0.id) }
         let postponed = store.postponedApps.filter { store.matchesSearch($0) }
         ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("可用更新").font(.system(size: 32, weight: .bold))
+                    .frame(height: 40, alignment: .leading)
+                UpdatesOverview(store: store, total: plan.count, installable: plan.filter(\.canInstall).count)
                 if store.bulkSummaryVisible {
-                    BulkProgressHero(store: store).entrance(0)
-                    TransferGroup(store: store, items: batch.filter { store.matchesSearch($0.application) }).entrance(1)
-                } else {
-                    hero(total: plan.count, installable: plan.filter(\.canInstall).count).entrance(0)
+                    TransferGroup(store: store, items: batch.filter { store.matchesSearch($0.application) }, available: installable)
                 }
-                if !installable.isEmpty {
-                    group(String(localized: "可在 Upovi 中更新"), items: installable).entrance(1)
+                if !store.bulkSummaryVisible, !installable.isEmpty {
+                    group(String(localized: "可在 Upovi 中更新"), items: installable, showTitle: false)
                 }
                 if !manual.isEmpty {
-                    group(String(localized: "需通过官方渠道更新"), items: manual).entrance(2)
+                    group(String(localized: "需通过官方渠道更新"), items: manual)
                 }
                 if !plan.isEmpty, visible.isEmpty, batch.isEmpty {
                     ContentUnavailableView.search(text: store.search)
                 }
                 if !postponed.isEmpty { postponedSection(postponed).entrance(3) }
             }
-            .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 72)
-            .frame(maxWidth: 980).frame(maxWidth: .infinity)
+            .padding(.horizontal, 28).padding(.top, 8).padding(.bottom, 40)
+            .frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }
-        .navigationTitle("可用更新")
-    }
-
-    // MARK: Hero
-
-    @ViewBuilder private func hero(total: Int, installable: Int) -> some View {
-        if total > 0 {
-            heroCard(colors: [Theme.sky, Theme.cobalt]) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(total.formatted()).font(Theme.display(64, weight: .heavy)).monospacedDigit()
-                        .contentTransition(.numericText())
-                    Text("个应用有来源更新").font(Theme.display(20, weight: .semibold))
-                }
-                Text(summary(total: total, installable: installable)).font(.callout).opacity(0.9)
-            } actions: {
-                Button { store.reviewAllUpdates() } label: { Label("全部更新…", systemImage: "arrow.down.circle.fill") }
-                    .buttonStyle(HeroButtonStyle())
-                    .disabled(store.operationBusy || store.updateCount == 0)
-                    .help("下载并安装所有可验证的来源更新；需官方更新的应用将单独列出")
-                    .accessibilityIdentifier("update-all-apps")
-                Button { store.refreshAll() } label: { Label("重新检查", systemImage: "arrow.clockwise") }
-                    .buttonStyle(HeroButtonStyle(prominent: false)).disabled(store.operationBusy)
-            }
-        } else if store.lastChecked == nil {
-            heroCard(colors: [Theme.sky, Theme.cobalt]) {
-                Text(store.scanning ? "正在扫描本机应用…" : store.checking ? "正在检查更新…" : store.refreshing ? "正在连接更新来源…" : "检查一下有没有新版本")
-                    .font(Theme.display(30, weight: .heavy))
-                Text("Upovi 会扫描 /Applications 与 ~/Applications，再向 Sparkle、Homebrew、GitHub 与 App Store 来源核对版本。")
-                    .font(.callout).opacity(0.9)
-            } actions: {
-                Button { store.refreshAll() } label: { Label("立即检查", systemImage: "arrow.clockwise") }
-                    .buttonStyle(HeroButtonStyle()).disabled(store.operationBusy)
-            }
-        } else {
-            heroCard(colors: [Color(red: 0.20, green: 0.74, blue: 0.62), Color(red: 0.09, green: 0.50, blue: 0.62)]) {
-                Label("没有来源报告的更新", systemImage: "checkmark.seal.fill").font(Theme.display(30, weight: .heavy))
-                Text(currentSummary).font(.callout).opacity(0.9)
-            } actions: {
-                if store.incompleteCheckCount > 0 {
-                    Button { store.section = .all; store.sourceFilter = .incomplete } label: { Label("查看检测异常", systemImage: "exclamationmark.triangle") }
-                        .buttonStyle(HeroButtonStyle())
-                }
-                Button { store.refreshAll() } label: { Label("重新检查", systemImage: "arrow.clockwise") }
-                    .buttonStyle(HeroButtonStyle(prominent: store.incompleteCheckCount == 0)).disabled(store.operationBusy)
-            }
-        }
-    }
-
-    private func heroCard<Content: View, Actions: View>(colors: [Color], @ViewBuilder content: () -> Content, @ViewBuilder actions: () -> Actions) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            content()
-            HStack(spacing: 10) { actions() }.padding(.top, 8)
-        }
-        .foregroundStyle(.white)
-        .padding(28)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(HeroBackground(colors: colors))
-        .shadow(color: (colors.last ?? .clear).opacity(0.25), radius: 18, y: 8)
-    }
-
-    private func summary(total: Int, installable: Int) -> String {
-        var parts = [String(localized: "\(installable) 个可由 Upovi 验证并安装")]
-        if total > installable { parts.append(String(localized: "\(total - installable) 个需官方渠道")) }
-        if let date = store.lastChecked { parts.append(String(localized: "上次检查 \(date.relativeDescription)")) }
-        return parts.joined(separator: " · ")
-    }
-
-    private var currentSummary: String {
-        var parts: [String] = []
-        if let date = store.lastChecked { parts.append(String(localized: "上次检查 \(date.relativeDescription)")) }
-        if store.incompleteCheckCount > 0 { parts.append(String(localized: "\(store.incompleteCheckCount) 个应用未能完整检查")) }
-        parts.append(String(localized: "结果为空并不代表所有应用都已是最新"))
-        return parts.joined(separator: " · ")
+        .background(UpdatesPalette.page)
+        .navigationTitle(Text(verbatim: "Upovi"))
     }
 
     // MARK: Lists
 
-    private func group(_ title: String, items: [BulkUpdateItem]) -> some View {
+    private func group(_ title: String, items: [BulkUpdateItem], showTitle: Bool = true) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: title, count: items.count)
+            if showTitle { SectionTitle(title: title, count: items.count) }
             VStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { Divider().padding(.leading, 76) }
+                    if index > 0 { Divider().opacity(0.5) }
                     UpdateRow(store: store, item: item)
                 }
-            }.card(padding: 0)
+            }.modifier(UpdatesSurface())
         }
     }
 
@@ -170,60 +99,72 @@ struct UpdatesView: View {
     }
 }
 
-private struct UpdateRow: View {
+struct UpdateRow: View {
     let store: AppStore
     let item: BulkUpdateItem
+    var isBatch = false
     @State private var notesExpanded = false
 
     private var app: InstalledApp { item.application }
     private var candidate: UpdateCandidate { item.candidate }
+    private var transfer: TransferProgress? { store.transfers[app.id] ?? (isBatch ? TransferProgress() : nil) }
 
     var body: some View {
         let candidate = candidate
         let lead = store.assessment(for: app).communityLeads.first { $0.confirmation == .sourceMatched }
-        let transfer = store.transfers[app.id]
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 14) {
-                AppIcon(path: app.path, size: 44)
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(app.name).font(.headline).lineLimit(1)
-                        StatusBadge(text: candidate.source, tone: .neutral)
-                        if lead != nil { StatusBadge(text: String(localized: "社区一致"), symbol: "person.2.fill", tone: .community).help(String(localized: "相同版本也出现在 P2P 社区报告中")) }
+        VStack(alignment: .leading, spacing: 0) {
+            GeometryReader { geometry in
+                HStack(spacing: 16) {
+                    HStack(spacing: 24) {
+                        AppIcon(path: app.path, size: 48)
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack(spacing: 8) {
+                                Text(app.name).font(.system(size: 16, weight: .semibold)).lineLimit(1)
+                                Text(candidate.source).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
+                                if lead != nil {
+                                    Image(systemName: "person.2").font(.caption).foregroundStyle(.secondary)
+                                        .help(String(localized: "相同版本也出现在 P2P 社区报告中"))
+                                }
+                            }
+                            HStack(spacing: 8) {
+                                VersionTransition(from: app.version, to: candidate.version, font: .system(size: 14))
+                                if let notes = candidate.releaseNotes, !notes.isEmpty {
+                                    ReleaseNotesControl(expanded: $notesExpanded).labelStyle(.iconOnly).help("更新说明")
+                                }
+                            }
+                            if let reason = item.manualReason {
+                                Text(reason).font(.caption).foregroundStyle(.secondary).lineLimit(2).help(reason)
+                            }
+                        }
                     }
-                    VersionTransition(from: app.version, to: candidate.version)
-                    if let reason = item.manualReason {
-                        Text(reason).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Group {
+                        if let transfer {
+                            TransferMeter(transfer: transfer,
+                                detail: transfer.phase == .failed ? store.bulkOutcomes[item.id]?.detail : nil,
+                                cancel: isBatch ? nil : { store.cancelInstallation() })
+                        } else {
+                            HStack { Spacer(minLength: 0); primaryButton(candidate) }.padding(.trailing, 24)
+                        }
+                    }
+                    .frame(width: min(380, max(260, geometry.size.width * 0.40)), height: 56)
+                    .overlay(alignment: .topTrailing) {
+                        moreMenu(candidate).frame(width: 14).padding(.top, 4)
                     }
                 }
-                Spacer(minLength: 12)
-                if let transfer {
-                    TransferAccessory(transfer: transfer) { store.cancelInstallation() }
-                } else {
-                    primaryButton(candidate)
-                }
-                moreMenu(candidate)
+                .frame(height: item.manualReason == nil ? 56 : 72)
             }
-            if let transfer {
-                TransferMeter(transfer: transfer).padding(.leading, 58)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-            if let notes = candidate.releaseNotes, !notes.isEmpty {
-                Button { withAnimation(.snappy) { notesExpanded.toggle() } } label: {
-                    Label(notesExpanded ? "收起更新说明" : "更新说明", systemImage: notesExpanded ? "chevron.up" : "text.alignleft")
-                        .font(.caption.weight(.medium))
-                }.buttonStyle(.plain).foregroundStyle(Theme.accent).padding(.leading, 58)
-                if notesExpanded {
-                    ScrollView { Text(notes).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
-                        .frame(maxHeight: 220).padding(12)
-                        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .padding(.leading, 58)
-                }
+            .frame(height: item.manualReason == nil ? 56 : 72)
+            if notesExpanded, let notes = candidate.releaseNotes, !notes.isEmpty {
+                ScrollView { Text(notes).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
+                    .frame(maxHeight: 220).padding(12)
+                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .padding(.leading, 58).padding(.top, 10)
             }
         }
-        .padding(.horizontal, 16).padding(.vertical, 14)
+        .padding(.horizontal, 20).padding(.vertical, 15)
         .contentShape(Rectangle())
-        .animation(.snappy, value: transfer == nil)
+        .accessibilityIdentifier("update-row-\(app.bundleID)")
         .contextMenu { menuItems(candidate) }
     }
 
@@ -232,7 +173,7 @@ private struct UpdateRow: View {
             Button("更新") {
                 if app.isAppStore { store.reviewStoreUpdate(app, candidate: candidate) } else { store.prepareInstallation(candidate, app: app) }
             }
-            .buttonStyle(.borderedProminent).controlSize(.regular)
+            .buttonStyle(.bordered).controlSize(.regular)
             .disabled(store.operationBusy)
             .accessibilityIdentifier(app.isAppStore ? "update-store-application" : "download-verify-\(app.bundleID)")
         } else if app.isAppStore {
@@ -268,169 +209,23 @@ private struct UpdateRow: View {
 
 // MARK: Batch progress
 
-/// Replaces the hero while a batch runs: a plain card with the overall bar and live counts.
-private struct BulkProgressHero: View {
-    let store: AppStore
-
-    var body: some View {
-        let running = store.bulkUpdating, failed = store.bulkFailedCount
-        let fraction = store.bulkOverallFraction
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    title(running: running, failed: failed).font(.title3.weight(.semibold))
-                    Text(subtitle).font(.callout).monospacedDigit().foregroundStyle(.secondary)
-                        .contentTransition(.numericText())
-                }
-                Spacer()
-                Text("\(Int((fraction * 100).rounded()))%")
-                    .font(.title3.weight(.medium)).monospacedDigit().foregroundStyle(.secondary)
-                    .contentTransition(.numericText(value: fraction)).animation(.snappy, value: Int(fraction * 100))
-            }
-            FlowProgressBar(value: fraction, tone: running ? .accent : failed > 0 ? .warning : .success,
-                            active: running, height: 6)
-            HStack(spacing: 10) {
-                if running {
-                    Button(store.bulkStopRequested ? "正在停止…" : "停止更新") { store.stopAllUpdates() }
-                        .disabled(store.bulkStopRequested)
-                    if store.bulkStopRequested { Text("正在安装的应用完成后停止").font(.caption).foregroundStyle(.secondary) }
-                    Spacer()
-                } else {
-                    Spacer()
-                    if let record = store.batchHistory.first(where: { $0.id == store.bulkRecordID }), !record.retryIDs.isEmpty {
-                        Button("重试未完成项") { store.retryBatch(record) }
-                    }
-                    Button("完成") { withAnimation(.snappy) { store.dismissBulkSummary() } }
-                        .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
-                }
-            }
-            .controlSize(.regular)
-        }
-        .card(padding: 20)
-        .animation(.smooth(duration: 0.3), value: running)
-    }
-
-    @ViewBuilder private func title(running: Bool, failed: Int) -> some View {
-        if running {
-            Text(store.bulkStopRequested ? "正在停止…" : "正在更新 \(store.bulkInstallableCount) 个应用")
-        } else if failed > 0 {
-            Label("更新已结束", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.primary)
-                .symbolRenderingMode(.multicolor)
-        } else {
-            Label { Text("全部更新完成") } icon: { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
-        }
-    }
-
-    private var subtitle: String {
-        var parts = [String(localized: "已完成 \(store.bulkFinishedCount) / \(store.bulkInstallableCount)")]
-        if store.bulkUpdating {
-            let downloading = store.bulkDownloadingCount
-            if downloading > 0 { parts.append(String(localized: "\(downloading) 个下载中")) }
-            if downloading > 0, store.bulkBytesPerSecond > 1000 { parts.append(TransferProgress.megabytes(Int64(store.bulkBytesPerSecond)) + "/s") }
-        } else if store.bulkCompletedCount != store.bulkFinishedCount {
-            parts.append(String(localized: "成功 \(store.bulkCompletedCount)"))
-        }
-        if store.bulkFailedCount > 0 { parts.append(String(localized: "失败 \(store.bulkFailedCount)")) }
-        return parts.joined(separator: " · ")
-    }
-}
-
 /// Batch rows stay listed (even after installing) until the dashboard is dismissed.
 private struct TransferGroup: View {
     let store: AppStore
     let items: [BulkUpdateItem]
+    let available: [BulkUpdateItem]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: store.bulkUpdating ? String(localized: "更新任务") : String(localized: "本次更新"), count: items.count)
-            VStack(spacing: 0) {
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { Divider().padding(.leading, 76) }
-                    TransferRow(store: store, item: item)
-                }
-            }.card(padding: 0)
-        }
-    }
-}
-
-private struct TransferRow: View {
-    let store: AppStore
-    let item: BulkUpdateItem
-
-    var body: some View {
-        let transfer = store.transfers[item.id] ?? TransferProgress()
-        let outcome = store.bulkOutcomes[item.id]
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 14) {
-                AppIcon(path: item.application.path, size: 44)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.application.name).font(.headline).lineLimit(1)
-                    VersionTransition(from: item.application.version, to: item.candidate.version)
-                }
-                Spacer(minLength: 12)
-                TransferAccessory(transfer: transfer, cancel: nil)
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                if index > 0 { Divider().opacity(0.5) }
+                UpdateRow(store: store, item: item, isBatch: true)
             }
-            TransferMeter(transfer: transfer, detail: transfer.phase == .failed ? outcome?.detail : nil).padding(.leading, 58)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 14)
-        .help(item.application.path)
-        .animation(.snappy, value: transfer.phase)
-    }
-}
-
-/// The per-row bar with its status line.
-private struct TransferMeter: View {
-    let transfer: TransferProgress
-    var detail: String? = nil
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            FlowProgressBar(value: transfer.fraction, tone: tone, active: transfer.isActive, indeterminate: transfer.indeterminate)
-            Text(detail ?? transfer.label).font(.caption).monospacedDigit().foregroundStyle(.secondary)
-                .lineLimit(2).textSelection(.enabled)
-        }
-    }
-
-    private var tone: Tone {
-        switch transfer.phase {
-        case .installed: .success
-        case .failed: .warning
-        case .cancelled, .queued: .neutral
-        default: .accent
-        }
-    }
-}
-
-/// Trailing percentage, state symbol or cancel button for a row in progress.
-private struct TransferAccessory: View {
-    let transfer: TransferProgress
-    let cancel: (() -> Void)?
-
-    var body: some View {
-        HStack(spacing: 8) {
-            switch transfer.phase {
-            case .installed:
-                Image(systemName: "checkmark.circle.fill").font(.title3).foregroundStyle(.green)
-                    .transition(.opacity)
-            case .failed:
-                Image(systemName: "exclamationmark.triangle.fill").font(.title3).foregroundStyle(.orange)
-            case .cancelled:
-                Image(systemName: "minus.circle").font(.title3).foregroundStyle(.secondary)
-            case .queued:
-                Image(systemName: "clock").font(.title3).foregroundStyle(.tertiary)
-            case .waitingForAuthorization:
-                Image(systemName: "lock.shield").font(.title3).foregroundStyle(.secondary)
-            default:
-                Text("\(Int((transfer.fraction * 100).rounded()))%")
-                    .font(.callout).monospacedDigit().foregroundStyle(.secondary)
-                    .contentTransition(.numericText(value: transfer.fraction))
-                    .animation(.snappy, value: Int(transfer.fraction * 100))
-                    .frame(minWidth: 48, alignment: .trailing)
-            }
-            if let cancel, transfer.canCancel {
-                Button(action: cancel) { Image(systemName: "xmark.circle.fill").font(.title3) }
-                    .buttonStyle(.plain).foregroundStyle(.secondary).help("取消下载")
+            ForEach(Array(available.enumerated()), id: \.element.id) { index, item in
+                if !items.isEmpty || index > 0 { Divider().opacity(0.5) }
+                UpdateRow(store: store, item: item)
             }
         }
+        .modifier(UpdatesSurface())
     }
 }

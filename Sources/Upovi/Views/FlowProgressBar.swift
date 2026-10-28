@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Quiet capsule progress: a flat tone fill that eases toward its value, with one faint
-/// highlight passing over it while work is in progress.
+/// Flat capsule progress with eased value changes. Only unknown-length downloads
+/// need a continuously moving indicator.
 struct FlowProgressBar: View {
     var value: Double
     var tone: Tone = .accent
@@ -13,7 +13,7 @@ struct FlowProgressBar: View {
     @State private var shown: Double = 0
 
     private var target: Double { min(1, max(0, value.isFinite ? value : 0)) }
-    private var moving: Bool { active && !reduceMotion && (indeterminate || (shown > 0 && shown < 1)) }
+    private var moving: Bool { active && !reduceMotion && indeterminate }
 
     var body: some View {
         GeometryReader { geometry in
@@ -24,8 +24,6 @@ struct FlowProgressBar: View {
                 TimelineView(.animation(minimumInterval: 1 / 30, paused: !moving)) { context in
                     let time = context.date.timeIntervalSinceReferenceDate
                     Capsule().fill(color)
-                        .overlay { if moving && !indeterminate { highlight(time, width: fillWidth) } }
-                        .clipShape(Capsule())
                         .frame(width: fillWidth)
                         .offset(x: indeterminate ? slide(time, width: width, fill: fillWidth) : 0)
                 }
@@ -40,7 +38,7 @@ struct FlowProgressBar: View {
         .animation(.easeInOut(duration: 0.25), value: tone)
         .accessibilityElement()
         .accessibilityLabel("进度")
-        .accessibilityValue(indeterminate ? "进行中" : "\(Int(target * 100))%")
+        .accessibilityValue(indeterminate ? String(localized: "进行中") : target.formatted(.percent.precision(.fractionLength(0))))
     }
 
     private var color: Color {
@@ -51,16 +49,6 @@ struct FlowProgressBar: View {
         case .neutral: .secondary.opacity(0.45)
         default: Theme.accent
         }
-    }
-
-    /// A low-contrast band drifting across the fill, so a slow transfer still reads as alive.
-    private func highlight(_ time: TimeInterval, width: CGFloat) -> some View {
-        let cycle = 2.4, progress = CGFloat(time.truncatingRemainder(dividingBy: cycle) / cycle)
-        let band = max(40, width * 0.4)
-        return LinearGradient(colors: [.white.opacity(0), .white.opacity(0.22), .white.opacity(0)], startPoint: .leading, endPoint: .trailing)
-            .frame(width: band)
-            .offset(x: -band + progress * (width + band))
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func slide(_ time: TimeInterval, width: CGFloat, fill: CGFloat) -> CGFloat {

@@ -63,7 +63,7 @@ extension AppStore {
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新，再安装其他应用。"); return }
         installing = true; canCancelInstallation = true; installationProgress = String(localized: "正在下载并验证更新…")
         let id = app.id
-        transfers[id] = TransferProgress(phase: .downloading)
+        beginTransfer(id)
         let progress: @Sendable (Int64, Int64) -> Void = { [weak self] received, expected in
             Task { @MainActor in self?.reportDownload(id, received: received, expected: expected) }
         }
