@@ -31,14 +31,14 @@ public enum BulkUpdatePlan {
 
     private static func manualReason(app: InstalledApp, candidate: UpdateCandidate) -> String? {
         if app.isAppStore {
-            guard let id = candidate.appStoreID else { return "商店更新尚未取得可核对的应用标识" }
+            guard let id = candidate.appStoreID else { return String(localized: "商店更新尚未取得可核对的应用标识") }
             do { try AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: 501).validate(); return nil }
-            catch { return "此商店应用的位置或身份不支持由 Upovi 发起更新" }
+            catch { return String(localized: "此商店应用的位置或身份不支持由 Upovi 发起更新") }
         }
-        if app.bundleID == "app.upovi.Upovi" { return "请使用 Upovi 自身更新" }
-        guard ApplicationSourceCatalog.replacementTeam(for: app) != nil else { return "无法确认已安装应用的开发者，请使用官方更新" }
-        guard let download = candidate.download, download.canVerify(for: app) else { return "来源未提供可验证的下载，请使用官方更新" }
-        guard ["zip", "dmg", "pkg"].contains(download.url.pathExtension.lowercased()) else { return "此安装格式需使用官方更新" }
+        if app.bundleID == "app.upovi.Upovi" { return String(localized: "请使用 Upovi 自身更新") }
+        guard ApplicationSourceCatalog.replacementTeam(for: app) != nil else { return String(localized: "无法确认已安装应用的开发者，请使用官方更新") }
+        guard let download = candidate.download, download.canVerify(for: app) else { return String(localized: "来源未提供可验证的下载，请使用官方更新") }
+        guard ["zip", "dmg", "pkg"].contains(download.url.pathExtension.lowercased()) else { return String(localized: "此安装格式需使用官方更新") }
         return nil
     }
 }
@@ -72,7 +72,7 @@ public enum BulkUpdateRunner {
             var running = 0
             for (index, item) in items.enumerated() {
                 if !item.canInstall {
-                    let outcome = BulkUpdateOutcome(item: item, status: .manual, detail: item.manualReason ?? "请使用官方更新")
+                    let outcome = BulkUpdateOutcome(item: item, status: .manual, detail: item.manualReason ?? String(localized: "请使用官方更新"))
                     outcomes[index] = outcome; await report(.finished(outcome)); continue
                 }
                 // Wait for a free slot before deciding whether this item may still start.
@@ -81,7 +81,7 @@ public enum BulkUpdateRunner {
                 }
                 let stopped = await shouldStop()
                 if Task.isCancelled || stopped {
-                    let outcome = BulkUpdateOutcome(item: item, status: .cancelled, detail: "已停止，未安装")
+                    let outcome = BulkUpdateOutcome(item: item, status: .cancelled, detail: String(localized: "已停止，未安装"))
                     outcomes[index] = outcome; await report(.finished(outcome)); continue
                 }
                 await report(.started(item))
@@ -101,12 +101,12 @@ public enum BulkUpdateRunner {
         do {
             try await operation(item)
             // Once an installation commits, report success even if stop was requested meanwhile.
-            return .init(item: item, status: .installed, detail: item.application.isAppStore ? "商店更新完成，不提供 Upovi 旧版备份" : "更新完成，主应用备份已保留")
+            return .init(item: item, status: .installed, detail: item.application.isAppStore ? String(localized: "商店更新完成，不提供 Upovi 旧版备份") : String(localized: "更新完成，主应用备份已保留"))
         } catch is AppStoreAlreadyCurrent {
-            return .init(item: item, status: .current, detail: "商店确认已经最新，未执行升级")
+            return .init(item: item, status: .current, detail: String(localized: "商店确认已经最新，未执行升级"))
         } catch {
             let cancelled = Task.isCancelled || error is CancellationError
-            return .init(item: item, status: cancelled ? .cancelled : .failed, detail: cancelled ? "已取消，未完成安装" : error.localizedDescription)
+            return .init(item: item, status: cancelled ? .cancelled : .failed, detail: cancelled ? String(localized: "已取消，未完成安装") : error.localizedDescription)
         }
     }
 }

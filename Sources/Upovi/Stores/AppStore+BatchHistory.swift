@@ -36,7 +36,7 @@ extension AppStore {
                     : VersionOrder.isNewer(version: old.candidate.version, build: old.candidate.build, than: app)
             }
             let plan = BulkUpdatePlan.make(apps: targets, results: actionableSourceResults, ignored: ignored)
-            guard !plan.isEmpty else { errorMessage = "原清单中未完成的应用已无可处理的更新，或来源尚未确认；请查看最新检测结果。"; return }
+            guard !plan.isEmpty else { errorMessage = String(localized: "原清单中未完成的应用已无可处理的更新，或来源尚未确认；请查看最新检测结果。"); return }
             bulkItems = plan; bulkOutcomes = [:]; bulkActiveIDs = []; clearBulkTransfers()
             bulkHasRun = false; bulkStopRequested = false
             bulkUpdatePresented = true

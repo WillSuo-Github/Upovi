@@ -10,13 +10,18 @@ struct InstallationHistoryView: View {
     enum Tab: String, CaseIterable, Identifiable {
         case installations = "安装与恢复", batches = "批量任务", checks = "检查记录"
         var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .installations: String(localized: "安装与恢复"); case .batches: String(localized: "批量任务"); case .checks: String(localized: "检查记录")
+            }
+        }
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                PageHeader(title: "历史与恢复", subtitle: "Upovi 安装更新时会保留旧版本，可在这里恢复或清理保留副本。") {
-                    Picker("类别", selection: $tab) { ForEach(Tab.allCases) { Text($0.rawValue).tag($0) } }
+                PageHeader(title: String(localized: "历史与恢复"), subtitle: String(localized: "Upovi 安装更新时会保留旧版本，可在这里恢复或清理保留副本。")) {
+                    Picker("类别", selection: $tab) { ForEach(Tab.allCases) { Text($0.title).tag($0) } }
                         .pickerStyle(.segmented).labelsHidden().fixedSize()
                 }.entrance(0)
                 if tab == .installations { summary.entrance(1) }
@@ -39,18 +44,18 @@ struct InstallationHistoryView: View {
         let retained = store.installationReceipts.filter { $0.retainedPath.map { FileManager.default.fileExists(atPath: $0) } ?? false }
         let bytes = retained.compactMap { store.backupSizes[$0.id] }.reduce(0, +)
         return HStack(spacing: 12) {
-            StatTile(value: store.installationReceipts.count.formatted(), label: "安装记录", symbol: "shippingbox")
-            StatTile(value: retained.count.formatted(), label: "可恢复的旧版本", symbol: "clock.arrow.circlepath", tone: .success)
-            StatTile(value: ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file), label: "保留副本占用", symbol: "internaldrive", tone: .warning)
+            StatTile(value: store.installationReceipts.count.formatted(), label: String(localized: "安装记录"), symbol: "shippingbox")
+            StatTile(value: retained.count.formatted(), label: String(localized: "可恢复的旧版本"), symbol: "clock.arrow.circlepath", tone: .success)
+            StatTile(value: ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file), label: String(localized: "保留副本占用"), symbol: "internaldrive", tone: .warning)
         }
     }
 
     @ViewBuilder private var installations: some View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 10) {
-                SectionTitle(title: "安装记录", count: store.installationReceipts.count)
+                SectionTitle(title: String(localized: "安装记录"), count: store.installationReceipts.count)
                 if store.installationReceipts.isEmpty {
-                    emptyCard("尚无安装记录", symbol: "shippingbox", message: "通过 Upovi 下载并验证的更新安装后会出现在这里。")
+                    emptyCard(String(localized: "尚无安装记录"), symbol: "shippingbox", message: String(localized: "通过 Upovi 下载并验证的更新安装后会出现在这里。"))
                 } else {
                     VStack(spacing: 0) {
                         ForEach(Array(store.installationReceipts.enumerated()), id: \.element.id) { index, receipt in
@@ -62,7 +67,7 @@ struct InstallationHistoryView: View {
             }
             if !store.administrator.attempts.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
-                    SectionTitle(title: "管理员安装", count: store.administrator.attempts.count)
+                    SectionTitle(title: String(localized: "管理员安装"), count: store.administrator.attempts.count)
                     Text("只恢复主应用，安装脚本和其他系统变更不会回滚。取消授权的尝试可能没有生成系统备份。")
                         .font(.caption).foregroundStyle(.secondary)
                     VStack(spacing: 0) {
@@ -78,7 +83,7 @@ struct InstallationHistoryView: View {
 
     @ViewBuilder private var checks: some View {
         if store.checkHistory.isEmpty {
-            emptyCard("尚无检查记录", symbol: "magnifyingglass", message: "每次完成来源检查后都会记录检查数量与结果。")
+            emptyCard(String(localized: "尚无检查记录"), symbol: "magnifyingglass", message: String(localized: "每次完成来源检查后都会记录检查数量与结果。"))
         } else {
             VStack(spacing: 0) {
                 ForEach(Array(store.checkHistory.enumerated()), id: \.element.id) { index, entry in
@@ -89,8 +94,8 @@ struct InstallationHistoryView: View {
                             Text("\(entry.applications) 个应用").font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        StatusBadge(text: "\(entry.updates) 个更新", symbol: "arrow.down.circle", tone: entry.updates > 0 ? .accent : .neutral)
-                        if entry.failed > 0 { StatusBadge(text: "\(entry.failed) 项未完整检查", symbol: "exclamationmark.triangle", tone: .warning) }
+                        StatusBadge(text: String(localized: "\(entry.updates) 个更新"), symbol: "arrow.down.circle", tone: entry.updates > 0 ? .accent : .neutral)
+                        if entry.failed > 0 { StatusBadge(text: String(localized: "\(entry.failed) 项未完整检查"), symbol: "exclamationmark.triangle", tone: .warning) }
                     }.padding(.horizontal, 16).padding(.vertical, 10)
                 }
             }.card(padding: 0)
@@ -149,12 +154,12 @@ private struct ReceiptRow: View {
 
     private var stateLabel: String {
         switch receipt.state {
-        case .prepared: "安装未完成，请检查恢复备份"
-        case .backedUp: "安装中断，旧版本已保留"
-        case .installed: "已安装，可恢复"
-        case .restored: "旧版本已恢复"
-        case .failed: "安装未完成"
-        case .backupDiscarded: "保留副本已清理"
+        case .prepared: String(localized: "安装未完成，请检查恢复备份")
+        case .backedUp: String(localized: "安装中断，旧版本已保留")
+        case .installed: String(localized: "已安装，可恢复")
+        case .restored: String(localized: "旧版本已恢复")
+        case .failed: String(localized: "安装未完成")
+        case .backupDiscarded: String(localized: "保留副本已清理")
         }
     }
     private var stateSymbol: String {
@@ -185,7 +190,7 @@ struct AdministratorBackupRow: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
                     Text(attempt.plan.application.name).font(.headline)
-                    StatusBadge(text: "管理员", symbol: "lock.fill")
+                    StatusBadge(text: String(localized: "管理员"), symbol: "lock.fill")
                 }
                 VersionTransition(from: attempt.plan.application.version, to: attempt.plan.version, tone: .neutral, font: .caption)
                 Text(status).font(.caption).foregroundStyle(.secondary)
@@ -212,12 +217,12 @@ struct AdministratorBackupRow: View {
 
     private var status: String {
         switch attempt.state {
-        case "installed": "安装完成，受保护的主应用备份已保留"
-        case "restored": "主应用已恢复，其他系统改动未回滚"
-        case "backupDiscarded": attempt.cleanupComplete == true ? "保留数据已清理，恢复已停用" : "清理未完成，恢复已停用；可继续清理残留"
-        case "cleanupPending": "清理状态尚未确认，请先核对管理员记录"
-        case "awaitingAuthorization": "授权或安装可能中断，请检查恢复选项"
-        default: "安装未完成或授权已取消；恢复时会核对系统备份"
+        case "installed": String(localized: "安装完成，受保护的主应用备份已保留")
+        case "restored": String(localized: "主应用已恢复，其他系统改动未回滚")
+        case "backupDiscarded": attempt.cleanupComplete == true ? String(localized: "保留数据已清理，恢复已停用") : String(localized: "清理未完成，恢复已停用；可继续清理残留")
+        case "cleanupPending": String(localized: "清理状态尚未确认，请先核对管理员记录")
+        case "awaitingAuthorization": String(localized: "授权或安装可能中断，请检查恢复选项")
+        default: String(localized: "安装未完成或授权已取消；恢复时会核对系统备份")
         }
     }
 }
@@ -245,6 +250,7 @@ private struct BatchHistoryList: View {
 private struct BatchCard: View {
     let store: AppStore
     let record: BulkUpdateRecord
+    @Environment(\.layoutDirection) private var layoutDirection
     @State private var expanded = false
 
     var body: some View {
@@ -252,8 +258,8 @@ private struct BatchCard: View {
         VStack(alignment: .leading, spacing: 10) {
             Button { withAnimation(.snappy) { expanded.toggle() } } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.secondary)
-                        .rotationEffect(.degrees(expanded ? 90 : 0))
+                    Image(systemName: "chevron.forward").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(expanded ? (layoutDirection == .rightToLeft ? -90 : 90) : 0))
                     VStack(alignment: .leading, spacing: 2) {
                         Text(record.startedAt.display()).font(.headline)
                         Text("完成 \(done)/\(record.entries.count)").font(.caption).foregroundStyle(.secondary)
@@ -261,7 +267,7 @@ private struct BatchCard: View {
                     Spacer()
                     Gauge(value: Double(done), in: 0...Double(max(1, record.entries.count))) { EmptyView() }
                         .gaugeStyle(.accessoryCircularCapacity).tint(record.retryIDs.isEmpty ? Color.green : Color.orange).scaleEffect(0.6).frame(width: 34, height: 34)
-                    StatusBadge(text: record.finishedAt == nil ? "未完成" : "已结束", tone: record.finishedAt == nil ? .warning : .neutral)
+                    StatusBadge(text: record.finishedAt == nil ? String(localized: "未完成") : String(localized: "已结束"), tone: record.finishedAt == nil ? .warning : .neutral)
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain)
             if expanded {

@@ -14,14 +14,14 @@ assert re.fullmatch(r'\d+(?:\.\d+){2}', release['version'])
 assert re.fullmatch(r'\d+', release['build'])
 assert release['feedURL'].startswith('https://')
 assert len(base64.b64decode(release['publicEDKey'], validate=True)) == 32
-info = dict(CFBundleExecutable='Upovi', CFBundleIdentifier='app.upovi.Upovi',
+info = dict(CFBundleDevelopmentRegion='en', CFBundleExecutable='Upovi', CFBundleIdentifier='app.upovi.Upovi',
             CFBundleName='Upovi', CFBundleDisplayName='Upovi', CFBundlePackageType='APPL',
             CFBundleShortVersionString=os.environ.get('MARKETING_VERSION', release['version']),
             CFBundleVersion=os.environ.get('CURRENT_PROJECT_VERSION', release['build']),
             UpoviSourceRevision=sys.argv[2],
             CFBundleIconFile=os.environ.get('ASSETCATALOG_COMPILER_APPICON_NAME', 'Upovi'), LSMinimumSystemVersion='14.0',
             NSPrincipalClass='NSApplication',
-            NSLocalNetworkUsageDescription='Discover opted-in peers and exchange selected app version reports.',
+            NSLocalNetworkUsageDescription='用于发现已开启 P2P 的节点并交换已扫描应用的版本报告。',
             NSHumanReadableCopyright='Copyright © 2026 Upovi contributors. MIT License.',
             SUFeedURL=release['feedURL'], SUPublicEDKey=release['publicEDKey'],
             SUEnableAutomaticChecks=False, SUAutomaticallyUpdate=False, SUEnableSystemProfiling=False,

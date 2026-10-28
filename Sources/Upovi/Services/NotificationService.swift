@@ -23,8 +23,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
     func sendTest() async -> String {
         let content = UNMutableNotificationContent()
-        content.title = "Upovi 通知测试"
-        content.body = "来源更新提醒已启用。社区版本仍只作为线索。"
+        content.title = String(localized: "Upovi 通知测试")
+        content.body = String(localized: "来源更新提醒已启用。社区版本仍只作为线索。")
         content.sound = .default
         let id = UUID().uuidString
         do {
@@ -32,8 +32,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             try await Task.sleep(for: .seconds(2))
             let delivered = await wasDelivered(id)
             logger.info("notification test submitted delivered=\(delivered)")
-            return delivered ? "测试通知已送达通知中心。" : "测试通知已提交；若未显示，请检查系统通知与专注模式。"
-        } catch { logger.error("notification test failed"); return "测试通知发送失败，请检查通知权限。" }
+            return delivered ? String(localized: "测试通知已送达通知中心。") : String(localized: "测试通知已提交；若未显示，请检查系统通知与专注模式。")
+        } catch { logger.error("notification test failed"); return String(localized: "测试通知发送失败，请检查通知权限。") }
     }
     func requestAccess() async -> Bool {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
@@ -46,7 +46,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let updates = UpdateAssessment.notificationBatch(apps: apps, results: results, ignored: ignored, seen: seen)
         guard !updates.isEmpty else { return }
         let content = UNMutableNotificationContent()
-        content.title = "发现 \(updates.count) 个应用更新"
+        content.title = String(localized: "发现 \(updates.count) 个应用更新")
         content.body = updates.prefix(3).map(\.app.name).joined(separator: "、")
         content.sound = .default
         do {

@@ -65,10 +65,10 @@ struct CommunityView: View {
         let leadCount = store.communityApps.reduce(0) { $0 + store.assessment(for: $1).communityLeads.count }
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                StatTile(value: store.discoveredPublishers.count.formatted(), label: "验签节点", symbol: "person.2.wave.2")
-                StatTile(value: store.p2pScope.count.formatted(), label: "参与共享的应用", symbol: "square.grid.2x2", tone: .success)
-                StatTile(value: leadCount.formatted(), label: "更高版本线索", symbol: "sparkles", tone: .community)
-                StatTile(value: store.lastSynced.map { $0.display(date: .omitted) } ?? "—", label: "最近同步", symbol: "clock")
+                StatTile(value: store.discoveredPublishers.count.formatted(), label: String(localized: "验签节点"), symbol: "person.2.wave.2")
+                StatTile(value: store.p2pScope.count.formatted(), label: String(localized: "参与共享的应用"), symbol: "square.grid.2x2", tone: .success)
+                StatTile(value: leadCount.formatted(), label: String(localized: "更高版本线索"), symbol: "sparkles", tone: .community)
+                StatTile(value: store.lastSynced.map { $0.display(date: .omitted) } ?? "—", label: String(localized: "最近同步"), symbol: "clock")
             }
             DisclosureGroup("同步详情", isExpanded: $detailsExpanded) {
                 Text(store.networkStatus).font(.caption.monospaced()).foregroundStyle(.secondary).textSelection(.enabled)
@@ -82,7 +82,7 @@ struct CommunityView: View {
     @ViewBuilder private var leads: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                SectionTitle(title: "社区版本线索", count: store.communityApps.count)
+                SectionTitle(title: String(localized: "社区版本线索"), count: store.communityApps.count)
                 Button("核对更新来源") { store.beginChecking() }
                     .disabled(store.checking || store.scanning || store.installing)
                     .help("向开发者来源核对；一致的版本会标记为“来源一致”")
@@ -103,7 +103,7 @@ struct CommunityView: View {
 
     @ViewBuilder private var peers: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: "已发现的公开节点", count: store.discoveredPublishers.count)
+            SectionTitle(title: String(localized: "已发现的公开节点"), count: store.discoveredPublishers.count)
             if store.discoveredPublishers.isEmpty {
                 Text("尚未收到共享节点的有效记录。需要其他用户共享相同应用，且公网 DHT 中有可用记录。")
                     .font(.callout).foregroundStyle(.secondary).card(padding: 16)
@@ -161,9 +161,9 @@ private struct LeadRow: View {
             Spacer()
             if let lead = leads.first {
                 switch lead.confirmation {
-                case .sourceMatched: StatusBadge(text: "来源一致", symbol: "checkmark.seal.fill", tone: .success)
-                case .multiplePublishers: StatusBadge(text: "多节点 · 未核实", symbol: "person.3", tone: .community)
-                case .unverified: StatusBadge(text: "未经核实", symbol: "questionmark.circle")
+                case .sourceMatched: StatusBadge(text: String(localized: "来源一致"), symbol: "checkmark.seal.fill", tone: .success)
+                case .multiplePublishers: StatusBadge(text: String(localized: "多节点 · 未核实"), symbol: "person.3", tone: .community)
+                case .unverified: StatusBadge(text: String(localized: "未经核实"), symbol: "questionmark.circle")
                 }
             }
             Button("查看应用") { store.show(app) }.controlSize(.small)

@@ -41,6 +41,7 @@
 		3514667F88CDC9DEDC0A6EE7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A975C10358CBA7959D1A8E2A /* SettingsView.swift */; };
 		354E6DF5FDAB4C1FA4281261 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447E72C54E21A55EF349008E /* AppStore.swift */; };
 		384D94E19663EB260E821B5D /* InstallationConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8F442FFB9DF0C8916ECEA1 /* InstallationConfirmationView.swift */; };
+		3C481EEA00D47A98957D8EF1 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DB52866408F20A1D741415E3 /* InfoPlist.xcstrings */; };
 		3DFE668D75FC742EBC6019FB /* DownloadCenterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 028A076FB28AE34E156298C6 /* DownloadCenterService.swift */; };
 		416E9C2F953307D902769000 /* libArchiveSupport.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE95B2B760BD2723B5C14153 /* libArchiveSupport.a */; };
 		451F2E8948ECF621A45E93B2 /* InstallationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163A9C75A378A30FD669A78A /* InstallationHistoryView.swift */; };
@@ -76,6 +77,7 @@
 		74F64AEB1AB4247119674570 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DE37D90F5CC2C99251E05F1 /* ContentView.swift */; };
 		754354A7E92F64E33555DF9E /* GlobalP2PSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4FA060891A3D22186996B58 /* GlobalP2PSettings.swift */; };
 		75C4BB8B4D72BEBD6D964422 /* PublicPeerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFD1E20BF56C09FDFCF2365 /* PublicPeerProtocol.swift */; };
+		766D5B6B06A0FF3D1E8DD5EF /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 5B6E212A17340ABD88EBE75D /* Localizable.xcstrings */; };
 		76C75CE3DFCFD08E2C09A7A5 /* LegacyMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EC1F3DFEFBE31A7AF5BE5F2 /* LegacyMigrationTests.swift */; };
 		76DE94F2BB7CA381094438B9 /* SourceDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E621AD43BD03896968BEDCC7 /* SourceDiagnosticsTests.swift */; };
 		76F73965D1AF5E378830F160 /* CanonicalFilePath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1ADE0B8107A0477CB48251 /* CanonicalFilePath.swift */; };
@@ -347,6 +349,7 @@
 		5595BC76CC1B3AB15E739208 /* UpoviInstaller */ = {isa = PBXFileReference; includeInIndex = 0; path = UpoviInstaller; sourceTree = BUILT_PRODUCTS_DIR; };
 		564086B40D4FF1345865886F /* DownloadCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadCoordinatorTests.swift; sourceTree = "<group>"; };
 		5863B940E28780A1C414786E /* build_and_run.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_and_run.sh; sourceTree = "<group>"; };
+		5B6E212A17340ABD88EBE75D /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		5C2BDA2F56AC3A043CC187DF /* GlobalP2PTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalP2PTests.swift; sourceTree = "<group>"; };
 		5C639F0D895F5D903E35CC25 /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
 		5D0C330923ACCCC4EA457BB7 /* package_release.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package_release.sh; sourceTree = "<group>"; };
@@ -425,6 +428,7 @@
 		D8595E8ED2B0246333DBC0C9 /* UpoviApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpoviApp.swift; sourceTree = "<group>"; };
 		D9DBBF382FB7882DFEA9A4E2 /* UpoviStoreInstaller */ = {isa = PBXFileReference; includeInIndex = 0; path = UpoviStoreInstaller; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA44BC2BB0AFD10B029DBEE6 /* CheckScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckScheduleTests.swift; sourceTree = "<group>"; };
+		DB52866408F20A1D741415E3 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		DEDEC0940FA2C86D7AAEAABE /* Release.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Release.json; sourceTree = "<group>"; };
 		DF9255B0D669DB0C4BE7DE90 /* BulkUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkUpdateView.swift; sourceTree = "<group>"; };
 		E16F11787601C86A1217B362 /* UpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesView.swift; sourceTree = "<group>"; };
@@ -849,6 +853,8 @@
 			isa = PBXGroup;
 			children = (
 				A315DDD221F95AFF9C824B5F /* Assets.xcassets */,
+				DB52866408F20A1D741415E3 /* InfoPlist.xcstrings */,
+				5B6E212A17340ABD88EBE75D /* Localizable.xcstrings */,
 				DEDEC0940FA2C86D7AAEAABE /* Release.json */,
 			);
 			path = Resources;
@@ -1125,11 +1131,11 @@
 				};
 			};
 			buildConfigurationList = 4217D2F2AE078F32F76EEE36 /* Build configuration list for PBXProject "Upovi" */;
-			developmentRegion = en;
+			developmentRegion = "zh-Hans";
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				en,
+				"zh-Hans",
 			);
 			mainGroup = 20644C4E36AF747CED00FF73;
 			minimizedProjectReferenceProxies = 1;
@@ -1159,6 +1165,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E841E3710FABE53512E776C /* Assets.xcassets in Resources */,
+				3C481EEA00D47A98957D8EF1 /* InfoPlist.xcstrings in Resources */,
+				766D5B6B06A0FF3D1E8DD5EF /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1528,12 +1536,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
 			};
@@ -1755,6 +1765,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -1762,6 +1773,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
 			};

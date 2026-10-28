@@ -35,31 +35,31 @@ struct ContentView: View {
         .sheet(isPresented: $store.bulkUpdatePresented) { BulkUpdateView(store: store) }
         .sheet(item: $store.diagnosticsPresentation) { DiagnosticsView(snapshot: $0) }
         .sheet(item: $store.restoreConfirmation) { receipt in
-            ConfirmationSheet(symbol: "clock.arrow.circlepath", title: "恢复 \(receipt.application.name)？",
-                message: "将关闭应用并恢复到 \(receipt.application.version)。当前版本会保留在同一目录，应用的文稿和设置不会被此操作主动修改。",
-                detail: "应用自身的数据格式可能不支持降级，请先保存工作。", confirmTitle: "恢复旧版本",
+            ConfirmationSheet(symbol: "clock.arrow.circlepath", title: String(localized: "恢复 \(receipt.application.name)？"),
+                message: String(localized: "将关闭应用并恢复到 \(receipt.application.version)。当前版本会保留在同一目录，应用的文稿和设置不会被此操作主动修改。"),
+                detail: String(localized: "应用自身的数据格式可能不支持降级，请先保存工作。"), confirmTitle: String(localized: "恢复旧版本"),
                 cancel: { store.restoreConfirmation = nil },
                 confirm: { store.restoreConfirmation = nil; store.restoreInstallation(receipt) })
         }
         .sheet(item: $store.backupDeletionConfirmation) { receipt in
-            ConfirmationSheet(symbol: "trash", tone: .danger, title: "清理 \(receipt.application.name) 的保留副本？",
-                message: "保留副本将移到废纸篓，清理后将无法使用这份副本恢复。当前应用、文稿和设置会保留。",
-                confirmTitle: "移到废纸篓", destructive: true,
+            ConfirmationSheet(symbol: "trash", tone: .danger, title: String(localized: "清理 \(receipt.application.name) 的保留副本？"),
+                message: String(localized: "保留副本将移到废纸篓，清理后将无法使用这份副本恢复。当前应用、文稿和设置会保留。"),
+                confirmTitle: String(localized: "移到废纸篓"), destructive: true,
                 cancel: { store.backupDeletionConfirmation = nil },
                 confirm: { store.backupDeletionConfirmation = nil; store.discardBackup(receipt) })
         }
         .sheet(item: $store.administratorRestoreConfirmation) { attempt in
-            ConfirmationSheet(symbol: "lock.rotation", tone: .warning, title: "恢复 \(attempt.plan.application.name) 的主应用？",
-                message: "将请求管理员授权，从受保护的事务备份恢复安装前的主应用。",
-                detail: "PKG 脚本、系统服务、驱动和数据变更不会因此撤销。", confirmTitle: "授权并恢复主应用",
+            ConfirmationSheet(symbol: "lock.rotation", tone: .warning, title: String(localized: "恢复 \(attempt.plan.application.name) 的主应用？"),
+                message: String(localized: "将请求管理员授权，从受保护的事务备份恢复安装前的主应用。"),
+                detail: String(localized: "PKG 脚本、系统服务、驱动和数据变更不会因此撤销。"), confirmTitle: String(localized: "授权并恢复主应用"),
                 cancel: { store.administratorRestoreConfirmation = nil },
                 confirm: { store.administratorRestoreConfirmation = nil; store.restoreAdministratorInstallation(attempt) })
         }
         .sheet(item: $store.administratorCleanupConfirmation) { attempt in
-            ConfirmationSheet(symbol: "lock.trianglebadge.exclamationmark", tone: .danger, title: "清理 \(attempt.plan.application.name) 的管理员备份？",
-                message: "将请求管理员授权，永久删除这个已完成事务的主应用副本、安装包和展开数据。清理后无法通过此事务恢复。当前应用和事务记录会保留。",
-                detail: "中断、失败或当前应用身份／版本不匹配的事务会被拒绝清理。", path: attempt.plan.application.path,
-                confirmTitle: "授权并永久清理", destructive: true, confirmIdentifier: "confirm-admin-backup-cleanup",
+            ConfirmationSheet(symbol: "lock.trianglebadge.exclamationmark", tone: .danger, title: String(localized: "清理 \(attempt.plan.application.name) 的管理员备份？"),
+                message: String(localized: "将请求管理员授权，永久删除这个已完成事务的主应用副本、安装包和展开数据。清理后无法通过此事务恢复。当前应用和事务记录会保留。"),
+                detail: String(localized: "中断、失败或当前应用身份／版本不匹配的事务会被拒绝清理。"), path: attempt.plan.application.path,
+                confirmTitle: String(localized: "授权并永久清理"), destructive: true, confirmIdentifier: "confirm-admin-backup-cleanup",
                 cancel: { store.administratorCleanupConfirmation = nil },
                 confirm: { store.administratorCleanupConfirmation = nil; store.manageAdministratorBackup(attempt, cleanup: true) })
         }
@@ -99,7 +99,7 @@ private struct Sidebar: View {
     private func item(_ section: AppSection, badge: Int) -> some View {
         // Activate the same state used by the detail column, including accessibility presses.
         Button { store.section = section } label: {
-            Label(section.rawValue, systemImage: section.symbol)
+            Label(section.title, systemImage: section.symbol)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
         }
@@ -179,9 +179,9 @@ private struct ActivityPill: View {
     }
 
     private var message: String {
-        if store.scanning { return "正在扫描应用…" }
-        if store.checking { return "正在检查更新 \(store.completedChecks)/\(store.apps.count)" }
-        if store.refreshing { return "正在连接更新来源…" }
-        return store.installationProgress.isEmpty ? "正在处理更新…" : store.installationProgress
+        if store.scanning { return String(localized: "正在扫描应用…") }
+        if store.checking { return String(localized: "正在检查更新 \(store.completedChecks)/\(store.apps.count)") }
+        if store.refreshing { return String(localized: "正在连接更新来源…") }
+        return store.installationProgress.isEmpty ? String(localized: "正在处理更新…") : store.installationProgress
     }
 }

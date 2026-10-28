@@ -10,7 +10,7 @@ import UpoviCore
               let helper = Bundle.main.url(forAuxiliaryExecutable: "UpoviStoreInstaller"),
               let bridge = Bundle.main.url(forAuxiliaryExecutable: "UpoviStoreBridge"),
               let team = AdministratorAuthorization.teamID(at: Bundle.main.bundleURL) else {
-            throw PeerError.unavailable("请使用包含商店更新组件的 Developer ID 签名 Upovi 应用包。")
+            throw PeerError.unavailable(String(localized: "请使用包含商店更新组件的 Developer ID 签名 Upovi 应用包。"))
         }
         let plan = AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: getuid())
         try plan.validate()
@@ -23,10 +23,10 @@ import UpoviCore
         let script = try AppStoreUpdatePlan.authorizationScript(helper: helper, bridge: bridge, plan: request, hostTeam: team)
         let data: Data
         do { data = try await ProcessCommand().run("/usr/bin/osascript", ["-e",script], timeoutSeconds:2100, maximumOutputBytes:65536) }
-        catch { throw PeerError.unavailable("商店更新尚未确认完成。请检查账户和管理员认证，重新检测后再操作；已交给 Apple 的后台任务可能仍在继续。") }
+        catch { throw PeerError.unavailable(String(localized: "商店更新尚未确认完成。请检查账户和管理员认证，重新检测后再操作；已交给 Apple 的后台任务可能仍在继续。")) }
         let receipt = try JSONDecoder().decode(AppStoreUpdateReceipt.self, from: data)
         guard receipt.plan.id == plan.id, ["installed","current"].contains(receipt.state), let updated = receipt.installedApplication else {
-            throw PeerError.invalid("商店更新结果尚未确认，请重新检测；不要立即重复发起更新。")
+            throw PeerError.invalid(String(localized: "商店更新结果尚未确认，请重新检测；不要立即重复发起更新。"))
         }
         try plan.verifyInstalled(updated)
         try JSONEncoder().encode(receipt).write(to: directory.appending(path: plan.id.uuidString+".json"), options:.atomic)

@@ -26,7 +26,7 @@ public enum UpdateChecker {
     static func check(_ app: InstalledApp, override: SourceOverride? = nil,
                       fetch: @Sendable (URL, Int) async throws -> Data,
                       catalog: @Sendable (InstalledApp) async throws -> CaskMetadata?) async -> SourceResult {
-        if app.isAppStore { return .init(appID: app.id, candidates: [], note: "由 App Store 管理更新", status: .appStore, checks: [.init(.appStore, .manual)]) }
+        if app.isAppStore { return .init(appID: app.id, candidates: [], note: String(localized: "由 App Store 管理更新"), status: .appStore, checks: [.init(.appStore, .manual)]) }
         let browserVersion = app.bundleID == "com.electron.lark" && (Int(app.version.split(separator: ".").first.map(String.init) ?? "") ?? 0) >= 100
         if let hint = ManualUpdateSource.forBundle(app.bundleID), browserVersion || (override?.appcast == nil && override?.githubRepository == nil) {
             return .init(appID: app.id, candidates: [], note: hint.note, status: .unsupported, manualURL: hint.url, checks: [.init(.manual, .manual)])
@@ -42,11 +42,11 @@ public enum UpdateChecker {
                         ? !app.build.isEmpty && VersionOrder.compare(candidate.build, app.build) == .orderedDescending
                         : VersionOrder.isNewer(version: candidate.version, build: candidate.build, than: app)
                 }
-                checked += 1; notes.append("已检查开发者 appcast"); checks.append(.init(.appcast, .checked))
-            } catch is CancellationError { return .init(appID: app.id, candidates: [], note: "检测已取消", status: .failed, checks: [.init(.appcast, .cancelled, error: CancellationError())]) }
+                checked += 1; notes.append(String(localized: "已检查开发者 appcast")); checks.append(.init(.appcast, .checked))
+            } catch is CancellationError { return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed, checks: [.init(.appcast, .cancelled, error: CancellationError())]) }
             catch { failed += 1; notes.append("appcast：\(failureDescription(error))"); checks.append(.init(.appcast, .failed, error: error)) }
         }
-        if Task.isCancelled { return .init(appID: app.id, candidates: [], note: "检测已取消", status: .failed) }
+        if Task.isCancelled { return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed) }
         do {
             let metadata: CaskMetadata?
             if let cask = casks[app.bundleID] ?? ApplicationSourceCatalog.catalogExceptions[app.bundleID] {
@@ -69,10 +69,10 @@ public enum UpdateChecker {
                 if comparable && VersionOrder.isNewer(version: version, build: build, than: installed) {
                     candidates.append(.init(version: version, build: build, source: "Homebrew", isCommunity: false,
                         url: URL(string: "https://formulae.brew.sh/cask/\(metadata.token)"), download: download,
-                        releaseNotes: identity == nil ? nil : "来源发布版本：\(sourceVersion)；主应用版本：\(version)（\(build)）。"))
+                        releaseNotes: identity == nil ? nil : String(localized: "来源发布版本：\(sourceVersion)；主应用版本：\(version)（\(build)）。")))
                 }
-                if comparable { checked += 1; notes.append("已检查 Homebrew"); checks.append(.init(.homebrew, .checked)) }
-                else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append("Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新") }
+                if comparable { checked += 1; notes.append(String(localized: "已检查 Homebrew")); checks.append(.init(.homebrew, .checked)) }
+                else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append(String(localized: "Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新")) }
             }
         } catch { failed += 1; notes.append("Homebrew：\(failureDescription(error))"); checks.append(.init(.homebrew, .failed, error: error)) }
         if let repository = override?.githubRepository ?? githubRepositories[app.bundleID], !Task.isCancelled {
@@ -82,14 +82,14 @@ public enum UpdateChecker {
                     candidates.append(.init(version: release.version, source: "GitHub Release", isCommunity: false,
                                             url: release.page, download: release.download, releaseNotes: release.releaseNotes))
                 }
-                checked += 1; notes.append("已检查 GitHub Release"); checks.append(.init(.github, .checked))
+                checked += 1; notes.append(String(localized: "已检查 GitHub Release")); checks.append(.init(.github, .checked))
             } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
         }
         candidates = supplementDownloads(candidates, for: app)
         let status: SourceStatus = failed > 0 ? (checked > 0 ? .partial : .failed)
             : !candidates.isEmpty ? .updates : checked > 0 ? (uncomparable > 0 ? .partial : .current) : .unsupported
         let hint = ManualUpdateSource.forBundle(app.bundleID)
-        return .init(appID: app.id, candidates: candidates, note: notes.isEmpty ? hint?.note ?? "暂未适配更新来源，可手动设置开发者 appcast 或 GitHub 仓库" : notes.joined(separator: " · "), status: status, manualURL: hint?.url, checks: checks)
+        return .init(appID: app.id, candidates: candidates, note: notes.isEmpty ? hint?.note ?? String(localized: "暂未适配更新来源，可手动设置开发者 appcast 或 GitHub 仓库") : notes.joined(separator: " · "), status: status, manualURL: hint?.url, checks: checks)
     }
 
     /// Preserve the source's target/build. A second source may fill a missing download for that version;
@@ -113,10 +113,10 @@ public enum UpdateChecker {
 
     private static func failureDescription(_ error: any Error) -> String {
         guard let http = error as? HTTPStatusError else { return error.localizedDescription }
-        if http.rateLimited { return "服务器限制了请求频率，请稍后重试（HTTP \(http.statusCode)）" }
-        if http.statusCode == 403 { return "服务器拒绝了请求，未确认是否有更新（HTTP 403）" }
-        if http.statusCode == 404 { return "公开更新来源暂不可用，未确认是否有更新（HTTP 404）" }
-        return "来源请求失败（HTTP \(http.statusCode)）"
+        if http.rateLimited { return String(localized: "服务器限制了请求频率，请稍后重试（HTTP \(http.statusCode)）") }
+        if http.statusCode == 403 { return String(localized: "服务器拒绝了请求，未确认是否有更新（HTTP 403）") }
+        if http.statusCode == 404 { return String(localized: "公开更新来源暂不可用，未确认是否有更新（HTTP 404）") }
+        return String(localized: "来源请求失败（HTTP \(http.statusCode)）")
     }
 
     public static func fetch(_ url: URL, limit: Int) async throws -> Data {

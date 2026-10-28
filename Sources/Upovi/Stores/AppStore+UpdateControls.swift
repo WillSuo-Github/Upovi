@@ -37,7 +37,7 @@ extension AppStore {
         guard !refreshing, !scanning, !checking, !installationBusy else { return }
         let panel = NSOpenPanel()
         panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = true
-        panel.message = "选择额外扫描的应用目录；全局 P2P 开启时，扫描到的应用也会参与版本共享。"
+        panel.message = String(localized: "选择额外扫描的应用目录；全局 P2P 开启时，扫描到的应用也会参与版本共享。")
         guard panel.runModal() == .OK else { return }
         setScanDirectories(additionalScanDirectories + panel.urls.map(\.path))
     }

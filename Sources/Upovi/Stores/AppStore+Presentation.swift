@@ -7,23 +7,23 @@ enum AppStatus: Equatable {
 
     var label: String {
         switch self {
-        case .ignored: "已忽略"
-        case .update(let version): "可更新 \(version)"
-        case .postponed: "已跳过或推迟"
-        case .community(let version): "社区线索 \(version)"
-        case .current: "未发现更新"
-        case .partial: "部分检测失败"
-        case .failed: "检测失败"
-        case .unsupported(let manual): manual ? "需官方渠道" : "未适配来源"
+        case .ignored: String(localized: "已忽略")
+        case .update(let version): String(localized: "可更新 \(version)")
+        case .postponed: String(localized: "已跳过或推迟")
+        case .community(let version): String(localized: "社区线索 \(version)")
+        case .current: String(localized: "未发现更新")
+        case .partial: String(localized: "部分检测失败")
+        case .failed: String(localized: "检测失败")
+        case .unsupported(let manual): manual ? String(localized: "需官方渠道") : String(localized: "未适配来源")
         case .appStore: "App Store"
-        case .unchecked: "尚未检查"
+        case .unchecked: String(localized: "尚未检查")
         }
     }
     /// Label without the version, for dense surfaces that show versions separately.
     var shortLabel: String {
         switch self {
-        case .update: "可更新"
-        case .community: "社区线索"
+        case .update: String(localized: "可更新")
+        case .community: String(localized: "社区线索")
         default: label
         }
     }

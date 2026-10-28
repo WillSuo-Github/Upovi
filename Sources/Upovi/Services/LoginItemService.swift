@@ -17,7 +17,7 @@ final class LoginItemService {
             if enabled { try SMAppService.mainApp.register() }
             else { try SMAppService.mainApp.unregister() }
         } catch {
-            errorMessage = "登录启动设置未完成：\(error.localizedDescription)"
+            errorMessage = String(localized: "登录启动设置未完成：\(error.localizedDescription)")
         }
         refresh()
     }

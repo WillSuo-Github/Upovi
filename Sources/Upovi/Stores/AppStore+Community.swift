@@ -49,7 +49,7 @@ extension AppStore {
         let localCopies = Dictionary(grouping: apps, by: { CommunityTopic.hash($0) })
         let scope = p2pScope
         let batch = GlobalP2PScope.batch(scope, offset: p2pBatchOffset)
-        guard !batch.apps.isEmpty else { networkStatus = "P2P 已开启，扫描到应用后会自动参与"; return }
+        guard !batch.apps.isEmpty else { networkStatus = String(localized: "P2P 已开启，扫描到应用后会自动参与"); return }
         let activeIDs = Set(apps.map(\.id))
         communityResults = communityResults.filter { activeIDs.contains($0.key) }
         discoveredPublishers = discoveredPublishers.filter { Date().timeIntervalSince($0.value.lastSeen) < 86400 }
@@ -58,7 +58,7 @@ extension AppStore {
         var announcements = 0, storage = 0, directoryAcks = 0, directoryCandidates = 0
         var failedRecords = 0, rejectedReports = 0, found = 0, responders = 0, endpoints = 0, unreachable = 0, failures = 0
         var lastFailure = ""
-        networkStatus = "正在发现并共享应用版本…"
+        networkStatus = String(localized: "正在发现并共享应用版本…")
         do {
             try Task.checkCancellation()
             let identity = try await loadIdentity()
@@ -95,7 +95,7 @@ extension AppStore {
                     var hasLead = false
                     for copy in copies where VersionOrder.isNewer(version: report.version, build: report.build, than: copy) {
                         communityResults[copy.id, default: []].append(.init(version: report.version, build: report.build,
-                            source: "公开节点 \(observation.shortID)", isCommunity: true, url: nil,
+                            source: String(localized: "公开节点 \(observation.shortID)"), isCommunity: true, url: nil,
                             observedAt: report.observedAt, peerID: observation.id, expiresAt: report.expiresAt))
                         hasLead = true
                     }
@@ -116,12 +116,12 @@ extension AppStore {
         preferences.set(publisherCache, forKey: "publicPublisherCacheV2")
         lastSynced = Date()
         logger.info("community sync completed apps=\(batch.apps.count) publishers=\(self.discoveredPublishers.count) leads=\(found) failures=\(failures)")
-        networkStatus = "已同步 \(batch.start + 1)–\(batch.start + batch.apps.count)/\(batch.total) 个应用 · 验签节点 \(discoveredPublishers.count) 个 · 更高版本线索 \(found) 条"
-        networkStatus += "\nDHT 响应 \(responders) 次 · 端点 \(endpoints) 个 · 索引候选 \(directoryCandidates) 个"
-        networkStatus += "\n主题登记确认 \(announcements) 次 · 索引登记确认 \(directoryAcks) 次 · 记录存储确认 \(storage) 次"
-        if unreachable > 0 { networkStatus += "\n\(unreachable) 个采样端点未返回有效记录" }
-        if failedRecords > 0 { networkStatus += "\n\(failedRecords) 个索引候选未返回有效签名记录" }
-        if rejectedReports > 0 { networkStatus += "\n已拒绝 \(rejectedReports) 条回放、冲突或无效报告" }
-        if failures > 0 { networkStatus += "\n\(failures) 项失败：\(lastFailure)" }
+        networkStatus = String(localized: "已同步 \(batch.start + 1)–\(batch.start + batch.apps.count)/\(batch.total) 个应用 · 验签节点 \(discoveredPublishers.count) 个 · 更高版本线索 \(found) 条")
+        networkStatus += String(localized: "\nDHT 响应 \(responders) 次 · 端点 \(endpoints) 个 · 索引候选 \(directoryCandidates) 个")
+        networkStatus += String(localized: "\n主题登记确认 \(announcements) 次 · 索引登记确认 \(directoryAcks) 次 · 记录存储确认 \(storage) 次")
+        if unreachable > 0 { networkStatus += String(localized: "\n\(unreachable) 个采样端点未返回有效记录") }
+        if failedRecords > 0 { networkStatus += String(localized: "\n\(failedRecords) 个索引候选未返回有效签名记录") }
+        if rejectedReports > 0 { networkStatus += String(localized: "\n已拒绝 \(rejectedReports) 条回放、冲突或无效报告") }
+        if failures > 0 { networkStatus += String(localized: "\n\(failures) 项失败：\(lastFailure)") }
     }
 }

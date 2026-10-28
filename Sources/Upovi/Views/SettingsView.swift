@@ -50,7 +50,7 @@ private struct GeneralSettings: View {
 
             Section {
                 Stepper(value: $store.bulkConcurrency, in: BulkUpdateRunner.concurrencyRange) {
-                    LabeledContent("同时下载和安装", value: "\(store.bulkConcurrency) 个应用")
+                    LabeledContent(String(localized: "同时下载和安装"), value: String(localized: "\(store.bulkConcurrency) 个应用"))
                 }
                 .disabled(store.bulkUpdating)
                 .accessibilityIdentifier("bulk-concurrency")
@@ -72,7 +72,7 @@ private struct GeneralSettings: View {
                         }
                     }.disabled(!store.notificationsEnabled || sendingTestNotification)
                 } label: {
-                    Text(notificationTestStatus.isEmpty ? "测试通知" : notificationTestStatus).foregroundStyle(notificationTestStatus.isEmpty ? .primary : .secondary)
+                    Text(notificationTestStatus.isEmpty ? String(localized: "测试通知") : notificationTestStatus).foregroundStyle(notificationTestStatus.isEmpty ? .primary : .secondary)
                 }
             } header: { Text("通知") } footer: {
                 Text("社区版本仅作线索，不触发更新通知。").font(.caption).foregroundStyle(.secondary)
@@ -118,10 +118,10 @@ private struct ScanSettings: View {
             }
 
             Section {
-                capability("checkmark.shield", "ZIP／DMG 应用更新", "下载后核对完整性、应用标识、开发者签名与 Gatekeeper，安装时保留旧版本。")
-                capability("shippingbox", "签名 PKG", "检查安装负载后执行；管理员安装会显示系统授权窗口，脚本改动无法回滚。")
-                capability("bag", "App Store 应用", "由 Upovi 发起商店更新，可能需要 Apple 账户认证；不提供旧版备份或暂停。")
-                capability("arrow.up.forward.app", "其他安装包", "无法验证时，引导到官方来源更新。")
+                capability("checkmark.shield", String(localized: "ZIP／DMG 应用更新"), String(localized: "下载后核对完整性、应用标识、开发者签名与 Gatekeeper，安装时保留旧版本。"))
+                capability("shippingbox", String(localized: "签名 PKG"), String(localized: "检查安装负载后执行；管理员安装会显示系统授权窗口，脚本改动无法回滚。"))
+                capability("bag", String(localized: "App Store 应用"), String(localized: "由 Upovi 发起商店更新，可能需要 Apple 账户认证；不提供旧版备份或暂停。"))
+                capability("arrow.up.forward.app", String(localized: "其他安装包"), String(localized: "无法验证时，引导到官方来源更新。"))
             } header: { Text("支持的安装方式") }
         }.formStyle(.grouped)
     }
@@ -158,10 +158,10 @@ private struct P2PSettings: View {
             }
 
             Section {
-                note("eye", "公开信息包括应用标识、版本、构建号、分发渠道和自报 Team ID，任何人均可读取；节点也能看到 IP。")
-                note("eye.slash", "不包含路径、用户名、设备名或安装包。")
-                note("clock.arrow.circlepath", "关闭后，网络中已缓存的公开记录仍会按有效期过期，无法立即撤回。")
-                note("signature", "签名不能证明真实安装或官方发布；社区报告不计入可用更新。")
+                note("eye", String(localized: "公开信息包括应用标识、版本、构建号、分发渠道和自报 Team ID，任何人均可读取；节点也能看到 IP。"))
+                note("eye.slash", String(localized: "不包含路径、用户名、设备名或安装包。"))
+                note("clock.arrow.circlepath", String(localized: "关闭后，网络中已缓存的公开记录仍会按有效期过期，无法立即撤回。"))
+                note("signature", String(localized: "签名不能证明真实安装或官方发布；社区报告不计入可用更新。"))
             } header: { Text("共享的内容") }
         }.formStyle(.grouped)
     }

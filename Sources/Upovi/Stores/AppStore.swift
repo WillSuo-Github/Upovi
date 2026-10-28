@@ -8,6 +8,13 @@ import OSLog
 enum AppSection: String, CaseIterable, Identifiable {
     case updates = "可用更新", all = "全部应用", downloads = "下载", history = "历史与恢复", community = "P2P 网络"
     var id: String { rawValue }
+    /// The raw value is persisted; show this localized title instead.
+    var title: String {
+        switch self {
+        case .updates: String(localized: "可用更新"); case .all: String(localized: "全部应用"); case .downloads: String(localized: "下载")
+        case .history: String(localized: "历史与恢复"); case .community: String(localized: "P2P 网络")
+        }
+    }
     var symbol: String {
         switch self {
         case .updates: "arrow.down.circle"; case .all: "square.grid.2x2"; case .downloads: "tray.and.arrow.down"
@@ -86,7 +93,7 @@ final class AppStore {
     var sourceResults: [String: SourceResult] = [:]
     var communityResults: [String: [UpdateCandidate]] = [:]
     var errorMessage: String?
-    var networkStatus = "尚未连接公网 DHT"
+    var networkStatus = String(localized: "尚未连接公网 DHT")
     var lastCheckAttempt: Date?
     var lastSyncAttempt: Date?
     var lastChecked: Date?
@@ -95,7 +102,7 @@ final class AppStore {
     var networkAvailable = true
     var p2pProgress = ""
     var discoveredPublishers: [String: DiscoveredPublisher] = [:]
-    var identityID = "尚未创建"
+    var identityID = String(localized: "尚未创建")
     private(set) var networkEnabled: Bool
     var p2pTransitioning = false
     var p2pBatchOffset = 0
@@ -168,7 +175,7 @@ final class AppStore {
         publisherCache = preferences.dictionary(forKey: "publicPublisherCacheV2") as? [String: [String]] ?? [:]
         preferences.onFailure = { [weak self] message in self?.errorMessage = message }
         errorMessage = preferences.loadFailure
-        networkStatus = networkEnabled ? "P2P 已开启，正在等待扫描应用" : "P2P 已关闭"
+        networkStatus = networkEnabled ? String(localized: "P2P 已开启，正在等待扫描应用") : String(localized: "P2P 已关闭")
     }
 
     func setP2PEnabled(_ enabled: Bool) {
@@ -176,14 +183,14 @@ final class AppStore {
         if enabled {
             guard preferences.set(true, forKey: GlobalP2PSettings.key) else { return }
             networkEnabled = true
-            networkStatus = "P2P 已开启，正在连接…"
+            networkStatus = String(localized: "P2P 已开启，正在连接…")
         } else {
             networkEnabled = false
             if !preferences.set(false, forKey: GlobalP2PSettings.key) {
-                errorMessage = "P2P 已停止，但关闭设置未能保存。下次启动前请修复设置目录的可写性。"
+                errorMessage = String(localized: "P2P 已停止，但关闭设置未能保存。下次启动前请修复设置目录的可写性。")
             }
             communityResults = [:]; discoveredPublishers = [:]
-            networkStatus = "P2P 已关闭，已缓存的公开记录会按有效期过期"
+            networkStatus = String(localized: "P2P 已关闭，已缓存的公开记录会按有效期过期")
         }
         restartP2P()
     }
@@ -239,7 +246,7 @@ final class AppStore {
             }
             await scan()
             guard !Task.isCancelled else { return }
-            guard networkAvailable else { errorMessage = "应用已重新扫描；当前没有可用网络，联网后再检查更新。"; return }
+            guard networkAvailable else { errorMessage = String(localized: "应用已重新扫描；当前没有可用网络，联网后再检查更新。"); return }
             await revalidateSources()
             guard !Task.isCancelled else { return }
             checking = true; lastCheckAttempt = Date()
@@ -249,7 +256,7 @@ final class AppStore {
 
     func beginChecking() {
         guard !refreshing, !checking, !scanning, !installationBusy else { return }
-        guard networkAvailable else { errorMessage = "当前没有可用网络，联网后再检查更新。"; return }
+        guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，联网后再检查更新。"); return }
         checking = true; lastCheckAttempt = Date()
         checkTask = Task { await checkUpdates() }
     }

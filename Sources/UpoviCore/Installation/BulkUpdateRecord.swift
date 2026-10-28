@@ -17,7 +17,7 @@ public struct BulkUpdateRecord: Identifiable, Codable, Sendable {
             var summary = $0.candidate
             summary.releaseNotes = nil; summary.download = nil
             let item = BulkUpdateItem(application: $0.application, candidate: summary, manualReason: $0.manualReason)
-            return .init(item: item, phase: $0.canInstall ? .pending : .manual, detail: $0.manualReason ?? "等待处理")
+            return .init(item: item, phase: $0.canInstall ? .pending : .manual, detail: $0.manualReason ?? String(localized: "等待处理"))
         }
     }
     public var retryIDs: Set<String> {
@@ -27,7 +27,7 @@ public struct BulkUpdateRecord: Identifiable, Codable, Sendable {
         guard finishedAt == nil else { return }
         for i in entries.indices where [.pending, .preparing, .installing].contains(entries[i].phase) {
             entries[i].phase = .interrupted
-            entries[i].detail = "上次任务中断；恢复前将重新检测，不会自动安装"
+            entries[i].detail = String(localized: "上次任务中断；恢复前将重新检测，不会自动安装")
         }
     }
     public mutating func update(_ id: String, phase: Phase, detail: String) {

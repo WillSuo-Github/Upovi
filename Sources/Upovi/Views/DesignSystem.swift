@@ -134,7 +134,7 @@ struct VersionTransition: View {
     var body: some View {
         HStack(spacing: 6) {
             Text(from).foregroundStyle(.secondary)
-            Image(systemName: "arrow.right").font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
+            Image(systemName: "arrow.forward").font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
             Text(to).fontWeight(.semibold).foregroundStyle(tone.color)
         }
         .font(font.monospacedDigit()).lineLimit(1)
@@ -267,8 +267,8 @@ struct ConfirmationSheet: View {
 }
 
 extension Locale {
-    /// The interface is written in Simplified Chinese; keep generated dates consistent with it.
-    static let interface = Locale(identifier: "zh_Hans_CN")
+    /// Dates follow the user's language and region, matching the localized interface.
+    static let interface = Locale.autoupdatingCurrent
 }
 
 extension Date {

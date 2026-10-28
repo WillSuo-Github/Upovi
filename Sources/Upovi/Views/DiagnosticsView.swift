@@ -31,7 +31,7 @@ struct DiagnosticsView: View {
             Toggle("包含应用标识与版本（会暴露软件清单）", isOn: $includeIdentifiers)
                 .accessibilityIdentifier("diagnostics-identifiers-toggle")
             ScrollView {
-                Text(report.map { String(decoding: $0, as: UTF8.self) } ?? "报告生成失败")
+                Text(report.map { String(decoding: $0, as: UTF8.self) } ?? String(localized: "报告生成失败"))
                     .font(.system(.caption, design: .monospaced)).textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(12)
                     .accessibilityIdentifier("diagnostics-preview")
@@ -48,9 +48,9 @@ struct DiagnosticsView: View {
         .fileExporter(isPresented: $exporting, document: DiagnosticDocument(data: report ?? Data()), contentType: .json,
                       defaultFilename: "Upovi-Diagnostics") { result in
             switch result {
-            case .success: status = "诊断报告已保存，未上传。"
+            case .success: status = String(localized: "诊断报告已保存，未上传。")
             case .failure(let error):
-                if (error as NSError).code != NSUserCancelledError { status = "诊断报告保存失败，请重新选择保存位置。" }
+                if (error as NSError).code != NSUserCancelledError { status = String(localized: "诊断报告保存失败，请重新选择保存位置。") }
             }
         }
     }

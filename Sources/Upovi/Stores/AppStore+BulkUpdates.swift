@@ -21,7 +21,7 @@ extension AppStore {
 
     func reviewAllUpdates() {
         guard !refreshing, !scanning, !checking, !installationBusy else { return }
-        guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = "请先完成或关闭 Upovi 自身更新。"; return }
+        guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新。"); return }
         bulkItems = BulkUpdatePlan.make(apps: apps, results: actionableSourceResults, ignored: ignored)
         guard !bulkItems.isEmpty else { return }
         resetBulkRun()
@@ -33,7 +33,7 @@ extension AppStore {
               !SelfUpdateService.shared.sessionInProgress else { return }
         guard !ignored.contains(app.bundleID), let id = candidate.appStoreID else { return }
         do { try AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: 501).validate() }
-        catch { errorMessage = "此商店安装的位置或签名暂不支持 Upovi 更新，请使用原分发渠道。"; return }
+        catch { errorMessage = String(localized: "此商店安装的位置或签名暂不支持 Upovi 更新，请使用原分发渠道。"); return }
         bulkItems = [.init(application: app, candidate: candidate, manualReason: nil)]
         resetBulkRun()
         bulkUpdatePresented = true
@@ -59,7 +59,7 @@ extension AppStore {
     func startAllUpdates() {
         guard bulkUpdatePresented, !bulkHasRun, !installing, !checking, !scanning, !refreshing,
               bulkInstallableCount > 0, !SelfUpdateService.shared.sessionInProgress else { return }
-        guard networkAvailable else { errorMessage = "当前没有可用网络，请联网后再开始更新。"; return }
+        guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，请联网后再开始更新。"); return }
         let record = BulkUpdateRecord(items: bulkItems)
         let previous = batchHistory
         batchHistory.insert(record, at: 0); batchHistory = Array(batchHistory.prefix(10))
@@ -79,7 +79,7 @@ extension AppStore {
             if let index = batchHistory.firstIndex(where: { $0.id == bulkRecordID }) {
                 batchHistory[index].finishedAt = Date(); saveBatchHistory()
             }
-            installationProgress = "全部更新结束：\(bulkCompletedCount) 个完成，\(bulkFailedCount) 个失败"
+            installationProgress = String(localized: "全部更新结束：\(bulkCompletedCount) 个完成，\(bulkFailedCount) 个失败")
             installing = false; bulkUpdating = false
             if networkEnabled { p2pBatchOffset = 0; restartP2P() }
         }
@@ -97,7 +97,7 @@ extension AppStore {
         case .started(let item):
             bulkActiveIDs.insert(item.id)
             transfers[item.id] = TransferProgress(phase: .downloading)
-            saveBulkPhase(item.id, phase: .preparing, detail: "正在下载并验证")
+            saveBulkPhase(item.id, phase: .preparing, detail: String(localized: "正在下载并验证"))
         case .finished(let outcome):
             let id = outcome.item.id
             bulkActiveIDs.remove(id)
@@ -113,7 +113,7 @@ extension AppStore {
             saveBulkPhase(id, phase: .init(rawValue: outcome.status.rawValue) ?? .failed, detail: outcome.detail)
             if outcome.status == .installed { sourceResults[id] = nil }
             if outcome.status == .current {
-                sourceResults[id] = .init(appID: id, candidates: [], note: "商店确认已经最新。", status: .current,
+                sourceResults[id] = .init(appID: id, candidates: [], note: String(localized: "商店确认已经最新。"), status: .current,
                     checks: [.init(.appStore, .checked)], appStoreID: outcome.item.candidate.appStoreID)
             }
         }
@@ -188,7 +188,7 @@ extension AppStore {
             }
             if app.isAppStore {
                 try Task.checkCancellation()
-                guard saveBulkPhase(id, phase: .installing, detail: "等待商店下载和管理员认证") else { throw PeerError.unavailable("Batch history could not be saved") }
+                guard saveBulkPhase(id, phase: .installing, detail: String(localized: "等待商店下载和管理员认证")) else { throw PeerError.unavailable("Batch history could not be saved") }
                 stage = .batchInstallation
                 try await authorized(id) { [self] in
                     setTransferPhase(id, .installing)
@@ -198,7 +198,7 @@ extension AppStore {
                 let package = try await cancellable(id) { [self] in try await administrator.preparePackage(candidate, app: app, progress: progress) }
                 defer { administrator.discard(package) }
                 if bulkStopRequested { throw CancellationError() }
-                guard saveBulkPhase(id, phase: .installing, detail: "等待管理员安装") else { throw PeerError.unavailable("Batch history could not be saved") }
+                guard saveBulkPhase(id, phase: .installing, detail: String(localized: "等待管理员安装")) else { throw PeerError.unavailable("Batch history could not be saved") }
                 stage = .batchInstallation
                 try await authorized(id) { [self] in
                     setTransferPhase(id, .installing)
@@ -208,7 +208,7 @@ extension AppStore {
                 let prepared = try await cancellable(id) { [self] in try await installer.prepare(app: app, candidate: candidate, progress: progress) }
                 do {
                     if bulkStopRequested { throw CancellationError() }
-                    guard saveBulkPhase(id, phase: .installing, detail: "正在安装") else { throw PeerError.unavailable("Batch history could not be saved") }
+                    guard saveBulkPhase(id, phase: .installing, detail: String(localized: "正在安装")) else { throw PeerError.unavailable("Batch history could not be saved") }
                     stage = .batchInstallation
                     if !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path) {
                         let plan = AdministratorInstallPlan(operation: .application, application: app,

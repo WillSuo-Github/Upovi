@@ -72,22 +72,22 @@ public actor AppStoreCatalog {
     }
     public func invalidate() { loadedAt = nil; pending = nil }
     public func check(_ app: InstalledApp) async -> SourceResult {
-        guard available else { return .init(appID: app.id, candidates: [], note: "请使用包含商店更新组件的完整 Upovi 应用包。", status: .appStore, checks: [.init(.appStore, .manual)]) }
+        guard available else { return .init(appID: app.id, candidates: [], note: String(localized: "请使用包含商店更新组件的完整 Upovi 应用包。"), status: .appStore, checks: [.init(.appStore, .manual)]) }
         do {
             let entries = try await load()
             let matches = entries.filter { $0.matches(app) }
             guard matches.count == 1, let entry = matches.first,
                   (entry.adamID == 0 || entries.filter({ $0.adamID == entry.adamID }).count == 1) else { throw PeerError.invalid("App Store identity is missing or ambiguous") }
             if entry.adamID == 0 {
-                return .init(appID: app.id, candidates: [], note: "此安装没有可确认的商店标识，可能来自 TestFlight。请使用原分发渠道更新；不会自动替换。", status: .appStore, checks: [.init(.appStore, .manual)])
+                return .init(appID: app.id, candidates: [], note: String(localized: "此安装没有可确认的商店标识，可能来自 TestFlight。请使用原分发渠道更新；不会自动替换。"), status: .appStore, checks: [.init(.appStore, .manual)])
             }
             guard let target = entry.newVersion else { throw PeerError.unavailable("No exact compatible Store release was confirmed") }
             let newer = VersionOrder.isNewer(version: target, than: app)
             let candidates: [UpdateCandidate] = newer ? [.init(version: target, source: "App Store", isCommunity: false,
                 url: URL(string: "https://apps.apple.com/app/id\(entry.adamID)"), appStoreID: entry.adamID)] : []
-            return .init(appID: app.id, candidates: candidates, note: "已检查公开商店版本，信息可能存在同步延迟。可在 Upovi 中发起更新，可能要求 Apple 账户或管理员认证。", status: newer ? .updates : .current, checks: [.init(.appStore, .checked)], appStoreID: entry.adamID)
+            return .init(appID: app.id, candidates: candidates, note: String(localized: "已检查公开商店版本，信息可能存在同步延迟。可在 Upovi 中发起更新，可能要求 Apple 账户或管理员认证。"), status: newer ? .updates : .current, checks: [.init(.appStore, .checked)], appStoreID: entry.adamID)
         } catch {
-            return .init(appID: app.id, candidates: [], note: "商店更新检测未完成。请确认系统支持商店更新组件，且应用已被 Spotlight 索引；不会将检测失败视为已经最新。", status: .failed, checks: [.init(.appStore, .failed, error: error)])
+            return .init(appID: app.id, candidates: [], note: String(localized: "商店更新检测未完成。请确认系统支持商店更新组件，且应用已被 Spotlight 索引；不会将检测失败视为已经最新。"), status: .failed, checks: [.init(.appStore, .failed, error: error)])
         }
     }
     private func load() async throws -> [StoreApplication] {

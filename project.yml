@@ -4,6 +4,7 @@ options:
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
+  developmentLanguage: zh-Hans
   transitivelyLinkDependencies: true
   groupSortPosition: top
 fileGroups:
@@ -19,6 +20,8 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "6.0"
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     CODE_SIGN_STYLE: Automatic
     ENABLE_USER_SCRIPT_SANDBOXING: NO
 packages:
@@ -79,6 +82,8 @@ targets:
     sources:
       - Sources/Upovi
       - Resources/Assets.xcassets
+      - Resources/Localizable.xcstrings
+      - Resources/InfoPlist.xcstrings
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: app.upovi.Upovi
       INFOPLIST_FILE: "$(DERIVED_FILE_DIR)/Upovi-Info.plist"
@@ -149,5 +154,8 @@ schemes:
         - UpoviTests
       environmentVariables:
         UPOVI_TEST_HOST: "1"
+      # Assertions read the Simplified Chinese source strings regardless of the machine language.
+      language: zh-Hans
+      region: CN
     archive:
       config: Release

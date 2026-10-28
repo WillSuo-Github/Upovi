@@ -96,7 +96,7 @@ struct ApplicationTable: View {
                 }
                 .onEnded { _ in dragStart = nil })
             .accessibilityElement()
-            .accessibilityLabel("调整\(["应用", "当前版本", "可用版本"][index])列宽")
+            .accessibilityLabel(String(localized: "调整“\([String(localized: "应用"), String(localized: "当前版本"), String(localized: "可用版本")][index])”列宽"))
             .accessibilityValue("\(Int(layout.widths[index]))")
             .accessibilityAdjustableAction { direction in
                 columns = layout.resizingBoundary(index, by: direction == .increment ? 10 : -10)

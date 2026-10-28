@@ -1,0 +1,216 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "NSLocalNetworkUsageDescription": {
+      "comment": "Privacy - Local Network Usage Description",
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يُستخدم لاكتشاف النظراء الذين فعّلوا P2P وتبادل تقارير إصدارات التطبيقات المفحوصة."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’utilitza per descobrir nodes amb el P2P activat i intercanviar informes de versió de les apps escanejades."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slouží k vyhledání uzlů se zapnutým P2P a výměně hlášení o verzích naskenovaných aplikací."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruges til at finde noder med P2P slået til og udveksle versionsrapporter for scannede apps."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird verwendet, um Knoten mit aktiviertem P2P zu finden und Versionsberichte gescannter Apps auszutauschen."
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Χρησιμοποιείται για τον εντοπισμό κόμβων με ενεργό P2P και την ανταλλαγή αναφορών έκδοσης για τις σαρωμένες εφαρμογές."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discovers peers with P2P turned on and exchanges version reports for scanned apps."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se usa para descubrir nodos con P2P activado e intercambiar informes de versión de las apps analizadas."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Käytetään P2P:n käyttöön ottaneiden solmujen löytämiseen ja skannattujen appien versioraporttien vaihtamiseen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sert à découvrir les pairs ayant activé le P2P et à échanger les rapports de version des apps analysées."
+          }
+        },
+        "he": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "משמש לגילוי עמיתים שהפעילו P2P ולהחלפת דוחות גרסה של יישומים שנסרקו."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "P2P चालू किए हुए पीयर खोजने और स्कैन किए गए ऐप की संस्करण रिपोर्ट साझा करने के लिए उपयोग होता है।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Koristi se za otkrivanje čvorova s uključenim P2P-om i razmjenu izvješća o verzijama skeniranih aplikacija."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A bekapcsolt P2P-vel rendelkező csomópontok felderítésére és a beolvasott appok verziójelentéseinek cseréjére szolgál."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digunakan untuk menemukan peer yang mengaktifkan P2P dan bertukar laporan versi app yang dipindai."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serve a individuare i peer con P2P attivo e a scambiare i rapporti di versione delle app analizzate."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "P2P を有効にしたノードを検出し、スキャンしたアプリのバージョンレポートを交換するために使用します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "P2P를 켠 노드를 찾고 스캔한 앱의 버전 보고서를 교환하는 데 사용됩니다."
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digunakan untuk menemui rakan yang menghidupkan P2P dan bertukar laporan versi apl yang diimbas."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brukes til å finne noder med P2P slått på og utveksle versjonsrapporter for skannede apper."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wordt gebruikt om peers met P2P ingeschakeld te vinden en versierapporten van gescande apps uit te wisselen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Służy do wykrywania węzłów z włączonym P2P i wymiany raportów o wersjach przeskanowanych aplikacji."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usado para descobrir pares com P2P ativado e trocar relatórios de versão dos apps verificados."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilizado para descobrir pares com P2P ativado e trocar relatórios de versão das apps analisadas."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folosit pentru a descoperi nodurile cu P2P activat și a schimba rapoarte de versiune pentru aplicațiile scanate."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Используется для поиска узлов с включённым P2P и обмена отчётами о версиях просканированных приложений."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slúži na vyhľadanie uzlov so zapnutým P2P a výmenu hlásení o verziách naskenovaných aplikácií."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Används för att hitta noder med P2P aktiverat och utbyta versionsrapporter för skannade appar."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ใช้เพื่อค้นหาโหนดที่เปิด P2P และแลกเปลี่ยนรายงานเวอร์ชันของแอปที่สแกนแล้ว"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "P2P’yi açmış eşleri keşfetmek ve taranan uygulamaların sürüm raporlarını paylaşmak için kullanılır."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Використовується для пошуку вузлів з увімкненим P2P та обміну звітами про версії просканованих програм."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dùng để khám phá các nút đã bật P2P và trao đổi báo cáo phiên bản của các ứng dụng đã quét."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用于发现已开启 P2P 的节点并交换已扫描应用的版本报告。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用於探索已開啟 P2P 的節點，並交換已掃描 App 的版本報告。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

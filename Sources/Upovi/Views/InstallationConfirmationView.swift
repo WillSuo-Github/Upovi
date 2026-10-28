@@ -6,9 +6,9 @@ struct InstallationConfirmationView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             if let update = store.preparedUpdate {
-                header(path: update.application.path, title: update.application.name, badge: "更新已验证",
+                header(path: update.application.path, title: update.application.name, badge: String(localized: "更新已验证"),
                        from: update.application.version, to: update.replacement.version)
-                checklist((update.archiveIntegrityVerified ? ["下载完整性"] : []) + ["应用标识与 Apple 开发者签名", "嵌套代码签名与架构兼容", "macOS Gatekeeper 信任"])
+                checklist((update.archiveIntegrityVerified ? [String(localized: "下载完整性")] : []) + [String(localized: "应用标识与 Apple 开发者签名"), String(localized: "嵌套代码签名与架构兼容"), String(localized: "macOS Gatekeeper 信任")])
                 if update.usesLegacyMigration {
                     Label("旧版官方文件与资源签名已核对，将升级为开发者签名版本。首次打开时可能需要重新确认系统权限。", systemImage: "checkmark.shield")
                         .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -23,16 +23,16 @@ struct InstallationConfirmationView: View {
                         Text("将显示 macOS 管理员授权窗口，并在系统事务目录保留主应用备份。").font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                buttons(confirm: "关闭应用并安装")
+                buttons(confirm: String(localized: "关闭应用并安装"))
             } else if let package = store.preparedPackage {
-                header(path: package.plan.application.path, title: package.plan.application.name, badge: "安装包签名已验证",
+                header(path: package.plan.application.path, title: package.plan.application.name, badge: String(localized: "安装包签名已验证"),
                        from: package.plan.application.version, to: package.plan.version)
-                checklist(["下载完整性", "安装包开发者签名", "macOS Gatekeeper 信任"])
+                checklist([String(localized: "下载完整性"), String(localized: "安装包开发者签名"), String(localized: "macOS Gatekeeper 信任")])
                 Text("授权后将检查安装负载的应用身份，再由 Upovi 执行系统安装工具。").font(.callout)
                 Label("PKG 可运行安装脚本并修改系统服务。Upovi 保留主应用备份，但恢复主应用不会撤销安装脚本、驱动或其他系统改动。请先保存文稿。",
                       systemImage: "exclamationmark.triangle.fill")
                     .font(.callout).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
-                buttons(confirm: "授权并安装")
+                buttons(confirm: String(localized: "授权并安装"))
             }
         }.padding(26).frame(width: 500)
     }

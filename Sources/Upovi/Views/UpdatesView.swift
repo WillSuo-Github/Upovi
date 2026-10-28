@@ -5,6 +5,7 @@ import UpoviCore
 /// The default landing page: what can be updated right now, and how.
 struct UpdatesView: View {
     @Bindable var store: AppStore
+    @Environment(\.layoutDirection) private var layoutDirection
     @State private var showPostponed = false
 
     private var plan: [BulkUpdateItem] {
@@ -29,10 +30,10 @@ struct UpdatesView: View {
                     hero(total: plan.count, installable: plan.filter(\.canInstall).count).entrance(0)
                 }
                 if !installable.isEmpty {
-                    group("可在 Upovi 中更新", items: installable).entrance(1)
+                    group(String(localized: "可在 Upovi 中更新"), items: installable).entrance(1)
                 }
                 if !manual.isEmpty {
-                    group("需通过官方渠道更新", items: manual).entrance(2)
+                    group(String(localized: "需通过官方渠道更新"), items: manual).entrance(2)
                 }
                 if !plan.isEmpty, visible.isEmpty, batch.isEmpty {
                     ContentUnavailableView.search(text: store.search)
@@ -103,17 +104,17 @@ struct UpdatesView: View {
     }
 
     private func summary(total: Int, installable: Int) -> String {
-        var parts = ["\(installable) 个可由 Upovi 验证并安装"]
-        if total > installable { parts.append("\(total - installable) 个需官方渠道") }
-        if let date = store.lastChecked { parts.append("上次检查 \(date.relativeDescription)") }
+        var parts = [String(localized: "\(installable) 个可由 Upovi 验证并安装")]
+        if total > installable { parts.append(String(localized: "\(total - installable) 个需官方渠道")) }
+        if let date = store.lastChecked { parts.append(String(localized: "上次检查 \(date.relativeDescription)")) }
         return parts.joined(separator: " · ")
     }
 
     private var currentSummary: String {
         var parts: [String] = []
-        if let date = store.lastChecked { parts.append("上次检查 \(date.relativeDescription)") }
-        if store.incompleteCheckCount > 0 { parts.append("\(store.incompleteCheckCount) 个应用未能完整检查") }
-        parts.append("结果为空并不代表所有应用都已是最新")
+        if let date = store.lastChecked { parts.append(String(localized: "上次检查 \(date.relativeDescription)")) }
+        if store.incompleteCheckCount > 0 { parts.append(String(localized: "\(store.incompleteCheckCount) 个应用未能完整检查")) }
+        parts.append(String(localized: "结果为空并不代表所有应用都已是最新"))
         return parts.joined(separator: " · ")
     }
 
@@ -135,8 +136,9 @@ struct UpdatesView: View {
         VStack(alignment: .leading, spacing: 10) {
             Button { withAnimation(.snappy) { showPostponed.toggle() } } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "chevron.right").font(.caption.weight(.bold)).rotationEffect(.degrees(showPostponed ? 90 : 0))
-                    SectionTitle(title: "已跳过或稍后提醒", count: apps.count)
+                    Image(systemName: "chevron.forward").font(.caption.weight(.bold))
+                        .rotationEffect(.degrees(showPostponed ? (layoutDirection == .rightToLeft ? -90 : 90) : 0))
+                    SectionTitle(title: String(localized: "已跳过或稍后提醒"), count: apps.count)
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain)
             if showPostponed {
@@ -187,7 +189,7 @@ private struct UpdateRow: View {
                     HStack(spacing: 8) {
                         Text(app.name).font(.headline).lineLimit(1)
                         StatusBadge(text: candidate.source, tone: .neutral)
-                        if lead != nil { StatusBadge(text: "社区一致", symbol: "person.2.fill", tone: .community).help("相同版本也出现在 P2P 社区报告中") }
+                        if lead != nil { StatusBadge(text: String(localized: "社区一致"), symbol: "person.2.fill", tone: .community).help(String(localized: "相同版本也出现在 P2P 社区报告中")) }
                     }
                     VersionTransition(from: app.version, to: candidate.version)
                     if let reason = item.manualReason {
@@ -227,7 +229,7 @@ private struct UpdateRow: View {
 
     @ViewBuilder private func primaryButton(_ candidate: UpdateCandidate) -> some View {
         if item.canInstall {
-            Button(app.isAppStore ? "更新" : "下载并验证") {
+            Button("更新") {
                 if app.isAppStore { store.reviewStoreUpdate(app, candidate: candidate) } else { store.prepareInstallation(candidate, app: app) }
             }
             .buttonStyle(.borderedProminent).controlSize(.regular)
@@ -320,15 +322,15 @@ private struct BulkProgressHero: View {
     }
 
     private var subtitle: String {
-        var parts = ["已完成 \(store.bulkFinishedCount) / \(store.bulkInstallableCount)"]
+        var parts = [String(localized: "已完成 \(store.bulkFinishedCount) / \(store.bulkInstallableCount)")]
         if store.bulkUpdating {
             let downloading = store.bulkDownloadingCount
-            if downloading > 0 { parts.append("\(downloading) 个下载中") }
+            if downloading > 0 { parts.append(String(localized: "\(downloading) 个下载中")) }
             if downloading > 0, store.bulkBytesPerSecond > 1000 { parts.append(TransferProgress.megabytes(Int64(store.bulkBytesPerSecond)) + "/s") }
         } else if store.bulkCompletedCount != store.bulkFinishedCount {
-            parts.append("成功 \(store.bulkCompletedCount)")
+            parts.append(String(localized: "成功 \(store.bulkCompletedCount)"))
         }
-        if store.bulkFailedCount > 0 { parts.append("失败 \(store.bulkFailedCount)") }
+        if store.bulkFailedCount > 0 { parts.append(String(localized: "失败 \(store.bulkFailedCount)")) }
         return parts.joined(separator: " · ")
     }
 }
@@ -340,7 +342,7 @@ private struct TransferGroup: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: store.bulkUpdating ? "更新任务" : "本次更新", count: items.count)
+            SectionTitle(title: store.bulkUpdating ? String(localized: "更新任务") : String(localized: "本次更新"), count: items.count)
             VStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                     if index > 0 { Divider().padding(.leading, 76) }

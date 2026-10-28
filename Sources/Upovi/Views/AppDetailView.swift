@@ -15,7 +15,7 @@ struct AppDetailView: View {
                     let leads = store.assessment(for: app).communityLeads
                     if !leads.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
-                            SectionTitle(title: "社区版本线索", count: leads.count)
+                            SectionTitle(title: String(localized: "社区版本线索"), count: leads.count)
                             ForEach(leads) { CommunityLeadView(lead: $0) }
                         }
                     }
@@ -54,8 +54,8 @@ struct AppDetailView: View {
                 ForEach(candidates) { UpdateCandidateCard(store: store, app: app, candidate: $0) }
             }
         } else if app.isAppStore, let id = store.sourceResults[app.id]?.appStoreID {
-            statusCard(symbol: "bag.fill", tone: .accent, title: "App Store 应用",
-                       message: "可以通过 Apple 商店服务检查并更新；可能需要拥有该应用的 Apple 账户认证。") {
+            statusCard(symbol: "bag.fill", tone: .accent, title: String(localized: "App Store 应用"),
+                       message: String(localized: "可以通过 Apple 商店服务检查并更新；可能需要拥有该应用的 Apple 账户认证。")) {
                 Button("检查并更新此应用") {
                     store.reviewStoreUpdate(app, candidate: .init(version: app.version, source: "App Store", isCommunity: false, url: nil, appStoreID: id))
                 }
@@ -66,30 +66,30 @@ struct AppDetailView: View {
             let result = store.sourceResults[app.id]
             switch store.status(for: app) {
             case .ignored:
-                statusCard(symbol: "eye.slash", tone: .neutral, title: "已忽略更新提醒", message: "此应用不会出现在可用更新、全部更新和通知中。") {
+                statusCard(symbol: "eye.slash", tone: .neutral, title: String(localized: "已忽略更新提醒"), message: String(localized: "此应用不会出现在可用更新、全部更新和通知中。")) {
                     Button("恢复更新提醒") { store.toggleIgnored(app) }
                 }
             case .current, .appStore:
-                statusCard(symbol: "checkmark.circle.fill", tone: .success, title: "来源未报告新版本",
-                           message: store.lastChecked.map { "最近一次检查（\($0.relativeDescription)）没有发现更高版本。" } ?? "") { EmptyView() }
+                statusCard(symbol: "checkmark.circle.fill", tone: .success, title: String(localized: "来源未报告新版本"),
+                           message: store.lastChecked.map { String(localized: "最近一次检查（\($0.relativeDescription)）没有发现更高版本。") } ?? "") { EmptyView() }
             case .failed, .partial:
-                statusCard(symbol: "exclamationmark.triangle.fill", tone: .warning, title: "检测未完成",
-                           message: "部分或全部来源没有返回有效结果，原因见下方“检测来源”。可以稍后重新检查，或在帮助菜单导出诊断报告。") {
+                statusCard(symbol: "exclamationmark.triangle.fill", tone: .warning, title: String(localized: "检测未完成"),
+                           message: String(localized: "部分或全部来源没有返回有效结果，原因见下方“检测来源”。可以稍后重新检查，或在帮助菜单导出诊断报告。")) {
                     Button("重新检查全部") { store.beginChecking() }.disabled(store.operationBusy)
                 }
             case .unsupported:
-                statusCard(symbol: "questionmark.circle.fill", tone: .neutral, title: "未找到可用的更新来源",
-                           message: "可以手动指定开发者的 appcast 或官方 GitHub 仓库。") {
+                statusCard(symbol: "questionmark.circle.fill", tone: .neutral, title: String(localized: "未找到可用的更新来源"),
+                           message: String(localized: "可以手动指定开发者的 appcast 或官方 GitHub 仓库。")) {
                     Button("设置更新来源…") { sourceEditor = true }.buttonStyle(.borderedProminent)
                     if let url = result?.manualURL { Button("官方更新入口") { store.open(url) } }
                 }
             case .community:
-                statusCard(symbol: "person.2.fill", tone: .community, title: "只有社区线索",
-                           message: "社区报告未获更新来源确认，不计入可用更新，也不能用于安装。") {
+                statusCard(symbol: "person.2.fill", tone: .community, title: String(localized: "只有社区线索"),
+                           message: String(localized: "社区报告未获更新来源确认，不计入可用更新，也不能用于安装。")) {
                     Button("核对更新来源") { store.beginChecking() }.disabled(store.operationBusy)
                 }
             default:
-                statusCard(symbol: "circle.dashed", tone: .neutral, title: "尚未检查", message: "刷新并检查后会显示此应用的来源结果。") {
+                statusCard(symbol: "circle.dashed", tone: .neutral, title: String(localized: "尚未检查"), message: String(localized: "刷新并检查后会显示此应用的来源结果。")) {
                     Button("检查更新") { store.beginChecking() }.disabled(store.operationBusy)
                 }
             }
@@ -110,13 +110,13 @@ struct AppDetailView: View {
 
     private func info(_ app: InstalledApp) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: "应用信息")
+            SectionTitle(title: String(localized: "应用信息"))
             VStack(spacing: 0) {
-                row("当前版本", app.version, mono: true)
-                row("构建号", app.build.isEmpty ? "未知" : app.build, mono: true)
-                row("分发渠道", app.isAppStore ? "App Store" : "开发者分发")
-                row("Team ID", app.teamID ?? "未识别", mono: app.teamID != nil)
-                row("安装位置", app.path, last: true)
+                row(String(localized: "当前版本"), app.version, mono: true)
+                row(String(localized: "构建号"), app.build.isEmpty ? String(localized: "未知") : app.build, mono: true)
+                row(String(localized: "分发渠道"), app.isAppStore ? "App Store" : String(localized: "开发者分发"))
+                row("Team ID", app.teamID ?? String(localized: "未识别"), mono: app.teamID != nil)
+                row(String(localized: "安装位置"), app.path, last: true)
             }.card(padding: 0)
         }
     }
@@ -135,9 +135,9 @@ struct AppDetailView: View {
 
     private func source(_ app: InstalledApp) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: "检测来源")
+            SectionTitle(title: String(localized: "检测来源"))
             VStack(alignment: .leading, spacing: 8) {
-                Text(store.sourceResults[app.id]?.note ?? "尚未检查开发者更新源").font(.callout).textSelection(.enabled)
+                Text(store.sourceResults[app.id]?.note ?? String(localized: "尚未检查开发者更新源")).font(.callout).textSelection(.enabled)
                 if let feed = store.sourceOverrides[app.bundleID]?.appcast ?? app.feedURL {
                     Label(feed.absoluteString, systemImage: "dot.radiowaves.up.forward").font(.caption.monospaced())
                         .foregroundStyle(.secondary).textSelection(.enabled).lineLimit(2)
@@ -220,7 +220,7 @@ private struct UpdateCandidateCard: View {
                 .buttonStyle(.borderedProminent).disabled(store.operationBusy)
                 .accessibilityIdentifier("update-store-application")
         case .verifiedDownload:
-            Button("下载并验证更新") { store.prepareInstallation(candidate, app: app) }
+            Button("更新") { store.prepareInstallation(candidate, app: app) }
                 .buttonStyle(.borderedProminent).disabled(store.operationBusy)
         case .official:
             if candidate.url != nil {
@@ -243,8 +243,8 @@ struct CommunityLeadView: View {
                 StatusBadge(text: confirmation.label, symbol: confirmation.symbol, tone: confirmation.tone)
             }
             Text(lead.confirmation == .sourceMatched
-                 ? "相同版本已由 \(lead.matchingSources.joined(separator: "、")) 提供。更新数量、通知与安装以来源结果为准。"
-                 : "未获更新来源确认，不计入更新数量，不发送更新通知。")
+                 ? String(localized: "相同版本已由 \(lead.matchingSources.joined(separator: "、")) 提供。更新数量、通知与安装以来源结果为准。")
+                 : String(localized: "未获更新来源确认，不计入更新数量，不发送更新通知。"))
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 4) {
                 Image(systemName: "person.2")
@@ -256,9 +256,9 @@ struct CommunityLeadView: View {
 
     private var confirmation: (label: String, symbol: String, tone: Tone) {
         switch lead.confirmation {
-        case .unverified: ("未经核实", "questionmark.circle", .neutral)
-        case .multiplePublishers: ("多节点 · 未核实", "person.3", .community)
-        case .sourceMatched: ("来源一致", "checkmark.seal.fill", .success)
+        case .unverified: (String(localized: "未经核实"), "questionmark.circle", .neutral)
+        case .multiplePublishers: (String(localized: "多节点 · 未核实"), "person.3", .community)
+        case .sourceMatched: (String(localized: "来源一致"), "checkmark.seal.fill", .success)
         }
     }
 }

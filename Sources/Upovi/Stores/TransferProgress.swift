@@ -43,23 +43,23 @@ struct TransferProgress: Equatable {
 
     var label: String {
         switch phase {
-        case .queued: return "排队中"
+        case .queued: return String(localized: "排队中")
         case .downloading:
             // The row's single percentage covers the whole update, so the status line shows bytes only.
-            guard received > 0 else { return "正在连接…" }
+            guard received > 0 else { return String(localized: "正在连接…") }
             var parts = [expected > 0 ? "\(Self.megabytes(received)) / \(Self.megabytes(expected))" : Self.megabytes(received)]
             if bytesPerSecond > 0 {
                 parts.append(Self.rate(bytesPerSecond))
                 if expected > received { parts.append(Self.remaining(Double(expected - received) / bytesPerSecond)) }
             }
             return parts.joined(separator: " · ")
-        case .verifying: return "正在校验签名与完整性"
-        case .awaitingConfirmation: return "已验证，等待确认安装"
-        case .waitingForAuthorization: return "等待授权"
-        case .installing: return "正在安装"
-        case .installed: return "已完成"
-        case .failed: return "失败"
-        case .cancelled: return "已停止"
+        case .verifying: return String(localized: "正在校验签名与完整性")
+        case .awaitingConfirmation: return String(localized: "已验证，等待确认安装")
+        case .waitingForAuthorization: return String(localized: "等待授权")
+        case .installing: return String(localized: "正在安装")
+        case .installed: return String(localized: "已完成")
+        case .failed: return String(localized: "失败")
+        case .cancelled: return String(localized: "已停止")
         }
     }
 
@@ -70,9 +70,9 @@ struct TransferProgress: Equatable {
 
     static func remaining(_ seconds: Double) -> String {
         guard seconds.isFinite else { return "" }
-        if seconds < 60 { return "剩余 \(max(1, Int(seconds.rounded()))) 秒" }
-        if seconds < 3600 { return "剩余约 \(Int((seconds / 60).rounded())) 分钟" }
-        return "剩余约 \(Int((seconds / 3600).rounded())) 小时"
+        if seconds < 60 { return String(localized: "剩余 \(max(1, Int(seconds.rounded()))) 秒") }
+        if seconds < 3600 { return String(localized: "剩余约 \(Int((seconds / 60).rounded())) 分钟") }
+        return String(localized: "剩余约 \(Int((seconds / 3600).rounded())) 小时")
     }
 
     static func megabytes(_ bytes: Int64) -> String {

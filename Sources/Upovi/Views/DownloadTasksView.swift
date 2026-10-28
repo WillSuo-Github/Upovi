@@ -11,18 +11,18 @@ struct DownloadTasksView: View {
         let active = records.filter { $0.state.active }, finished = records.filter { !$0.state.active }
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                PageHeader(title: "下载", subtitle: "暂停会保留进度；断网后等待重连，临时网络错误最多自动重试 3 次。安装仍需单独确认。").entrance(0)
+                PageHeader(title: String(localized: "下载"), subtitle: String(localized: "暂停会保留进度；断网后等待重连，临时网络错误最多自动重试 3 次。安装仍需单独确认。")).entrance(0)
                 if store.downloadCenter.historySaveFailed {
                     Label("下载记录未能保存；当前任务仍可操作，退出后可能缺少记录。", systemImage: "exclamationmark.triangle.fill")
                         .font(.callout).foregroundStyle(.orange).card(padding: 12, tint: .orange)
                 }
                 if records.isEmpty {
                     ContentUnavailableView(store.search.isEmpty ? "暂无下载任务" : "没有匹配的下载", systemImage: "tray.and.arrow.down",
-                                           description: Text("在“可用更新”中选择“下载并验证”或“全部更新”，任务会显示在这里。"))
+                                           description: Text("在“可用更新”中选择“更新”或“全部更新”，任务会显示在这里。"))
                         .padding(.top, 60)
                 }
-                if !active.isEmpty { list("进行中", active).entrance(1) }
-                if !finished.isEmpty { list("最近", finished).entrance(2) }
+                if !active.isEmpty { list(String(localized: "进行中"), active).entrance(1) }
+                if !finished.isEmpty { list(String(localized: "最近"), finished).entrance(2) }
             }
             .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 72)
             .frame(maxWidth: 980).frame(maxWidth: .infinity)
@@ -101,27 +101,27 @@ private struct DownloadTaskRow: View {
     private func failure(_ issue: DiagnosticIssue) -> String {
         let message: String
         switch issue.kind {
-        case .offline, .connection, .timeout: message = "网络连接未恢复，请联网后重新检测并下载。"
-        case .tls: message = "安全连接未通过，请检查网络或使用官方更新。"
-        case .http: message = "服务器未能提供安装包，请稍后重新检测来源。"
-        case .validationRejected, .invalidMetadata: message = "下载或完整性校验未通过，请重新检测来源或使用官方更新。"
-        default: message = "下载未完成，请重新检测来源；需要排查时可导出诊断报告。"
+        case .offline, .connection, .timeout: message = String(localized: "网络连接未恢复，请联网后重新检测并下载。")
+        case .tls: message = String(localized: "安全连接未通过，请检查网络或使用官方更新。")
+        case .http: message = String(localized: "服务器未能提供安装包，请稍后重新检测来源。")
+        case .validationRejected, .invalidMetadata: message = String(localized: "下载或完整性校验未通过，请重新检测来源或使用官方更新。")
+        default: message = String(localized: "下载未完成，请重新检测来源；需要排查时可导出诊断报告。")
         }
         return message + (issue.httpStatus.map { " HTTP \($0)" } ?? "")
     }
     private var label: String {
         switch record.state {
-        case .queued: "准备下载"
-        case .downloading: "下载中"
-        case .paused: "已暂停"
-        case .waitingForNetwork: "等待网络"
-        case .retrying: "稍后自动重试"
-        case .verifying: "正在校验"
-        case .downloaded: "已下载，待应用验证"
-        case .verified: "已校验"
-        case .failed: "下载失败"
-        case .cancelled: "已取消"
-        case .interrupted: "已中断，需重新检测"
+        case .queued: String(localized: "准备下载")
+        case .downloading: String(localized: "下载中")
+        case .paused: String(localized: "已暂停")
+        case .waitingForNetwork: String(localized: "等待网络")
+        case .retrying: String(localized: "稍后自动重试")
+        case .verifying: String(localized: "正在校验")
+        case .downloaded: String(localized: "已下载，待应用验证")
+        case .verified: String(localized: "已校验")
+        case .failed: String(localized: "下载失败")
+        case .cancelled: String(localized: "已取消")
+        case .interrupted: String(localized: "已中断，需重新检测")
         }
     }
     private var symbol: String {

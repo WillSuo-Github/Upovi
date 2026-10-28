@@ -30,12 +30,12 @@ struct LibraryView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            PageHeader(title: "全部应用", subtitle: "\(store.apps.count) 个本机应用 · 来自 /Applications、~/Applications 与自定义目录") {
+            PageHeader(title: String(localized: "全部应用"), subtitle: String(localized: "\(store.apps.count) 个本机应用 · 来自 /Applications、~/Applications 与自定义目录")) {
                 Text(store.visibleApps.count.formatted()).font(Theme.display(26, weight: .semibold)).monospacedDigit().foregroundStyle(.tertiary)
             }
             Picker("筛选", selection: $store.sourceFilter) {
                 ForEach(SourceFilter.allCases) { filter in
-                    Text(count(filter).map { "\(filter.rawValue) \($0)" } ?? filter.rawValue).tag(filter)
+                    Text(count(filter).map { "\(filter.title) \($0)" } ?? filter.title).tag(filter)
                 }
             }
             .pickerStyle(.segmented).labelsHidden().fixedSize()
