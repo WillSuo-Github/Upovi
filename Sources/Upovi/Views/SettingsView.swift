@@ -124,6 +124,7 @@ private struct ScanSettings: View {
                 capability("arrow.up.forward.app", String(localized: "其他安装包"), String(localized: "无法验证时，引导到官方来源更新。"))
             } header: { Text("支持的安装方式") }
         }.formStyle(.grouped)
+        .listAnimation(store.additionalScanDirectories)
     }
 
     private func capability(_ symbol: String, _ title: String, _ detail: String) -> some View {

@@ -24,6 +24,7 @@ struct DownloadTasksView: View {
                 if !active.isEmpty { list(String(localized: "进行中"), active).entrance(1) }
                 if !finished.isEmpty { list(String(localized: "最近"), finished).entrance(2) }
             }
+            .listAnimation([active.map(\.id), finished.map(\.id)])
             .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 72)
             .frame(maxWidth: 980).frame(maxWidth: .infinity)
         }
@@ -36,8 +37,11 @@ struct DownloadTasksView: View {
             SectionTitle(title: title, count: records.count)
             VStack(spacing: 0) {
                 ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
-                    if index > 0 { Divider().padding(.leading, 70) }
-                    DownloadTaskRow(store: store, record: record)
+                    VStack(spacing: 0) {
+                        if index > 0 { Divider().padding(.leading, 70) }
+                        DownloadTaskRow(store: store, record: record)
+                    }
+                    .transition(.listRow)
                 }
             }.card(padding: 0)
         }

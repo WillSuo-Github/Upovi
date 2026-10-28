@@ -82,7 +82,27 @@ struct CardBackground: ViewModifier {
     }
 }
 
+extension AnyTransition {
+    /// Rows fade and settle in when they join a list, and fade and shrink slightly when they leave.
+    static var listRow: AnyTransition {
+        .asymmetric(insertion: .opacity.combined(with: .offset(y: -6)),
+                    removal: .opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+    }
+}
+
+/// One animation for every list change, switched off with Reduce Motion.
+private struct ListAnimation<Value: Equatable>: ViewModifier {
+    let value: Value
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func body(content: Content) -> some View {
+        content.animation(reduceMotion ? nil : .snappy(duration: 0.35), value: value)
+    }
+}
+
 extension View {
+    /// Animates insertions, removals and moves whenever `value` (usually the visible ids) changes.
+    func listAnimation<Value: Equatable>(_ value: Value) -> some View { modifier(ListAnimation(value: value)) }
+
     func card(padding: CGFloat = 16, tint: Color? = nil) -> some View { modifier(CardBackground(padding: padding, tint: tint)) }
 
     /// Staggered fade/slide entrance for page sections.

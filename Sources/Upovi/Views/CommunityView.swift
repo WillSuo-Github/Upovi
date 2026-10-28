@@ -93,10 +93,14 @@ struct CommunityView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(store.communityApps.enumerated()), id: \.element.id) { index, app in
-                        if index > 0 { Divider().padding(.leading, 66) }
-                        LeadRow(store: store, app: app)
+                        VStack(spacing: 0) {
+                            if index > 0 { Divider().padding(.leading, 66) }
+                            LeadRow(store: store, app: app)
+                        }
+                        .transition(.listRow)
                     }
                 }.card(padding: 0)
+                .listAnimation(store.communityApps.map(\.id))
             }
         }
     }
@@ -119,8 +123,10 @@ struct CommunityView: View {
                             }
                             Text(peer.applications.sorted().joined(separator: "、")).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                         }.card(padding: 12)
+                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
                     }
                 }
+                .listAnimation(store.discoveredPublishers.values.sorted { $0.lastSeen > $1.lastSeen }.map(\.id))
             }
         }
     }

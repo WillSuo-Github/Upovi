@@ -40,7 +40,8 @@ struct UpdatesView: View {
                 }
                 if !postponed.isEmpty { postponedSection(postponed).entrance(3) }
             }
-            .animation(.snappy(duration: 0.35), value: pending.map(\.id))
+            // Skips, restores, new check results and search all animate rows in and out.
+            .listAnimation([pending.map(\.id), installable.map(\.id), manual.map(\.id), postponed.map(\.id)])
             .padding(.horizontal, 32).padding(.top, 14).padding(.bottom, 48)
             .frame(maxWidth: 980).frame(maxWidth: .infinity)
         }
@@ -55,8 +56,11 @@ struct UpdatesView: View {
             if showTitle { UpdatesSectionHeader(title: title, count: items.count) }
             VStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { UpdateRow.separator }
-                    UpdateRow(store: store, item: item)
+                    VStack(spacing: 0) {
+                        if index > 0 { UpdateRow.separator }
+                        UpdateRow(store: store, item: item)
+                    }
+                    .transition(.listRow)
                 }
             }.modifier(UpdatesSurface())
         }
@@ -75,18 +79,21 @@ struct UpdatesView: View {
             if showPostponed {
                 VStack(spacing: 0) {
                     ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
-                        if index > 0 { Divider().padding(.leading, 60) }
-                        HStack(spacing: 12) {
-                            AppIcon(path: app.path, size: 32)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(app.name).font(.system(size: 13, weight: .medium))
-                                if let candidate = store.fullAssessment(for: app).sourceUpdates.first {
-                                    VersionTransition(from: app.version, to: candidate.version, tone: .neutral, font: .caption)
+                        VStack(spacing: 0) {
+                            if index > 0 { Divider().padding(.leading, 60) }
+                            HStack(spacing: 12) {
+                                AppIcon(path: app.path, size: 32)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(app.name).font(.system(size: 13, weight: .medium))
+                                    if let candidate = store.fullAssessment(for: app).sourceUpdates.first {
+                                        VersionTransition(from: app.version, to: candidate.version, tone: .neutral, font: .caption)
+                                    }
                                 }
-                            }
-                            Spacer()
-                            Button("恢复提醒") { restore(app) }.buttonStyle(PillButtonStyle())
-                        }.padding(.horizontal, 16).padding(.vertical, 10)
+                                Spacer()
+                                Button("恢复提醒") { restore(app) }.buttonStyle(PillButtonStyle())
+                            }.padding(.horizontal, 16).padding(.vertical, 10)
+                        }
+                        .transition(.listRow)
                     }
                 }.modifier(UpdatesSurface()).transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -258,7 +265,7 @@ private struct TransferGroup: View {
                     if index > 0 { UpdateRow.separator }
                     UpdateRow(store: store, item: item, isBatch: true)
                 }
-                .transition(.asymmetric(insertion: .identity, removal: .opacity.combined(with: .move(edge: .top))))
+                .transition(.listRow)
             }
             ForEach(Array(available.enumerated()), id: \.element.id) { index, item in
                 if !items.isEmpty || index > 0 { UpdateRow.separator }

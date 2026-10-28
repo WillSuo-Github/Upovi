@@ -7,6 +7,12 @@ struct InstallationHistoryView: View {
     @Bindable var store: AppStore
     @State private var tab = Tab.installations
 
+    /// Everything whose change should animate the page: the tab and each list's ids.
+    private struct ListState: Equatable {
+        let tab: Tab
+        let receipts: [String], attempts: [String], checks: [String], batches: [String]
+    }
+
     enum Tab: String, CaseIterable, Identifiable {
         case installations = "安装与恢复", batches = "批量任务", checks = "检查记录"
         var id: String { rawValue }
@@ -31,8 +37,13 @@ struct InstallationHistoryView: View {
                     case .batches: BatchHistoryList(store: store)
                     case .checks: checks
                     }
-                }.entrance(2)
+                }
+                .id(tab).transition(.opacity)
+                .entrance(2)
             }
+            .listAnimation(ListState(tab: tab, receipts: store.installationReceipts.map { "\($0.id)" },
+                                     attempts: store.administrator.attempts.map { "\($0.id)" },
+                                     checks: store.checkHistory.map { "\($0.id)" }, batches: store.batchHistory.map { "\($0.id)" }))
             .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 72)
             .frame(maxWidth: 980).frame(maxWidth: .infinity)
         }
@@ -59,8 +70,11 @@ struct InstallationHistoryView: View {
                 } else {
                     VStack(spacing: 0) {
                         ForEach(Array(store.installationReceipts.enumerated()), id: \.element.id) { index, receipt in
-                            if index > 0 { Divider().padding(.leading, 66) }
-                            ReceiptRow(store: store, receipt: receipt)
+                            VStack(spacing: 0) {
+                                if index > 0 { Divider().padding(.leading, 66) }
+                                ReceiptRow(store: store, receipt: receipt)
+                            }
+                            .transition(.listRow)
                         }
                     }.card(padding: 0)
                 }
@@ -72,8 +86,11 @@ struct InstallationHistoryView: View {
                         .font(.caption).foregroundStyle(.secondary)
                     VStack(spacing: 0) {
                         ForEach(Array(store.administrator.attempts.enumerated()), id: \.element.id) { index, attempt in
-                            if index > 0 { Divider().padding(.leading, 66) }
-                            AdministratorBackupRow(store: store, attempt: attempt)
+                            VStack(spacing: 0) {
+                                if index > 0 { Divider().padding(.leading, 66) }
+                                AdministratorBackupRow(store: store, attempt: attempt)
+                            }
+                            .transition(.listRow)
                         }
                     }.card(padding: 0)
                 }
@@ -87,6 +104,7 @@ struct InstallationHistoryView: View {
         } else {
             VStack(spacing: 0) {
                 ForEach(Array(store.checkHistory.enumerated()), id: \.element.id) { index, entry in
+                    VStack(spacing: 0) {
                     if index > 0 { Divider().padding(.leading, 16) }
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -97,6 +115,8 @@ struct InstallationHistoryView: View {
                         StatusBadge(text: String(localized: "\(entry.updates) 个更新"), symbol: "arrow.down.circle", tone: entry.updates > 0 ? .accent : .neutral)
                         if entry.failed > 0 { StatusBadge(text: String(localized: "\(entry.failed) 项未完整检查"), symbol: "exclamationmark.triangle", tone: .warning) }
                     }.padding(.horizontal, 16).padding(.vertical, 10)
+                    }
+                    .transition(.listRow)
                 }
             }.card(padding: 0)
         }
@@ -241,7 +261,7 @@ private struct BatchHistoryList: View {
             }.card(padding: 18)
         } else {
             VStack(spacing: 12) {
-                ForEach(store.batchHistory) { record in BatchCard(store: store, record: record) }
+                ForEach(store.batchHistory) { record in BatchCard(store: store, record: record).transition(.listRow) }
             }
         }
     }
@@ -285,7 +305,9 @@ private struct BatchCard: View {
                         Button("重新检测并恢复未完成项") { store.retryBatch(record) }
                             .buttonStyle(.borderedProminent).disabled(store.operationBusy).padding(.top, 4)
                     }
-                }.padding(.leading, 30)
+                }
+                .padding(.leading, 30)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }.card(padding: 14)
     }

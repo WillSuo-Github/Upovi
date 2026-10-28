@@ -34,8 +34,10 @@ struct ApplicationTable: View {
                                         select: { selection = row.app.id; focused = true },
                                         reveal: { reveal(row.app) }, toggleIgnored: { toggleIgnored(row.app) })
                                         .id(row.app.id)
+                                        .transition(.listRow)
                                 }
                             }
+                            .listAnimation(rows.map(\.app.id))
                             .padding(.vertical, 4)
                         }
                         .accessibilityIdentifier("application-table-scroll")
