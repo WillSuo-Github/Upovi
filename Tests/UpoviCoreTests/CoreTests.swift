@@ -13,6 +13,11 @@ final class CoreTests: XCTestCase {
         XCTAssertFalse(VersionOrder.isNewer(version: "2.0beta1", than: app))
         XCTAssertTrue(VersionOrder.isNewer(version: "1.0", build: "101", than: app))
         XCTAssertFalse(VersionOrder.isNewer(version: "1.0", build: "99", than: app))
+        // Homebrew's "short.build" spelling of the installed version is not an update.
+        let thunder = InstalledApp(name: "Thunder", bundleID: "com.xunlei.Thunder", version: "5.80.8", build: "66675", path: "/fixture")
+        XCTAssertFalse(VersionOrder.isNewer(version: "5.80.8.66675", than: thunder))
+        XCTAssertTrue(VersionOrder.isNewer(version: "5.80.8.66676", than: thunder))
+        XCTAssertTrue(VersionOrder.isNewer(version: "5.80.9", than: thunder))
     }
 
     func testBencodeRejectsMalformedAndAmbiguousPackets() throws {

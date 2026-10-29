@@ -56,7 +56,8 @@ public enum VersionOrder {
     public static func isNewer(version: String, build: String = "", than app: InstalledApp) -> Bool {
         if isPrerelease(version) && !isPrerelease(app.version) { return false }
         guard let order = compare(version, app.version) else { return false }
-        if order == .orderedDescending { return true }
+        // Casks often publish "short.build" (5.80.8.66675) for an app that reports 5.80.8 (66675).
+        if order == .orderedDescending { return app.build.isEmpty || version != app.version + "." + app.build }
         guard order == .orderedSame, !build.isEmpty, !app.build.isEmpty else { return false }
         return compare(build, app.build) == .orderedDescending
     }

@@ -37,7 +37,8 @@ public enum BundleVerifier {
             }
         }
         guard VersionOrder.compare(incoming.version, expectedVersion) == .orderedSame ||
-                (expectedVersion == incoming.build && expectedBuild == incoming.build),
+                (expectedVersion == incoming.build && expectedBuild == incoming.build) ||
+                (!incoming.build.isEmpty && expectedVersion == incoming.version + "." + incoming.build),
               expectedBuild.isEmpty || incoming.build == expectedBuild,
               VersionOrder.isNewer(version: incoming.version, build: incoming.build, than: app) else {
             throw PeerError.invalid("Downloaded application \(incoming.version) (\(incoming.build)) does not match selected update \(expectedVersion) (\(expectedBuild))")

@@ -160,6 +160,13 @@ final class BulkUpdateTests: XCTestCase, @unchecked Sendable {
         let peak = await meter.peak
         XCTAssertEqual(peak, 1)
     }
+    func testUnityHubEditorsAreLeftToTheOfficialChannel() {
+        let editor = InstalledApp(name: "Unity", bundleID: "com.unity3d.UnityEditor5.x", version: "6000.6.0f1", build: "6000.6.0f1",
+                                  path: "/Applications/Unity/Hub/Editor/6000.6.0f1/Unity.app", teamID: "BVPN9UFA9B")
+        let items = BulkUpdatePlan.make(apps: [editor], results: results([editor], candidates: [candidate("6000.6.7f1", build: "", ext: "pkg")]), ignored: [])
+        XCTAssertEqual(items.count, 1)
+        XCTAssertFalse(items[0].canInstall)
+    }
 }
 
 private actor ConcurrencyMeter {

@@ -200,7 +200,10 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
                 lock.unlock(); completionHandler(.allow); return
             }
             guard (200..<300).contains(http.statusCode) else { throw HTTPStatusError.response(http) }
-            guard response.expectedContentLength <= limit else { throw URLError(.badServerResponse) }
+            guard response.expectedContentLength <= limit else {
+                throw PeerError.unavailable(String(format: "Download is %.1f GB, larger than the %.1f GB limit",
+                                                   Double(response.expectedContentLength) / 1e9, Double(limit) / 1e9))
+            }
             if let destination {
                 let encoding = http.value(forHTTPHeaderField: "Content-Encoding")?.lowercased()
                 guard encoding == nil || encoding == "identity" else { throw DownloadRestart.required }
