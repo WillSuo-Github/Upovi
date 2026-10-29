@@ -27,8 +27,9 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
             let architecture = "x86_64"
             #endif
             if let requested = attributes["sparkle:cpuArchitecture"], requested != architecture && requested != "universal" { return }
-            current?.build = attributes["sparkle:version"] ?? ""
-            current?.version = attributes["sparkle:shortVersionString"] ?? ""
+            // Versions may also be item elements placed before the enclosure; absent attributes must not erase them.
+            if let build = attributes["sparkle:version"] { current?.build = build }
+            if let version = attributes["sparkle:shortVersionString"] { current?.version = version }
             current?.download = attributes["url"] ?? ""
             current?.signature = attributes["sparkle:edSignature"] ?? ""
         }

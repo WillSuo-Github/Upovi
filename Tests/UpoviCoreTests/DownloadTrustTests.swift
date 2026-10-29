@@ -118,6 +118,42 @@ final class DownloadTrustTests: XCTestCase {
         XCTAssertEqual(result.candidates.first?.build, "7789")
         XCTAssertTrue(result.candidates.allSatisfy { $0.download?.hasIntegrityProof == true })
     }
+    func testBuiltInUpdaterChannelDecidesWhetherHomebrewIsAhead() async {
+        @Sendable func feed(_ versions: [String]) -> Data {
+            Data(("<rss xmlns:sparkle=\"http://www.andymatuschak.org/xml-namespaces/sparkle\"><channel>" + versions.map {
+                "<item><enclosure sparkle:version=\"1\" sparkle:shortVersionString=\"\($0)\" url=\"https://example.com/App-\($0).zip\" /></item>"
+            }.joined() + "</channel></rss>").utf8)
+        }
+        let cask = Data(#"{"token":"chatgpt","version":"26.1023.51421","url":"https://persistent.oaistatic.com/codex-app-prod/ChatGPT-darwin-arm64-26.1023.51421.zip","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifacts":[{"app":["ChatGPT.app"]}]}"#.utf8)
+        let chatgpt = InstalledApp(name: "ChatGPT", bundleID: "com.openai.codex", version: "26.1023.50603", build: "22391", path: "/fixture.app", teamID: "2DC432GLL2")
+        let url = ApplicationSourceCatalog.officialFeed(for: chatgpt, installationID: "fixture")
+        XCTAssertEqual(url?.host, "updates.oaistatic.com")
+        XCTAssertNil(ApplicationSourceCatalog.officialFeed(for: InstalledApp(name: "ChatGPT", bundleID: "com.openai.codex", version: "1", path: "/x.app", teamID: "OTHERTEAM1")))
+        func check(_ app: InstalledApp, offered: [String]?) async -> SourceResult {
+            await UpdateChecker.check(app, fetch: { url, _ in
+                if url.host == "formulae.brew.sh" { return cask }
+                guard let offered else { throw URLError(.cannotConnectToHost) }
+                return feed(offered)
+            }, catalog: { _ in try JSONDecoder().decode(CaskMetadata.self, from: cask) })
+        }
+        // Staged rollout: the app's channel still serves the installed version, so Homebrew may not get ahead.
+        let held = await check(chatgpt, offered: ["26.1023.50603", "26.1021.31345"])
+        XCTAssertTrue(held.candidates.isEmpty); XCTAssertEqual(held.status, .current)
+        // Released: the channel's own entry and the same-version cask proof both remain.
+        let released = await check(chatgpt, offered: ["26.1023.51421", "26.1023.50603"])
+        XCTAssertEqual(Set(released.candidates.map(\.version)), ["26.1023.51421"])
+        XCTAssertTrue(released.candidates.contains { $0.source == "Homebrew" })
+        // An unreadable channel cannot hold anything back.
+        let unreachable = await check(chatgpt, offered: nil)
+        XCTAssertEqual(unreachable.candidates.map(\.source), ["Homebrew"])
+        // Element-form versions before the enclosure, as OpenAI's feed writes them.
+        let elements = Data(#"<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><item><sparkle:version>22530</sparkle:version><sparkle:shortVersionString>26.1023.51421</sparkle:shortVersionString><enclosure url="https://example.com/App.zip" /></item></channel></rss>"#.utf8)
+        XCTAssertEqual(try AppcastReader.read(elements).map { "\($0.version)/\($0.build)" }, ["26.1023.51421/22530"])
+        // The same rule applies to any app that declares SUFeedURL.
+        let sparkle = InstalledApp(name: "Fixture", bundleID: "app.synthetic.sparkle", version: "26.1023.50603", path: "/s.app", teamID: "SYNTHETIC", feedURL: URL(string: "https://example.com/appcast.xml"))
+        let sparkleHeld = await check(sparkle, offered: ["26.1023.50603"])
+        XCTAssertTrue(sparkleHeld.candidates.isEmpty)
+    }
     func testDownloadRecordWaitsForPayloadVerificationAndRestartRequiresRecheck() async throws {
         let root = FileManager.default.temporaryDirectory.appending(path: "upovi-trust-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)

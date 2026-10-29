@@ -34,10 +34,14 @@ public enum UpdateChecker {
         var candidates: [UpdateCandidate] = [], notes: [String] = []
         var checked = 0, failed = 0, uncomparable = 0
         var checks: [SourceCheckDetail] = []
-        if let feed = override?.appcast ?? app.feedURL {
+        // Versions the app's own updater currently offers; nil when that channel is unknown or unreadable.
+        var officialOffers: [UpdateCandidate]?
+        if let feed = override?.appcast ?? app.feedURL ?? ApplicationSourceCatalog.officialFeed(for: app) {
             do {
                 let data = try await fetch(feed, 3_000_000)
-                candidates += try AppcastReader.read(data).filter { candidate in
+                let offers = try AppcastReader.read(data)
+                officialOffers = offers
+                candidates += offers.filter { candidate in
                     candidate.usesBuildVersion
                         ? !app.build.isEmpty && VersionOrder.compare(candidate.build, app.build) == .orderedDescending
                         : VersionOrder.isNewer(version: candidate.version, build: candidate.build, than: app)
@@ -47,6 +51,7 @@ public enum UpdateChecker {
             catch { failed += 1; notes.append("appcast：\(failureDescription(error))"); checks.append(.init(.appcast, .failed, error: error)) }
         }
         if Task.isCancelled { return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed) }
+        let appcastCount = candidates.count
         do {
             let metadata: CaskMetadata?
             if let cask = casks[app.bundleID] ?? ApplicationSourceCatalog.catalogExceptions[app.bundleID] {
@@ -85,11 +90,22 @@ public enum UpdateChecker {
                 checked += 1; notes.append(String(localized: "已检查 GitHub Release")); checks.append(.init(.github, .checked))
             } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
         }
+        if let officialOffers {
+            candidates = Array(candidates.prefix(appcastCount)) + candidates.dropFirst(appcastCount).filter { offered($0, by: officialOffers) }
+        }
         candidates = supplementDownloads(candidates, for: app)
         let status: SourceStatus = failed > 0 ? (checked > 0 ? .partial : .failed)
             : !candidates.isEmpty ? .updates : checked > 0 ? (uncomparable > 0 ? .partial : .current) : .unsupported
         let hint = ManualUpdateSource.forBundle(app.bundleID)
         return .init(appID: app.id, candidates: candidates, note: notes.isEmpty ? hint?.note ?? String(localized: "暂未适配更新来源，可手动设置开发者 appcast 或 GitHub 仓库") : notes.joined(separator: " · "), status: status, manualURL: hint?.url, checks: checks)
+    }
+
+    /// A built-in updater is authoritative: another source may not get ahead of the newest version the
+    /// app's own feed offers (staged rollouts, held or withdrawn releases). Build-only feeds cannot be compared.
+    static func offered(_ candidate: UpdateCandidate, by offers: [UpdateCandidate]) -> Bool {
+        let versioned = offers.filter { !$0.usesBuildVersion && !$0.version.isEmpty }
+        guard !candidate.usesBuildVersion, !versioned.isEmpty else { return true }
+        return versioned.contains { VersionOrder.compare($0.version, candidate.version).map { $0 != .orderedAscending } ?? false }
     }
 
     /// Preserve the source's target/build. A second source may fill a missing download for that version;
