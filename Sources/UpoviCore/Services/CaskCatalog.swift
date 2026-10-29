@@ -83,9 +83,11 @@ public struct CaskMetadata: Decodable, Sendable {
         // The selected platform's artifacts decide whether a DMG/ZIP contains a direct app.
         let directApp = (selected?.artifacts ?? artifacts ?? []).contains(where: { !($0.app ?? []).isEmpty })
         guard let url = selected?.url ?? url, url.scheme == "https", let sha256 = selected?.sha256 ?? sha256, sha256.count == 64, sha256.allSatisfy(\.isHexDigit),
-              ["zip", "dmg", "pkg"].contains(url.pathExtension.lowercased()),
               directApp || url.pathExtension.lowercased() == "pkg" else { return nil }
-        return .init(url: url, sha256: sha256)
+        let descriptor = DownloadDescriptor(url: url, sha256: sha256)
+        // Without an extension, only a direct-app cask may defer to the verified bytes (ZIP or DMG).
+        guard descriptor.declaredFormat != nil || (directApp && descriptor.formatResolvableAfterDownload) else { return nil }
+        return descriptor
     }
 
     public func download(for app: InstalledApp) -> DownloadDescriptor? {

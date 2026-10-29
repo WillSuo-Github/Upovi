@@ -39,22 +39,32 @@ public actor UpdateInstaller {
         }
         let workspace = FileManager.default.temporaryDirectory.appending(path: "Upovi-install-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false)
-        let archive = workspace.appending(path: "update." + descriptor.url.pathExtension.lowercased())
+        let downloaded = workspace.appending(path: "update." + (descriptor.declaredFormat ?? "download"))
         var downloadID: UUID?
         do {
             if ApplicationSourceCatalog.legacyMigration(for: app) != nil {
                 let check = Task.detached { try BundleVerifier.checkSignature(URL(fileURLWithPath: app.path), like: app) }
                 try await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
             }
-            downloadID = try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: archive, progress: progress)
-            let verification = Task.detached { try BundleVerifier.validateDownload(archive, descriptor: descriptor, app: app) }
+            downloadID = try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: downloaded, progress: progress)
+            let verification = Task.detached { try BundleVerifier.validateDownload(downloaded, descriptor: descriptor, app: app) }
             try await withTaskCancellationHandler { try await verification.value } onCancel: { verification.cancel() }
             try Task.checkCancellation()
+            var archive = downloaded
+            if descriptor.declaredFormat == nil {
+                // The bytes are already proven; their format decides the route. Packages need the administrator path.
+                guard descriptor.hasIntegrityProof, let format = DownloadDescriptor.sniffFormat(of: downloaded), format != "pkg" else {
+                    throw PeerError.invalid("This download is not a ZIP or DMG application update; use the official updater")
+                }
+                archive = workspace.appending(path: "update." + format)
+                try FileManager.default.moveItem(at: downloaded, to: archive)
+            }
+            let source = archive
             let extracted: URL
             var mounted: URL?
             if archive.pathExtension == "zip" {
                 extracted = workspace.appending(path: "Extracted")
-                let extraction = Task.detached { try ArchiveExtractor.extractZIP(archive, to: extracted) }
+                let extraction = Task.detached { try ArchiveExtractor.extractZIP(source, to: extracted) }
                 try await withTaskCancellationHandler { try await extraction.value } onCancel: { extraction.cancel() }
             } else if archive.pathExtension == "dmg" {
                 extracted = workspace.appending(path: "Mounted")

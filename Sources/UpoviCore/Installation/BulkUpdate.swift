@@ -40,7 +40,7 @@ public enum BulkUpdatePlan {
         if app.path.contains("/Unity/Hub/Editor/") { return String(localized: "此安装格式需使用官方更新") }
         guard ApplicationSourceCatalog.replacementTeam(for: app) != nil else { return String(localized: "无法确认已安装应用的开发者，请使用官方更新") }
         guard let download = candidate.download, download.canVerify(for: app) else { return String(localized: "来源未提供可验证的下载，请使用官方更新") }
-        guard ["zip", "dmg", "pkg"].contains(download.url.pathExtension.lowercased()) else { return String(localized: "此安装格式需使用官方更新") }
+        guard download.declaredFormat != nil || download.formatResolvableAfterDownload else { return String(localized: "此安装格式需使用官方更新") }
         return nil
     }
 }
