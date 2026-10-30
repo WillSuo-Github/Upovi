@@ -1,6 +1,662 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+      "全局工具": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Global Tools"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "全域工具"
+            }
+          }
+        }
+      },
+      "全局工具更新": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Global Tool Updates"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "全域工具更新"
+            }
+          }
+        }
+      },
+      "Rust 工具链": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Rust toolchains"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Rust 工具鏈"
+            }
+          }
+        }
+      },
+      "打开开关后，此来源会参与检查和“全部更新”。打开开关只检查，不会立即安装更新。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Enabled sources participate in checks and Update All. Enabling a source checks for updates without installing them."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "開啟後，此來源會參與檢查與「全部更新」。開啟來源只會檢查，不會立即安裝更新。"
+            }
+          }
+        }
+      },
+      "固定版本、自定义版本约束以及由其他运行时维护的软件会保留原有设置。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Pinned versions, custom version constraints and runtime-managed packages keep their existing settings."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "固定版本、自訂版本限制與由其他執行環境維護的軟體會保留原有設定。"
+            }
+          }
+        }
+      },
+      "重新检测工具": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Detect Tools Again"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "重新偵測工具"
+            }
+          }
+        }
+      },
+      "Homebrew 本身、软件索引与 Formula 命令行工具；图形应用仍使用原有更新流程。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Homebrew itself, its package index and Formula command-line tools. Desktop apps keep their existing update flow."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Homebrew 本身、軟體索引與 Formula 命令列工具；圖形應用程式仍使用原有更新流程。"
+            }
+          }
+        }
+      },
+      "当前 npm 环境中全局安装的命令行工具，不修改项目依赖。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Globally installed tools in the current npm environment. Project dependencies stay unchanged."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "目前 npm 環境中全域安裝的命令列工具，不修改專案相依套件。"
+            }
+          }
+        }
+      },
+      "当前 pnpm 环境中全局安装的命令行工具。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Globally installed tools in the current pnpm environment."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "目前 pnpm 環境中全域安裝的命令列工具。"
+            }
+          }
+        }
+      },
+      "通过 uv tool 安装的独立 Python 工具。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Isolated Python tools installed with uv tool."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "透過 uv tool 安裝的獨立 Python 工具。"
+            }
+          }
+        }
+      },
+      "通过 pipx 安装的独立 Python 工具及其环境。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Isolated Python tools and environments installed with pipx."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "透過 pipx 安裝的獨立 Python 工具及其環境。"
+            }
+          }
+        }
+      },
+      "通过 Cargo 安装的二进制工具；需要已安装 cargo-update。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Binaries installed with Cargo. Requires an existing cargo-update installation."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "透過 Cargo 安裝的二進位工具；需要已安裝 cargo-update。"
+            }
+          }
+        }
+      },
+      "通过 rustup 安装的 stable、beta、nightly 工具链；保留固定版本。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Stable, beta and nightly toolchains installed with rustup. Pinned versions are retained."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "透過 rustup 安裝的 stable、beta、nightly 工具鏈；保留固定版本。"
+            }
+          }
+        }
+      },
+      "未检测到 Cargo 和 cargo-update；不会替你安装。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Cargo and cargo-update are required; Upovi does not install them."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "需要 Cargo 與 cargo-update；Upovi 不會代為安裝。"
+            }
+          }
+        }
+      },
+      "未检测到此包管理器；不会替你安装。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Package manager not detected. Upovi does not install it."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "未偵測到此套件管理器；不會代為安裝。"
+            }
+          }
+        }
+      },
+      "更新由原有包管理器执行，可能运行安装脚本。只管理全局工具，不修改项目文件、系统自带的软件或包管理器之外的二进制文件。更新记录可在“历史与恢复”查看，不提供 Upovi 应用备份回滚。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Updates run through the existing package manager and may execute install scripts. Only global tools are managed; project files, system software and unmanaged binaries are unchanged. See History & Recovery for results. Upovi app-backup rollback is unavailable for these updates."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "更新由原有套件管理器執行，可能執行安裝指令稿。僅管理全域工具，不修改專案檔案、系統內建軟體或未受管理的二進位檔。可在「歷史與復原」查看更新記錄，不提供 Upovi 應用程式備份回復。"
+            }
+          }
+        }
+      },
+      "检查工具更新": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Check Tool Updates"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "檢查工具更新"
+            }
+          }
+        }
+      },
+      "更新此来源": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Update This Source"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "更新此來源"
+            }
+          }
+        }
+      },
+      "全局工具按来源依次更新。Homebrew 也会刷新自身和软件索引；正在执行的工具更新会完成后再停止后续任务。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Tool sources update sequentially. Homebrew also refreshes itself and its package index. Stopping lets the current source finish and skips later sources."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "全域工具會依來源依序更新。Homebrew 也會更新自身與軟體索引；停止時會先完成目前來源，再停止後續工作。"
+            }
+          }
+        }
+      },
+      "包管理器正在更新并核对结果…": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Package manager is updating and verifying results…"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "套件管理器正在更新並核對結果…"
+            }
+          }
+        }
+      },
+      "已检查 %lld 个全局工具 · %lld 个有更新": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Checked %1$lld global tools · %2$lld updates available"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "已檢查 %1$lld 個全域工具 · %2$lld 個有更新"
+            }
+          }
+        }
+      },
+      "%lld 个按原配置保留": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "%lld kept under existing settings"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "%lld 個依原設定保留"
+            }
+          }
+        }
+      },
+      "正在检查全局工具…": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Checking global tools…"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "正在檢查全域工具…"
+            }
+          }
+        }
+      },
+      "尚未检查全局工具": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Global tools have not been checked"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "尚未檢查全域工具"
+            }
+          }
+        }
+      },
+      "全局工具更新记录": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Global Tool Update History"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "全域工具更新記錄"
+            }
+          }
+        }
+      },
+      "由原有包管理器执行，不提供 Upovi 应用回滚。中断的更新需重新检查。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Managed by the existing package manager without Upovi app rollback. Interrupted updates must be checked again."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "由原有套件管理器執行，不提供 Upovi 應用程式回復。中斷的更新需重新檢查。"
+            }
+          }
+        }
+      },
+      "尚无全局工具更新记录": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "No global tool updates recorded"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "尚無全域工具更新記錄"
+            }
+          }
+        }
+      },
+      "已中断": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Interrupted"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "已中斷"
+            }
+          }
+        }
+      },
+      "上次工具更新中断；重新检查后再继续。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "The previous tool update was interrupted. Check again before continuing."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "上次工具更新中斷；重新檢查後再繼續。"
+            }
+          }
+        }
+      },
+      "已停止后续任务，此来源未执行。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Stopped before this source was started."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "已停止後續工作，此來源未執行。"
+            }
+          }
+        }
+      },
+      "此工具来源已关闭或不再可用。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "This tool source is disabled or unavailable."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "此工具來源已關閉或不再可用。"
+            }
+          }
+        }
+      },
+      "无法保存更新记录，未执行工具更新。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Update history could not be saved. No tool update was started."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "無法儲存更新記錄，未執行工具更新。"
+            }
+          }
+        }
+      },
+      "包管理器已完成更新，并重新核对已安装的全局工具。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "The package manager completed the update and rechecked the installed global tools."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "套件管理器已完成更新，並重新核對已安裝的全域工具。"
+            }
+          }
+        }
+      },
+      "全局工具来源": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Global Tool Sources"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "全域工具來源"
+            }
+          }
+        }
+      },
+      "将依次更新这些来源管理的全局工具。可能运行安装脚本，不修改项目依赖，不提供应用备份回滚；停止只影响尚未执行的来源。": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Update the global tools managed by these sources sequentially. Install scripts may run. Project dependencies are unchanged and app-backup rollback is unavailable. Stopping skips sources that have not started."
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "依序更新這些來源管理的全域工具。可能執行安裝指令稿，不修改專案相依套件，不提供應用程式備份回復；停止只影響尚未執行的來源。"
+            }
+          }
+        }
+      },
+      "确认更新": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Confirm Updates"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "確認更新"
+            }
+          }
+        }
+      },
+      "%lld 个应用 · %lld 个工具来源": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "%1$lld apps · %2$lld tool sources"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "%1$lld 個應用程式 · %2$lld 個工具來源"
+            }
+          }
+        }
+      },
+      "开始更新 %lld 项任务": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Start %lld Update Tasks"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "開始更新 %lld 項工作"
+            }
+          }
+        }
+      },
+      "正在更新 %lld 项任务": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Running %lld Update Tasks"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "正在更新 %lld 項工作"
+            }
+          }
+        }
+      },
+      "应用与全局工具更新": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "App and Global Tool Updates"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "應用程式與全域工具更新"
+            }
+          }
+        }
+      },
+      "%lld 个应用有更新 · %lld 个全局工具有更新 · %lld 个工具来源": {
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "%1$lld app updates · %2$lld global tool updates · %3$lld tool sources"
+            }
+          },
+          "zh-Hant": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "%1$lld 個應用程式有更新 · %2$lld 個全域工具有更新 · %3$lld 個工具來源"
+            }
+          }
+        }
+      },
     "请在系统设置的“隐私与安全 → 应用程序管理”中允许 Upovi Installer，然后重试。应用主程序可能已更新，重试将优先完成安装收尾。": {
       "localizations": {
         "en": {

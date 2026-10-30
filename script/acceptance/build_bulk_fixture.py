@@ -107,6 +107,7 @@ def main():
     elif options.mode == 'startup':
         print('Production scanner and sources; --store-app narrows the inventory to one existing app.')
         print('--quit-preview uses synthetic apps and never updates installed software. --review only opens the confirmation sheet.')
+        print('--tools-preview uses only npm in an explicit root/npm-prefix; seed that private prefix before launch.')
     else:
         print('Synthetic offline ' + options.mode + ' only; no applications are copied or replaced.')
 

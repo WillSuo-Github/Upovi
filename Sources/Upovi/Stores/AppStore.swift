@@ -42,6 +42,18 @@ final class AppStore {
     var bulkHasRun = false
     var bulkStopRequested = false
     var bulkItems: [BulkUpdateItem] = []
+    var enabledToolSources = Set<ToolSource>()
+    var toolLocations = ToolSourceDiscovery.locations()
+    var toolSnapshots: [ToolSource: ToolSnapshot] = [:]
+    var toolCheckErrors: [ToolSource: String] = [:]
+    var toolChecking = false
+    var toolBatchSources: [ToolSource] = []
+    var toolOutcomes: [ToolSource: ToolUpdateRecord] = [:]
+    var toolRunningSource: ToolSource?
+    var toolHistory: [ToolUpdateRecord] = []
+    @ObservationIgnored var toolCheckTask: Task<Void, Never>?
+    @ObservationIgnored var checkToolSource: @Sendable (ToolSource, URL) async throws -> ToolSnapshot = { try await ToolSourceService().check($0, executable: $1) }
+    @ObservationIgnored var updateToolSource: @Sendable (ToolSource, URL, String?) async throws -> ToolSnapshot = { try await ToolSourceService().update($0, executable: $1, expectedContext: $2) }
     var bulkOutcomes: [String: BulkUpdateOutcome] = [:]
     var bulkActiveIDs: Set<String> = []
     /// Keeps the batch dashboard and its rows on screen after the run until the user dismisses it.
@@ -153,6 +165,14 @@ final class AppStore {
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
         self.revalidateSources = revalidateSources
+        enabledToolSources = Set((preferences.stringArray(forKey: "toolSourcesV1") ?? []).compactMap(ToolSource.init(rawValue:)))
+        if let data = preferences.data(forKey: "toolHistoryV1"), let saved = try? JSONDecoder().decode([ToolUpdateRecord].self, from: data) {
+            toolHistory = Array(saved.prefix(100)).map { record in
+                var record = record
+                if record.state == .running { record.state = .interrupted; record.detail = String(localized: "上次工具更新中断；重新检查后再继续。"); record.finishedAt = Date() }
+                return record
+            }
+        }
         let rememberedSection = AppSection(rawValue: preferences.string(forKey: "lastSectionV1") ?? "") ?? .updates
         section = rememberedSection == .community ? .updates : rememberedSection
         libraryInspectorPresented = preferences.bool(forKey: "libraryInspectorPresentedV1")
@@ -212,7 +232,7 @@ final class AppStore {
         }
     }
     var selectedApp: InstalledApp? { apps.first { $0.id == selection } }
-    var updateCount: Int { apps.filter { !ignored.contains($0.bundleID) && assessment(for: $0).hasUpdate }.count }
+    var updateCount: Int { apps.filter { !ignored.contains($0.bundleID) && assessment(for: $0).hasUpdate }.count + toolUpdateCount }
     var communityApps: [InstalledApp] { apps.filter { !assessment(for: $0).communityLeads.isEmpty } }
 
     func assessment(for app: InstalledApp) -> UpdateAssessment {
@@ -258,6 +278,7 @@ final class AppStore {
             guard !Task.isCancelled else { return }
             checking = true; lastCheckAttempt = Date()
             await checkUpdates()
+            if !Task.isCancelled { refreshToolSources() }
         }
     }
 
@@ -265,9 +286,12 @@ final class AppStore {
         guard !refreshing, !checking, !scanning, !installationBusy else { return }
         guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，联网后再检查更新。"); return }
         checking = true; lastCheckAttempt = Date()
-        checkTask = Task { await checkUpdates() }
+        checkTask = Task {
+            await checkUpdates()
+            if !Task.isCancelled { refreshToolSources() }
+        }
     }
-    func cancelChecking() { checkTask?.cancel() }
+    func cancelChecking() { checkTask?.cancel(); toolCheckTask?.cancel(); toolChecking = false }
     private func checkUpdates() async {
         completedChecks = 0; sourceResults = [:]
         defer { checking = false }

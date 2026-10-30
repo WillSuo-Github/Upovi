@@ -71,8 +71,8 @@ private struct UpdatesStatus {
             if store.bulkUpdating {
                 glyph = .progress(store.bulkOverallFraction, .accent)
                 title = store.bulkStopRequested ? String(localized: "正在停止…")
-                    : String(localized: "正在更新 \(store.bulkInstallableCount) 个应用")
-                showsRate = !store.bulkStopRequested
+                    : (store.toolBatchSources.isEmpty ? String(localized: "正在更新 \(store.bulkInstallableCount) 个应用") : String(localized: "正在更新 \(store.bulkInstallableCount) 项任务"))
+                showsRate = !store.bulkStopRequested && store.toolRunningSource == nil
             } else if store.bulkCompletedCount == store.bulkInstallableCount {
                 glyph = .symbol("checkmark.circle.fill", .success)
                 title = String(localized: "全部更新完成")
@@ -94,6 +94,10 @@ private struct UpdatesStatus {
             var parts = [String(localized: "完成 \(store.completedChecks)/\(apps)")]
             if total > 0 { parts.append(String(localized: "\(total) 个应用有来源更新")) }
             detail = parts.joined(separator: " · ")
+        } else if !store.availableToolSources.isEmpty {
+            glyph = store.toolChecking ? .spinner : .symbol("terminal.fill", .accent)
+            title = store.toolChecking ? String(localized: "正在检查全局工具…") : String(localized: "应用与全局工具更新")
+            detail = String(localized: "\(total) 个应用有更新 · \(store.toolUpdateCount) 个全局工具有更新 · \(store.availableToolSources.count) 个工具来源")
         } else if total > 0 {
             glyph = .symbol("arrow.down.circle.fill", .accent)
             title = String(localized: "\(total) 个应用有来源更新")
@@ -171,17 +175,17 @@ private struct UpdatesOverviewActions: View {
                         .disabled(store.bulkStopRequested)
                         .help(store.bulkStopRequested ? "正在安装的应用完成后停止" : "停止更新")
                 } else {
-                    if let record = store.batchHistory.first(where: { $0.id == store.bulkRecordID }), !record.retryIDs.isEmpty {
-                        Button("重试未完成项") { store.retryBatch(record) }.disabled(store.operationBusy)
+                    if !store.toolFailedSources.isEmpty || store.batchHistory.contains(where: { $0.id == store.bulkRecordID && !$0.retryIDs.isEmpty }) {
+                        Button("重试未完成项") { store.retryLatestBulkRun() }.disabled(store.operationBusy)
                     }
                     Button("完成") { store.dismissBulkSummary() }
                         .buttonStyle(PillButtonStyle(prominent: true)).keyboardShortcut(.defaultAction)
                 }
-            } else if store.checking || store.refreshing {
+            } else if store.checking || store.refreshing || store.toolChecking {
                 Button("取消") { store.cancelChecking() }
             } else if store.scanning {
                 EmptyView()
-            } else if total > 0 {
+            } else if total > 0 || !store.availableToolSources.isEmpty {
                 Button("全部更新…") { store.reviewAllUpdates() }
                     .buttonStyle(PillButtonStyle(prominent: true)).disabled(store.operationBusy)
                     .help("下载并安装所有可验证的来源更新；需官方更新的应用将单独列出")

@@ -15,7 +15,7 @@ extension AppStore {
         if !saved { bulkPersistenceFailed = true; bulkStopRequested = true }
         return saved
     }
-    func retryBatch(_ record: BulkUpdateRecord) {
+    func retryBatch(_ record: BulkUpdateRecord, toolSources: [ToolSource] = []) {
         guard !installationBusy, !refreshing, !checking, !scanning else { return }
         let ids = record.retryIDs
         guard !ids.isEmpty else { return }
@@ -38,8 +38,10 @@ extension AppStore {
                 return old.candidate.isNewer(than: app)
             }
             let plan = repairs + BulkUpdatePlan.make(apps: targets, results: actionableSourceResults, ignored: ignored)
-            guard !plan.isEmpty else { errorMessage = String(localized: "原清单中未完成的应用已无可处理的更新，或来源尚未确认；请查看最新检测结果。"); return }
+            toolBatchSources = toolSources.filter { enabledToolSources.contains($0) && toolLocations[$0] != nil }
+            guard !plan.isEmpty || !toolBatchSources.isEmpty else { errorMessage = String(localized: "原清单中未完成的应用已无可处理的更新，或来源尚未确认；请查看最新检测结果。"); return }
             bulkItems = plan; bulkOutcomes = [:]; bulkActiveIDs = []; clearBulkTransfers()
+            toolOutcomes = [:]
             bulkHasRun = false; bulkStopRequested = false
             bulkUpdatePresented = true
         }

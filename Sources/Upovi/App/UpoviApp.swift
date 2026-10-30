@@ -48,7 +48,7 @@ struct UpoviApp: App {
                 Button("刷新并检查全部应用") { store.refreshAll() }.keyboardShortcut("r")
                     .disabled(store.operationBusy)
                 Button("全部更新…") { store.reviewAllUpdates() }.keyboardShortcut("u", modifiers: [.command, .shift])
-                    .disabled(store.operationBusy || store.updateCount == 0)
+                    .disabled(store.operationBusy || (store.updateCount == 0 && store.availableToolSources.isEmpty))
                 Button("同步 P2P 记录") { store.beginSync() }.keyboardShortcut("p", modifiers: [.command, .shift])
                     .disabled(!store.networkEnabled || store.syncing)
             }

@@ -3,27 +3,29 @@ import Foundation
 import UpoviCore
 
 extension AppStore {
-    var bulkInstallableCount: Int { bulkItems.filter(\.canInstall).count }
-    var bulkCompletedCount: Int { bulkOutcomes.values.filter { $0.status == .installed || $0.status == .current }.count }
-    var bulkFailedCount: Int { bulkOutcomes.values.filter { $0.status == .failed }.count }
-    var bulkFinishedCount: Int { bulkOutcomes.values.filter { $0.status != .manual }.count }
+    var bulkAppInstallableCount: Int { bulkItems.filter(\.canInstall).count }
+    var bulkInstallableCount: Int { bulkAppInstallableCount + toolBatchSources.count }
+    var bulkCompletedCount: Int { bulkOutcomes.values.filter { $0.status == .installed || $0.status == .current }.count + toolOutcomes.values.filter { $0.state == .succeeded }.count }
+    var bulkFailedCount: Int { bulkOutcomes.values.filter { $0.status == .failed }.count + toolOutcomes.values.filter { $0.state == .failed }.count }
+    var bulkFinishedCount: Int { bulkOutcomes.values.filter { $0.status != .manual }.count + toolOutcomes.count }
     var bulkDownloadingCount: Int { bulkActiveIDs.filter { transfers[$0]?.phase == .downloading }.count }
 
     /// Average of every installable item's own progress, so the overall bar moves with each download.
     var bulkOverallFraction: Double {
         let items = bulkItems.filter(\.canInstall)
-        guard !items.isEmpty else { return 0 }
+        guard bulkInstallableCount > 0 else { return 0 }
         let total = items.reduce(0.0) { sum, item in
             sum + (bulkOutcomes[item.id] != nil ? 1 : transfers[item.id]?.fraction ?? 0)
         }
-        return total / Double(items.count)
+        return (total + Double(toolOutcomes.count)) / Double(bulkInstallableCount)
     }
 
     func reviewAllUpdates() {
-        guard !refreshing, !scanning, !checking, !installationBusy else { return }
+        guard !refreshing, !scanning, !checking, !toolChecking, !installationBusy else { return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新。"); return }
         bulkItems = BulkUpdatePlan.make(apps: apps, results: actionableSourceResults, ignored: ignored)
-        guard !bulkItems.isEmpty else { return }
+        toolBatchSources = availableToolSources
+        guard !bulkItems.isEmpty || !toolBatchSources.isEmpty else { return }
         resetBulkRun()
         bulkUpdatePresented = true
     }
@@ -35,6 +37,7 @@ extension AppStore {
         do { try AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: 501).validate() }
         catch { errorMessage = String(localized: "此商店安装的位置或签名暂不支持 Upovi 更新，请使用原分发渠道。"); return }
         bulkItems = [.init(application: app, candidate: candidate, manualReason: nil)]
+        toolBatchSources = []
         resetBulkRun()
         bulkUpdatePresented = true
     }
@@ -42,7 +45,7 @@ extension AppStore {
     private func resetBulkRun() {
         cancelBulkApplicationQuit()
         clearBulkTransfers()
-        bulkOutcomes = [:]; bulkActiveIDs = []; bulkHasRun = false; bulkStopRequested = false; bulkSummaryVisible = false
+        bulkOutcomes = [:]; toolOutcomes = [:]; bulkActiveIDs = []; bulkHasRun = false; bulkStopRequested = false; bulkSummaryVisible = false
     }
 
     func clearBulkTransfers() {
@@ -80,18 +83,21 @@ extension AppStore {
     }
 
     private var canStartBulkUpdates: Bool {
-        bulkUpdatePresented && !bulkHasRun && !installing && !checking && !scanning && !refreshing
+        bulkUpdatePresented && !bulkHasRun && !installing && !checking && !toolChecking && !scanning && !refreshing
             && bulkInstallableCount > 0 && !SelfUpdateService.shared.sessionInProgress
     }
 
     private func beginAllUpdates(applicationsToQuit: [InstalledApp]) {
         guard canStartBulkUpdates else { return }
         guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，请联网后再开始更新。"); return }
-        let record = BulkUpdateRecord(items: bulkItems)
-        let previous = batchHistory
-        batchHistory.insert(record, at: 0); batchHistory = Array(batchHistory.prefix(10))
-        guard saveBatchHistory() else { batchHistory = previous; return }
-        bulkRecordID = record.id; bulkPersistenceFailed = false
+        if !bulkItems.isEmpty {
+            let record = BulkUpdateRecord(items: bulkItems)
+            let previous = batchHistory
+            batchHistory.insert(record, at: 0); batchHistory = Array(batchHistory.prefix(10))
+            guard saveBatchHistory() else { batchHistory = previous; return }
+            bulkRecordID = record.id
+        } else { bulkRecordID = nil }
+        bulkPersistenceFailed = false
         bulkHasRun = true; bulkUpdating = true; installing = true; bulkStopRequested = false
         for item in bulkItems where item.canInstall { transfers[item.id] = TransferProgress() }
         // Progress now lives on the Updates page rows instead of the confirmation sheet.
@@ -117,6 +123,7 @@ extension AppStore {
                     await self.recordBulkPreparationEvent(event, authorization: authorization)
                 })
             await installAuthorizedBulkItems(authorization)
+            await runToolBatch()
             bulkActiveIDs = []; bulkCancellers = [:]
             await refreshInstallations()
             apps = await scanInventory()

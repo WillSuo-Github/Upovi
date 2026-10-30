@@ -6,7 +6,7 @@ public final class ProcessCommand: @unchecked Sendable {
     private let process = Process()
     private var cancelled = false
     public func cancel() { lock.withLock { cancelled = true; if process.isRunning { process.terminate() } } }
-    public func run(_ executable: String, _ arguments: [String], timeoutSeconds: TimeInterval = 300, outputFile: URL? = nil, environment: [String: String]? = nil, maximumOutputBytes: Int = 20_000_000) async throws -> Data {
+    public func run(_ executable: String, _ arguments: [String], timeoutSeconds: TimeInterval = 300, outputFile: URL? = nil, environment: [String: String]? = nil, maximumOutputBytes: Int = 20_000_000, successCodes: Set<Int32> = [0], currentDirectory: URL? = nil) async throws -> Data {
         try await withTaskCancellationHandler {
             try await Task.detached { [self] in
                 let pipe = Pipe()
@@ -14,6 +14,8 @@ public final class ProcessCommand: @unchecked Sendable {
                     if cancelled { throw CancellationError() }
                     process.executableURL = URL(fileURLWithPath: executable); process.arguments = arguments
                     process.environment = environment
+                    process.currentDirectoryURL = currentDirectory
+                    process.standardInput = FileHandle.nullDevice
                     process.standardOutput = pipe; process.standardError = outputFile == nil ? FileHandle.nullDevice : pipe
                     try process.run()
                 }
@@ -29,7 +31,7 @@ public final class ProcessCommand: @unchecked Sendable {
                 try lock.withLock {
                     if cancelled { throw CancellationError() }
                     guard !overflow else { throw PeerError.unavailable("System tool output exceeded its size limit") }
-                    guard process.terminationStatus == 0 else { throw PeerError.unavailable("System tool failed: \(URL(fileURLWithPath: executable).lastPathComponent) (\(process.terminationStatus))") }
+                    guard successCodes.contains(process.terminationStatus) else { throw PeerError.unavailable("System tool failed: \(URL(fileURLWithPath: executable).lastPathComponent) (\(process.terminationStatus))") }
                 }
                 return data
             }.value

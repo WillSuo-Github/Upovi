@@ -94,7 +94,7 @@ extension AppStore {
         }
     }
 
-    var operationBusy: Bool { installationBusy || refreshing || checking || scanning }
+    var operationBusy: Bool { installationBusy || refreshing || checking || scanning || toolChecking }
 
     /// Applications whose source update is hidden only by a skip or reminder policy.
     var postponedApps: [InstalledApp] {

@@ -26,6 +26,7 @@
 		11118E70EFEE2207DC16B749 /* AppDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF3159B46330E61FDA54665 /* AppDetailView.swift */; };
 		169125EA8A67F9E2214D83E2 /* SourceRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777DCABAB86273A5460FE09F /* SourceRefreshTests.swift */; };
 		19807E6ECF8A45DF490B5BB8 /* AppcastReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FB16EAA4DCCED6343CFC73 /* AppcastReader.swift */; };
+		1E55165BFC35F9B44A100199 /* ToolSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8805F07EB5C721BF0AD13A4F /* ToolSourceTests.swift */; };
 		1EA57B447159DEABDF7B9262 /* PeerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D54348A624F4C6167D6B407 /* PeerIdentity.swift */; };
 		1ECF2E3FEFFCC952BB7718B8 /* ArchiveExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8B7398E052985DA7B6DFAC /* ArchiveExtractor.swift */; };
 		207FE19E7E6B2D7F7527CAA9 /* SourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0EC6911ED80B9285EE8DCEF /* SourceTests.swift */; };
@@ -43,6 +44,7 @@
 		3514667F88CDC9DEDC0A6EE7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A975C10358CBA7959D1A8E2A /* SettingsView.swift */; };
 		354E6DF5FDAB4C1FA4281261 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447E72C54E21A55EF349008E /* AppStore.swift */; };
 		384D94E19663EB260E821B5D /* InstallationConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8F442FFB9DF0C8916ECEA1 /* InstallationConfirmationView.swift */; };
+		3AAA6CEDE82130366192CAC8 /* ToolSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012B5E07EBC2A310572AA9C3 /* ToolSource.swift */; };
 		3C481EEA00D47A98957D8EF1 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DB52866408F20A1D741415E3 /* InfoPlist.xcstrings */; };
 		3DFE668D75FC742EBC6019FB /* DownloadCenterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 028A076FB28AE34E156298C6 /* DownloadCenterService.swift */; };
 		416E9C2F953307D902769000 /* libArchiveSupport.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE95B2B760BD2723B5C14153 /* libArchiveSupport.a */; };
@@ -64,6 +66,7 @@
 		5D54A26B9021363C1FD63AE8 /* AppStore+Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B40B93C741A318C0876429 /* AppStore+Diagnostics.swift */; };
 		5D8FD2496ACB08675BE6F9EB /* SettingsFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5BF79BD17050A7E7BE56016 /* SettingsFileTests.swift */; };
 		5E841E3710FABE53512E776C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A315DDD221F95AFF9C824B5F /* Assets.xcassets */; };
+		604E9105CC0F3CE5E1D07A2C /* AppStore+ToolSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A31B9CA98316CFF15DDCA4 /* AppStore+ToolSources.swift */; };
 		61074AA73F8C84CBF6000017 /* UpdateAssessment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C60CD84A6E92B304B3A3B64 /* UpdateAssessment.swift */; };
 		62AED13B056FF9E9619C9CA6 /* AppStore+Downloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E7256EE554FEBE4389FFB96 /* AppStore+Downloads.swift */; };
 		66C298EE0A291069CB1F43BC /* ApplicationTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D126983E39B3F7F4B4E16BF8 /* ApplicationTable.swift */; };
@@ -90,7 +93,9 @@
 		7DF2A0FCAF32652C596D6478 /* BundleVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = D675D630F5266112A52E9DE5 /* BundleVerifier.swift */; };
 		80122F335CB3C15D982010FD /* DiagnosticIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724712475346CB121C0893F5 /* DiagnosticIssue.swift */; };
 		806AAF45D02E5BAF776B28D3 /* ArtifactDownloadCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B49120A9E9D6E74DA52D9B3 /* ArtifactDownloadCache.swift */; };
+		829378A1D520E340A47FA215 /* ToolSourceWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8EFA85943558392508C403D /* ToolSourceWorkflowTests.swift */; };
 		82E9F2AC8481D311C5D0E999 /* SelfUpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5882410BC8225FD9B2AD84 /* SelfUpdateService.swift */; };
+		83BD56B929AD08E5503E89B0 /* ToolSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F180E81B400185753172D73 /* ToolSourcesView.swift */; };
 		842D0AB8B62C63199A710A94 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E54E304436F52424F3F31E3A /* LoginItemService.swift */; };
 		85C34028C5637B942A863E14 /* AdministratorInstallationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDEDFA03B7204433AC94147 /* AdministratorInstallationTests.swift */; };
 		85D518B8193AF88C67CC8A8F /* ApplicationInstallationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 056761868C3F57738A652AF9 /* ApplicationInstallationTests.swift */; };
@@ -99,6 +104,7 @@
 		896325DE7F341E4EBA9CB35C /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B39E00B3A49880BEF03153 /* LibraryView.swift */; };
 		8B831E1B9A77E2CC78F8E381 /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
 		8B9A5F9A28044DE5AA47EB42 /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00F6463BC2B71CC4CC10C88 /* CommunityView.swift */; };
+		8C8F31CC09AD900058DC4B0A /* ToolSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8D9A222DD2926CA11F04568 /* ToolSourceService.swift */; };
 		8CDAE1A88EC2BD2AA2471F91 /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
 		8F7AD206F5A91DCECB0278B0 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25102D3CE4A21F8F511A8FF2 /* DiagnosticsView.swift */; };
 		9423D50A02811FCF748397EC /* CommunityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA7C5CD32C37E1CFC6024A1 /* CommunityTests.swift */; };
@@ -293,6 +299,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		012B5E07EBC2A310572AA9C3 /* ToolSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSource.swift; sourceTree = "<group>"; };
 		0242521892B617E903F91134 /* DownloadTasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTasksView.swift; sourceTree = "<group>"; };
 		0266D077A496F87433981A50 /* StoreReceiptRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreReceiptRecovery.swift; sourceTree = "<group>"; };
 		028A076FB28AE34E156298C6 /* DownloadCenterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadCenterService.swift; sourceTree = "<group>"; };
@@ -377,6 +384,7 @@
 		6B1B8D4A15B28335B53815F5 /* DownloadTrustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTrustTests.swift; sourceTree = "<group>"; };
 		6DE37D90F5CC2C99251E05F1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		6EC1F3DFEFBE31A7AF5BE5F2 /* LegacyMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyMigrationTests.swift; sourceTree = "<group>"; };
+		6F180E81B400185753172D73 /* ToolSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSourcesView.swift; sourceTree = "<group>"; };
 		711527FF6982CB9347F4B701 /* CheckHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckHistory.swift; sourceTree = "<group>"; };
 		724712475346CB121C0893F5 /* DiagnosticIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticIssue.swift; sourceTree = "<group>"; };
 		72BE72ADF05E641806DA48D9 /* PeerVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerVault.swift; sourceTree = "<group>"; };
@@ -391,6 +399,7 @@
 		8469FCBF24C464F307A3CB51 /* write_bundle_info.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = write_bundle_info.py; sourceTree = "<group>"; };
 		851092CF94312D5895936180 /* DownloadCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadCoordinator.swift; sourceTree = "<group>"; };
 		8598E59FB4705797071DADF6 /* generate_update_feed.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_update_feed.sh; sourceTree = "<group>"; };
+		8805F07EB5C721BF0AD13A4F /* ToolSourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSourceTests.swift; sourceTree = "<group>"; };
 		8ADF7F48526B389A1E4119C8 /* download_center.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = download_center.swift; sourceTree = "<group>"; };
 		8C60CD84A6E92B304B3A3B64 /* UpdateAssessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateAssessment.swift; sourceTree = "<group>"; };
 		8E89B52913813D3DA9752D12 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -411,7 +420,9 @@
 		A315DDD221F95AFF9C824B5F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A49B1BEF905C096322534908 /* AdministratorBackupCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorBackupCleaner.swift; sourceTree = "<group>"; };
 		A4FA060891A3D22186996B58 /* GlobalP2PSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalP2PSettings.swift; sourceTree = "<group>"; };
+		A5A31B9CA98316CFF15DDCA4 /* AppStore+ToolSources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+ToolSources.swift"; sourceTree = "<group>"; };
 		A5FB16EAA4DCCED6343CFC73 /* AppcastReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppcastReader.swift; sourceTree = "<group>"; };
+		A8EFA85943558392508C403D /* ToolSourceWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSourceWorkflowTests.swift; sourceTree = "<group>"; };
 		A975C10358CBA7959D1A8E2A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A9852F29027C045968D3FCCF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		AA58FDE9A6CE0B67C70F488C /* UpoviCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpoviCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -434,6 +445,7 @@
 		C00F6463BC2B71CC4CC10C88 /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
 		C0D5152DBF8F8A34A2C91586 /* CommunityHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityHistory.swift; sourceTree = "<group>"; };
 		C3B39E00B3A49880BEF03153 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		C8D9A222DD2926CA11F04568 /* ToolSourceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSourceService.swift; sourceTree = "<group>"; };
 		CD07344B27D2421EE6A76282 /* UpoviTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpoviTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE3C2AC6D4659FFAED17EB66 /* source_refresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = source_refresh.swift; sourceTree = "<group>"; };
 		CE95B2B760BD2723B5C14153 /* libArchiveSupport.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libArchiveSupport.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -574,6 +586,7 @@
 				0752EE762D9878EED96DAED8 /* DiagnosticsWorkflowTests.swift */,
 				10C3186A78FC7CF98D6A82AA /* DownloadWorkflowTests.swift */,
 				B3453C7074ED60A9804CA828 /* ToolbarWorkflowTests.swift */,
+				A8EFA85943558392508C403D /* ToolSourceWorkflowTests.swift */,
 				592184E69E573346D40B7653 /* TransferProgressTests.swift */,
 				FA1D001925A9B0AE1A1A8E99 /* UpdateControlsWorkflowTests.swift */,
 			);
@@ -612,6 +625,7 @@
 				C3B39E00B3A49880BEF03153 /* LibraryView.swift */,
 				A975C10358CBA7959D1A8E2A /* SettingsView.swift */,
 				F3B323BDE71CE1C122683B76 /* SourceEditorView.swift */,
+				6F180E81B400185753172D73 /* ToolSourcesView.swift */,
 				9ABD141C086C1CA02015C7ED /* TransferViews.swift */,
 				93F69221DF91BCA0111F29FA /* UpdatesOverview.swift */,
 				E16F11787601C86A1217B362 /* UpdatesView.swift */,
@@ -685,6 +699,7 @@
 				7E7256EE554FEBE4389FFB96 /* AppStore+Downloads.swift */,
 				94F5DDC26AB7FF14352E5B0B /* AppStore+Operations.swift */,
 				39F7B9B289219F5806229241 /* AppStore+Presentation.swift */,
+				A5A31B9CA98316CFF15DDCA4 /* AppStore+ToolSources.swift */,
 				126D63E5E3B898343D14A823 /* AppStore+UpdateControls.swift */,
 				711527FF6982CB9347F4B701 /* CheckHistory.swift */,
 				5E6179EA13E95F294582D151 /* SourceFilter.swift */,
@@ -828,6 +843,8 @@
 				FED7A35CFC832D8643A5BCEB /* SettingsFile.swift */,
 				D1D569E7071CCB46EAF130AC /* SourceHTTPClient.swift */,
 				3E49336380FDBE1D8D5BBD16 /* SourceVersion.swift */,
+				012B5E07EBC2A310572AA9C3 /* ToolSource.swift */,
+				C8D9A222DD2926CA11F04568 /* ToolSourceService.swift */,
 				F61C90ECA840CB2B2C5BDC7E /* UpdateChecker.swift */,
 			);
 			path = Services;
@@ -948,6 +965,7 @@
 				624F7E5B8CCD9EE8E97601B1 /* SourceHTTPClientTests.swift */,
 				777DCABAB86273A5460FE09F /* SourceRefreshTests.swift */,
 				D0EC6911ED80B9285EE8DCEF /* SourceTests.swift */,
+				8805F07EB5C721BF0AD13A4F /* ToolSourceTests.swift */,
 				370492760240B5D431368A08 /* UpdateAssessmentTests.swift */,
 				EF6DE0926B15291CA0D14592 /* UpdateControlsTests.swift */,
 			);
@@ -1318,6 +1336,8 @@
 				2118B6A5DEE200FE097DA072 /* SourceHTTPClient.swift in Sources */,
 				045FEC3F954643CF01A579D0 /* SourceVersion.swift in Sources */,
 				F632E89E74B5D8A52CEB7B14 /* StoreReceiptRecovery.swift in Sources */,
+				3AAA6CEDE82130366192CAC8 /* ToolSource.swift in Sources */,
+				8C8F31CC09AD900058DC4B0A /* ToolSourceService.swift in Sources */,
 				61074AA73F8C84CBF6000017 /* UpdateAssessment.swift in Sources */,
 				77B3646ED052408D228DAD8E /* UpdateChecker.swift in Sources */,
 				26301ECC6E9EDD3AD41DD2E3 /* UpdateInstaller.swift in Sources */,
@@ -1371,6 +1391,7 @@
 				DBF0767009ADAAA9615CBA8D /* SourceHTTPClientTests.swift in Sources */,
 				169125EA8A67F9E2214D83E2 /* SourceRefreshTests.swift in Sources */,
 				207FE19E7E6B2D7F7527CAA9 /* SourceTests.swift in Sources */,
+				1E55165BFC35F9B44A100199 /* ToolSourceTests.swift in Sources */,
 				2EF6240926E82EC8DD37F3F8 /* UpdateAssessmentTests.swift in Sources */,
 				2F37A01CC9BE8C94C7F0316E /* UpdateControlsTests.swift in Sources */,
 			);
@@ -1384,6 +1405,7 @@
 				9F281F35B473759734B63AD6 /* AppTableLayoutTests.swift in Sources */,
 				DB06422D74838FD02B017862 /* DiagnosticsWorkflowTests.swift in Sources */,
 				BD69C72ECD40DFA3803E17BC /* DownloadWorkflowTests.swift in Sources */,
+				829378A1D520E340A47FA215 /* ToolSourceWorkflowTests.swift in Sources */,
 				5CF3ACD5EEAC3490D7468014 /* ToolbarWorkflowTests.swift in Sources */,
 				9C9DE9DDE15984A0D4552B6B /* TransferProgressTests.swift in Sources */,
 				A8B8785BB8DD42DD2068541C /* UpdateControlsWorkflowTests.swift in Sources */,
@@ -1414,6 +1436,7 @@
 				62AED13B056FF9E9619C9CA6 /* AppStore+Downloads.swift in Sources */,
 				70B3A454984F6C1F6523B99E /* AppStore+Operations.swift in Sources */,
 				BC42C83404CA6D47A5A2E14A /* AppStore+Presentation.swift in Sources */,
+				604E9105CC0F3CE5E1D07A2C /* AppStore+ToolSources.swift in Sources */,
 				9D7536A7BD31F08E3B35506A /* AppStore+UpdateControls.swift in Sources */,
 				354E6DF5FDAB4C1FA4281261 /* AppStore.swift in Sources */,
 				DB779A5470F386CAA87A27B2 /* AppStoreInstallationService.swift in Sources */,
@@ -1438,6 +1461,7 @@
 				3514667F88CDC9DEDC0A6EE7 /* SettingsView.swift in Sources */,
 				98410AE03A6D0D2733F43950 /* SourceEditorView.swift in Sources */,
 				0E3C370FF5AF9E6689C94245 /* SourceFilter.swift in Sources */,
+				83BD56B929AD08E5503E89B0 /* ToolSourcesView.swift in Sources */,
 				CEE8F8C6D13C6EBD2B706356 /* TransferProgress.swift in Sources */,
 				2E54C16B5CB94546B7F356E2 /* TransferViews.swift in Sources */,
 				96B517174DF32592096EB4B5 /* UpdatesOverview.swift in Sources */,

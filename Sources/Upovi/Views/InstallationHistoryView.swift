@@ -14,11 +14,12 @@ struct InstallationHistoryView: View {
     }
 
     enum Tab: String, CaseIterable, Identifiable {
-        case installations = "安装与恢复", batches = "批量任务", checks = "检查记录"
+        case installations = "安装与恢复", batches = "批量任务", checks = "检查记录", tools = "全局工具"
         var id: String { rawValue }
         var title: String {
             switch self {
             case .installations: String(localized: "安装与恢复"); case .batches: String(localized: "批量任务"); case .checks: String(localized: "检查记录")
+            case .tools: String(localized: "全局工具")
             }
         }
     }
@@ -36,6 +37,7 @@ struct InstallationHistoryView: View {
                     case .installations: installations
                     case .batches: BatchHistoryList(store: store)
                     case .checks: checks
+                    case .tools: ToolHistoryView(store: store)
                     }
                 }
                 .id(tab).transition(.opacity)

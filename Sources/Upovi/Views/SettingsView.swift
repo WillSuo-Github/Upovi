@@ -10,6 +10,7 @@ struct SettingsView: View {
         TabView(selection: $tab) {
             GeneralSettings(store: store).tabItem { Label("通用", systemImage: "gearshape") }.tag("general")
             ScanSettings(store: store).tabItem { Label("扫描与安装", systemImage: "square.grid.2x2") }.tag("scan")
+            ToolSourcesSettings(store: store).tabItem { Label("全局工具", systemImage: "terminal") }.tag("tools")
             P2PSettings(store: store).tabItem { Label("P2P", systemImage: "point.3.connected.trianglepath.dotted") }.tag("p2p")
             AboutSettings(store: store).tabItem { Label("关于", systemImage: "info.circle") }.tag("about")
         }

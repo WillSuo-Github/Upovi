@@ -22,6 +22,16 @@ struct BulkUpdateView: View {
                     if !manual.isEmpty {
                         section(String(localized: "需要你通过官方渠道处理"), items: manual)
                     }
+                    if !store.toolBatchSources.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("全局工具来源").font(.headline)
+                            ForEach(store.toolBatchSources) { source in
+                                Label(source.title, systemImage: "terminal").frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            Text("将依次更新这些来源管理的全局工具。可能运行安装脚本，不修改项目依赖，不提供应用备份回滚；停止只影响尚未执行的来源。")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }.padding(12).modifier(UpdatesSurface())
+                    }
                     if !store.bulkHasRun {
                         Text("使用全部应用的检测结果，不受搜索和列表筛选影响；已忽略、跳过或稍后提醒的更新不参与。")
                             .font(.system(size: 11)).foregroundStyle(.tertiary)
@@ -53,13 +63,17 @@ struct BulkUpdateView: View {
             Image(nsImage: NSApp.applicationIconImage).resizable().interpolation(.high)
                 .frame(width: 56, height: 56).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
-                Text(store.bulkHasRun ? (store.bulkUpdating ? "正在更新…" : "更新已结束") : "确认更新应用")
+                Text(store.bulkHasRun ? (store.bulkUpdating ? "正在更新…" : "更新已结束") : (store.toolBatchSources.isEmpty ? "确认更新应用" : "确认更新"))
                     .font(.system(size: 20, weight: .bold))
                 Group {
                     if store.bulkHasRun {
-                        Text("已完成 \(store.bulkCompletedCount) 个 · 失败 \(store.bulkFailedCount) 个 · 共 \(store.bulkItems.count) 个")
+                        Text("已完成 \(store.bulkCompletedCount) 个 · 失败 \(store.bulkFailedCount) 个 · 共 \(store.bulkItems.count + store.toolBatchSources.count) 个")
                     } else {
-                        Text("可自动更新 \(store.bulkInstallableCount) 个 · 需官方处理 \(store.bulkItems.count - store.bulkInstallableCount) 个")
+                        if store.toolBatchSources.isEmpty {
+                            Text("可自动更新 \(store.bulkInstallableCount) 个 · 需官方处理 \(store.bulkItems.count - store.bulkAppInstallableCount) 个")
+                        } else {
+                            Text("\(store.bulkAppInstallableCount) 个应用 · \(store.toolBatchSources.count) 个工具来源")
+                        }
                     }
                 }
                 .font(.system(size: 13)).foregroundStyle(.secondary).monospacedDigit()
@@ -81,8 +95,11 @@ struct BulkUpdateView: View {
     }
 
     private var notes: [Note] {
-        var notes = [Note(id: "quit", symbol: "doc.badge.clock",
-                          text: String(localized: "更新时会请求退出应用，请先保存文稿。直接下载的更新会保留旧版主应用；需要管理员权限的任务准备完成后，本轮统一授权一次。"))]
+        var notes: [Note] = []
+        if !store.bulkItems.isEmpty {
+            notes.append(Note(id: "quit", symbol: "doc.badge.clock",
+                              text: String(localized: "更新时会请求退出应用，请先保存文稿。直接下载的更新会保留旧版主应用；需要管理员权限的任务准备完成后，本轮统一授权一次。")))
+        }
         if store.bulkItems.contains(where: { $0.candidate.storeReceiptRecovery != nil }) {
             notes.append(Note(id: "receipt", symbol: "checkmark.seal",
                               text: String(localized: "主程序已更新，本次只校验并补齐原始商店购买凭据，不会重新下载应用。")))
@@ -199,7 +216,7 @@ struct BulkUpdateView: View {
                     .keyboardShortcut(.cancelAction)
             }
             if !store.bulkHasRun {
-                Button("开始更新 \(store.bulkInstallableCount) 个应用") { store.startAllUpdates() }
+                Button(store.toolBatchSources.isEmpty ? String(localized: "开始更新 \(store.bulkInstallableCount) 个应用") : String(localized: "开始更新 \(store.bulkInstallableCount) 项任务")) { store.startAllUpdates() }
                     .buttonStyle(PillButtonStyle(prominent: true, large: true)).keyboardShortcut(.defaultAction)
                     .disabled(store.bulkInstallableCount == 0 || !store.networkAvailable)
                     .accessibilityIdentifier("bulk-update-start")

@@ -35,6 +35,7 @@ struct UpdatesView: View {
                 if !manual.isEmpty {
                     group(String(localized: "需通过官方渠道更新"), items: manual)
                 }
+                ToolSourcesSection(store: store)
                 if !plan.isEmpty, visible.isEmpty, batch.isEmpty {
                     ContentUnavailableView.search(text: store.search)
                 }

@@ -35,6 +35,7 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
         preferences.set(false, forKey: "notificationsV1")
         let coordinator = DownloadCoordinator(storageURL: root.appending(path: "downloads.json"))
         let preview = CommandLine.arguments.contains("--quit-preview")
+        let toolsPreview = CommandLine.arguments.contains("--tools-preview")
         let selected: String? = {
             guard let index = CommandLine.arguments.firstIndex(of: "--store-app"), CommandLine.arguments.indices.contains(index + 1) else { return nil }
             return CommandLine.arguments[index + 1]
@@ -45,6 +46,7 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
         let store = AppStore(preferences: preferences,
             installer: UpdateInstaller(journalDirectory: root.appending(path: "Journal"), downloads: coordinator),
             scanApplications: { roots in
+                if toolsPreview { return [] }
                 if preview { return fixtures }
                 if let selected { return AppScanner.read(URL(fileURLWithPath: selected)).map { [$0] } ?? [] }
                 return await Task.detached { AppScanner.scan(roots: roots) }.value
@@ -52,7 +54,22 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
                 if preview { return .init(appID: app.id, candidates: [.init(version: "2", source: "App Store", isCommunity: false, url: nil, appStoreID: 12345)], note: "Offline quit confirmation fixture", status: .updates) }
                 return await UpdateChecker.check(app)
             })
-        if preview {
+        if toolsPreview {
+            var environment = ProcessInfo.processInfo.environment
+            environment["NPM_CONFIG_PREFIX"] = root.appending(path: "npm-prefix").path
+            environment["PATH"] = "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+            environment["NPM_CONFIG_UPDATE_NOTIFIER"] = "false"
+            let isolatedEnvironment = environment
+            let service = ToolSourceService(runner: { command in
+                try await ProcessCommand().run(command.executable.path, command.arguments,
+                    timeoutSeconds: 180, environment: isolatedEnvironment, successCodes: command.successCodes,
+                    currentDirectory: root)
+            })
+            store.toolLocations = [.npm: URL(fileURLWithPath: "/opt/homebrew/bin/npm")]
+            store.enabledToolSources = [.npm]
+            store.checkToolSource = { source, executable in try await service.check(source, executable: executable) }
+            store.updateToolSource = { source, executable, context in try await service.update(source, executable: executable, expectedContext: context) }
+        } else if preview {
             store.runningUpdateApplications = { $0 }
             store.quitUpdateApplication = { _ in }
             store.makeInstallationAuthorizationBatch = {
@@ -81,6 +98,7 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
                 .onChange(of: store.bulkUpdating) { _, _ in record() }
         }
         .defaultSize(width: 1240, height: 780)
+        Settings { SettingsView(store: store) }
     }
 
     private func record() {
@@ -88,7 +106,8 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
                                    "completedChecks": store.completedChecks, "checked": store.lastChecked != nil,
                                    "periodicChecksEnabled": store.automaticChecks, "p2pEnabled": store.networkEnabled,
                                    "quitConfirmation": store.bulkQuitPresented, "succeeded": store.bulkCompletedCount, "failed": store.bulkFailedCount,
-                                   "outcomes": store.bulkOutcomes.values.map { ["app": $0.item.application.name, "status": $0.status.rawValue, "detail": $0.detail] }]
+                                   "outcomes": store.bulkOutcomes.values.map { ["app": $0.item.application.name, "status": $0.status.rawValue, "detail": $0.detail] },
+                                   "toolHistory": store.toolHistory.map { ["source": $0.source.rawValue, "status": $0.state.rawValue, "detail": $0.detail] }]
         if let data = try? JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]) {
             try? data.write(to: root.appending(path: "startup-result.json"), options: .atomic)
         }
