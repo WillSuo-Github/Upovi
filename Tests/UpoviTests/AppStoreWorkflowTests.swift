@@ -120,3 +120,74 @@ extension AppStoreWorkflowTests {
         XCTAssertFalse(store.bulkUpdating)
     }
 }
+
+extension AppStoreWorkflowTests {
+    func testRunningAppsRequireOneConfirmationBeforeQuittingOrStartingAnyUpdate() async throws {
+        let (store, apps) = try batchFixture()
+        var closed: [String] = [], installed: [String] = []
+        store.runningUpdateApplications = { $0 }
+        store.quitUpdateApplication = { closed.append($0.id) }
+        store.installStoreUpdate = { _, app, _ in
+            XCTAssertEqual(closed.count, apps.count)
+            installed.append(app.id)
+        }
+        store.reviewAllUpdates(); store.startAllUpdates()
+        XCTAssertTrue(store.bulkQuitPresented)
+        XCTAssertEqual(store.bulkQuitApplications, apps)
+        XCTAssertNil(store.bulkTask)
+        XCTAssertTrue(store.batchHistory.isEmpty)
+        XCTAssertTrue(closed.isEmpty)
+        store.confirmBulkApplicationQuit(); await store.bulkTask?.value
+        XCTAssertFalse(store.bulkQuitPresented)
+        XCTAssertEqual(Set(closed), Set(apps.map(\.id)))
+        XCTAssertEqual(Set(installed), Set(apps.map(\.id)))
+        XCTAssertEqual(store.bulkCompletedCount, 3)
+    }
+
+    func testCancellingQuitConfirmationLeavesApplicationsAndHistoryUntouched() async throws {
+        let (store, _) = try batchFixture()
+        store.runningUpdateApplications = { $0 }
+        store.quitUpdateApplication = { _ in XCTFail("Cancelling must not quit any application") }
+        store.reviewAllUpdates(); store.startAllUpdates(); store.cancelBulkApplicationQuit()
+        XCTAssertFalse(store.bulkQuitPresented)
+        XCTAssertTrue(store.bulkQuitApplications.isEmpty)
+        XCTAssertTrue(store.bulkUpdatePresented)
+        XCTAssertFalse(store.bulkHasRun)
+        XCTAssertNil(store.bulkTask)
+        XCTAssertTrue(store.batchHistory.isEmpty)
+    }
+
+    func testRefusedQuitFailsThatApplicationWhileOtherUpdatesContinue() async throws {
+        let (store, apps) = try batchFixture()
+        var installed: [String] = []
+        store.runningUpdateApplications = { $0 }
+        store.quitUpdateApplication = { app in
+            if app.id == apps[0].id { throw PeerError.unavailable("Synthetic application has unsaved documents") }
+        }
+        store.installStoreUpdate = { _, app, _ in installed.append(app.id) }
+        store.reviewAllUpdates(); store.startAllUpdates(); store.confirmBulkApplicationQuit(); await store.bulkTask?.value
+        XCTAssertEqual(store.bulkOutcomes[apps[0].id]?.status, .failed)
+        XCTAssertEqual(Set(installed), Set(apps.dropFirst().map(\.id)))
+        XCTAssertEqual(store.bulkCompletedCount, 2)
+        XCTAssertEqual(store.bulkFailedCount, 1)
+    }
+}
+
+extension AppStoreWorkflowTests {
+    func testStopWhileWaitingForQuitCancelsTheWaitAndDoesNotInstall() async throws {
+        let (store, _) = try batchFixture()
+        var waiting = false
+        store.runningUpdateApplications = { $0 }
+        store.quitUpdateApplication = { _ in waiting = true; try await Task.sleep(for: .seconds(60)) }
+        store.installStoreUpdate = { _, _, _ in XCTFail("Stopping before applications quit must not install") }
+        store.reviewAllUpdates(); store.startAllUpdates(); store.confirmBulkApplicationQuit()
+        for _ in 0..<100 {
+            if waiting { break }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        XCTAssertTrue(waiting)
+        store.stopAllUpdates(); await store.bulkTask?.value
+        XCTAssertEqual(store.bulkOutcomes.values.filter { $0.status == .cancelled }.count, 3)
+        XCTAssertFalse(store.bulkUpdating)
+    }
+}

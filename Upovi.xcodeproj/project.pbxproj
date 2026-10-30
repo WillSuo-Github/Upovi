@@ -153,6 +153,7 @@
 		F167CB3ED34D1B3E6B93F39D /* AdministratorInstallationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02C7E5B62F6594028563603 /* AdministratorInstallationService.swift */; };
 		F5041B11F683DC74B661E59F /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
 		F5193104D324E7972AAC58AC /* AppStoreUpdateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6196FD40E923119FB208259F /* AppStoreUpdateTests.swift */; };
+		F632E89E74B5D8A52CEB7B14 /* StoreReceiptRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0266D077A496F87433981A50 /* StoreReceiptRecovery.swift */; };
 		F7A068B3750C3893A8305CF2 /* PeerVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72BE72ADF05E641806DA48D9 /* PeerVault.swift */; };
 		FA299331624C012F2951ECA6 /* BulkUpdate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE233866CE636FE680C6146 /* BulkUpdate.swift */; };
 		FD05733E3DABADC9604DA194 /* UpoviInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E981CB479F930398425BBF18 /* UpoviInstaller.swift */; };
@@ -289,6 +290,7 @@
 
 /* Begin PBXFileReference section */
 		0242521892B617E903F91134 /* DownloadTasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTasksView.swift; sourceTree = "<group>"; };
+		0266D077A496F87433981A50 /* StoreReceiptRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreReceiptRecovery.swift; sourceTree = "<group>"; };
 		028A076FB28AE34E156298C6 /* DownloadCenterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadCenterService.swift; sourceTree = "<group>"; };
 		030F969880E0CA97D67A6490 /* Upovi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Upovi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		03D9357A364B110FDD2439DB /* verify_release.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = verify_release.py; sourceTree = "<group>"; };
@@ -358,6 +360,7 @@
 		5C639F0D895F5D903E35CC25 /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
 		5D0C330923ACCCC4EA457BB7 /* package_release.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package_release.sh; sourceTree = "<group>"; };
 		5E6179EA13E95F294582D151 /* SourceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceFilter.swift; sourceTree = "<group>"; };
+		5EB3DF7EEB4C32E1DB9F1AB0 /* embed_store_installer.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = embed_store_installer.py; sourceTree = "<group>"; };
 		6196FD40E923119FB208259F /* AppStoreUpdateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreUpdateTests.swift; sourceTree = "<group>"; };
 		624F7E5B8CCD9EE8E97601B1 /* SourceHTTPClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHTTPClientTests.swift; sourceTree = "<group>"; };
 		6290B032D074120E19226B31 /* source_installation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = source_installation.swift; sourceTree = "<group>"; };
@@ -698,6 +701,7 @@
 				5863B940E28780A1C414786E /* build_and_run.sh */,
 				97EDD6E02F519B093F242370 /* embed_sparkle.py */,
 				AF04C5BB957703EE1740DC83 /* embed_store_bridge.py */,
+				5EB3DF7EEB4C32E1DB9F1AB0 /* embed_store_installer.py */,
 				AA842F745C9A0679903A0FD2 /* embed_xcode_resources.sh */,
 				8598E59FB4705797071DADF6 /* generate_update_feed.sh */,
 				2D504B9C32E904A8D533428C /* make_icon.swift */,
@@ -789,6 +793,7 @@
 				B7DDB0A92E368C4A07F0A727 /* InstallerPackageVerifier.swift */,
 				829D0AE486C6C39C79B895D4 /* MachOCompatibility.swift */,
 				211706499C567E1A7027E386 /* ProcessCommand.swift */,
+				0266D077A496F87433981A50 /* StoreReceiptRecovery.swift */,
 				BD0F5062F6A88189F1B52141 /* UpdateInstaller.swift */,
 			);
 			path = Installation;
@@ -1215,7 +1220,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/usr/bin/env bash\nset -euo pipefail\ncd \"$SRCROOT\"\nAPP_BUNDLE=\"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\nSIGNING_IDENTITY=\"${EXPANDED_CODE_SIGN_IDENTITY:--}\"\nif [[ -z \"$SIGNING_IDENTITY\" ]]; then SIGNING_IDENTITY=\"-\"; fi\npython3 script/embed_store_bridge.py \"$APP_BUNDLE\" \"$SIGNING_IDENTITY\"\n# Mach-O command-line tools do not carry an Info.plist bundle identifier.\n# Their explicit signing identities are checked by administrator authorization.\nfor HELPER_NAME in UpoviInstaller UpoviStoreInstaller; do\n  case \"$HELPER_NAME\" in\n    UpoviInstaller) HELPER_ID=app.upovi.Installer ;;\n    UpoviStoreInstaller) HELPER_ID=app.upovi.StoreInstaller ;;\n  esac\n  SIGNING_ARGS=(--force --identifier \"$HELPER_ID\" --sign \"$SIGNING_IDENTITY\")\n  if [[ \"$SIGNING_IDENTITY\" != \"-\" ]]; then SIGNING_ARGS+=(--options runtime --timestamp); fi\n  /usr/bin/codesign \"${SIGNING_ARGS[@]}\" \"$APP_BUNDLE/Contents/MacOS/$HELPER_NAME\"\ndone\n# Keep the pinned license independent of Xcode's build/archive package-cache layout.\ncp Vendor/Sparkle-LICENSE \"$APP_BUNDLE/Contents/Resources/Sparkle-LICENSE\"\n";
+			shellScript = "#!/usr/bin/env bash\nset -euo pipefail\ncd \"$SRCROOT\"\nAPP_BUNDLE=\"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\nSIGNING_IDENTITY=\"${EXPANDED_CODE_SIGN_IDENTITY:--}\"\nif [[ -z \"$SIGNING_IDENTITY\" ]]; then SIGNING_IDENTITY=\"-\"; fi\npython3 script/embed_store_bridge.py \"$APP_BUNDLE\" \"$SIGNING_IDENTITY\"\n# Mach-O command-line tools do not carry an Info.plist bundle identifier.\n# Their explicit signing identities are checked by administrator authorization.\nfor HELPER_NAME in UpoviInstaller UpoviStoreInstaller; do\n  case \"$HELPER_NAME\" in\n    UpoviInstaller) HELPER_ID=app.upovi.Installer ;;\n    UpoviStoreInstaller) HELPER_ID=app.upovi.StoreInstaller ;;\n  esac\n  SIGNING_ARGS=(--force --identifier \"$HELPER_ID\" --sign \"$SIGNING_IDENTITY\")\n  if [[ \"$SIGNING_IDENTITY\" != \"-\" ]]; then SIGNING_ARGS+=(--options runtime --timestamp); fi\n  /usr/bin/codesign \"${SIGNING_ARGS[@]}\" \"$APP_BUNDLE/Contents/MacOS/$HELPER_NAME\"\ndone\npython3 script/embed_store_installer.py \"$APP_BUNDLE\" \"$SIGNING_IDENTITY\"\n# Keep the pinned license independent of Xcode's build/archive package-cache layout.\ncp Vendor/Sparkle-LICENSE \"$APP_BUNDLE/Contents/Resources/Sparkle-LICENSE\"\n";
 			showEnvVarsInLog = 0;
 		};
 		F4DD8FC2F012BA7A16E8E6E1 /* Prepare application metadata */ = {
@@ -1298,6 +1303,7 @@
 				5B272A3F2264A5CB0928A126 /* SettingsFile.swift in Sources */,
 				2118B6A5DEE200FE097DA072 /* SourceHTTPClient.swift in Sources */,
 				045FEC3F954643CF01A579D0 /* SourceVersion.swift in Sources */,
+				F632E89E74B5D8A52CEB7B14 /* StoreReceiptRecovery.swift in Sources */,
 				61074AA73F8C84CBF6000017 /* UpdateAssessment.swift in Sources */,
 				77B3646ED052408D228DAD8E /* UpdateChecker.swift in Sources */,
 				26301ECC6E9EDD3AD41DD2E3 /* UpdateInstaller.swift in Sources */,

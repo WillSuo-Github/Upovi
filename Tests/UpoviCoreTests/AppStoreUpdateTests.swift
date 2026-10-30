@@ -86,7 +86,12 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
     func testAuthorizationStagesBothSignedHelpersAndQuotesCallerPaths() throws {
         let script = try AppStoreUpdatePlan.authorizationScript(helper:URL(fileURLWithPath:"/synthetic/helper's tool"),bridge:URL(fileURLWithPath:"/synthetic/bridge"),plan:URL(fileURLWithPath:"/synthetic/plan"),hostTeam:"SYNTHETIC1")
         XCTAssertTrue(script.contains("app.upovi.StoreInstaller")); XCTAssertTrue(script.contains("app.upovi.StoreBridge"))
-        XCTAssertTrue(script.contains("with administrator privileges")); XCTAssertTrue(script.contains("/usr/sbin/chown 0:0"))
+        XCTAssertTrue(script.contains("with administrator privileges")); XCTAssertTrue(script.contains("/usr/sbin/chown -R 0:0"))
+        XCTAssertTrue(script.contains("/usr/bin/stat -f %u /dev/console"))
+        XCTAssertTrue(script.contains("/bin/launchctl asuser"))
+        XCTAssertTrue(script.contains("/bin/chmod 755"))
+        XCTAssertTrue(script.contains("/bin/chmod -R a+rX,go-w"))
+        XCTAssertTrue(script.contains("/bin/chmod 600"))
         XCTAssertThrowsError(try AppStoreUpdatePlan.requirement(identifier:"untrusted",hostTeam:"SYNTHETIC1"))
         XCTAssertThrowsError(try AppStoreUpdatePlan.requirement(identifier:"app.upovi.StoreBridge",hostTeam:"bad\"team"))
     }
@@ -116,5 +121,89 @@ private actor StoreReplies {
         let devices = mode == "ios" ? "iPhone14,1" : "MacDesktop-MacDesktop"
         let minimum = mode == "future-os" ? "999" : "14"
         return Data("{\"adamID\":12345,\"bundleID\":\"\(bundle)\",\"version\":\"\(version)\",\"minimumOSVersion\":\"\(minimum)\",\"kind\":\"software\",\"supportedDevices\":[\"\(devices)\"]}".utf8)
+    }
+}
+
+extension AppStoreUpdateTests {
+    func testVerifiedStoreUpdateDoesNotProbeAndCancelTheDownloadQueue() throws {
+        let product = try JSONDecoder().decode(StoreProduct.self, from: Data(#"{"adamID":12345,"bundleID":"app.synthetic.store","version":"2","minimumOSVersion":"14","kind":"mac-software"}"#.utf8))
+        let plan = AppStoreUpdatePlan(application: app, storeID: 12345, version: "2", userID: 501)
+        XCTAssertEqual(try plan.updateArguments(for: product), ["update", "--force", "12345"])
+        XCTAssertThrowsError(try AppStoreUpdatePlan(application: app, storeID: 99999, version: "2", userID: 501).updateArguments(for: product))
+        XCTAssertThrowsError(try AppStoreUpdatePlan(application: app, storeID: 12345, version: "3", userID: 501).updateArguments(for: product))
+        let current = try JSONDecoder().decode(StoreProduct.self, from: Data(#"{"adamID":12345,"bundleID":"app.synthetic.store","version":"1","minimumOSVersion":"14","kind":"mac-software"}"#.utf8))
+        XCTAssertNil(try AppStoreUpdatePlan(application: app, storeID: 12345, version: "1", userID: 501).updateArguments(for: current))
+    }
+
+    func testStoreFailureReceiptCarriesItsCauseWithoutAccountIdentifiers() throws {
+        let error = NSError(domain: "SyntheticStoreDomain", code: 42, userInfo: [NSLocalizedDescriptionKey: "Download cancelled"])
+        var receipt = AppStoreUpdateReceipt(plan: .init(application: app, storeID: 12345, version: "2", userID: 501), state: "failedOrUnconfirmed")
+        receipt.failure = .init(stage: "store", error: error, detail: "Error: Download cancelled for fixture@account.invalid")
+        let decoded = try JSONDecoder().decode(AppStoreUpdateReceipt.self, from: JSONEncoder().encode(receipt))
+        XCTAssertEqual(decoded.failure?.domain, "SyntheticStoreDomain")
+        XCTAssertEqual(decoded.failure?.code, 42)
+        XCTAssertEqual(decoded.failure?.stage, "store")
+        let message = StoreInstallationError(try XCTUnwrap(decoded.failure)).localizedDescription
+        XCTAssertTrue(message.contains("Download cancelled"))
+        XCTAssertFalse(message.contains("fixture@account.invalid"))
+    }
+}
+
+extension AppStoreUpdateTests {
+    func testStoreFailureSkipsProgressLinesAndIdentifiesPermissionDenial() {
+        let error = NSError(domain: NSCocoaErrorDomain, code: 513, userInfo: [NSLocalizedDescriptionKey: "Write denied"])
+        let failure = StoreInstallationFailure(stage: "store", error: error,
+            detail: "==> Downloading Xcode (27.2)\n==> Updating Xcode (27.2)\nError: Failed to copy receipt: Operation not permitted")
+        XCTAssertTrue(failure.message.hasPrefix("Error: Failed to copy receipt"))
+        XCTAssertFalse(failure.message.contains("Downloading"))
+        XCTAssertTrue(failure.requiresAppManagement)
+        let progressOnly = StoreInstallationFailure(stage: "store", error: error, detail: "==> Downloading Xcode (27.2)")
+        XCTAssertEqual(progressOnly.message, "Write denied")
+        let diskFull = StoreInstallationFailure(stage: "appManagement", error: NSError(domain: NSCocoaErrorDomain, code: 640))
+        XCTAssertFalse(diskFull.requiresAppManagement)
+    }
+
+    func testReceiptRecoveryIsBoundToTheRecordedDestinationAndNeverDownloadsAgain() throws {
+        let detail = "Error: Failed to copy receipt for Running Application (2) from '/var/folders/fixture/receipt' to '\(app.path)/Contents/_MASReceipt/receipt': Operation not permitted"
+        let failure = StoreInstallationFailure(stage: "store", error: PeerError.invalid("Failed"), detail: detail)
+        XCTAssertEqual(failure.recoverableReceiptPath(application: app), "/var/folders/fixture/receipt")
+        let unrelated = InstalledApp(name: "Other", bundleID: app.bundleID, version: "1", path: "/Applications/Other.app")
+        XCTAssertNil(failure.recoverableReceiptPath(application: unrelated))
+        let recovery = StoreReceiptRecovery(transactionID: UUID(), path: "/private/var/folders/fixture/receipt", sha256: String(repeating: "a", count: 64))
+        let plan = AppStoreUpdatePlan(application: app, storeID: 12345, version: "2", userID: 501, receiptRecovery: recovery)
+        XCTAssertNoThrow(try plan.validate())
+        let product = try JSONDecoder().decode(StoreProduct.self, from: Data(#"{"adamID":12345,"bundleID":"app.synthetic.store","version":"2","minimumOSVersion":"14","kind":"mac-software"}"#.utf8))
+        XCTAssertThrowsError(try plan.updateArguments(for: product))
+        for path in ["/tmp/receipt", "/etc/passwd", "/private/var/folders/../receipt"] {
+            XCTAssertThrowsError(try StoreReceiptRecovery(transactionID: UUID(), path: path, sha256: recovery.sha256).validate())
+        }
+    }
+
+    func testReceiptRecoveryPreservesPhysicalTemporaryDirectoryPath() throws {
+        let file = FileManager.default.temporaryDirectory.appending(path: "Upovi-receipt-path-\(UUID().uuidString)")
+        try Data("fixture".utf8).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let canonical = try CanonicalFilePath.resolve(file)
+        guard canonical.hasPrefix("/private/var/folders/") else { throw XCTSkip("Host temporary directory does not use the macOS /var alias") }
+        let recovery = StoreReceiptRecovery(transactionID: UUID(), path: canonical, sha256: String(repeating: "a", count: 64))
+        XCTAssertNoThrow(try recovery.validate())
+        let alias = URL(fileURLWithPath: canonical.replacingOccurrences(of: "/private/var/", with: "/var/"))
+        XCTAssertEqual(try CanonicalFilePath.resolve(alias), recovery.path)
+    }
+
+    func testUnsignedMalformedAndMismatchedReceiptPayloadsAreRejected() throws {
+        func tlv(_ tag: UInt8, _ value: Data) -> Data { Data([tag, UInt8(value.count)]) + value }
+        func attribute(_ type: UInt8, _ value: String) -> Data {
+            tlv(0x30, tlv(0x02, Data([type])) + tlv(0x02, Data([1])) + tlv(0x04, tlv(0x0C, Data(value.utf8))))
+        }
+        let valid = tlv(0x31, attribute(2, app.bundleID) + attribute(3, app.version))
+        XCTAssertNoThrow(try StoreReceiptVerifier.validatePayload(valid, application: app))
+        XCTAssertThrowsError(try StoreReceiptVerifier.validate(valid, application: app))
+        for data in [Data(), Data([0x31,0x80]), Data([0x31,0x84,0xFF,0xFF,0xFF,0xFF]),
+                     tlv(0x31, attribute(2, "app.other") + attribute(3, app.version)),
+                     tlv(0x31, attribute(2, app.bundleID) + attribute(3, "999")),
+                     tlv(0x31, attribute(2, app.bundleID) + attribute(2, app.bundleID) + attribute(3, app.version))] {
+            XCTAssertThrowsError(try StoreReceiptVerifier.validatePayload(data, application: app))
+        }
     }
 }

@@ -158,7 +158,7 @@ actor DesignPreviewTransfer {
                              checkApplication: { app, _ in try? await Task.sleep(for: .milliseconds(120)); return results[app.id] ?? .init(appID: app.id, candidates: [], note: "Fixture", status: .current) })
         store.administrator = AdministratorInstallationService(directory: root.appending(path: "Attempts"), downloads: coordinator)
         // Never reach the real App Store service from the offline preview.
-        store.installStoreUpdate = { _, _ in try await Task.sleep(for: .seconds(3)) }
+        store.installStoreUpdate = { _, _, _ in try await Task.sleep(for: .seconds(3)) }
         // Keep the preview offline: no path monitor, scheduled checks or DHT synchronization.
         store.monitoringTask = Task { }
         store.p2pTransitioning = true

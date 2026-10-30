@@ -24,6 +24,7 @@ components = [
     (bundle / 'Contents/MacOS/UpoviInstaller', 'app.upovi.Installer'),
     (bundle / 'Contents/MacOS/UpoviStoreInstaller', 'app.upovi.StoreInstaller'),
     (bundle / 'Contents/MacOS/UpoviStoreBridge', 'app.upovi.StoreBridge'),
+    (bundle / 'Contents/Helpers/UpoviStoreInstaller.app', 'app.upovi.StoreInstaller'),
     (bundle, 'app.upovi.Upovi'),
 ]
 

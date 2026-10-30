@@ -40,6 +40,7 @@ extension AppStore {
     }
 
     private func resetBulkRun() {
+        cancelBulkApplicationQuit()
         clearBulkTransfers()
         bulkOutcomes = [:]; bulkActiveIDs = []; bulkHasRun = false; bulkStopRequested = false; bulkSummaryVisible = false
     }
@@ -57,8 +58,34 @@ extension AppStore {
     }
 
     func startAllUpdates() {
-        guard bulkUpdatePresented, !bulkHasRun, !installing, !checking, !scanning, !refreshing,
-              bulkInstallableCount > 0, !SelfUpdateService.shared.sessionInProgress else { return }
+        guard canStartBulkUpdates else { return }
+        let running = runningUpdateApplications(bulkItems.filter(\.canInstall).map(\.application))
+        if !running.isEmpty {
+            bulkQuitApplications = running
+            bulkQuitPresented = true
+            return
+        }
+        beginAllUpdates(applicationsToQuit: [])
+    }
+
+    func confirmBulkApplicationQuit() {
+        let applications = bulkQuitApplications
+        cancelBulkApplicationQuit()
+        beginAllUpdates(applicationsToQuit: applications)
+    }
+
+    func cancelBulkApplicationQuit() {
+        bulkQuitPresented = false
+        bulkQuitApplications = []
+    }
+
+    private var canStartBulkUpdates: Bool {
+        bulkUpdatePresented && !bulkHasRun && !installing && !checking && !scanning && !refreshing
+            && bulkInstallableCount > 0 && !SelfUpdateService.shared.sessionInProgress
+    }
+
+    private func beginAllUpdates(applicationsToQuit: [InstalledApp]) {
+        guard canStartBulkUpdates else { return }
         guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，请联网后再开始更新。"); return }
         let record = BulkUpdateRecord(items: bulkItems)
         let previous = batchHistory
@@ -71,8 +98,21 @@ extension AppStore {
         bulkSummaryVisible = true; bulkUpdatePresented = false; section = .updates
         let items = bulkItems, width = bulkConcurrency
         bulkTask = Task { [self] in
+            var failedToQuit = Set<String>()
+            for app in applicationsToQuit {
+                if bulkStopRequested { break }
+                do { try await cancellable(app.id) { [self] in try await quitUpdateApplication(app) } }
+                catch is CancellationError { bulkStopRequested = true; break }
+                catch {
+                    failedToQuit.insert(app.id)
+                    recordDiagnostic(.batchPreparation, appID: app.id, error: error)
+                    if let item = items.first(where: { $0.id == app.id }) {
+                        recordBulkEvent(.finished(.init(item: item, status: .failed, detail: error.localizedDescription)))
+                    }
+                }
+            }
             let authorization = makeInstallationAuthorizationBatch()
-            _ = await BulkUpdateRunner.run(items, concurrency: width, shouldStop: { await self.bulkStopRequested },
+            _ = await BulkUpdateRunner.run(items.filter { !failedToQuit.contains($0.id) }, concurrency: width, shouldStop: { await self.bulkStopRequested },
                 operation: { try await self.installBulkItem($0, authorization: authorization) }, report: { event in
                     await self.recordBulkPreparationEvent(event, authorization: authorization)
                 })
@@ -200,7 +240,7 @@ extension AppStore {
             }
             if app.isAppStore {
                 try Task.checkCancellation()
-                guard saveBulkPhase(id, phase: .installing, detail: String(localized: "等待商店下载和管理员认证")) else { throw PeerError.unavailable("Batch history could not be saved") }
+                guard saveBulkPhase(id, phase: .installing, detail: candidate.storeReceiptRecovery == nil ? String(localized: "等待商店下载和管理员认证") : String(localized: "正在完成商店安装收尾")) else { throw PeerError.unavailable("Batch history could not be saved") }
                 stage = .batchInstallation
                 setTransferPhase(id, .waitingForAuthorization)
                 authorization.enqueue(item) { [self] authorize in

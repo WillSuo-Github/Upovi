@@ -1,6 +1,134 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "请在系统设置的“隐私与安全 → 应用程序管理”中允许 Upovi Installer，然后重试。应用主程序可能已更新，重试将优先完成安装收尾。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Upovi Installer in System Settings → Privacy & Security → App Management, then retry. The application may already be updated; retry will first finish the installation."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請在系統設定的「隱私權與安全性 → 應用程式管理」中允許 Upovi Installer，然後重試。應用程式主程式可能已更新，重試會優先完成安裝收尾。"
+          }
+        }
+      }
+    },
+    "正在完成商店安装收尾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completing the App Store installation"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在完成商店安裝收尾"
+          }
+        }
+      }
+    },
+    "主程序已更新，本次只校验并补齐原始商店购买凭据，不会重新下载应用。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The application is already updated. This task verifies and restores its original App Store receipt without downloading the application again."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主程式已更新，本次只驗證並補齊原始商店購買憑據，不會重新下載應用程式。"
+          }
+        }
+      }
+    },
+    "商店更新未完成：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store update did not complete: %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店更新未完成：%@"
+          }
+        }
+      }
+    },
+    "请先保存文稿。确认后将正常退出这些应用并继续更新；不会强制结束未响应或拒绝退出的应用。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save your documents first. Confirm to quit these applications normally and continue updating. Applications that do not respond or decline to quit will not be forced to close."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請先儲存文件。確認後會正常結束這些應用程式並繼續更新；不會強制結束未回應或拒絕結束的應用程式。"
+          }
+        }
+      }
+    },
+    "以下应用正在运行：": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These applications are running:"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以下應用程式正在執行："
+          }
+        }
+      }
+    },
+    "关闭并更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit and Update"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉並更新"
+          }
+        }
+      }
+    },
+    "关闭正在运行的应用？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit running applications?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉正在執行的應用程式？"
+          }
+        }
+      }
+    },
     "\n%lld 个索引候选未返回有效签名记录": {
       "localizations": {
         "ar": {

@@ -38,9 +38,7 @@ public struct UpdateAssessment: Sendable {
         let sources = usableSource ? sourceResult?.candidates ?? [] : []
         sourceUpdates = sources.filter { candidate in
             guard !candidate.isCommunity else { return false }
-            return candidate.usesBuildVersion
-                ? !app.build.isEmpty && VersionOrder.compare(candidate.build, app.build) == .orderedDescending
-                : VersionOrder.isNewer(version: candidate.version, build: candidate.build, than: app)
+            return candidate.isNewer(than: app)
         }.sorted { VersionOrder.compare($0.version, $1.version) == .orderedDescending }
         let liveReports = reports.filter {
             $0.isCommunity && ($0.expiresAt ?? $0.observedAt.addingTimeInterval(86400)) > now &&

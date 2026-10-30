@@ -152,7 +152,7 @@ public actor UpdateInstaller {
             try BundleTransaction(journalDirectory: journal, validate: { _ in }).restore(receipt)
         }.value
     }
-    public static func requestApplicationQuit(_ app: InstalledApp) async throws { try await quit(app) }
+    public static func requestApplicationQuit(_ app: InstalledApp, timeoutSeconds: Int = 10) async throws { try await quit(app, timeoutSeconds: timeoutSeconds) }
 
     public func discardBackup(_ receipt: InstallationReceipt) async throws {
         guard !exclusive, activePaths.isEmpty else { throw PeerError.unavailable("An installation operation is already running") }
@@ -175,7 +175,7 @@ public actor UpdateInstaller {
         }.value
     }
 
-    private static func quit(_ app: InstalledApp) async throws {
+    private static func quit(_ app: InstalledApp, timeoutSeconds: Int = 10) async throws {
         func running() async -> Bool {
             await MainActor.run { NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL.path == app.path } }
         }
@@ -184,7 +184,7 @@ public actor UpdateInstaller {
                 _ = application.terminate()
             }
         }
-        for _ in 0..<40 {
+        for _ in 0..<(min(300, max(1, timeoutSeconds)) * 4) {
             if !(await running()) { return }
             try await Task.sleep(for: .milliseconds(250))
         }

@@ -36,6 +36,8 @@ final class AppStore {
     var bulkPersistenceFailed = false
     var refreshing = false
     var bulkUpdatePresented = false
+    var bulkQuitPresented = false
+    var bulkQuitApplications: [InstalledApp] = []
     var bulkUpdating = false
     var bulkHasRun = false
     var bulkStopRequested = false
@@ -50,7 +52,7 @@ final class AppStore {
     }
     @ObservationIgnored var bulkCancellers: [String: () -> Void] = [:]
     @ObservationIgnored var transferSamples: [String: TransferProgress.Sample] = [:]
-    /// Administrator and App Store steps show system prompts; run them one at a time.
+    /// The batch submits its privileged installation steps under one authorization.
     @ObservationIgnored var bulkTask: Task<Void, Never>?
     @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
@@ -117,6 +119,12 @@ final class AppStore {
     @ObservationIgnored let preferences: AppPreferences
     @ObservationIgnored lazy var notifications = NotificationService()
     @ObservationIgnored var installStoreUpdate: @MainActor (UpdateCandidate, InstalledApp, InstallationAuthorization) async throws -> Void = { try await AppStoreInstallationService().perform($0, app: $1, authorize: $2) }
+    @ObservationIgnored var runningUpdateApplications: @MainActor ([InstalledApp]) -> [InstalledApp] = { apps in
+        let paths = Set(NSWorkspace.shared.runningApplications.compactMap { $0.bundleURL?.standardizedFileURL.path })
+        return apps.filter { paths.contains($0.path) }
+    }
+    @ObservationIgnored var quitUpdateApplication: @MainActor (InstalledApp) async throws -> Void = { try await UpdateInstaller.requestApplicationQuit($0, timeoutSeconds: 120) }
+    @ObservationIgnored var storeReceiptRecoveryItem: @MainActor (InstalledApp) -> BulkUpdateItem? = { AppStoreInstallationService.recoveryItem(for: $0) }
     @ObservationIgnored var makeInstallationAuthorizationBatch: @MainActor () -> InstallationAuthorizationBatch = { InstallationAuthorizationBatch() }
     @ObservationIgnored let installer: UpdateInstaller
     @ObservationIgnored let scanApplications: @Sendable ([URL]) async -> [InstalledApp]

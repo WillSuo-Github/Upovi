@@ -63,7 +63,8 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
                                              guard url.scheme == "https", ["zip", "dmg", "pkg"].contains(url.pathExtension.lowercased()),
                                                    let signature = Data(base64Encoded: item.signature), signature.count == 64 else { return nil }
                                              return DownloadDescriptor(url: url, edSignature: signature)
-                                         }, releaseNotes: item.notes.isEmpty ? nil : item.notes))
+                                         }, releaseNotes: item.notes.isEmpty ? nil : item.notes,
+                                         buildIsAuthoritative: !item.build.isEmpty))
                 }
             }
             current = nil

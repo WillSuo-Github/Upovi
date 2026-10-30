@@ -41,11 +41,7 @@ public enum UpdateChecker {
                 let data = try await fetch(feed, 3_000_000)
                 let offers = try AppcastReader.read(data)
                 officialOffers = offers
-                candidates += offers.filter { candidate in
-                    candidate.usesBuildVersion
-                        ? !app.build.isEmpty && VersionOrder.compare(candidate.build, app.build) == .orderedDescending
-                        : VersionOrder.isNewer(version: candidate.version, build: candidate.build, than: app)
-                }
+                candidates += offers.filter { $0.isNewer(than: app) }
                 checked += 1; notes.append(String(localized: "已检查开发者 appcast")); checks.append(.init(.appcast, .checked))
             } catch is CancellationError { return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed, checks: [.init(.appcast, .cancelled, error: CancellationError())]) }
             catch { failed += 1; notes.append("appcast：\(failureDescription(error))"); checks.append(.init(.appcast, .failed, error: error)) }
@@ -91,7 +87,12 @@ public enum UpdateChecker {
             } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
         }
         if let officialOffers {
-            candidates = Array(candidates.prefix(appcastCount)) + candidates.dropFirst(appcastCount).filter { offered($0, by: officialOffers) }
+            candidates = Array(candidates.prefix(appcastCount)) + candidates.dropFirst(appcastCount).filter { candidate in
+                offered(candidate, by: officialOffers) && !officialOffers.contains { offer in
+                    offer.buildIsAuthoritative == true && !offer.usesBuildVersion &&
+                        VersionOrder.compare(offer.version, candidate.version) == .orderedSame && !offer.isNewer(than: app)
+                }
+            }
         }
         candidates = supplementDownloads(candidates, for: app)
         let status: SourceStatus = failed > 0 ? (checked > 0 ? .partial : .failed)

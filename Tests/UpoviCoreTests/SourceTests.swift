@@ -79,3 +79,40 @@ final class SourceTests: XCTestCase {
         XCTAssertEqual(result.first?.download?.url.lastPathComponent, "Full.zip")
     }
 }
+
+extension SourceTests {
+    func testSparkleDisplayVersionCannotOfferTheAlreadyInstalledPlayCoverBuildAgain() async throws {
+        let xml = """
+        <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><item>
+        <sparkle:version>1633</sparkle:version><sparkle:shortVersionString>4.0.0</sparkle:shortVersionString>
+        <enclosure url="https://example.invalid/PlayCover_4.0.0-prerelease.dmg" />
+        </item></channel></rss>
+        """
+        let offers = try AppcastReader.read(Data(xml.utf8))
+        let app = InstalledApp(name: "PlayCover fixture", bundleID: "io.playcover.PlayCover", version: "3.1.0", build: "1633",
+            path: "/synthetic/PlayCover.app", teamID: "792V9HMJW3", feedURL: URL(string: "https://example.invalid/appcast.xml"))
+        let candidate = try XCTUnwrap(offers.first)
+        XCTAssertEqual(candidate.version, "4.0.0")
+        XCTAssertEqual(candidate.build, "1633")
+        XCTAssertTrue(candidate.comparesUsingBuild)
+        XCTAssertFalse(candidate.isNewer(than: app))
+        let github = Data(#"{"tag_name":"3.1.0","html_url":"https://github.com/PlayCover/PlayCover/releases/tag/3.1.0","draft":false,"prerelease":false,"assets":[]}"#.utf8)
+        let result = await UpdateChecker.check(app, fetch: { url, _ in url.host == "example.invalid" ? Data(xml.utf8) : github }, catalog: { _ in nil })
+        XCTAssertEqual(result.status, .current)
+        XCTAssertFalse(UpdateAssessment(app: app, sourceResult: result).hasUpdate)
+        XCTAssertTrue(BulkUpdatePlan.make(apps: [app], results: [app.id: result], ignored: []).isEmpty)
+    }
+
+    func testAuthoritativeBuildOrdersUpdatesIndependentlyOfDisplayVersionAndSurvivesHistory() throws {
+        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.sparkle", version: "4.0", build: "100", path: "/synthetic/F.app")
+        let newer = UpdateCandidate(version: "3.1", build: "101", source: "Developer appcast", isCommunity: false, url: nil, buildIsAuthoritative: true)
+        XCTAssertTrue(newer.isNewer(than: app))
+        let assessment = UpdateAssessment(app: app, sourceResult: .init(appID: app.id, candidates: [newer], note: "", status: .updates))
+        XCTAssertEqual(assessment.sourceUpdates.count, 1)
+        let encoded = try JSONEncoder().encode(newer)
+        XCTAssertTrue(try JSONDecoder().decode(UpdateCandidate.self, from: encoded).comparesUsingBuild)
+        var legacy = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        legacy.removeValue(forKey: "buildIsAuthoritative")
+        XCTAssertNil(try JSONDecoder().decode(UpdateCandidate.self, from: JSONSerialization.data(withJSONObject: legacy)).buildIsAuthoritative)
+    }
+}

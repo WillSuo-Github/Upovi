@@ -16,5 +16,6 @@ for HELPER_NAME in UpoviInstaller UpoviStoreInstaller; do
   if [[ "$SIGNING_IDENTITY" != "-" ]]; then SIGNING_ARGS+=(--options runtime --timestamp); fi
   /usr/bin/codesign "${SIGNING_ARGS[@]}" "$APP_BUNDLE/Contents/MacOS/$HELPER_NAME"
 done
+python3 script/embed_store_installer.py "$APP_BUNDLE" "$SIGNING_IDENTITY"
 # Keep the pinned license independent of Xcode's build/archive package-cache layout.
 cp Vendor/Sparkle-LICENSE "$APP_BUNDLE/Contents/Resources/Sparkle-LICENSE"

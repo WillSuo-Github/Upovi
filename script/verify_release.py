@@ -36,6 +36,12 @@ for name, identifier in [("UpoviStoreInstaller", "app.upovi.StoreInstaller"), ("
     assert set(subprocess.check_output(["lipo", "-archs", str(executable)], text=True).split()) == {"arm64", "x86_64"}
     subprocess.run(["codesign", "--verify", "--strict", "--all-architectures", "-R",
                     '=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier "' + identifier + '"', str(executable)], check=True)
+store_helper = bundle / "Contents/Helpers/UpoviStoreInstaller.app"
+store_info = plistlib.loads((store_helper / "Contents/Info.plist").read_bytes())
+assert store_info['CFBundleIdentifier'] == 'app.upovi.StoreInstaller'
+assert store_info['CFBundleExecutable'] == 'UpoviStoreInstaller'
+subprocess.run(['codesign', '--verify', '--strict', '--all-architectures', '-R',
+                '=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier "app.upovi.StoreInstaller"', str(store_helper)], check=True)
 assert subprocess.check_output([str(bundle / "Contents/MacOS/UpoviStoreBridge"), "version"], text=True).strip() == "7.0.0"
 archive = folder / distribution['archive']
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()

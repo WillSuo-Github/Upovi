@@ -121,7 +121,7 @@ final class DownloadTrustTests: XCTestCase {
     func testBuiltInUpdaterChannelDecidesWhetherHomebrewIsAhead() async {
         @Sendable func feed(_ versions: [String]) -> Data {
             Data(("<rss xmlns:sparkle=\"http://www.andymatuschak.org/xml-namespaces/sparkle\"><channel>" + versions.map {
-                "<item><enclosure sparkle:version=\"1\" sparkle:shortVersionString=\"\($0)\" url=\"https://example.com/App-\($0).zip\" /></item>"
+                "<item><enclosure sparkle:version=\"\($0 == "26.1023.51421" ? "22530" : "22391")\" sparkle:shortVersionString=\"\($0)\" url=\"https://example.com/App-\($0).zip\" /></item>"
             }.joined() + "</channel></rss>").utf8)
         }
         let cask = Data(#"{"token":"chatgpt","version":"26.1023.51421","url":"https://persistent.oaistatic.com/codex-app-prod/ChatGPT-darwin-arm64-26.1023.51421.zip","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifacts":[{"app":["ChatGPT.app"]}]}"#.utf8)

@@ -37,6 +37,13 @@ struct BulkUpdateView: View {
         .frame(width: 600, height: 580)
         .background(UpdatesPalette.page)
         .interactiveDismissDisabled(store.bulkUpdating)
+        .alert("关闭正在运行的应用？", isPresented: $store.bulkQuitPresented) {
+            Button("关闭并更新") { store.confirmBulkApplicationQuit() }
+            Button("取消", role: .cancel) { store.cancelBulkApplicationQuit() }
+        } message: {
+            Text(String(localized: "以下应用正在运行：") + "\n\n" + store.bulkQuitApplications.map(\.name).joined(separator: "、")
+                + "\n\n" + String(localized: "请先保存文稿。确认后将正常退出这些应用并继续更新；不会强制结束未响应或拒绝退出的应用。"))
+        }
     }
 
     // MARK: Header
@@ -76,6 +83,10 @@ struct BulkUpdateView: View {
     private var notes: [Note] {
         var notes = [Note(id: "quit", symbol: "doc.badge.clock",
                           text: String(localized: "更新时会请求退出应用，请先保存文稿。直接下载的更新会保留旧版主应用；需要管理员权限的任务准备完成后，本轮统一授权一次。"))]
+        if store.bulkItems.contains(where: { $0.candidate.storeReceiptRecovery != nil }) {
+            notes.append(Note(id: "receipt", symbol: "checkmark.seal",
+                              text: String(localized: "主程序已更新，本次只校验并补齐原始商店购买凭据，不会重新下载应用。")))
+        }
         if store.bulkItems.contains(where: { $0.canInstall && $0.application.isAppStore }) {
             notes.append(Note(id: "store", symbol: "bag",
                               text: String(localized: "商店应用由 Upovi 发起 Apple 服务更新，可能要求 Apple 账户认证。不提供 Upovi 旧版备份或下载暂停；停止只影响后续任务，已交给商店的更新可能继续。")))

@@ -50,6 +50,9 @@ public struct BulkUpdateOutcome: Sendable {
     public let item: BulkUpdateItem
     public let status: Status
     public let detail: String
+    public init(item: BulkUpdateItem, status: Status, detail: String) {
+        self.item = item; self.status = status; self.detail = detail
+    }
 }
 
 public enum BulkUpdateEvent: Sendable {

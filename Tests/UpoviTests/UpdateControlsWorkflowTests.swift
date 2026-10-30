@@ -88,3 +88,25 @@ final class UpdateControlsWorkflowTests: XCTestCase {
         XCTAssertNotNil(value.errorMessage)
     }
 }
+
+extension UpdateControlsWorkflowTests {
+    func testRetryOffersReceiptCompletionAfterTheStoreReplacedTheAppButLostItsReceipt() async throws {
+        let original = InstalledApp(name: "Store fixture", bundleID: "app.synthetic.store.recovery", version: "1", path: "/Applications/Upovi Recovery Fixture.app", teamID: "SYNTHETIC1", isAppStore: true)
+        let current = InstalledApp(name: original.name, bundleID: original.bundleID, version: "2", path: original.path, teamID: original.teamID, isAppStore: false)
+        var candidate = UpdateCandidate(version: "2", source: "App Store", isCommunity: false, url: nil, appStoreID: 12345)
+        let item = BulkUpdateItem(application: original, candidate: candidate, manualReason: nil)
+        var record = BulkUpdateRecord(items: [item]); record.update(original.id, phase: .failed, detail: "Receipt could not be written"); record.finishedAt = Date()
+        let store = AppStore(preferences: try preferences(), scanApplications: { _ in [current] }, checkApplication: { app, _ in
+            .init(appID: app.id, candidates: [], note: "Missing receipt", status: .unsupported)
+        })
+        let recovery = StoreReceiptRecovery(transactionID: UUID(), path: "/private/var/folders/fixture/receipt", sha256: String(repeating: "a", count: 64))
+        candidate.storeReceiptRecovery = recovery
+        let recoveryItem = BulkUpdateItem(application: original, candidate: candidate, manualReason: nil)
+        store.storeReceiptRecoveryItem = { app in app.id == current.id ? recoveryItem : nil }
+        store.retryBatch(record); await store.retryTask?.value
+        XCTAssertTrue(store.bulkUpdatePresented)
+        XCTAssertEqual(store.bulkItems.count, 1)
+        XCTAssertEqual(store.bulkItems.first?.candidate.storeReceiptRecovery, recovery)
+        XCTAssertNil(store.bulkTask)
+    }
+}

@@ -28,16 +28,16 @@ extension AppStore {
             await refresh?.value
             guard !Task.isCancelled, refresh?.isCancelled != true, networkAvailable, !installationBusy, !refreshing, !checking, !scanning else { return }
             let original = Dictionary(record.entries.map { ($0.item.id, $0.item) }, uniquingKeysWith: { first, _ in first })
+            let repairs = apps.filter { ids.contains($0.id) }.compactMap { storeReceiptRecoveryItem($0) }
+            logger.info("Batch retry matched \(self.apps.filter { ids.contains($0.id) }.count) installed apps and \(repairs.count) Store receipt repairs")
             let targets = apps.filter { app in
                 guard ids.contains(app.id), let old = original[app.id],
                       old.application.bundleID == app.bundleID, old.application.teamID == app.teamID,
                       old.application.channel == app.channel else { return false }
                 // Another updater or later batch may already have completed the recorded target.
-                return old.candidate.usesBuildVersion
-                    ? VersionOrder.compare(old.candidate.build, app.build) == .orderedDescending
-                    : VersionOrder.isNewer(version: old.candidate.version, build: old.candidate.build, than: app)
+                return old.candidate.isNewer(than: app)
             }
-            let plan = BulkUpdatePlan.make(apps: targets, results: actionableSourceResults, ignored: ignored)
+            let plan = repairs + BulkUpdatePlan.make(apps: targets, results: actionableSourceResults, ignored: ignored)
             guard !plan.isEmpty else { errorMessage = String(localized: "原清单中未完成的应用已无可处理的更新，或来源尚未确认；请查看最新检测结果。"); return }
             bulkItems = plan; bulkOutcomes = [:]; bulkActiveIDs = []; clearBulkTransfers()
             bulkHasRun = false; bulkStopRequested = false

@@ -72,7 +72,8 @@ def main():
             objects.extend(str(path) for path in (products / (object_target + '.build')).rglob('*.o'))
     if not objects:
         raise RuntimeError('No compiled core objects found; inspect the SwiftPM product layout.')
-    command = ['swiftc', '-swift-version', '6', '-parse-as-library', '-I', str(products), '-I', str(modules), '-F', str(products)]
+    sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
+    command = ['swiftc', '-sdk', sdk, '-swift-version', '6', '-parse-as-library', '-I', str(products), '-I', str(modules), '-F', str(products)]
     command += sources + [str(root / 'script/acceptance' / {'bulk': 'bulk_install.swift', 'admin-cleanup': 'admin_cleanup.swift', 'diagnostics': 'diagnostics.swift', 'downloads': 'download_center.swift', 'design': 'design_preview.swift', 'startup': 'startup.swift', 'mos': 'mos_migration.swift'}[options.mode])] + objects
     command += ['-larchive', '-framework', 'Sparkle', '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks', '-o', str(executable)]
     run(command, cwd=root)
@@ -86,6 +87,12 @@ def main():
         command += ['--options', 'runtime', '--timestamp']
     if options.mode == 'admin-cleanup':
         run(['ditto', str(options.helper_bundle / 'Contents/MacOS/UpoviInstaller'), str(app / 'Contents/MacOS/UpoviInstaller')])
+    elif options.mode == 'startup' and options.helper_bundle:
+        if options.signing_identity == '-':
+            parser.error('Real Store acceptance requires a Developer ID signing identity.')
+        run(['ditto', str(options.helper_bundle / 'Contents/Helpers'), str(app / 'Contents/Helpers')])
+        for name in ['UpoviInstaller', 'UpoviStoreInstaller', 'UpoviStoreBridge']:
+            run(['ditto', str(options.helper_bundle / 'Contents/MacOS' / name), str(app / 'Contents/MacOS' / name)])
     run(command + [str(app)])
     run(['codesign', '--verify', '--deep', '--strict', str(app)])
     print('Isolated fixture:', app)
@@ -97,6 +104,9 @@ def main():
         print('No administrator operation runs until explicitly selected in the fixture UI.')
     elif options.mode == 'mos':
         print('Official legacy Mos copy with live sources; preferences, downloads and replacements stay isolated.')
+    elif options.mode == 'startup':
+        print('Production scanner and sources; --store-app narrows the inventory to one existing app.')
+        print('--quit-preview uses synthetic apps and never updates installed software. --review only opens the confirmation sheet.')
     else:
         print('Synthetic offline ' + options.mode + ' only; no applications are copied or replaced.')
 
