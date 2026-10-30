@@ -72,7 +72,7 @@ import UpoviCore
             guard let current = AppScanner.read(target) else { throw PeerError.invalid("Original store application is missing") }
             try plan.verifyCurrent(current); try BundleVerifier.checkSignature(target, like: plan.application)
             guard !NSRunningApplication.runningApplications(withBundleIdentifier: current.bundleID).contains(where: {
-                $0.bundleURL?.standardizedFileURL.path == current.path
+                $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: current.path) } ?? false
             }) else { throw PeerError.unavailable("Close the application before updating") }
             // Test the exact receipt directory before starting a potentially multi-gigabyte download.
             stage = "appManagement"

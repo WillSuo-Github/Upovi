@@ -14,7 +14,7 @@ The installed Team ID remains absent in inventory and receipts. Only the expecte
 
 The old signature and executable fingerprint are checked before download, immediately before replacement and on the retained backup. The ordinary transaction validates the new signed developer on both sides of the final rename. Recovery checks the pinned legacy backup and refuses unrelated or externally changed replacements. Backup cleanup understands both the legacy and signed identities. Administrator application plans use the same verification policy; the legacy exception cannot authorize PKG installation.
 
-Individual confirmation explains that the old official files were verified and the update adopts the signed developer identity. First launch may require the user to confirm system permissions again. Upovi does not alter Accessibility/TCC permissions or bypass quarantine/Gatekeeper.
+Individual confirmation explains that the old official files were verified and the update adopts the signed developer identity. First launch may require the user to confirm system permissions again. Upovi does not alter Accessibility/TCC permissions. Downloads remain quarantined until installation is confirmed; the signed replacement passes fresh Developer ID and Gatekeeper checks before scoped installation finalization releases its quarantine metadata.
 
 ## Acceptance
 

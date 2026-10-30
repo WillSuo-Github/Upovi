@@ -120,8 +120,8 @@ final class AppStore {
     @ObservationIgnored lazy var notifications = NotificationService()
     @ObservationIgnored var installStoreUpdate: @MainActor (UpdateCandidate, InstalledApp, InstallationAuthorization) async throws -> Void = { try await AppStoreInstallationService().perform($0, app: $1, authorize: $2) }
     @ObservationIgnored var runningUpdateApplications: @MainActor ([InstalledApp]) -> [InstalledApp] = { apps in
-        let paths = Set(NSWorkspace.shared.runningApplications.compactMap { $0.bundleURL?.standardizedFileURL.path })
-        return apps.filter { paths.contains($0.path) }
+        let paths = NSWorkspace.shared.runningApplications.compactMap(\.bundleURL)
+        return apps.filter { app in paths.contains { ApplicationRunningLocation.matches($0, installedPath: app.path) } }
     }
     @ObservationIgnored var quitUpdateApplication: @MainActor (InstalledApp) async throws -> Void = { try await UpdateInstaller.requestApplicationQuit($0, timeoutSeconds: 120) }
     @ObservationIgnored var storeReceiptRecoveryItem: @MainActor (InstalledApp) -> BulkUpdateItem? = { AppStoreInstallationService.recoveryItem(for: $0) }

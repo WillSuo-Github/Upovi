@@ -38,7 +38,7 @@ public actor UpdateInstaller {
             try? FileManager.default.removeItem(at: stale.workspace); prepared[stale.id] = nil
         }
         let workspace = FileManager.default.temporaryDirectory.appending(path: "Upovi-install-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false)
+        try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         let downloaded = workspace.appending(path: "update." + (descriptor.declaredFormat ?? "download"))
         var downloadID: UUID?
         do {
@@ -83,7 +83,8 @@ public actor UpdateInstaller {
                 if !descriptor.hasIntegrityProof { try BundleVerifier.checkDeveloperIDSignature(staged, like: app) }
                 if let executable = Bundle(url: staged)?.executableURL { try MachOCompatibility.validate(executable) }
                 else { throw PeerError.invalid("Update has no application executable") }
-                // Preserve the normal macOS trust boundary; never remove quarantine or bypass Gatekeeper.
+                // Downloads remain quarantined. A confirmed installation completes this state only
+                // after a fresh Developer ID and Gatekeeper check in ApplicationInstallation.
                 let quarantine = "0081;\(String(Int(Date().timeIntervalSince1970), radix: 16));Upovi;\(UUID().uuidString)"
                 let status = quarantine.withCString { pointer in
                     setxattr(staged.path, "com.apple.quarantine", pointer, strlen(pointer), 0, 0)
@@ -114,6 +115,7 @@ public actor UpdateInstaller {
         activePaths.insert(value.application.path); defer { activePaths.remove(value.application.path) }
         try await Self.quit(value.application)
         try Task.checkCancellation()
+        try await ApplicationInstallation.finalize(value.bundle, matching: value.replacement)
         // Once the rename transaction starts it runs to completion or recovery, even if the UI task is cancelled.
         let journal = journalDirectory
         let receipt = try await Task.detached {
@@ -121,6 +123,7 @@ public actor UpdateInstaller {
                 _ = try BundleVerifier.validate(url, replacing: value.application,
                     expectedVersion: value.replacement.version, expectedBuild: value.replacement.build)
                 if !value.archiveIntegrityVerified { try BundleVerifier.checkDeveloperIDSignature(url, like: value.application) }
+                try ApplicationInstallation.verifyFinalized(url)
             }, validateOriginal: { url in try BundleVerifier.checkSignature(url, like: value.application) }).commit(prepared: value.bundle, replacing: value.application,
                       newVersion: value.replacement.version, newBuild: value.replacement.build)
         }.value
@@ -164,7 +167,7 @@ public actor UpdateInstaller {
             try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         }
         let running = await MainActor.run {
-            NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL.path == backup.path }
+            NSWorkspace.shared.runningApplications.contains { $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: backup.path) } ?? false }
         }
         guard !running else { throw PeerError.invalid("Quit the backup application before moving it to Trash") }
         let journal = journalDirectory
@@ -177,10 +180,10 @@ public actor UpdateInstaller {
 
     private static func quit(_ app: InstalledApp, timeoutSeconds: Int = 10) async throws {
         func running() async -> Bool {
-            await MainActor.run { NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL.path == app.path } }
+            await MainActor.run { NSWorkspace.shared.runningApplications.contains { $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: app.path) } ?? false } }
         }
         await MainActor.run {
-            for application in NSWorkspace.shared.runningApplications where application.bundleURL?.standardizedFileURL.path == app.path {
+            for application in NSWorkspace.shared.runningApplications where application.bundleURL.map({ ApplicationRunningLocation.matches($0, installedPath: app.path) }) ?? false {
                 _ = application.terminate()
             }
         }

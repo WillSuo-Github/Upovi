@@ -129,12 +129,18 @@ struct UpoviInstaller {
                 let incoming = job.appending(path: "Incoming.app")
                 try files.copyItem(at: URL(fileURLWithPath: supplied.artifactPath), to: incoming)
                 try validateUpdate(incoming, plan: supplied)
-                _ = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", incoming.path])
+                guard let replacement = AppScanner.read(incoming) else { throw PeerError.invalid("Prepared application is missing") }
+                try await ApplicationInstallation.finalize(incoming, matching: replacement)
                 attempt.state = "installing"; try save(attempt, in: job)
                 try files.moveItem(at: target, to: job.appending(path: "Previous.app"))
                 try files.moveItem(at: incoming, to: target)
             }
             try validateUpdate(target, plan: supplied)
+            if supplied.operation == .package {
+                guard let installed = AppScanner.read(target) else { throw PeerError.invalid("Installed application is missing") }
+                try await ApplicationInstallation.finalize(target, matching: installed)
+            }
+            try ApplicationInstallation.verifyFinalized(target)
             attempt.installedApplication = AppScanner.read(target)
             if let usage = try? AdministratorBackupCleaner.usage(in: job) {
                 attempt.backupBytes = usage.bytes; attempt.backupBytesIsLowerBound = usage.lowerBound
