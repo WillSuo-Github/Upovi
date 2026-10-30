@@ -58557,7 +58557,7 @@
         }
       }
     },
-    "更新时会请求退出应用，请先保存文稿。直接下载的更新会保留旧版主应用；需要管理员权限时会出现系统授权窗口。": {
+    "更新时会请求退出应用，请先保存文稿。直接下载的更新会保留旧版主应用；需要管理员权限的任务准备完成后，本轮统一授权一次。": {
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -58598,7 +58598,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Updating asks apps to quit, so save your documents first. Directly downloaded updates keep the previous main app; a system authorization window appears when administrator privileges are needed."
+            "value": "Updates ask applications to quit, so save your documents first. Direct downloads keep the previous main application. Once tasks requiring administrator privileges are ready, authorize this batch once."
           }
         },
         "es": {

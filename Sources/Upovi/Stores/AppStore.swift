@@ -51,7 +51,6 @@ final class AppStore {
     @ObservationIgnored var bulkCancellers: [String: () -> Void] = [:]
     @ObservationIgnored var transferSamples: [String: TransferProgress.Sample] = [:]
     /// Administrator and App Store steps show system prompts; run them one at a time.
-    @ObservationIgnored let authorizationGate = SerialGate()
     @ObservationIgnored var bulkTask: Task<Void, Never>?
     @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
@@ -117,7 +116,8 @@ final class AppStore {
     var notificationsEnabled: Bool
     @ObservationIgnored let preferences: AppPreferences
     @ObservationIgnored lazy var notifications = NotificationService()
-    @ObservationIgnored var installStoreUpdate: @MainActor (UpdateCandidate, InstalledApp) async throws -> Void = { try await AppStoreInstallationService().perform($0, app: $1) }
+    @ObservationIgnored var installStoreUpdate: @MainActor (UpdateCandidate, InstalledApp, InstallationAuthorization) async throws -> Void = { try await AppStoreInstallationService().perform($0, app: $1, authorize: $2) }
+    @ObservationIgnored var makeInstallationAuthorizationBatch: @MainActor () -> InstallationAuthorizationBatch = { InstallationAuthorizationBatch() }
     @ObservationIgnored let installer: UpdateInstaller
     @ObservationIgnored let scanApplications: @Sendable ([URL]) async -> [InstalledApp]
     @ObservationIgnored let revalidateSources: @Sendable () async -> Void

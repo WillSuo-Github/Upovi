@@ -28,6 +28,9 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
         return "=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier \"\(identifier)\" and certificate leaf[subject.OU] = \"\(hostTeam)\""
     }
     public static func authorizationScript(helper: URL, bridge: URL, plan: URL, hostTeam: String) throws -> String {
+        AdministratorAuthorization.script(command: try authorizationCommand(helper: helper, bridge: bridge, plan: plan, hostTeam: hostTeam))
+    }
+    public static func authorizationCommand(helper: URL, bridge: URL, plan: URL, hostTeam: String) throws -> String {
         let helperRequirement = try requirement(identifier: "app.upovi.StoreInstaller", hostTeam: hostTeam)
         let bridgeRequirement = try requirement(identifier: "app.upovi.StoreBridge", hostTeam: hostTeam)
         let q = AdministratorAuthorization.shellQuote
@@ -46,7 +49,7 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
         /usr/bin/codesign --verify --strict --all-architectures -R \(q(bridgeRequirement)) "$work/UpoviStoreBridge"
         "$work/UpoviStoreInstaller" "$work/plan.json" "$work/UpoviStoreBridge"
         """
-        return "do shell script " + AdministratorAuthorization.appleScriptLiteral(command) + " with administrator privileges"
+        return command
     }
     public func verifyCurrent(_ current: InstalledApp) throws {
         guard current.isAppStore, current.path == application.path, current.bundleID == application.bundleID,

@@ -71,8 +71,12 @@ extension AppStore {
         bulkSummaryVisible = true; bulkUpdatePresented = false; section = .updates
         let items = bulkItems, width = bulkConcurrency
         bulkTask = Task { [self] in
+            let authorization = makeInstallationAuthorizationBatch()
             _ = await BulkUpdateRunner.run(items, concurrency: width, shouldStop: { await self.bulkStopRequested },
-                operation: { try await self.installBulkItem($0) }, report: { await self.recordBulkEvent($0) })
+                operation: { try await self.installBulkItem($0, authorization: authorization) }, report: { event in
+                    await self.recordBulkPreparationEvent(event, authorization: authorization)
+                })
+            await installAuthorizedBulkItems(authorization)
             bulkActiveIDs = []; bulkCancellers = [:]
             await refreshInstallations()
             apps = await scanInventory()
@@ -83,6 +87,40 @@ extension AppStore {
             installing = false; bulkUpdating = false
             if networkEnabled { p2pBatchOffset = 0; restartP2P() }
         }
+    }
+
+    private func recordBulkPreparationEvent(_ event: BulkUpdateEvent, authorization: InstallationAuthorizationBatch) {
+        // A successfully prepared privileged job is still pending, not an installed application.
+        if case .finished(let outcome) = event, outcome.status == .installed, authorization.contains(outcome.item.id) { return }
+        recordBulkEvent(event)
+    }
+
+    private func installAuthorizedBulkItems(_ batch: InstallationAuthorizationBatch) async {
+        guard !batch.jobs.isEmpty else { return }
+        bulkCancellers["authorizationBatch"] = { batch.stop() }
+        defer { bulkCancellers["authorizationBatch"] = nil }
+        if bulkStopRequested { batch.stop() }
+        await withTaskGroup(of: Void.self) { group in
+            for job in batch.jobs {
+                group.addTask { await self.installAuthorizedBulkJob(job, batch: batch) }
+            }
+        }
+    }
+
+    private func installAuthorizedBulkJob(_ job: InstallationAuthorizationBatch.Job, batch: InstallationAuthorizationBatch) async {
+        defer { batch.finishRegistration(job.item.id) }
+        _ = await BulkUpdateRunner.run([job.item], shouldStop: { await self.bulkStopRequested }, operation: { _ in
+            do {
+                guard await !self.bulkPersistenceFailed else { throw PeerError.unavailable("Batch history could not be saved; installation was not started") }
+                try await job.operation(batch.authorization(for: job.item.id))
+            } catch {
+                if !(error is AppStoreAlreadyCurrent) { await self.recordDiagnostic(.batchInstallation, appID: job.item.id, error: error) }
+                throw error
+            }
+        }, report: { event in
+            if case .finished = event { await self.recordBulkEvent(event) }
+        })
+        await job.cleanup()
     }
 
     /// Stops queued applications and cancels running downloads; installations already committing finish.
@@ -150,12 +188,7 @@ extension AppStore {
         return try await withTaskCancellationHandler { try await task.value } onCancel: { task.cancel() }
     }
 
-    private func authorized(_ id: String, _ body: @escaping @MainActor @Sendable () async throws -> Void) async throws {
-        setTransferPhase(id, .waitingForAuthorization)
-        try await authorizationGate.run { try await body() }
-    }
-
-    private func installBulkItem(_ item: BulkUpdateItem) async throws {
+    private func installBulkItem(_ item: BulkUpdateItem, authorization: InstallationAuthorizationBatch) async throws {
         var stage: DiagnosticEvent.Stage = .batchPreparation
         do {
             try Task.checkCancellation()
@@ -169,20 +202,22 @@ extension AppStore {
                 try Task.checkCancellation()
                 guard saveBulkPhase(id, phase: .installing, detail: String(localized: "等待商店下载和管理员认证")) else { throw PeerError.unavailable("Batch history could not be saved") }
                 stage = .batchInstallation
-                try await authorized(id) { [self] in
+                setTransferPhase(id, .waitingForAuthorization)
+                authorization.enqueue(item) { [self] authorize in
                     setTransferPhase(id, .installing)
-                    try await installStoreUpdate(candidate, app)
+                    try await installStoreUpdate(candidate, app, authorize)
                 }
             } else if candidate.download?.url.pathExtension.lowercased() == "pkg" {
                 let package = try await cancellable(id) { [self] in try await administrator.preparePackage(candidate, app: app, progress: progress) }
-                defer { administrator.discard(package) }
-                if bulkStopRequested { throw CancellationError() }
-                guard saveBulkPhase(id, phase: .installing, detail: String(localized: "等待管理员安装")) else { throw PeerError.unavailable("Batch history could not be saved") }
-                stage = .batchInstallation
-                try await authorized(id) { [self] in
-                    setTransferPhase(id, .installing)
-                    try await administrator.perform(package.plan)
-                }
+                do {
+                    if bulkStopRequested { throw CancellationError() }
+                    guard saveBulkPhase(id, phase: .installing, detail: String(localized: "等待管理员安装")) else { throw PeerError.unavailable("Batch history could not be saved") }
+                    setTransferPhase(id, .waitingForAuthorization)
+                    authorization.enqueue(item, cleanup: { [self] in administrator.discard(package) }) { [self] authorize in
+                        setTransferPhase(id, .installing)
+                        try await administrator.perform(package.plan, authorize: authorize)
+                    }
+                } catch { administrator.discard(package); throw error }
             } else {
                 let prepared = try await cancellable(id) { [self] in try await installer.prepare(app: app, candidate: candidate, progress: progress) }
                 do {
@@ -193,15 +228,16 @@ extension AppStore {
                         let plan = AdministratorInstallPlan(operation: .application, application: app,
                             version: prepared.replacement.version, build: prepared.replacement.build,
                             artifactPath: prepared.bundle.resolvingSymlinksInPath().path)
-                        try await authorized(id) { [self] in
+                        setTransferPhase(id, .waitingForAuthorization)
+                        authorization.enqueue(item, cleanup: { [self] in await installer.discard(prepared.id) }) { [self] authorize in
                             setTransferPhase(id, .installing)
-                            try await administrator.perform(plan)
+                            try await administrator.perform(plan, authorize: authorize)
                         }
                     } else {
                         setTransferPhase(id, .installing)
                         _ = try await installer.install(prepared.id)
                     }
-                    await installer.discard(prepared.id)
+                    if !authorization.contains(id) { await installer.discard(prepared.id) }
                 } catch { await installer.discard(prepared.id); throw error }
             }
         } catch {

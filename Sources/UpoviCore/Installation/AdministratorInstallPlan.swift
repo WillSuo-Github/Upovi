@@ -71,6 +71,12 @@ public enum AdministratorAuthorization {
         return "=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and identifier \"app.upovi.Installer\" and certificate leaf[subject.OU] = \"\(hostTeam)\""
     }
     public static func script(helper: URL, plan: URL, hostTeam: String) throws -> String {
+        script(command: try command(helper: helper, plan: plan, hostTeam: hostTeam))
+    }
+    public static func script(command: String) -> String {
+        "do shell script " + appleScriptLiteral(command) + " with administrator privileges"
+    }
+    public static func command(helper: URL, plan: URL, hostTeam: String) throws -> String {
         let requirement = try requirement(hostTeam: hostTeam)
         let command = """
         set -eu
@@ -86,7 +92,35 @@ public enum AdministratorAuthorization {
         /bin/chmod 600 "$work/plan.json"
         "$work/UpoviInstaller" "$work/plan.json"
         """
-        return "do shell script " + appleScriptLiteral(command) + " with administrator privileges"
+        return command
+    }
+    /// Each command runs in its own shell so one helper failure cannot suppress later apps.
+    /// Results contain an index, exit status and base64 output; no caller-controlled paths are written as root.
+    public static func batchCommand(_ commands: [String], stopFile: URL) -> String {
+        commands.enumerated().map { index, command in
+            """
+            if [ -e \(shellQuote(stopFile.path)) ]; then
+                /usr/bin/printf '%s\\n' '\(index):-1:'
+            else
+                output=$(/bin/sh -c \(shellQuote(command)) 2>&1)
+                status=$?
+                encoded=$(/usr/bin/printf '%s' "$output" | /usr/bin/base64 | /usr/bin/tr -d '\\r\\n')
+                /usr/bin/printf '%s:%s:%s\\n' '\(index)' "$status" "$encoded"
+            fi
+            """
+        }.joined(separator: "\n")
+    }
+    public static func batchResults(_ data: Data, count: Int) throws -> [(status: Int, output: Data)] {
+        let lines = String(decoding: data, as: UTF8.self).split(whereSeparator: { $0 == "\n" || $0 == "\r" })
+        guard lines.count == count else { throw PeerError.invalid("Incomplete authorized batch results") }
+        return try lines.enumerated().map { index, line in
+            let fields = line.split(separator: ":", omittingEmptySubsequences: false)
+            guard fields.count == 3, Int(fields[0]) == index, let status = Int(fields[1]),
+                  (-1...255).contains(status), let output = Data(base64Encoded: String(fields[2])) else {
+                throw PeerError.invalid("Invalid authorized batch result")
+            }
+            return (status, output)
+        }
     }
     public static func teamID(at url: URL) -> String? {
         var code: SecStaticCode?, info: CFDictionary?

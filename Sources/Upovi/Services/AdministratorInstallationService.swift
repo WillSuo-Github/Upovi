@@ -53,7 +53,7 @@ final class AdministratorInstallationService {
     }
     func discard(_ prepared: PreparedInstallerPackage) { try? FileManager.default.removeItem(at: prepared.workspace) }
 
-    func perform(_ plan: AdministratorInstallPlan) async throws {
+    func perform(_ plan: AdministratorInstallPlan, authorize: InstallationAuthorization = .system) async throws {
         try plan.validate()
         guard let team = AdministratorAuthorization.teamID(at: Bundle.main.bundleURL),
               let helper = Bundle.main.url(forAuxiliaryExecutable: "UpoviInstaller") else {
@@ -72,9 +72,8 @@ final class AdministratorInstallationService {
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: input.path)
         defer { try? FileManager.default.removeItem(at: input) }
         do {
-            let script = try AdministratorAuthorization.script(helper: helper, plan: input, hostTeam: team)
-            let data = try await ProcessCommand().run("/usr/bin/osascript", ["-e", script], timeoutSeconds: 2100,
-                outputFile: directory.appending(path: plan.id.uuidString + "-authorization.log"))
+            let command = try AdministratorAuthorization.command(helper: helper, plan: input, hostTeam: team)
+            let data = try await authorize.run(command, directory.appending(path: plan.id.uuidString + "-authorization.log"))
             let result = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: data)
             let accepted = plan.operation == .inspect || (plan.operation == .discardBackup ? result.state == "backupDiscarded" : plan.operation == .restore ? result.state == "restored" : result.state == "installed")
             guard result.id == plan.id, accepted else { throw PeerError.invalid("Unexpected administrator transaction result") }
@@ -84,6 +83,83 @@ final class AdministratorInstallationService {
                 attempt.state = "interruptedOrFailed"; attempt.updatedAt = Date(); try? save(attempt)
             }
             throw error
+        }
+    }
+}
+
+/// An authorization boundary shared by direct and App Store installations.
+struct InstallationAuthorization: Sendable {
+    let run: @MainActor @Sendable (String, URL?) async throws -> Data
+    static let system = Self { command, log in
+        try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
+            timeoutSeconds: 2100, outputFile: log)
+    }
+}
+
+/// Downloads finish before the pending privileged commands are submitted together.
+/// Only this batch's signed-helper commands run, in order, under one system prompt.
+@MainActor
+final class InstallationAuthorizationBatch {
+    struct Job: Sendable {
+        let item: BulkUpdateItem
+        let operation: @MainActor @Sendable (InstallationAuthorization) async throws -> Void
+        let cleanup: @MainActor @Sendable () async -> Void
+    }
+    private(set) var jobs: [Job] = []
+    private var arrived = Set<String>()
+    private var requests: [String: (String, URL?, CheckedContinuation<Data, any Error>)] = [:]
+    private var execution: Task<Void, Never>?
+    private var stopped = false
+    private let stopFile = FileManager.default.temporaryDirectory.appending(path: "Upovi-stop-\(UUID().uuidString)")
+    private let execute: @MainActor @Sendable (String, Int) async throws -> Data
+
+    init(execute: @escaping @MainActor @Sendable (String, Int) async throws -> Data = { command, count in
+        try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
+            timeoutSeconds: TimeInterval(2100 * count), maximumOutputBytes: max(65536, count * 100000))
+    }) { self.execute = execute }
+
+    func enqueue(_ item: BulkUpdateItem, cleanup: @escaping @MainActor @Sendable () async -> Void = {},
+                 operation: @escaping @MainActor @Sendable (InstallationAuthorization) async throws -> Void) {
+        jobs.append(.init(item: item, operation: operation, cleanup: cleanup))
+    }
+    func contains(_ id: String) -> Bool { jobs.contains { $0.item.id == id } }
+    func stop() {
+        stopped = true
+        // The privileged shell reads only this marker's existence; it never executes its contents.
+        try? Data().write(to: stopFile, options: .atomic)
+    }
+    func authorization(for id: String) -> InstallationAuthorization {
+        .init { [self] command, log in
+            guard !stopped else { throw CancellationError() }
+            return try await withCheckedThrowingContinuation { continuation in
+                requests[id] = (command, log, continuation)
+                finishRegistration(id)
+            }
+        }
+    }
+    /// Also called when preflight failed or the user stopped before submitting a command.
+    func finishRegistration(_ id: String) {
+        arrived.insert(id)
+        guard arrived.count == jobs.count, execution == nil else { return }
+        execution = Task { [self] in
+            defer { try? FileManager.default.removeItem(at: stopFile) }
+            let ordered = jobs.compactMap { requests[$0.item.id] }
+            guard !ordered.isEmpty else { return }
+            do {
+                if stopped { throw CancellationError() }
+                let command = AdministratorAuthorization.batchCommand(ordered.map { $0.0 }, stopFile: stopFile)
+                let data = try await execute(command, ordered.count)
+                let results = try AdministratorAuthorization.batchResults(data, count: ordered.count)
+                for (request, result) in zip(ordered, results) {
+                    if let log = request.1 { try? result.output.write(to: log, options: .atomic) }
+                    if result.status == 0 { request.2.resume(returning: result.output) }
+                    else if result.status == -1 { request.2.resume(throwing: CancellationError()) }
+                    else { request.2.resume(throwing: PeerError.unavailable("Authorized installer failed (\(result.status)): \(String(decoding: result.output.prefix(4096), as: UTF8.self))")) }
+                }
+            } catch {
+                for request in ordered { request.2.resume(throwing: error) }
+            }
+            requests = [:]
         }
     }
 }

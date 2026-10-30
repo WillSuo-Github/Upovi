@@ -92,3 +92,53 @@ final class AdministratorInstallationTests: XCTestCase {
         XCTAssertEqual(try CanonicalFilePath.resolve(link), file.path)
     }
 }
+
+extension AdministratorInstallationTests {
+    func testBatchUsesOneAuthorizationAndKeepsSignedHelperChecksForBothChannels() async throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-batch-script-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let commands = [
+            try AdministratorAuthorization.command(helper: root.appending(path: "Direct ' helper"), plan: root.appending(path: "Direct.json"), hostTeam: "SYNTHETIC1"),
+            try AppStoreUpdatePlan.authorizationCommand(helper: root.appending(path: "Store"), bridge: root.appending(path: "Bridge"), plan: root.appending(path: "Store.json"), hostTeam: "SYNTHETIC1")
+        ]
+        let script = AdministratorAuthorization.script(command: AdministratorAuthorization.batchCommand(commands, stopFile: root.appending(path: "stop")))
+        XCTAssertEqual(script.components(separatedBy: "with administrator privileges").count - 1, 1)
+        for identifier in ["app.upovi.Installer", "app.upovi.StoreInstaller", "app.upovi.StoreBridge"] { XCTAssertTrue(script.contains(identifier)) }
+        let source = root.appending(path: "Batch.applescript"), compiled = root.appending(path: "Batch.scpt")
+        try script.write(to: source, atomically: true, encoding: .utf8)
+        _ = try await ProcessCommand().run("/usr/bin/osacompile", ["-o", compiled.path, source.path])
+    }
+
+    func testBatchIsolatesFailuresAndRoundTripsQuotedMultilineOutput() async throws {
+        let text = "line one: 'quoted' $(exit 88)\n第二行"
+        let commands = ["printf '%s' " + AdministratorAuthorization.shellQuote(text), "printf 'failure' >&2; exit 23", "printf 'last'"]
+        let command = AdministratorAuthorization.batchCommand(commands, stopFile: URL(fileURLWithPath: "/nonexistent/Upovi-stop"))
+        let output = try await ProcessCommand().run("/bin/sh", ["-c", command])
+        let results = try AdministratorAuthorization.batchResults(output, count: 3)
+        XCTAssertEqual(results.map(\.status), [0, 23, 0])
+        XCTAssertEqual(String(decoding: results[0].output, as: UTF8.self), text)
+        XCTAssertEqual(String(decoding: results[1].output, as: UTF8.self), "failure")
+        XCTAssertEqual(String(decoding: results[2].output, as: UTF8.self), "last")
+    }
+
+    func testBatchStopFinishesCurrentCommandAndSkipsLaterCommands() async throws {
+        let stop = FileManager.default.temporaryDirectory.appending(path: "Upovi-batch-stop-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: stop) }
+        let command = AdministratorAuthorization.batchCommand([
+            "printf 'committed'; /usr/bin/touch " + AdministratorAuthorization.shellQuote(stop.path),
+            "printf 'must not run'; exit 99"
+        ], stopFile: stop)
+        let output = try await ProcessCommand().run("/bin/sh", ["-c", command])
+        let results = try AdministratorAuthorization.batchResults(output, count: 2)
+        XCTAssertEqual(results.map(\.status), [0, -1])
+        XCTAssertEqual(String(decoding: results[0].output, as: UTF8.self), "committed")
+        XCTAssertTrue(results[1].output.isEmpty)
+    }
+
+    func testBatchRejectsMissingDuplicateAndCorruptResults() {
+        for output in ["0:0:", "0:0:\n0:0:", "0:0:@@\n1:0:", "0:999:\n1:0:"] {
+            XCTAssertThrowsError(try AdministratorAuthorization.batchResults(Data(output.utf8), count: 2))
+        }
+    }
+}
