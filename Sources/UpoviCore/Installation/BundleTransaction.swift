@@ -1,5 +1,10 @@
 import Foundation
 
+public struct InstalledApplicationChanged: LocalizedError, Sendable {
+    public init() { }
+    public var errorDescription: String? { "Installed application changed, is linked, or its parent is not writable" }
+}
+
 public struct InstallationReceipt: Codable, Identifiable, Sendable {
     public enum State: String, Codable, Sendable { case prepared, backedUp, installed, restored, failed, backupDiscarded }
     public let id: String
@@ -39,7 +44,7 @@ struct BundleTransaction {
               let current = AppScanner.read(target), current.bundleID == app.bundleID, current.version == app.version,
               current.build == app.build, current.teamID == app.teamID,
               files.isWritableFile(atPath: target.deletingLastPathComponent().path) else {
-            throw PeerError.invalid("Installed application changed, is linked, or its parent is not writable")
+            throw InstalledApplicationChanged()
         }
         let id = UUID().uuidString, parent = target.deletingLastPathComponent()
         let backup = parent.appending(path: ".upovi-backup-\(id).app")

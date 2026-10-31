@@ -161,7 +161,7 @@ extension AppStore {
                 guard await !self.bulkPersistenceFailed else { throw PeerError.unavailable("Batch history could not be saved; installation was not started") }
                 try await job.operation(batch.authorization(for: job.item.id))
             } catch {
-                if !(error is AppStoreAlreadyCurrent) { await self.recordDiagnostic(.batchInstallation, appID: job.item.id, error: error) }
+                if !(error is AppStoreAlreadyCurrent) && !(error is ApplicationAlreadyCurrent) { await self.recordDiagnostic(.batchInstallation, appID: job.item.id, error: error) }
                 throw error
             }
         }, report: { event in
@@ -198,8 +198,8 @@ extension AppStore {
             saveBulkPhase(id, phase: .init(rawValue: outcome.status.rawValue) ?? .failed, detail: outcome.detail)
             if outcome.status == .installed { sourceResults[id] = nil }
             if outcome.status == .current {
-                sourceResults[id] = .init(appID: id, candidates: [], note: String(localized: "商店确认已经最新。"), status: .current,
-                    checks: [.init(.appStore, .checked)], appStoreID: outcome.item.candidate.appStoreID)
+                sourceResults[id] = .init(appID: id, candidates: [], note: outcome.detail, status: .current,
+                    checks: outcome.item.application.isAppStore ? [.init(.appStore, .checked)] : [], appStoreID: outcome.item.candidate.appStoreID)
             }
         }
     }
@@ -242,6 +242,7 @@ extension AppStore {
             guard !bulkPersistenceFailed else { throw PeerError.unavailable("Batch history could not be saved; installation was not started") }
             guard networkAvailable else { throw URLError(.notConnectedToInternet) }
             let app = item.application, candidate = item.candidate, id = item.id
+            if try BundleVerifier.selectedUpdateIsInstalled(app, candidate: candidate) { throw ApplicationAlreadyCurrent() }
             let progress: @Sendable (Int64, Int64) -> Void = { [weak self] received, expected in
                 Task { @MainActor in self?.reportDownload(id, received: received, expected: expected) }
             }
@@ -288,7 +289,9 @@ extension AppStore {
                 } catch { await installer.discard(prepared.id); throw error }
             }
         } catch {
-            if !(error is AppStoreAlreadyCurrent) { recordDiagnostic(stage, appID: item.application.id, error: error) }
+            if error is InstalledApplicationChanged,
+               (try? BundleVerifier.selectedUpdateIsInstalled(item.application, candidate: item.candidate)) == true { throw ApplicationAlreadyCurrent() }
+            if !(error is AppStoreAlreadyCurrent) && !(error is ApplicationAlreadyCurrent) { recordDiagnostic(stage, appID: item.application.id, error: error) }
             throw error
         }
     }

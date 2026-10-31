@@ -34,6 +34,7 @@ public actor UpdateInstaller {
             throw PeerError.invalid("Use the official source or in-app updater for this application")
         }
         activePaths.insert(app.path); defer { activePaths.remove(app.path) }
+        if try BundleVerifier.selectedUpdateIsInstalled(app, candidate: candidate) { throw ApplicationAlreadyCurrent() }
         for stale in prepared.values where stale.application.path == app.path {
             try? FileManager.default.removeItem(at: stale.workspace); prepared[stale.id] = nil
         }
@@ -113,6 +114,11 @@ public actor UpdateInstaller {
     public func install(_ id: UUID) async throws -> InstallationReceipt {
         guard !exclusive, let value = prepared[id], !activePaths.contains(value.application.path) else { throw PeerError.invalid("Prepared update is no longer available") }
         activePaths.insert(value.application.path); defer { activePaths.remove(value.application.path) }
+        let target = UpdateCandidate(version: value.replacement.version, build: value.replacement.build, source: "Prepared update", isCommunity: false, url: nil)
+        if try BundleVerifier.selectedUpdateIsInstalled(value.application, candidate: target) {
+            try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
+            throw ApplicationAlreadyCurrent()
+        }
         try await Self.quit(value.application)
         try Task.checkCancellation()
         try await ApplicationInstallation.finalize(value.bundle, matching: value.replacement)

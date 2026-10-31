@@ -55,6 +55,8 @@ public struct BulkUpdateOutcome: Sendable {
     }
 }
 
+public struct ApplicationAlreadyCurrent: Error, Sendable { public init() { } }
+
 public enum BulkUpdateEvent: Sendable {
     case started(BulkUpdateItem)
     case finished(BulkUpdateOutcome)
@@ -109,6 +111,8 @@ public enum BulkUpdateRunner {
             return .init(item: item, status: .installed, detail: item.application.isAppStore ? String(localized: "商店更新完成，不提供 Upovi 旧版备份") : String(localized: "更新完成，主应用备份已保留"))
         } catch is AppStoreAlreadyCurrent {
             return .init(item: item, status: .current, detail: String(localized: "商店确认已经最新，未执行升级"))
+        } catch is ApplicationAlreadyCurrent {
+            return .init(item: item, status: .current, detail: String(localized: "已安装选定版本或更高版本，未重复安装"))
         } catch {
             let cancelled = Task.isCancelled || error is CancellationError
             return .init(item: item, status: cancelled ? .cancelled : .failed, detail: cancelled ? String(localized: "已取消，未完成安装") : error.localizedDescription)

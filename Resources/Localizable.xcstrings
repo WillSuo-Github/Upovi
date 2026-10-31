@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "已安装选定版本或更高版本，未重复安装": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The selected version or newer is already installed; no replacement was performed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已安裝選定版本或更新版本，未重複安裝"
+          }
+        }
+      }
+    },
       "全局工具": {
         "localizations": {
           "en": {

@@ -94,6 +94,20 @@ final class InstallationTests: XCTestCase {
         XCTAssertThrowsError(try transaction.commit(prepared: URL(fileURLWithPath: update.path), replacing: app, newVersion: "2.0", newBuild: "2.0"))
         XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: app.path))?.version, "1.0")
     }
+    func testConcurrentExternalUpdateStopsReplacementBeforeWritingAReceipt() throws {
+        let root = try directory(), old = try fixture(root, name: "Installed", version: "1.0")
+        let update = try fixture(root, name: "Prepared", version: "2.0")
+        _ = try fixture(root, name: "Installed", version: "3.0")
+        let journal = root.appending(path: "Journal")
+        let transaction = BundleTransaction(journalDirectory: journal, validate: { _ in XCTFail("A changed original must not enter replacement") })
+        XCTAssertThrowsError(try transaction.commit(prepared: URL(fileURLWithPath: update.path), replacing: old, newVersion: "2.0", newBuild: "2.0")) {
+            XCTAssertTrue($0 is InstalledApplicationChanged)
+        }
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: old.path))?.version, "3.0")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: journal.path))
+        let target = UpdateCandidate(version: "2.0", source: "Fixture", isCommunity: false, url: nil)
+        XCTAssertFalse(try BundleVerifier.selectedUpdateIsInstalled(old, candidate: target), "An unsigned newer bundle cannot become a successful no-op")
+    }
     func testRestoreDoesNotOverwriteAnExternalUpdate() throws {
         let root = try directory(), app = try fixture(root, name: "Installed", version: "1.0")
         let update = try fixture(root, name: "Prepared", version: "2.0")

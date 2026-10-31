@@ -60,9 +60,12 @@ public enum UpdateChecker {
                 let sourceVersion = SourceVersion.normalize(pieces.first ?? "")
                 let download = metadata.download(for: app)
                 let identity = ApplicationSourceCatalog.bundleRelease(for: app, sourceVersion: sourceVersion, download: download?.url)
-                let version = identity?.version ?? sourceVersion
                 let declaredBuild = pieces.count > 1 ? pieces[1] : ""
-                let sourceBuild = app.build != app.version && declaredBuild.range(of: #"^\d+(?:\.\d+)*$"#, options: .regularExpression) != nil ? declaredBuild : ""
+                let numericBuild = declaredBuild.range(of: #"^\d+(?:\.\d+)*$"#, options: .regularExpression) != nil
+                // Some casks declare "short,full" while the signed app uses full for both version keys.
+                let fullVersion = app.version == app.build && numericBuild && declaredBuild.hasPrefix(sourceVersion + ".") ? declaredBuild : nil
+                let version = identity?.version ?? fullVersion ?? sourceVersion
+                let sourceBuild = (app.build != app.version || fullVersion != nil) && numericBuild ? declaredBuild : ""
                 let build = identity?.build ?? sourceBuild
                 let comparable = SourceVersion.comparable(version, installed: app.version)
                 let installed = InstalledApp(name: app.name, bundleID: app.bundleID, version: SourceVersion.normalize(app.version),

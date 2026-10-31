@@ -109,6 +109,21 @@ final class DownloadTrustTests: XCTestCase {
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: app(team: "OTHERTEAM1"), sourceVersion: "7.50.1", download: official))
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.1", download: URL(string: "https://example.com/Other.zip")))
     }
+    func testCaskFullVersionRemainsExactForAppsUsingItInBothBundleKeys() async throws {
+        let payload = Data(#"{"token":"jetbrains-toolbox","version":"3.9.1,3.9.1.89198","url":"https://download.jetbrains.com/toolbox/jetbrains-toolbox-3.9.1.89198-arm64.dmg","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifacts":[{"app":["JetBrains Toolbox.app"]}]}"#.utf8)
+        let metadata = try JSONDecoder().decode(CaskMetadata.self, from: payload)
+        let old = InstalledApp(name: "Toolbox", bundleID: "com.jetbrains.toolbox", version: "3.9.0.88839", build: "3.9.0.88839", path: "/fixture/Toolbox.app", teamID: "TEAMFIX001")
+        let result = await UpdateChecker.check(old, fetch: { _, _ in XCTFail("Use injected exact catalog metadata"); return Data() }, catalog: { _ in metadata })
+        XCTAssertEqual(result.candidates.first?.version, "3.9.1.89198")
+        XCTAssertEqual(result.candidates.first?.build, "3.9.1.89198")
+        let current = InstalledApp(name: old.name, bundleID: old.bundleID, version: "3.9.1.89198", build: "3.9.1.89198", path: old.path, teamID: old.teamID)
+        let checked = await UpdateChecker.check(current, fetch: { _, _ in Data() }, catalog: { _ in metadata })
+        XCTAssertTrue(checked.candidates.isEmpty)
+        XCTAssertEqual(checked.status, .current)
+        let unrelated = try JSONDecoder().decode(CaskMetadata.self, from: Data(#"{"token":"fixture","version":"3.9.1,89198"}"#.utf8))
+        let ordinary = await UpdateChecker.check(old, fetch: { _, _ in Data() }, catalog: { _ in unrelated })
+        XCTAssertEqual(ordinary.candidates.first?.version, "3.9.1")
+    }
     func testTyporaSourceFillsMissingAppcastDownloadWithLiveCaskMetadata() async {
         let xml = Data(#"<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><item><enclosure sparkle:version="7789" sparkle:shortVersionString="1.14.15" url="https://downloads.typora.io/mac/Typora-1.14.15.dmg" /></item></channel></rss>"#.utf8)
         let json = Data(#"{"token":"typora","version":"1.14.15","url":"https://downloads.typora.io/mac/Typora-1.14.15.dmg","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifacts":[{"app":["Typora.app"]}]}"#.utf8)

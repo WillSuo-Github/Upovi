@@ -77,6 +77,14 @@ final class BulkUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(outcomes.map(\.status), [.installed, .failed, .installed])
         XCTAssertTrue(outcomes[1].detail.contains("Synthetic verification failure"))
     }
+    func testExternallyUpdatedApplicationIsCurrentWithoutClaimingAnInstall() async {
+        let item = plan(1)
+        let outcomes = await BulkUpdateRunner.run(item, shouldStop: { false }, operation: { _ in
+            throw ApplicationAlreadyCurrent()
+        }, report: { _ in })
+        XCTAssertEqual(outcomes.map(\.status), [.current])
+        XCTAssertFalse(outcomes[0].detail.isEmpty)
+    }
 
     func testStopAfterCommitKeepsSuccessAndDoesNotStartRemainingApps() async {
         let items = plan(), tracker = Tracker()

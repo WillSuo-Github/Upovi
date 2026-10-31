@@ -3,6 +3,30 @@ import Security
 import CryptoKit
 
 public enum BundleVerifier {
+    /// A changed app is only a successful no-op after checking its real path, exact identity and signature.
+    public static func selectedUpdateIsInstalled(_ app: InstalledApp, candidate: UpdateCandidate) throws -> Bool {
+        let target = URL(fileURLWithPath: app.path).standardizedFileURL
+        guard !app.isAppStore, !candidate.isCommunity, let team = app.teamID, !team.isEmpty,
+              target.resolvingSymlinksInPath().path == target.path,
+              let current = AppScanner.read(target), !current.isAppStore,
+              current.bundleID == app.bundleID, current.teamID == team else { return false }
+        let order: ComparisonResult?
+        if candidate.usesBuildVersion {
+            guard !current.build.isEmpty, !candidate.build.isEmpty else { return false }
+            order = VersionOrder.compare(current.build, candidate.build)
+        } else {
+            let version = VersionOrder.compare(current.version, candidate.version)
+            if version == .orderedSame, !candidate.build.isEmpty {
+                guard !current.build.isEmpty else { return false }
+                order = VersionOrder.compare(current.build, candidate.build)
+            } else { order = version }
+        }
+        guard order == .orderedSame || order == .orderedDescending else { return false }
+        try checkDeveloperIDSignature(target, like: app)
+        guard let verified = AppScanner.read(target) else { return false }
+        return verified.bundleID == current.bundleID && verified.teamID == current.teamID && !verified.isAppStore
+            && verified.version == current.version && verified.build == current.build
+    }
     /// Apple-anchored Developer ID, rather than just an embedded team string, binds signature-only downloads.
     public static func checkDeveloperIDSignature(_ url: URL, like app: InstalledApp) throws {
         guard let team = ApplicationSourceCatalog.replacementTeam(for: app), team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,

@@ -70,6 +70,7 @@ extension AppStore {
         installationTask = Task { [self] in
             defer { installing = false; canCancelInstallation = false }
             do {
+                if try BundleVerifier.selectedUpdateIsInstalled(app, candidate: candidate) { throw ApplicationAlreadyCurrent() }
                 if candidate.download?.url.pathExtension.lowercased() == "pkg" {
                     preparedPackage = try await administrator.preparePackage(candidate, app: app, progress: progress)
                     setTransferPhase(id, .awaitingConfirmation)
@@ -81,7 +82,8 @@ extension AppStore {
                 preparedUpdate = value
                 administratorInstallRequested = !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path)
                 installationConfirmation = true; installationProgress = String(localized: "更新已验证，等待安装确认")
-            } catch { transfers[id] = nil; recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = String(localized: "下载或验证未完成"); if !Task.isCancelled && !(error is CancellationError) { errorMessage = error.localizedDescription } }
+            } catch is ApplicationAlreadyCurrent { await finishCurrentInstallation(app) }
+            catch { transfers[id] = nil; recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = String(localized: "下载或验证未完成"); if !Task.isCancelled && !(error is CancellationError) { errorMessage = error.localizedDescription } }
         }
     }
     func cancelInstallation() { installationTask?.cancel() }
@@ -114,8 +116,15 @@ extension AppStore {
                 let found = await scanInventory()
                 apps = found; sourceResults[value.application.id] = nil
                 logger.info("installation completed")
-            } catch { recordDiagnostic(.installation, appID: value.application.id, error: error); errorMessage = error.localizedDescription; installationProgress = String(localized: "安装未完成，原应用或恢复备份已保留") }
+            } catch is ApplicationAlreadyCurrent { await finishCurrentInstallation(value.application) }
+            catch { recordDiagnostic(.installation, appID: value.application.id, error: error); errorMessage = error.localizedDescription; installationProgress = String(localized: "安装未完成，原应用或恢复备份已保留") }
         }
+    }
+    private func finishCurrentInstallation(_ app: InstalledApp) async {
+        transfers[app.id] = nil
+        installationProgress = String(localized: "已安装选定版本或更高版本，未重复安装")
+        apps = await scanInventory()
+        sourceResults[app.id] = .init(appID: app.id, candidates: [], note: installationProgress, status: .current)
     }
     private func confirmAdministratorInstallation(_ plan: AdministratorInstallPlan) {
         guard !installing, !SelfUpdateService.shared.sessionInProgress else { return }
