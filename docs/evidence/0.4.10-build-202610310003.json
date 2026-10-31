@@ -1,0 +1,102 @@
+{
+  "version": "0.4.10",
+  "build": "202610310003",
+  "productRevision": "9c0af3662ace198bb8331ca45cdad6db28ffadad",
+  "releaseRevision": "2cf0445d2a1671a17a65edc75199167e1d4e3550",
+  "localValidation": {
+    "swift": {
+      "passed": 253,
+      "failed": 0,
+      "sourceRevision": "9c0af3662ace198bb8331ca45cdad6db28ffadad"
+    },
+    "xcode": {
+      "passed": 40,
+      "failed": 0,
+      "sourceRevision": "9c0af3662ace198bb8331ca45cdad6db28ffadad"
+    },
+    "releaseMetadata": {
+      "passed": 8,
+      "failed": 0
+    }
+  },
+  "nativeAcceptance": {
+    "testedProductBuild": "202610310002",
+    "batchRetry": {
+      "eligibleTasks": 5,
+      "completed": 5,
+      "failed": 0
+    },
+    "repeatToolSourceRun": {
+      "eligibleTasks": 4,
+      "completed": 4,
+      "failed": 0
+    },
+    "signedExternalCurrentVersionRecognized": true,
+    "wrongTeamAndUncomparableVersionsRejected": true
+  },
+  "githubActionsEnabled": false,
+  "appleNotarization": {
+    "status": "Accepted",
+    "submissionID": "23f47e9a-a170-46e9-a117-8155ebc1a336"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-10-31T06:42:46Z",
+      "tagName": "build-202610310003",
+      "targetCommitish": "2cf0445d2a1671a17a65edc75199167e1d4e3550",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202610310003"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202610310003.zip",
+        "size": 19712071,
+        "sha256": "3416e61bb671dfec6ba1ca3a22663abc70533eb948c3e35d7c1180887dfb44de",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202610310003.zip.sha256",
+        "size": 96,
+        "sha256": "6e0ff82dea07b33d6e145722a6201a9be6dbbea390356f57c0e8bba87eac8e7d",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "747de606462709dc7db74cd1882f8c3ca87b53cf4ccf087b3b46ad27ed54f9e9",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "5c0b1c2539f01f3bae9eb3e4f11cfb10e769d8eaad45feb0b2d36b50995ce795",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "b91235221cba3220303437da2e79335478827d5cadd2bc2833b86d5b1fe844ef",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202610310003",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "3416e61bb671dfec6ba1ca3a22663abc70533eb948c3e35d7c1180887dfb44de",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "intelRuntimeTested": false
+}
