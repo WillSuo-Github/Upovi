@@ -19,7 +19,7 @@ struct ContentView: View {
             ToolbarItem(placement: .primaryAction) {
                 Button { store.refreshAll() } label: { Label("刷新并检查", systemImage: "arrow.clockwise") }
                     .disabled(store.operationBusy)
-                    .help("重新扫描全部应用，然后检查全部应用的更新（⌘R）")
+                    .help("重新扫描本机应用，并检查应用与已启用全局工具的更新（⌘R）")
                     .accessibilityIdentifier("refresh-all-apps")
             }
         }

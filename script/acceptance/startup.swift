@@ -36,6 +36,8 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
         let coordinator = DownloadCoordinator(storageURL: root.appending(path: "downloads.json"))
         let preview = CommandLine.arguments.contains("--quit-preview")
         let toolsPreview = CommandLine.arguments.contains("--tools-preview")
+        let completionPreview = CommandLine.arguments.contains("--completion-preview")
+        let allSucceeded = CommandLine.arguments.contains("--all-succeeded")
         let selected: String? = {
             guard let index = CommandLine.arguments.firstIndex(of: "--store-app"), CommandLine.arguments.indices.contains(index + 1) else { return nil }
             return CommandLine.arguments[index + 1]
@@ -43,18 +45,38 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
         let fixtures = (1...2).map { index in
             InstalledApp(name: "Running App \(index)", bundleID: "app.synthetic.store\(index)", version: "1", path: "/Applications/Upovi Synthetic Store \(index).app", teamID: "SYNTHETIC1", isAppStore: true)
         }
+        let completionApps = ["zoom.us", "Completed App A", "Completed App B"].enumerated().map { index, name in
+            InstalledApp(name: name, bundleID: "app.synthetic.completion\(index)", version: "1", path: "/Applications/Upovi Completion Fixture \(index).app", teamID: "SYNTHETIC1", isAppStore: true)
+        } + [InstalledApp(name: "Unity", bundleID: "app.synthetic.manual", version: "1", path: "/Applications/Unity/Hub/Editor/Fixture/Unity.app", teamID: "SYNTHETIC1")]
         let store = AppStore(preferences: preferences,
             installer: UpdateInstaller(journalDirectory: root.appending(path: "Journal"), downloads: coordinator),
             scanApplications: { roots in
+                if completionPreview { return completionApps }
                 if toolsPreview { return [] }
                 if preview { return fixtures }
                 if let selected { return AppScanner.read(URL(fileURLWithPath: selected)).map { [$0] } ?? [] }
                 return await Task.detached { AppScanner.scan(roots: roots) }.value
             }, checkApplication: { app, _ in
+                if completionPreview {
+                    return .init(appID: app.id, candidates: [.init(version: "2", source: "Offline fixture", isCommunity: false, url: nil, appStoreID: app.isAppStore ? 12345 : nil)], note: "Offline completion fixture", status: .updates)
+                }
                 if preview { return .init(appID: app.id, candidates: [.init(version: "2", source: "App Store", isCommunity: false, url: nil, appStoreID: 12345)], note: "Offline quit confirmation fixture", status: .updates) }
                 return await UpdateChecker.check(app)
             })
-        if toolsPreview {
+        if completionPreview {
+            let sources: [ToolSource] = [.homebrew, .npm, .uv, .rustup]
+            store.toolLocations = Dictionary(uniqueKeysWithValues: sources.map { ($0, URL(fileURLWithPath: "/fixture/" + $0.executableName)) })
+            store.enabledToolSources = Set(sources)
+            store.checkToolSource = { source, _ in .init(source: source, installed: ["fixture-tool":"1"], updates: source == .npm ? [.init(name: "fixture-tool", installed: "1", available: "2")] : []) }
+            store.updateToolSource = { source, _, _ in .init(source: source, installed: ["fixture-tool":"2"], updates: []) }
+            store.runningUpdateApplications = { _ in [] }
+            store.installStoreUpdate = { _, app, _ in
+                if app.name == "zoom.us" && !allSucceeded { throw InstallationSpaceError(required: 6_000_000_000, available: 5_000_000_000) }
+            }
+            store.makeInstallationAuthorizationBatch = {
+                InstallationAuthorizationBatch { _, _ in throw PeerError.invalid("Offline fixture must never authorize") }
+            }
+        } else if toolsPreview {
             var environment = ProcessInfo.processInfo.environment
             environment["NPM_CONFIG_PREFIX"] = root.appending(path: "npm-prefix").path
             environment["PATH"] = "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"

@@ -23,6 +23,17 @@ enum AppSection: String, CaseIterable, Identifiable {
     }
 }
 
+enum HistorySection: String, CaseIterable, Identifiable {
+    case installations = "安装与恢复", batches = "批量任务", checks = "检查记录", tools = "全局工具"
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .installations: String(localized: "安装与恢复"); case .batches: String(localized: "批量任务")
+        case .checks: String(localized: "检查记录"); case .tools: String(localized: "全局工具")
+        }
+    }
+}
+
 @MainActor @Observable
 final class AppStore {
     let downloadCenter: DownloadCenterService
@@ -32,6 +43,7 @@ final class AppStore {
     var policyClock = Date()
     var additionalScanDirectories: [String] = []
     var batchHistory: [BulkUpdateRecord] = []
+    var historySection = HistorySection.installations
     var bulkRecordID: UUID?
     var bulkPersistenceFailed = false
     var refreshing = false
@@ -265,6 +277,7 @@ final class AppStore {
 
     func refreshAll() {
         guard !refreshing, !scanning, !checking, !installationBusy else { return }
+        dismissBulkSummary()
         refreshing = true
         checkTask = Task {
             defer {
@@ -285,6 +298,7 @@ final class AppStore {
     func beginChecking() {
         guard !refreshing, !checking, !scanning, !installationBusy else { return }
         guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，联网后再检查更新。"); return }
+        dismissBulkSummary()
         checking = true; lastCheckAttempt = Date()
         checkTask = Task {
             await checkUpdates()

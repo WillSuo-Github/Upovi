@@ -83,7 +83,7 @@ extension AppStore {
                 administratorInstallRequested = !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path)
                 installationConfirmation = true; installationProgress = String(localized: "更新已验证，等待安装确认")
             } catch is ApplicationAlreadyCurrent { await finishCurrentInstallation(app) }
-            catch { transfers[id] = nil; recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = String(localized: "下载或验证未完成"); if !Task.isCancelled && !(error is CancellationError) { errorMessage = error.localizedDescription } }
+            catch { transfers[id] = nil; recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = String(localized: "下载或验证未完成"); if !Task.isCancelled && !(error is CancellationError) { errorMessage = AdministratorInstallationSpace.message(for: error) ?? error.localizedDescription } }
         }
     }
     func cancelInstallation() { installationTask?.cancel() }
@@ -117,7 +117,7 @@ extension AppStore {
                 apps = found; sourceResults[value.application.id] = nil
                 logger.info("installation completed")
             } catch is ApplicationAlreadyCurrent { await finishCurrentInstallation(value.application) }
-            catch { recordDiagnostic(.installation, appID: value.application.id, error: error); errorMessage = error.localizedDescription; installationProgress = String(localized: "安装未完成，原应用或恢复备份已保留") }
+            catch { recordDiagnostic(.installation, appID: value.application.id, error: error); errorMessage = AdministratorInstallationSpace.message(for: error) ?? error.localizedDescription; installationProgress = String(localized: "安装未完成，原应用或恢复备份已保留") }
         }
     }
     private func finishCurrentInstallation(_ app: InstalledApp) async {
@@ -143,7 +143,7 @@ extension AppStore {
                 installationProgress = String(localized: "管理员安装完成；主应用备份已保留")
                 apps = await scanInventory()
                 sourceResults[plan.application.id] = nil
-            } catch { recordDiagnostic(.installation, appID: plan.application.id, error: error); errorMessage = String(localized: "管理员安装未完成或授权已取消。请在记录中检查恢复选项：\(error.localizedDescription)") }
+            } catch { recordDiagnostic(.installation, appID: plan.application.id, error: error); errorMessage = AdministratorInstallationSpace.message(for: error) ?? String(localized: "管理员安装未完成或授权已取消。请在记录中检查恢复选项：\(error.localizedDescription)") }
         }
     }
     func restoreAdministratorInstallation(_ attempt: AdministratorInstallAttempt) {
@@ -205,7 +205,7 @@ extension AppStore {
                 try await installer.restore(receipt); await refreshInstallations()
                 apps = await scanInventory()
                 sourceResults = [:]; installationProgress = String(localized: "旧版本已恢复")
-            } catch { recordDiagnostic(.recovery, appID: receipt.application.id, error: error); errorMessage = error.localizedDescription }
+            } catch { recordDiagnostic(.recovery, appID: receipt.application.id, error: error); errorMessage = AdministratorInstallationSpace.message(for: error) ?? error.localizedDescription }
         }
     }
 

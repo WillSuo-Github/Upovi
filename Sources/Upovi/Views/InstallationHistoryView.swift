@@ -5,30 +5,19 @@ import UpoviCore
 /// Installation receipts with rollback, batch runs and recent checks.
 struct InstallationHistoryView: View {
     @Bindable var store: AppStore
-    @State private var tab = Tab.installations
+    private var tab: HistorySection { store.historySection }
 
     /// Everything whose change should animate the page: the tab and each list's ids.
     private struct ListState: Equatable {
-        let tab: Tab
+        let tab: HistorySection
         let receipts: [String], attempts: [String], checks: [String], batches: [String]
-    }
-
-    enum Tab: String, CaseIterable, Identifiable {
-        case installations = "安装与恢复", batches = "批量任务", checks = "检查记录", tools = "全局工具"
-        var id: String { rawValue }
-        var title: String {
-            switch self {
-            case .installations: String(localized: "安装与恢复"); case .batches: String(localized: "批量任务"); case .checks: String(localized: "检查记录")
-            case .tools: String(localized: "全局工具")
-            }
-        }
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 PageHeader(title: String(localized: "历史与恢复"), subtitle: String(localized: "Upovi 安装更新时会保留旧版本，可在这里恢复或清理保留副本。")) {
-                    Picker("类别", selection: $tab) { ForEach(Tab.allCases) { Text($0.title).tag($0) } }
+                    Picker("类别", selection: $store.historySection) { ForEach(HistorySection.allCases) { Text($0.title).tag($0) } }
                         .pickerStyle(.segmented).labelsHidden().fixedSize()
                 }.entrance(0)
                 if tab == .installations { summary.entrance(1) }
@@ -277,6 +266,7 @@ private struct BatchCard: View {
 
     var body: some View {
         let done = record.entries.filter { $0.phase == .installed || $0.phase == .current }.count
+        let total = record.entries.filter { $0.item.canInstall }.count
         VStack(alignment: .leading, spacing: 10) {
             Button { withAnimation(.snappy) { expanded.toggle() } } label: {
                 HStack(spacing: 12) {
@@ -284,10 +274,10 @@ private struct BatchCard: View {
                         .rotationEffect(.degrees(expanded ? (layoutDirection == .rightToLeft ? -90 : 90) : 0))
                     VStack(alignment: .leading, spacing: 2) {
                         Text(record.startedAt.display()).font(.headline)
-                        Text("完成 \(done)/\(record.entries.count)").font(.caption).foregroundStyle(.secondary)
+                        Text("完成 \(done)/\(total)").font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Gauge(value: Double(done), in: 0...Double(max(1, record.entries.count))) { EmptyView() }
+                    Gauge(value: Double(done), in: 0...Double(max(1, total))) { EmptyView() }
                         .gaugeStyle(.accessoryCircularCapacity).tint(record.retryIDs.isEmpty ? Color.green : Color.orange).scaleEffect(0.6).frame(width: 34, height: 34)
                     StatusBadge(text: record.finishedAt == nil ? String(localized: "未完成") : String(localized: "已结束"), tone: record.finishedAt == nil ? .warning : .neutral)
                 }.contentShape(Rectangle())

@@ -1,6 +1,150 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "部分更新未完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some Updates Need Attention"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "部分更新未完成"
+          }
+        }
+      }
+    },
+    "已完成 %lld 项 · %lld 项未完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld completed · %2$lld need attention"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已完成 %1$lld 項 · %2$lld 項未完成"
+          }
+        }
+      }
+    },
+    "已完成 %lld 项，更新记录已保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld completed; results saved to history"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已完成 %lld 項，更新紀錄已儲存"
+          }
+        }
+      }
+    },
+    "查看更新记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View Update History"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看更新紀錄"
+          }
+        }
+      }
+    },
+    "更新未完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update Incomplete"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新未完成"
+          }
+        }
+      }
+    },
+    "刷新并检查全部更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh and Check All Updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新整理並檢查全部更新"
+          }
+        }
+      }
+    },
+    "重新扫描本机应用，并检查应用与已启用全局工具的更新（⌘R）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan apps and check updates for apps and enabled global tools (⌘R)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新掃描本機應用程式，並檢查應用程式與已啟用全域工具的更新（⌘R）"
+          }
+        }
+      }
+    },
+    "磁盘空间不足：至少需要 %@，目前可用 %@。请释放空间后重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough disk space: at least %1$@ required, %2$@ available. Free space and retry."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁碟空間不足：至少需要 %1$@，目前可用 %2$@。請釋放空間後重試。"
+          }
+        }
+      }
+    },
+    "磁盘空间不足。请先释放安装与备份所需的空间，再重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough disk space. Free space for installation and backup, then retry."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁碟空間不足。請先釋放安裝與備份所需的空間，再重試。"
+          }
+        }
+      }
+    },
     "已安装选定版本或更高版本，未重复安装": {
       "localizations": {
         "en": {

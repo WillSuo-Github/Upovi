@@ -34,6 +34,7 @@ final class AdministratorInstallationService {
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedInstallerPackage {
         guard !candidate.isCommunity, !app.isAppStore, let descriptor = candidate.download,
               descriptor.hasIntegrityProof, descriptor.url.pathExtension.lowercased() == "pkg" else { throw PeerError.invalid("No verified package download") }
+        try await Task.detached { try AdministratorInstallationSpace.validate(application: URL(fileURLWithPath: app.path)) }.value
         let workspace = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appending(path: "Upovi-package-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         do {
@@ -55,6 +56,9 @@ final class AdministratorInstallationService {
 
     func perform(_ plan: AdministratorInstallPlan, authorize: InstallationAuthorization = .system) async throws {
         try plan.validate()
+        if [.application, .package].contains(plan.operation) {
+            try await Task.detached { try AdministratorInstallationSpace.validate(application: URL(fileURLWithPath: plan.application.path)) }.value
+        }
         guard let team = AdministratorAuthorization.teamID(at: Bundle.main.bundleURL),
               let helper = Bundle.main.url(forAuxiliaryExecutable: "UpoviInstaller") else {
             throw PeerError.unavailable("Use a complete Developer ID signed Upovi bundle for administrator installation")

@@ -68,6 +68,11 @@ private struct UpdatesStatus {
             }
             if store.bulkFailedCount > 0 { parts.append(String(localized: "失败 \(store.bulkFailedCount)")) }
             detail = parts.joined(separator: " · ")
+            if !store.bulkUpdating {
+                let remaining = store.bulkInstallableCount - store.bulkCompletedCount
+                detail = remaining > 0 ? String(localized: "已完成 \(store.bulkCompletedCount) 项 · \(remaining) 项未完成")
+                    : String(localized: "已完成 \(store.bulkCompletedCount) 项，更新记录已保存")
+            }
             if store.bulkUpdating {
                 glyph = .progress(store.bulkOverallFraction, .accent)
                 title = store.bulkStopRequested ? String(localized: "正在停止…")
@@ -78,7 +83,7 @@ private struct UpdatesStatus {
                 title = String(localized: "全部更新完成")
             } else {
                 glyph = .symbol("exclamationmark.circle.fill", .warning)
-                title = String(localized: "更新已结束")
+                title = String(localized: "部分更新未完成")
             }
         } else if store.scanning {
             glyph = .spinner
@@ -178,8 +183,13 @@ private struct UpdatesOverviewActions: View {
                     if !store.toolFailedSources.isEmpty || store.batchHistory.contains(where: { $0.id == store.bulkRecordID && !$0.retryIDs.isEmpty }) {
                         Button("重试未完成项") { store.retryLatestBulkRun() }.disabled(store.operationBusy)
                     }
-                    Button("完成") { store.dismissBulkSummary() }
-                        .buttonStyle(PillButtonStyle(prominent: true)).keyboardShortcut(.defaultAction)
+                    if store.bulkCompletedCount == store.bulkInstallableCount {
+                        Button("查看更新记录") {
+                            store.historySection = store.bulkAppInstallableCount > 0 ? .batches : .tools
+                            store.section = .history
+                        }
+                            .accessibilityIdentifier("view-update-history")
+                    }
                 }
             } else if store.checking || store.refreshing || store.toolChecking {
                 Button("取消") { store.cancelChecking() }

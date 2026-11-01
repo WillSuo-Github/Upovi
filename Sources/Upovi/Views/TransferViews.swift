@@ -97,7 +97,7 @@ struct TransferStatusLine: View {
             Text(text)
                 .foregroundStyle(transfer.phase == .failed ? AnyShapeStyle(.orange)
                                  : transfer.phase == .installed ? AnyShapeStyle(.green) : AnyShapeStyle(.secondary))
-                .monospacedDigit().lineLimit(1).truncationMode(.middle).help(text)
+                .monospacedDigit().lineLimit(transfer.phase == .failed ? 3 : 1).truncationMode(.tail).help(text)
         }
     }
 

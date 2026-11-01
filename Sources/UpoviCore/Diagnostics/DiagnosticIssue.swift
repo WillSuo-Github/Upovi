@@ -28,6 +28,7 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable {
             code = nil
             if error is DecodingError { kind = .invalidMetadata }
             else if case PeerError.invalid = error { kind = .validationRejected }
+            else if error is InstallationSpaceError { kind = .operationFailed }
             else if case PeerError.unavailable = error { kind = .operationFailed }
             else { kind = .unknown }
         }

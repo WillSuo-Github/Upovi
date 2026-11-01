@@ -115,7 +115,7 @@ public enum BulkUpdateRunner {
             return .init(item: item, status: .current, detail: String(localized: "已安装选定版本或更高版本，未重复安装"))
         } catch {
             let cancelled = Task.isCancelled || error is CancellationError
-            return .init(item: item, status: cancelled ? .cancelled : .failed, detail: cancelled ? String(localized: "已取消，未完成安装") : error.localizedDescription)
+            return .init(item: item, status: cancelled ? .cancelled : .failed, detail: cancelled ? String(localized: "已取消，未完成安装") : AdministratorInstallationSpace.message(for: error) ?? error.localizedDescription)
         }
     }
 }

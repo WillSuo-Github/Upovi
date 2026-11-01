@@ -101,9 +101,7 @@ struct UpoviInstaller {
             throw PeerError.invalid("Application changed before administrator installation")
         }
         try BundleVerifier.checkSignature(target, like: supplied.application)
-        let available = (try files.attributesOfFileSystem(forPath: job.path)[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
-        let required = max(6_000_000_000, allocatedBytes(in: target) * 2 + 4_000_000_000)
-        guard available > required else { throw PeerError.unavailable("Insufficient free space for protected backup and package expansion") }
+        try AdministratorInstallationSpace.validate(application: target, volumePath: job)
         var attempt = AdministratorInstallAttempt(plan: supplied, state: "preparing")
         try save(attempt, in: job)
         do {

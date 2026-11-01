@@ -53,7 +53,7 @@ struct ToolSourcesSettings: View {
 
 struct ToolSourcesSection: View {
     @Bindable var store: AppStore
-    private var sources: [ToolSource] { store.bulkSummaryVisible ? store.toolBatchSources : store.availableToolSources }
+    private var sources: [ToolSource] { store.visibleToolSources }
     var body: some View {
         if !sources.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
@@ -61,10 +61,6 @@ struct ToolSourcesSection: View {
                     Text("全局工具").font(.system(size: 14, weight: .semibold))
                     Spacer()
                     if store.toolChecking { ProgressView().controlSize(.small) }
-                    else if !store.bulkUpdating {
-                        Button("检查工具更新") { store.refreshToolSources() }.disabled(store.operationBusy)
-                            .buttonStyle(PillButtonStyle()).accessibilityIdentifier("check-tool-sources")
-                    }
                 }
                 VStack(spacing: 0) {
                     ForEach(sources, id: \.self) { source in
@@ -77,22 +73,20 @@ struct ToolSourcesSection: View {
                                     .lineLimit(3).help(detail(source))
                             }.frame(maxWidth: .infinity, alignment: .leading)
                             if store.toolRunningSource == source { ProgressView().controlSize(.small) }
-                            else {
-                                Button("更新此来源") { store.reviewToolUpdates([source]) }
-                                    .buttonStyle(PillButtonStyle()).disabled(store.operationBusy || store.toolChecking)
-                                    .accessibilityIdentifier("update-tool-source-" + source.rawValue)
+                            else if (store.bulkSummaryVisible && store.toolFailedSources.contains(source)) || store.toolCheckErrors[source] != nil {
+                                Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange)
+                                    .accessibilityLabel(Text("更新未完成"))
                             }
                         }.padding(16).accessibilityIdentifier("tool-source-row-" + source.rawValue)
                     }
                 }.modifier(UpdatesSurface())
-                Text("全局工具按来源依次更新。Homebrew 也会刷新自身和软件索引；正在执行的工具更新会完成后再停止后续任务。")
-                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }
     private func detail(_ source: ToolSource) -> String {
         if store.toolRunningSource == source { return String(localized: "包管理器正在更新并核对结果…") }
         if let result = store.toolOutcomes[source], store.bulkSummaryVisible { return result.detail }
+        if store.bulkUpdating { return String(localized: "排队中") }
         if let error = store.toolCheckErrors[source] { return error }
         if let result = store.toolSnapshots[source] {
             let summary = String(localized: "已检查 \(result.installed.count) 个全局工具 · \(result.updates.count) 个有更新")

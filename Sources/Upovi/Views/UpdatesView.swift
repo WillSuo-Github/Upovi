@@ -42,7 +42,7 @@ struct UpdatesView: View {
                 if !postponed.isEmpty { postponedSection(postponed).entrance(3) }
             }
             // Skips, restores, new check results and search all animate rows in and out.
-            .listAnimation([pending.map(\.id), installable.map(\.id), manual.map(\.id), postponed.map(\.id)])
+            .listAnimation([pending.map(\.id), installable.map(\.id), manual.map(\.id), postponed.map(\.id), store.visibleToolSources.map(\.id)])
             .padding(.horizontal, 32).padding(.top, 14).padding(.bottom, 48)
             .frame(maxWidth: 980).frame(maxWidth: .infinity)
         }
@@ -179,7 +179,7 @@ struct UpdateRow: View {
                             }
                         }
                     }
-                    .font(.system(size: 12)).frame(height: 16, alignment: .leading)
+                    .font(.system(size: 12)).frame(height: transfer?.phase == .failed ? nil : 16, alignment: .leading)
                     if let reason = item.manualReason {
                         Text(reason).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2).help(reason)
                     }

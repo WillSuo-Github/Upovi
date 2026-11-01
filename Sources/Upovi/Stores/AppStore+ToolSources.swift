@@ -5,6 +5,12 @@ extension AppStore {
     var availableToolSources: [ToolSource] { ToolSource.allCases.filter { enabledToolSources.contains($0) && toolLocations[$0] != nil } }
     var toolUpdateCount: Int { availableToolSources.reduce(0) { $0 + (toolSnapshots[$1]?.updates.count ?? 0) } }
     var toolFailedSources: [ToolSource] { toolBatchSources.filter { toolOutcomes[$0]?.state == .failed || toolOutcomes[$0]?.state == .interrupted } }
+    var visibleToolSources: [ToolSource] {
+        if bulkSummaryVisible {
+            return toolBatchSources.filter { toolOutcomes[$0]?.state != .succeeded }
+        }
+        return availableToolSources.filter { toolCheckErrors[$0] != nil || !(toolSnapshots[$0]?.updates.isEmpty ?? true) }
+    }
 
     func setToolSource(_ source: ToolSource, enabled: Bool) {
         guard !installationBusy else { return }

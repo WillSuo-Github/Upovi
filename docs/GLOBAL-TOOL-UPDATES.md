@@ -1,6 +1,6 @@
 # Global tool updates
 
-Settings → Tools contains independent, persistent opt-in switches. All are off by default. Enabling a source checks its inventory; installation starts only after confirming Update All or Update This Source. Missing managers are shown as unavailable and are never installed automatically.
+Settings → Tools contains independent, persistent opt-in switches. All are off by default. Enabling a source checks its inventory; installation starts after confirming Update All. The toolbar Refresh and Check action checks applications and enabled global tools together. Source rows show pending work and errors, with no separate check/update buttons. Successful sources leave the updates list and retain their records in History & Recovery. Missing managers are shown as unavailable and are never installed automatically.
 
 | Source | Update scope |
 | --- | --- |
@@ -23,6 +23,10 @@ Commands use argument arrays and a private neutral working directory. They do no
 After each source finishes, Upovi checks the inventory again. Exit status zero alone does not mean success: selected package versions must change and no eligible updates may remain. Failures retain a bounded, sanitized diagnostic. Raw pipx metadata and command credentials are not stored in tool history or shared over P2P.
 
 Stop finishes the current source and skips the remaining sources. An interrupted application session is recorded as interrupted on the next launch and never automatically resumes an installation. History & Recovery → Global Tools shows source results; package-manager changes do not offer Upovi application rollback.
+
+Finished runs show a completed-task count and any unfinished count, rather than labeling every handled task as successfully updated. A partial result retains the failed rows and one retry action; a successful run links to its saved history. Refresh clears the old result summary while checking both application and tool sources again. Manual-channel applications remain separate from automatic task totals, including in batch history.
+
+Administrator installation uses the existing conservative protected-backup/expansion space policy before package downloads and before authorization. The root helper rechecks the same policy before copying the backup. Insufficient-space messages report required and available bytes and ask the user to free space before retrying; this does not lower the space reserve or delete retained backups.
 
 ## Local validation
 

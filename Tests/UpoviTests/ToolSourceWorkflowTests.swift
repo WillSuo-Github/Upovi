@@ -9,7 +9,7 @@ import UpoviCore
         let preferences = AppPreferences(url: root.appending(path: "settings.plist"), migrateUserDefaults: false)
         preferences.set(false, forKey: GlobalP2PSettings.key)
         let installer = UpdateInstaller(journalDirectory: root.appending(path: "Journal"), downloadCache: ArtifactDownloadCache(directory: root.appending(path: "Cache")))
-        let value = AppStore(preferences: preferences, installer: installer, scanApplications: { _ in [] })
+        let value = AppStore(preferences: preferences, installer: installer, scanApplications: { _ in [] }, revalidateSources: { })
         value.administrator = AdministratorInstallationService(directory: root.appending(path: "Attempts"), downloads: installer.downloads)
         value.toolLocations = [.npm: URL(fileURLWithPath: "/fixture/npm"), .uv: URL(fileURLWithPath: "/fixture/uv")]
         value.checkToolSource = { source, _ in .init(source: source, context: "/fixture/global", installed: ["tool":"1.0"], updates: [.init(name: "tool", installed: "1.0", available: "2.0")]) }
@@ -37,6 +37,7 @@ import UpoviCore
         XCTAssertEqual(value.bulkCompletedCount, 1); XCTAssertEqual(value.bulkFailedCount, 0)
         XCTAssertTrue(value.batchHistory.isEmpty)
         XCTAssertEqual(value.toolHistory.first?.state, .succeeded)
+        XCTAssertTrue(value.visibleToolSources.isEmpty)
         XCTAssertEqual(AppStore(preferences: preferences).toolHistory.first?.state, .succeeded)
         XCTAssertFalse(value.installationBusy)
     }
@@ -60,5 +61,35 @@ import UpoviCore
         let value = AppStore(preferences: preferences)
         XCTAssertEqual(value.toolHistory.first?.state, .interrupted)
         XCTAssertFalse(value.bulkUpdating); XCTAssertNil(value.bulkTask)
+    }
+    func testCompletedSourcesLeaveTheListAndRetryTargetsOnlyFailures() async throws {
+        let (value, _) = try store()
+        value.setToolSource(.npm, enabled: true); await value.toolCheckTask?.value
+        value.setToolSource(.uv, enabled: true); await value.toolCheckTask?.value
+        value.updateToolSource = { source, _, _ in
+            if source == .npm { throw PeerError.unavailable("Synthetic manager failure") }
+            return .init(source: source, installed: ["tool":"2.0"], updates: [])
+        }
+        value.reviewAllUpdates(); value.startAllUpdates(); await value.bulkTask?.value
+        XCTAssertEqual(value.bulkCompletedCount, 1); XCTAssertEqual(value.bulkFailedCount, 1)
+        XCTAssertEqual(value.visibleToolSources, [.npm]); XCTAssertEqual(value.toolHistory.count, 2)
+        value.retryLatestBulkRun()
+        XCTAssertEqual(value.toolBatchSources, [.npm])
+        value.updateToolSource = { source, _, _ in .init(source: source, installed: ["tool":"2.0"], updates: []) }
+        value.startAllUpdates(); await value.bulkTask?.value
+        XCTAssertTrue(value.visibleToolSources.isEmpty)
+        XCTAssertEqual(value.toolHistory.count, 3)
+    }
+    func testGlobalRefreshClearsFinishedSummaryAndChecksEnabledTools() async throws {
+        let (value, _) = try store()
+        value.updateToolSource = { source, _, _ in .init(source: source, installed: ["tool":"2.0"], updates: []) }
+        value.setToolSource(.npm, enabled: true); await value.toolCheckTask?.value
+        value.reviewAllUpdates(); value.startAllUpdates(); await value.bulkTask?.value
+        XCTAssertTrue(value.bulkSummaryVisible)
+        value.refreshAll()
+        XCTAssertFalse(value.bulkSummaryVisible)
+        await value.checkTask?.value; await value.toolCheckTask?.value
+        XCTAssertEqual(value.toolSnapshots[.npm]?.updates.count, 1)
+        XCTAssertEqual(value.visibleToolSources, [.npm])
     }
 }

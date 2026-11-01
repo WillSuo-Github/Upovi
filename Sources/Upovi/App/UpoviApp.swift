@@ -45,7 +45,7 @@ struct UpoviApp: App {
                 Button("P2P 网络") { store.section = .community }.keyboardShortcut("5", modifiers: .command)
             }
             CommandGroup(after: .newItem) {
-                Button("刷新并检查全部应用") { store.refreshAll() }.keyboardShortcut("r")
+                Button("刷新并检查全部更新") { store.refreshAll() }.keyboardShortcut("r")
                     .disabled(store.operationBusy)
                 Button("全部更新…") { store.reviewAllUpdates() }.keyboardShortcut("u", modifiers: [.command, .shift])
                     .disabled(store.operationBusy || (store.updateCount == 0 && store.availableToolSources.isEmpty))

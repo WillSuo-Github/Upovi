@@ -2,6 +2,21 @@ import XCTest
 @testable import UpoviCore
 
 final class AdministratorInstallationTests: XCTestCase {
+    func testSpacePreflightKeepsTheProtectedBackupPolicyAndReportsActionableNumbers() throws {
+        XCTAssertEqual(AdministratorInstallationSpace.requiredBytes(applicationBytes: 100_000_000), 6_000_000_000)
+        XCTAssertEqual(AdministratorInstallationSpace.requiredBytes(applicationBytes: 2_000_000_000), 8_000_000_000)
+        XCTAssertEqual(AdministratorInstallationSpace.requiredBytes(applicationBytes: Int64.max), Int64.max)
+        XCTAssertThrowsError(try AdministratorInstallationSpace.check(required: 6_000_000_000, available: 5_000_000_000)) { error in
+            let space = error as? InstallationSpaceError
+            XCTAssertEqual(space?.required, 6_000_000_000); XCTAssertEqual(space?.available, 5_000_000_000)
+            XCTAssertNotNil(AdministratorInstallationSpace.message(for: error))
+            let wrapped = PeerError.unavailable("Authorized installer failed (1): " + error.localizedDescription)
+            XCTAssertEqual(AdministratorInstallationSpace.message(for: wrapped), space?.userMessage)
+        }
+        XCTAssertThrowsError(try AdministratorInstallationSpace.check(required: 6_000_000_000, available: 6_000_000_000))
+        XCTAssertNoThrow(try AdministratorInstallationSpace.check(required: 6_000_000_000, available: 6_000_000_001))
+        XCTAssertNil(AdministratorInstallationSpace.message(for: PeerError.invalid("Unrelated signature failure")))
+    }
     private func app(path: String = "/Applications/Upovi Synthetic.app", team: String? = "SYNTHETIC1", appStore: Bool = false) -> InstalledApp {
         .init(name: "Synthetic", bundleID: "app.upovi.synthetic.admin", version: "1.0", build: "1", path: path, teamID: team, isAppStore: appStore)
     }
