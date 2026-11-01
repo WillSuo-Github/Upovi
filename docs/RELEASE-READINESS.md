@@ -1,3 +1,15 @@
+# Upovi 0.4.10 build 202611010002
+
+Application and enabled global-tool checks now share the toolbar refresh action and one Update All flow. Source-specific check/update buttons are removed. Successful tool rows leave the updates list, while unfinished rows remain beside one retry action. Completed runs link directly to the relevant history tab, and batch-history totals exclude manual-channel applications. Failed application details can wrap onto multiple readable lines.
+
+Administrator installation checks the existing conservative protected-backup/package-expansion space reserve before downloading a package and before authorization. The root helper rechecks the same policy before copying backups. Typed space failures show required and available capacity, including when wrapped by an authorized process error. Space reserves and retained-backup protections are unchanged.
+
+Product revision `f661cbd` passed all 256 local Swift tests, 42 hosted Xcode workflow tests and 8 release-numbering tests. Isolated native completion fixtures verified both a 7/7 successful run and a 6-success/1-failure run, without repeated tool buttons or successful rows left behind. The installed product build 202611010001 also showed the real Zoom space warning before download or authorization. Release revision `283740f` only allocates build 202611010002. GitHub Actions remain disabled; validation was local.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611010002) is published as Latest. Apple notarization, ticket stapling and Gatekeeper passed. All five public assets match the verified local bytes; freshly extracted public-bundle signatures, ticket and Gatekeeper checks and public Sparkle feed/archive signatures passed. See [release evidence](evidence/0.4.10-build-202611010002.json). This publication did not replace the normal installed Upovi, exercise a new Sparkle replacement/relaunch or run on physical Intel hardware. The completion fixtures do not represent real Store or privileged package installations; the space preflight intentionally blocks installation when its reserve is unavailable.
+
+---
+
 # Upovi 0.4.10 build 202610310003
 
 This release adds default-off Settings switches for Homebrew, global npm/pnpm, uv tools, pipx, Cargo and Rust toolchains, source-level progress/history and post-update verification. Project dependencies and lock files are unchanged. It also adds verified current-version completion when another updater finishes first, preserves full Toolbox-style cask versions, reuses batch administrator authorization, confirms normal application quit, improves Store completion/receipt recovery, and finalizes quarantine only after the selected app passes fresh Developer ID and Gatekeeper checks.
