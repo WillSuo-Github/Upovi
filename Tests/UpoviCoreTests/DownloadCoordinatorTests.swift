@@ -116,4 +116,56 @@ private actor TransferGate {
         let failed = await center.historySaveFailed; XCTAssertTrue(failed)
     }
 
+    func testTimeoutRetriesRecoverAndTerminalErrorRetainsItsClassification() async throws {
+        for recover in [false, true] {
+            let gate = TransferGate(), destination = try destination()
+            let center = DownloadCoordinator { _, _, target, _, _, progress in
+                await gate.begin()
+                if recover, await gate.count() == 3 { try Data("complete".utf8).write(to: target); return }
+                progress(4, 8)
+                throw URLError(.timedOut)
+            }
+            do {
+                try await center.download(descriptor, app: app, to: destination, progress: { _, _ in })
+                XCTAssertTrue(recover)
+            } catch {
+                XCTAssertFalse(recover)
+                let timeout = try XCTUnwrap(error as? DownloadTimeoutError)
+                XCTAssertEqual(timeout.retries, 3)
+                XCTAssertEqual(DiagnosticIssue(error).kind, .timeout)
+                XCTAssertEqual(DiagnosticIssue(error).code, NSURLErrorTimedOut)
+                XCTAssertFalse(timeout.localizedDescription.contains("SECRET"))
+            }
+            let calls = await gate.count(), record = await center.snapshot().first
+            XCTAssertEqual(calls, recover ? 3 : 4)
+            XCTAssertEqual(record?.state, recover ? .verified : .failed)
+        }
+    }
+    func testArtifactTimeoutBudgetIsIndependentOfMetadataAndPreservesTransportSettings() {
+        let base = URLSessionConfiguration.ephemeral
+        base.connectionProxyDictionary = ["HTTPSProxy":"127.0.0.1", "HTTPSPort": 7897]
+        let artifact = HTTPTransfer.sessionConfiguration(base, downloading: true)
+        let metadata = HTTPTransfer.sessionConfiguration(base, downloading: false)
+        XCTAssertEqual(artifact.timeoutIntervalForRequest, 90)
+        XCTAssertEqual(artifact.timeoutIntervalForResource, 3600)
+        XCTAssertEqual(metadata.timeoutIntervalForRequest, 30)
+        XCTAssertEqual(metadata.timeoutIntervalForResource, 300)
+        XCTAssertEqual(artifact.connectionProxyDictionary?["HTTPSProxy"] as? String, "127.0.0.1")
+        XCTAssertNil(artifact.urlCredentialStorage); XCTAssertNil(artifact.httpCookieStorage)
+        XCTAssertEqual(base.timeoutIntervalForRequest, 60, "The caller's configuration must remain unchanged")
+    }
+    func testRecoveryStatusDoesNotHideResumedByteProgress() {
+        var record = DownloadRecord(app: app, targetVersion: "2")
+        record.state = .retrying; record.retries = 2
+        XCTAssertNotNil(record.recoveryStatus)
+        record.state = .downloading
+        XCTAssertNotNil(record.recoveryStatus)
+        record.received = 12345
+        XCTAssertNil(record.recoveryStatus)
+        record.state = .waitingForNetwork
+        XCTAssertNotNil(record.recoveryStatus)
+        record.state = .failed
+        XCTAssertNil(record.recoveryStatus)
+    }
+
 }

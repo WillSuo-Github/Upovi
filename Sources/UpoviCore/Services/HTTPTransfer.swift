@@ -48,6 +48,15 @@ struct HTTPMetadataResponse: Sendable {
 }
 
 public enum HTTPTransfer {
+    /// Artifact transfers need a larger wall-clock budget than small source metadata reads.
+    /// The inactivity timer still interrupts a stalled connection so the coordinator can retry.
+    static func sessionConfiguration(_ base: URLSessionConfiguration, downloading: Bool) -> URLSessionConfiguration {
+        let config = base.copy() as! URLSessionConfiguration
+        config.timeoutIntervalForRequest = downloading ? 90 : 30
+        config.timeoutIntervalForResource = downloading ? 3600 : 300
+        config.urlCredentialStorage = nil; config.httpShouldSetCookies = false; config.httpCookieStorage = nil
+        return config
+    }
     static func metadata(from url: URL, limit: Int, headers: [String: String],
                          configuration: URLSessionConfiguration = .ephemeral) async throws -> HTTPMetadataResponse {
         let transfer = Transfer(url: url, limit: Int64(limit), destination: nil, progress: nil,
@@ -142,9 +151,7 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
                         file = handle
                     }
                     self.continuation = continuation
-                    let config = configuration.copy() as! URLSessionConfiguration
-                    config.timeoutIntervalForRequest = 30; config.timeoutIntervalForResource = 300
-                    config.urlCredentialStorage = nil; config.httpShouldSetCookies = false; config.httpCookieStorage = nil
+                    let config = HTTPTransfer.sessionConfiguration(configuration, downloading: destination != nil)
                     if destination != nil || metadataHeaders != nil { config.urlCache = nil; config.requestCachePolicy = .reloadIgnoringLocalCacheData }
                     let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
                     self.session = session

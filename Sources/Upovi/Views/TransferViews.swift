@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UpoviCore
 
 /// The selected design groups speed, progress and remaining time in one trailing column.
 struct DownloadRate: View {
@@ -89,6 +90,7 @@ struct TransferRing: View {
 /// Replaces a row's version line while a transfer runs: size, speed and time remaining in one line.
 struct TransferStatusLine: View {
     let transfer: TransferProgress
+    var download: DownloadRecord? = nil
     var detail: String? = nil
 
     var body: some View {
@@ -103,6 +105,8 @@ struct TransferStatusLine: View {
 
     private func label(at date: Date) -> String {
         if let detail, transfer.phase == .failed { return detail }
+        guard transfer.phase == .downloading || transfer.phase == .verifying else { return transfer.label }
+        if let status = download?.recoveryStatus { return status }
         guard transfer.phase == .downloading else { return transfer.label }
         let rate = transfer.liveBytesPerSecond(at: date)
         guard transfer.received > 0, rate > 0 else { return transfer.downloadDetail(at: date) }

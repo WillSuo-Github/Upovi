@@ -31,6 +31,22 @@ final class ResumableDownloadTests: XCTestCase, @unchecked Sendable {
         do { try await task.value; XCTFail("Interrupted download must not finish") } catch { }
         XCTAssertFalse(FileManager.default.fileExists(atPath: output.path))
     }
+    func testTimeoutAutomaticallyResumesPartialAndVerifiesTheFinalArtifact() async throws {
+        let (root, url, descriptor, config) = try setup([.prefix(failure: .timedOut), .suffix()])
+        let cache = ArtifactDownloadCache(directory: root.appending(path: "Cache"), configuration: config)
+        let center = DownloadCoordinator(cache: cache)
+        let output = root.appending(path: "resumed.zip")
+        try await center.download(descriptor, app: app, targetVersion: "2", to: output, progress: { _, _ in })
+        XCTAssertEqual(try String(contentsOf: output, encoding: .utf8), ResumeReply.golden)
+        let requests = ResumeRegistry.shared.requests(for: url)
+        XCTAssertEqual(requests.count, 2)
+        XCTAssertEqual(requests[1].value(forHTTPHeaderField: "Range"), "bytes=262144-")
+        XCTAssertEqual(requests[1].value(forHTTPHeaderField: "If-Range"), "\"v1\"")
+        let record = await center.snapshot().first
+        XCTAssertEqual(record?.state, .verified)
+        XCTAssertEqual(record?.retries, 1)
+        XCTAssertEqual(record?.resumedBytes, 262144)
+    }
     func testCancelledDownloadResumesAfterRecreatingCacheAndUsesIfRange() async throws {
         let (root, url, descriptor, config) = try setup([.prefix(), .suffix()])
         let directory = root.appending(path: "Cache")
@@ -181,7 +197,8 @@ private struct ResumeReply: Sendable {
     let headers: [String: String]
     let body: Data
     var finish = true
-    static func prefix(etag: String = "\"v1\"") -> Self { .init(status: 200, headers: ["ETag": etag, "Content-Length": "262150"], body: Data(repeating: 97, count: 262_144), finish: false) }
+    var failure: URLError.Code? = nil
+    static func prefix(etag: String = "\"v1\"", failure: URLError.Code? = nil) -> Self { .init(status: 200, headers: ["ETag": etag, "Content-Length": "262150"], body: Data(repeating: 97, count: 262_144), finish: false, failure: failure) }
     static func suffix(etag: String = "\"v1\"", range: String = "bytes 262144-262149/262150") -> Self { .init(status: 206, headers: ["ETag": etag, "Content-Length": "6", "Content-Range": range], body: Data("efghij".utf8)) }
     static func full(_ value: String, etag: String = "\"v1\"") -> Self { .init(status: 200, headers: ["ETag": etag, "Content-Length": String(value.utf8.count)], body: Data(value.utf8)) }
 }
@@ -217,7 +234,14 @@ private final class ResumeProtocol: URLProtocol, @unchecked Sendable {
             DispatchQueue.global().asyncAfter(deadline: .now() + 0.05) { [self] in
                 guard !stoppedLock.withLock({ stopped }) else { return }
                 client?.urlProtocol(self, didLoad: reply.body)
-                if reply.finish { client?.urlProtocolDidFinishLoading(self) }
+                if let failure = reply.failure {
+                    // Let URLSession deliver the already received prefix before simulating a later stall.
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { [self] in
+                        guard !stoppedLock.withLock({ stopped }) else { return }
+                        client?.urlProtocol(self, didFailWithError: URLError(failure))
+                    }
+                }
+                else if reply.finish { client?.urlProtocolDidFinishLoading(self) }
             }
         }
     }

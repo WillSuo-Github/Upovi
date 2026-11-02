@@ -188,6 +188,7 @@ struct UpdateRow: View {
                     Group {
                         if let transfer, transfer.phase != .installed {
                             TransferStatusLine(transfer: transfer,
+                                               download: store.downloadCenter.record(for: app.id, since: transfer.startedAt),
                                                detail: store.bulkOutcomes[item.id]?.detail)
                         } else {
                             // Installed rows keep their version line so the result stays readable.

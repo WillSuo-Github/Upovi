@@ -19,6 +19,9 @@ final class DownloadCenterService {
             }
         }
     }
+    func record(for applicationID: String, since start: Date) -> DownloadRecord? {
+        records.first { $0.applicationID == applicationID && $0.createdAt >= start }
+    }
     func pause(_ id: UUID) { Task { await coordinator.pause(id) } }
     func resume(_ id: UUID) { Task { await coordinator.resume(id) } }
     func cancel(_ id: UUID) { Task { await coordinator.cancel(id) } }

@@ -31,14 +31,16 @@ final class DownloadDelegate: NSObject, NSApplicationDelegate {
     private let root: URL
     private let app: InstalledApp
     init() {
-        guard let index = CommandLine.arguments.firstIndex(of: "--root"), CommandLine.arguments.indices.contains(index + 1) else { fatalError("Explicit --root required") }
+        guard let index = CommandLine.arguments.firstIndex(of: "--root"), CommandLine.arguments.indices.contains(index + 1) else { exit(0) }
         let root = URL(fileURLWithPath: CommandLine.arguments[index + 1]).standardizedFileURL
-        guard root.path.contains("/.local/"), root.resolvingSymlinksInPath().path == root.path else { fatalError("Use an unlinked private .local directory") }
+        guard root.path.contains("/.local/"), root.resolvingSymlinksInPath().path == root.path else { exit(0) }
         self.root = root
         let app = InstalledApp(name: "Download Acceptance", bundleID: "app.synthetic.download", version: "1", path: root.appending(path: "Fixture.app").path, teamID: "SYNTHETIC")
         self.app = app
+        let timeoutPreview = CommandLine.arguments.contains("--timeout-preview")
         let transfer = SyntheticTransfer(); self.transfer = transfer
-        let coordinator = DownloadCoordinator(storageURL: root.appending(path: "tasks.json")) { _, _, destination, phase, resume, progress in
+        let coordinator = DownloadCoordinator(storageURL: root.appending(path: "tasks.json"), retryDelay: timeoutPreview ? .seconds(4) : .milliseconds(10)) { _, _, destination, phase, resume, progress in
+            if timeoutPreview { throw URLError(.timedOut) }
             try await transfer.run(destination, phase: phase, resume: resume, progress: progress)
         }; self.coordinator = coordinator
         let preferences = AppPreferences(url: root.appending(path: "settings.plist"), migrateUserDefaults: false)
@@ -46,7 +48,12 @@ final class DownloadDelegate: NSObject, NSApplicationDelegate {
         let store = AppStore(preferences: preferences, installer: UpdateInstaller(journalDirectory: root.appending(path: "Journal"), downloads: coordinator),
                              scanApplications: { _ in [app] }, checkApplication: { app, _ in .init(appID: app.id, candidates: [], note: "Synthetic offline fixture", status: .current) })
         store.administrator = AdministratorInstallationService(directory: root.appending(path: "Attempts"), downloads: coordinator)
-        store.apps = [app]; store.section = .downloads; store.monitoringTask = Task { }
+        store.apps = [app]; store.section = timeoutPreview ? .updates : .downloads;
+        if timeoutPreview {
+            store.sourceResults[app.id] = .init(appID: app.id, candidates: [.init(version: "2", source: "Offline timeout fixture", isCommunity: false, url: nil,
+                download: .init(url: URL(string: "https://example.invalid/Fixture.zip")!, sha256: String(repeating: "a", count: 64)))], note: "Offline fixture", status: .updates)
+        }
+         store.monitoringTask = Task { }
         _store = State(initialValue: store)
     }
     var body: some Scene {
@@ -54,7 +61,26 @@ final class DownloadDelegate: NSObject, NSApplicationDelegate {
         .commands {
             CommandMenu("Fixture") {
                 Button("Start synthetic download") {
-                    Task { await transfer.reset(); try? await coordinator.download(.init(url: URL(string: "https://example.invalid/Fixture.zip")!, sha256: String(repeating: "a", count: 64)), app: app, targetVersion: "2", to: root.appending(path: "Output-\(UUID().uuidString).zip"), progress: { _, _ in }) }
+                    Task {
+                        await transfer.reset()
+                        let timeoutPreview = CommandLine.arguments.contains("--timeout-preview")
+                        let candidate = UpdateCandidate(version: "2", source: "Offline timeout fixture", isCommunity: false, url: nil,
+                            download: .init(url: URL(string: "https://example.invalid/Fixture.zip")!, sha256: String(repeating: "a", count: 64)))
+                        let item = BulkUpdateItem(application: app, candidate: candidate, manualReason: nil)
+                        if timeoutPreview {
+                            store.beginTransfer(app.id); store.bulkItems = [item]; store.bulkOutcomes = [:]
+                            store.bulkSummaryVisible = true; store.bulkUpdating = true; store.installing = true
+                        }
+                        do {
+                            try await coordinator.download(candidate.download!, app: app, targetVersion: "2", to: root.appending(path: "Output-\(UUID().uuidString).zip"), progress: { _, _ in })
+                        } catch {
+                            if timeoutPreview {
+                                store.bulkOutcomes[app.id] = .init(item: item, status: .failed, detail: error.localizedDescription)
+                                store.transfers[app.id]?.finish(.failed)
+                            }
+                        }
+                        if timeoutPreview { store.bulkUpdating = false; store.installing = false }
+                    }
                 }
                 .disabled(store.downloadCenter.records.contains { $0.state.active })
                 Button("Disconnect fixture network") { Task { await coordinator.setOnline(false) } }

@@ -37,6 +37,23 @@ final class TransferProgressTests: XCTestCase {
         XCTAssertEqual(store.transfers["a"]?.bytesPerSecond, 500_000)
     }
 
+    func testDownloadRecoveryProjectionExcludesPreviousAttempts() async throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-recovery-status-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.recovery", version: "1", path: "/synthetic/F.app", teamID: "SYNTHETIC")
+        var record = DownloadRecord(app: app, targetVersion: "2")
+        record.state = .failed; record.retries = 3; record.issue = .init(URLError(.timedOut))
+        let file = root.appending(path: "tasks.json")
+        try JSONEncoder().encode([record]).write(to: file)
+        let service = DownloadCenterService(coordinator: DownloadCoordinator(storageURL: file))
+        service.start()
+        for _ in 0..<100 where service.records.isEmpty { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(service.record(for: app.id, since: record.createdAt)?.retries, 3)
+        XCTAssertNil(service.record(for: app.id, since: record.createdAt.addingTimeInterval(1)))
+        XCTAssertNil(service.record(for: "/synthetic/Other.app", since: .distantPast))
+    }
+
     func testCompletionRemovesDownloadRateAndRestartDoesNotProduceANegativeRate() {
         let now = Date(timeIntervalSince1970: 10_000)
         var sample = TransferProgress.Sample(startedAt: now)

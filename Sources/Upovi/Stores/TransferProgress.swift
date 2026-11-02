@@ -5,6 +5,7 @@ struct TransferProgress: Equatable {
     enum Phase: Equatable {
         case queued, downloading, verifying, awaitingConfirmation, waitingForAuthorization, installing, installed, failed, cancelled
     }
+    var startedAt = Date()
     var phase: Phase = .queued
     var received: Int64 = 0
     var expected: Int64 = 0

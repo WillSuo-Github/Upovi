@@ -136,6 +136,9 @@ public actor DownloadCoordinator {
             return id
         } catch {
             update(id) { $0.state = error is CancellationError || Task.isCancelled ? .cancelled : .failed; $0.issue = .init(error) }
+            if !Task.isCancelled, DiagnosticIssue(error).kind == .timeout, let record = records.first(where: { $0.id == id }) {
+                throw DownloadTimeoutError(retries: record.retries, received: record.received)
+            }
             throw error
         }
     }

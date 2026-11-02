@@ -11,6 +11,7 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable {
     public private(set) var rateLimited: Bool? = nil
     public private(set) var retryAt: Date? = nil
     public init(_ error: any Error) {
+        if error is DownloadTimeoutError { kind = .timeout; code = NSURLErrorTimedOut; httpStatus = nil; return }
         if error is CancellationError { kind = .cancelled; code = nil; httpStatus = nil; return }
         if let http = error as? HTTPStatusError { kind = .http; code = nil; httpStatus = http.statusCode; rateLimited = http.rateLimited; retryAt = http.retryAt; return }
         httpStatus = nil

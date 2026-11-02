@@ -1,6 +1,86 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "安装包下载超时，自动重试 %lld 次后仍未完成。请检查网络后重试未完成项；本次尚未安装更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download timed out after %lld automatic retries. Check the network, then retry unfinished items. This update has not been installed."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝包下載逾時，自動重試 %lld 次後仍未完成。請檢查網路後重試未完成項；本次尚未安裝更新。"
+          }
+        }
+      }
+    },
+    "网络请求未完成，正在自动重试（%lld/3）…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network request interrupted; retrying automatically (%lld/3)…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路請求未完成，正在自動重試（%lld/3）…"
+          }
+        }
+      }
+    },
+    "等待网络恢复，连接后自动继续…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for the network; continuing automatically when connected…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待網路恢復，連線後自動繼續…"
+          }
+        }
+      }
+    },
+    "下载已暂停，可在“下载”中继续": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download paused; resume it in Downloads"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下載已暫停，可在「下載」中繼續"
+          }
+        }
+      }
+    },
+    "正在重新连接并接续下载（已重试 %lld/3）…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting to download (retry %lld/3)…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在重新連線並接續下載（已重試 %lld/3）…"
+          }
+        }
+      }
+    },
     "通过 Homebrew 安装的 Formula 命令行工具；每个待更新工具独立列出，图形应用仍使用原有更新流程。": {
       "localizations": {
         "en": {

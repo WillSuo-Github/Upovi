@@ -212,6 +212,7 @@ extension AppStore {
 
     func beginTransfer(_ id: String, at now: Date = Date()) {
         transfers[id] = TransferProgress(phase: .downloading)
+        transfers[id]?.startedAt = now
         transferSamples[id] = .init(startedAt: now)
     }
 
