@@ -41,9 +41,10 @@ struct UpdatesView: View {
             VStack(alignment: .leading, spacing: 24) {
                 UpdatesOverview(store: store, total: plan.count + store.toolUpdateCount,
                                 installable: plan.filter(\.canInstall).count + store.toolUpdateCount)
-                if !entries.isEmpty { updateList(entries) }
+                    .entrance(0)
+                if !entries.isEmpty { updateList(entries).entrance(1) }
                 if !manual.isEmpty {
-                    group(String(localized: "需通过官方渠道更新"), items: manual)
+                    group(String(localized: "需通过官方渠道更新"), items: manual).entrance(2)
                 }
                 ForEach(store.availableToolSources.filter { store.toolCheckErrors[$0] != nil }) { source in
                     Label(source.title + ": " + (store.toolCheckErrors[source] ?? ""), systemImage: "exclamationmark.triangle")

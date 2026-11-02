@@ -8,8 +8,8 @@ struct LibraryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header.padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 14)
-            AppTable(store: store)
+            header.entrance(0).padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 14)
+            AppTable(store: store).entrance(1)
         }
         .frame(minWidth: 460)
         .navigationTitle("全部应用")
