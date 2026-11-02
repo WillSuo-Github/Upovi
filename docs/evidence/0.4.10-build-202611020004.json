@@ -1,0 +1,126 @@
+{
+  "version": "0.4.10",
+  "build": "202611020004",
+  "productRevision": "fb7a77309c13bc914a57dacb6f4f370c96159987",
+  "releaseRevision": "fb7a77309c13bc914a57dacb6f4f370c96159987",
+  "localValidation": {
+    "swiftTests": 275,
+    "swiftFailures": 0,
+    "hostedXcodeTests": 46,
+    "hostedXcodeFailures": 0,
+    "releaseMetadataTests": 8,
+    "signedLocalCandidate": "Developer ID; strict nested all-architecture verification passed"
+  },
+  "isolatedAcceptance": {
+    "openclaw": {
+      "oldVersion": "2026.3.1",
+      "oldBuild": "2026030190",
+      "oldTeam": "Y5PE65HELJ",
+      "oldArchiveSHA256": "f2d53c476a28d660c16d6b496a3096778193e11548dce58354f73e70a433eec3",
+      "newVersion": "2026.10.9",
+      "newBuild": "2610000990",
+      "newTeam": "FWJYW4S8P8",
+      "newArchiveSHA256": "8a041aa23b708b474cfd9b143f6d7d4cb0e91f08e15a0357a550c65884ace71d",
+      "bundleID": "ai.openclaw.mac",
+      "sameSparklePublicKey": true,
+      "isolatedProductionInstall": "passed",
+      "alreadyCurrentRecheck": "passed",
+      "isolatedRestore": "passed",
+      "unknownDeveloperRejected": true,
+      "firstLaunchTested": false,
+      "olderBotMoltIdentifier": "manual migration"
+    },
+    "playcover": {
+      "advertisedVersion": "4.0.0",
+      "payloadVersion": "3.1.0",
+      "advertisedAndPayloadBuild": "1633",
+      "oldBuild": "856",
+      "archiveSHA256": "54e01381205ed7de05f8316ca229eab39ab8f6202b0dda4de07e98396e64d79e",
+      "sparkleArchiveSignature": "passed",
+      "authoritativeBuildAndDeveloperID": "passed",
+      "gatekeeper": "rejected: Unnotarized Developer ID",
+      "productionPreparation": "blocked",
+      "originalPreserved": true,
+      "installed": false
+    },
+    "pnpm": {
+      "actualEmptyEnvironmentServiceChecks": [
+        "9.15.9",
+        "10.20.0"
+      ],
+      "passed": true,
+      "noGlobalPackageInstalled": true
+    },
+    "remote": {
+      "upoviBuildReported": "202611020003",
+      "installedAppIdentitiesRead": false,
+      "updatesVerified": false
+    }
+  },
+  "githubActionsEnabled": false,
+  "appleNotarization": {
+    "status": "Accepted",
+    "submissionID": "dcd10ec3-46a5-4a63-a2bd-cc63e8acaff8"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-02T08:52:21Z",
+      "tagName": "build-202611020004",
+      "targetCommitish": "fb7a77309c13bc914a57dacb6f4f370c96159987",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611020004"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202611020004.zip",
+        "size": 19865071,
+        "sha256": "6fa5b30ca9662db4c6a578666574c5f48671bea8aedcc5a2fb958e601abdd3f1",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611020004.zip.sha256",
+        "size": 96,
+        "sha256": "e02d6c8554cc16c09e91924ae2468834585eb280eb5120100c5686ff3a166092",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "fb04d0896bf5256d496a2e30cc0773e26d8d3916ced3954101abc2e0ef357b30",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "44d318014f70963a5414a20dba796a57df26ad69ebacc8e41a8cc19850f73693",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 279,
+        "sha256": "bcdabe1f86806531785021675aee13c8ca550787eff1fe078630dff974e463ce",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611020004",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "6fa5b30ca9662db4c6a578666574c5f48671bea8aedcc5a2fb958e601abdd3f1",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerified": true,
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "intelRuntimeTested": false
+}

@@ -58,4 +58,4 @@ OpenClaw has one reviewed, one-way Team ID transfer for the exact `ai.openclaw.m
 
 The still earlier official `2026.2.15` has identifier `bot.molt.mac`. That identifier change is not an approved automatic bundle replacement: its available update remains visible with an official-installer migration explanation instead of entering a doomed automatic task.
 
-The reporting Mac runs Upovi `202611020003`, but its installed app identities and pnpm environment were not read directly. The reproduced causes and tested paths do not establish remote installation success. See [acceptance evidence](evidence/source-errors-202611020004.json). Build `202611020004` is prepared locally; public release remains a separate action.
+The reporting Mac runs Upovi `202611020003`, but its installed app identities and pnpm environment were not read directly. The reproduced causes and tested paths do not establish remote installation success. See [acceptance evidence](evidence/source-errors-202611020004.json). The notarized universal build `202611020004` is now published; see [release evidence](evidence/0.4.10-build-202611020004.json).

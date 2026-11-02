@@ -1,3 +1,15 @@
+# Upovi 0.4.10 build 202611020004
+
+This build supports the reviewed one-way OpenClaw Developer ID transfer for the exact `ai.openclaw.mac` application, from `Y5PE65HELJ` to `FWJYW4S8P8`. Original and replacement Apple-anchored signatures, selected version/build, Gatekeeper, backups and recovery remain mandatory. The earlier `bot.molt.mac` identifier stays visible as an official-installer migration rather than entering an automatic replacement.
+
+Sparkle payload validation and already-current checks use the exact authoritative build when the candidate declares it. This fixes the PlayCover 4.0.0 appcast label versus signed 3.1.0 / 1633 payload mismatch. The inspected official prerelease still fails Gatekeeper as `Unnotarized Developer ID`; its production preparation was blocked and the original app preserved. This release neither bypasses that rejection nor claims a successful PlayCover installation. Security-assessment errors now explain the macOS rejection. pnpm 9/10 empty global inventories finish without querying a nonexistent global manifest; nonempty and malformed-source failures remain enforced.
+
+Product/release revision `fb7a773` passed 275 Swift tests, 46 hosted Xcode workflow tests and 8 release-metadata tests. The production installer upgraded an isolated official OpenClaw copy from 2026.3.1 to 2026.10.9, recognized the completed target and restored the original. Real pnpm 9.15.9 and 10.20.0 private empty environments passed the production service. See [source and acceptance evidence](evidence/source-errors-202611020004.json). Normal applications and user global tools were unchanged. The reporting Mac's original app identities and pnpm environment were not read, and its update success remains unverified. GitHub Actions remain disabled; validation was local.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611020004) is published as Latest. Apple notarization, ticket stapling and Gatekeeper passed. All five anonymously downloaded public assets match verified local bytes; fresh extraction passed nested signatures, ticket, Gatekeeper and signed Sparkle feed/archive checks. The canonical latest feed and direct archive also match. See [release evidence](evidence/0.4.10-build-202611020004.json). This publication did not replace the normal installed Upovi, exercise a new Sparkle self-replacement, run on physical Intel hardware or verify application first-launch/auxiliary-service migration.
+
+---
+
 # Upovi 0.4.10 build 202611020003
 
 Artifact downloads use a 90-second inactivity timeout and one-hour resource budget per attempt, independently of shorter metadata checks. Existing bounded retry, strong-validator continuation, HTTPS and archive/application validation remain enforced. Update rows show recovery and pause state from the current download attempt. Exhausted timeouts report the actual retry count, and Downloads distinguishes timeout, connection interruption and offline failure rather than labeling all three as offline.
