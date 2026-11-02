@@ -59,13 +59,13 @@ final class AppStore {
     var toolSnapshots: [ToolSource: ToolSnapshot] = [:]
     var toolCheckErrors: [ToolSource: String] = [:]
     var toolChecking = false
-    var toolBatchSources: [ToolSource] = []
-    var toolOutcomes: [ToolSource: ToolUpdateRecord] = [:]
-    var toolRunningSource: ToolSource?
+    var toolBatchItems: [ToolUpdateItem] = []
+    var toolOutcomes: [String: ToolUpdateRecord] = [:]
+    var toolRunningID: String?
     var toolHistory: [ToolUpdateRecord] = []
     @ObservationIgnored var toolCheckTask: Task<Void, Never>?
     @ObservationIgnored var checkToolSource: @Sendable (ToolSource, URL) async throws -> ToolSnapshot = { try await ToolSourceService().check($0, executable: $1) }
-    @ObservationIgnored var updateToolSource: @Sendable (ToolSource, URL, String?) async throws -> ToolSnapshot = { try await ToolSourceService().update($0, executable: $1, expectedContext: $2) }
+    @ObservationIgnored var updateToolPackage: @Sendable (ToolUpdateItem, URL) async throws -> ToolSnapshot = { try await ToolSourceService().update($0, executable: $1) }
     var bulkOutcomes: [String: BulkUpdateOutcome] = [:]
     var bulkActiveIDs: Set<String> = []
     /// Keeps the batch dashboard and its rows on screen after the run until the user dismisses it.
@@ -179,7 +179,7 @@ final class AppStore {
         self.revalidateSources = revalidateSources
         enabledToolSources = Set((preferences.stringArray(forKey: "toolSourcesV1") ?? []).compactMap(ToolSource.init(rawValue:)))
         if let data = preferences.data(forKey: "toolHistoryV1"), let saved = try? JSONDecoder().decode([ToolUpdateRecord].self, from: data) {
-            toolHistory = Array(saved.prefix(100)).map { record in
+            toolHistory = Array(saved.prefix(500)).map { record in
                 var record = record
                 if record.state == .running { record.state = .interrupted; record.detail = String(localized: "上次工具更新中断；重新检查后再继续。"); record.finishedAt = Date() }
                 return record

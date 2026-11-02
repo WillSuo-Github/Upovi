@@ -13,6 +13,17 @@ struct UpdatesView: View {
             .sorted { $0.application.name.localizedStandardCompare($1.application.name) == .orderedAscending }
     }
 
+    private enum Entry: Identifiable {
+        case application(BulkUpdateItem, batch: Bool)
+        case tool(ToolUpdateItem)
+        var id: String {
+            switch self { case .application(let item, _): "app:" + item.id; case .tool(let item): "tool:" + item.id }
+        }
+        var name: String {
+            switch self { case .application(let item, _): item.application.name; case .tool(let item): item.package.name }
+        }
+    }
+
     var body: some View {
         let plan = plan
         let visible = plan.filter { store.matchesSearch($0.application) }
@@ -23,26 +34,28 @@ struct UpdatesView: View {
         let postponed = store.postponedApps.filter { store.matchesSearch($0) }
         // Installed batch rows leave the list; only running, queued and failed ones stay.
         let pending = batch.filter { store.matchesSearch($0.application) && store.transfers[$0.id]?.phase != .installed }
+        let tools = store.visibleToolUpdates.filter { store.matchesSearch($0) }
+        let entries = (pending.map { Entry.application($0, batch: true) } + installable.map { Entry.application($0, batch: false) } + tools.map { Entry.tool($0) })
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                UpdatesOverview(store: store, total: plan.count, installable: plan.filter(\.canInstall).count)
-                if store.bulkSummaryVisible, !pending.isEmpty || !installable.isEmpty {
-                    TransferGroup(store: store, items: pending, available: installable)
-                }
-                if !store.bulkSummaryVisible, !installable.isEmpty {
-                    group(String(localized: "可在 Upovi 中更新"), items: installable, showTitle: false)
-                }
+                UpdatesOverview(store: store, total: plan.count + store.toolUpdateCount,
+                                installable: plan.filter(\.canInstall).count + store.toolUpdateCount)
+                if !entries.isEmpty { updateList(entries) }
                 if !manual.isEmpty {
                     group(String(localized: "需通过官方渠道更新"), items: manual)
                 }
-                ToolSourcesSection(store: store)
-                if !plan.isEmpty, visible.isEmpty, batch.isEmpty {
+                ForEach(store.availableToolSources.filter { store.toolCheckErrors[$0] != nil }) { source in
+                    Label(source.title + ": " + (store.toolCheckErrors[source] ?? ""), systemImage: "exclamationmark.triangle")
+                        .font(.caption).foregroundStyle(.orange).textSelection(.enabled)
+                }
+                if !store.search.isEmpty, entries.isEmpty, manual.isEmpty, postponed.isEmpty {
                     ContentUnavailableView.search(text: store.search)
                 }
                 if !postponed.isEmpty { postponedSection(postponed).entrance(3) }
             }
             // Skips, restores, new check results and search all animate rows in and out.
-            .listAnimation([pending.map(\.id), installable.map(\.id), manual.map(\.id), postponed.map(\.id), store.visibleToolSources.map(\.id)])
+            .listAnimation([pending.map(\.id), installable.map(\.id), manual.map(\.id), postponed.map(\.id), tools.map(\.id)])
             .padding(.horizontal, 32).padding(.top, 14).padding(.bottom, 48)
             .frame(maxWidth: 980).frame(maxWidth: .infinity)
         }
@@ -51,6 +64,20 @@ struct UpdatesView: View {
     }
 
     // MARK: Lists
+
+    private func updateList(_ entries: [Entry]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                if index > 0 { UpdateRow.separator }
+                Group {
+                    switch entry {
+                    case .application(let item, let batch): UpdateRow(store: store, item: item, isBatch: batch)
+                    case .tool(let item): ToolUpdateRow(store: store, item: item)
+                    }
+                }.transition(.listRow)
+            }
+        }.modifier(UpdatesSurface())
+    }
 
     private func group(_ title: String, items: [BulkUpdateItem], showTitle: Bool = true) -> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -248,31 +275,5 @@ struct UpdateRow: View {
         Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: app.path)]) }
         Divider()
         Button("忽略此应用的更新") { store.toggleIgnored(app) }
-    }
-}
-
-// MARK: Batch progress
-
-/// Batch rows stay listed (even after installing) until the dashboard is dismissed.
-private struct TransferGroup: View {
-    let store: AppStore
-    let items: [BulkUpdateItem]
-    let available: [BulkUpdateItem]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                VStack(spacing: 0) {
-                    if index > 0 { UpdateRow.separator }
-                    UpdateRow(store: store, item: item, isBatch: true)
-                }
-                .transition(.listRow)
-            }
-            ForEach(Array(available.enumerated()), id: \.element.id) { index, item in
-                if !items.isEmpty || index > 0 { UpdateRow.separator }
-                UpdateRow(store: store, item: item)
-            }
-        }
-        .modifier(UpdatesSurface())
     }
 }

@@ -3,8 +3,13 @@ import Foundation
 import UpoviCore
 
 extension AppStore {
+    var hasUnselectedUpdates: Bool {
+        let appIDs = Set(bulkItems.map(\.id)), toolIDs = Set(toolBatchItems.map(\.id))
+        return pendingToolUpdates.contains { !toolIDs.contains($0.id) }
+            || BulkUpdatePlan.make(apps: apps, results: actionableSourceResults, ignored: ignored).contains { $0.canInstall && !appIDs.contains($0.id) }
+    }
     var bulkAppInstallableCount: Int { bulkItems.filter(\.canInstall).count }
-    var bulkInstallableCount: Int { bulkAppInstallableCount + toolBatchSources.count }
+    var bulkInstallableCount: Int { bulkAppInstallableCount + toolBatchItems.count }
     var bulkCompletedCount: Int { bulkOutcomes.values.filter { $0.status == .installed || $0.status == .current }.count + toolOutcomes.values.filter { $0.state == .succeeded }.count }
     var bulkFailedCount: Int { bulkOutcomes.values.filter { $0.status == .failed }.count + toolOutcomes.values.filter { $0.state == .failed }.count }
     var bulkFinishedCount: Int { bulkOutcomes.values.filter { $0.status != .manual }.count + toolOutcomes.count }
@@ -24,8 +29,8 @@ extension AppStore {
         guard !refreshing, !scanning, !checking, !toolChecking, !installationBusy else { return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新。"); return }
         bulkItems = BulkUpdatePlan.make(apps: apps, results: actionableSourceResults, ignored: ignored)
-        toolBatchSources = availableToolSources
-        guard !bulkItems.isEmpty || !toolBatchSources.isEmpty else { return }
+        toolBatchItems = pendingToolUpdates
+        guard !bulkItems.isEmpty || !toolBatchItems.isEmpty else { return }
         resetBulkRun()
         bulkUpdatePresented = true
     }
@@ -37,7 +42,7 @@ extension AppStore {
         do { try AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: 501).validate() }
         catch { errorMessage = String(localized: "此商店安装的位置或签名暂不支持 Upovi 更新，请使用原分发渠道。"); return }
         bulkItems = [.init(application: app, candidate: candidate, manualReason: nil)]
-        toolBatchSources = []
+        toolBatchItems = []
         resetBulkRun()
         bulkUpdatePresented = true
     }
@@ -132,6 +137,7 @@ extension AppStore {
             }
             installationProgress = String(localized: "全部更新结束：\(bulkCompletedCount) 个完成，\(bulkFailedCount) 个失败")
             installing = false; bulkUpdating = false
+            if bulkItems.isEmpty, toolBatchItems.count == 1, bulkFailedCount == 0, hasUnselectedUpdates { dismissBulkSummary() }
             if networkEnabled { p2pBatchOffset = 0; restartP2P() }
         }
     }

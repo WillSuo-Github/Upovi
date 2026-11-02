@@ -26,6 +26,17 @@ public struct ToolPackage: Codable, Hashable, Sendable {
     }
 }
 
+/// A package in one checked global environment; identical names in different sources stay distinct.
+public struct ToolUpdateItem: Codable, Hashable, Identifiable, Sendable {
+    public let source: ToolSource
+    public let package: ToolPackage
+    public let context: String
+    public var id: String { source.rawValue + ":" + context + ":" + package.name }
+    public init(source: ToolSource, package: ToolPackage, context: String = "") {
+        self.source = source; self.package = package; self.context = context
+    }
+}
+
 public struct ToolSnapshot: Codable, Sendable {
     public let source: ToolSource
     public let date: Date
@@ -42,12 +53,13 @@ public struct ToolUpdateRecord: Codable, Identifiable, Sendable {
     public enum State: String, Codable, Sendable { case running, succeeded, failed, interrupted }
     public let id: UUID
     public let source: ToolSource
+    public let item: ToolUpdateItem?
     public let startedAt: Date
     public var finishedAt: Date?
     public var state: State
     public var detail: String
-    public init(source: ToolSource) {
-        id = UUID(); self.source = source; startedAt = Date(); state = .running; detail = ""
+    public init(source: ToolSource, item: ToolUpdateItem? = nil) {
+        id = UUID(); self.source = source; self.item = item; startedAt = Date(); state = .running; detail = ""
     }
 }
 

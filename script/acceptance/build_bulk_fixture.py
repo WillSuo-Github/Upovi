@@ -108,7 +108,7 @@ def main():
         print('Production scanner and sources; --store-app narrows the inventory to one existing app.')
         print('--quit-preview uses synthetic apps and never updates installed software. --review only opens the confirmation sheet.')
         print('--tools-preview uses only npm in an explicit root/npm-prefix; seed that private prefix before launch.')
-        print('--completion-preview is an offline 7-task completion flow; --all-succeeded removes its synthetic space failure.')
+        print('--completion-preview uses offline apps and individual tool packages; --all-succeeded removes the synthetic space failure, --tool-failure fails one package once.')
     else:
         print('Synthetic offline ' + options.mode + ' only; no applications are copied or replaced.')
 

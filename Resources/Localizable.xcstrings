@@ -1,6 +1,182 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "通过 Homebrew 安装的 Formula 命令行工具；每个待更新工具独立列出，图形应用仍使用原有更新流程。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formula command-line tools installed through Homebrew. Each outdated tool appears individually; graphical apps keep their existing update flow."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "透過 Homebrew 安裝的 Formula 命令列工具；每個待更新工具獨立列出，圖形應用程式仍使用原有更新流程。"
+          }
+        }
+      }
+    },
+    "已停止后续任务，此工具未执行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped before this tool was updated."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已停止後續任務，此工具未執行。"
+          }
+        }
+      }
+    },
+    "正在更新并核对版本…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updating and verifying the installed version…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在更新並核對版本…"
+          }
+        }
+      }
+    },
+    "正在核对已启用的更新来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking enabled update sources"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在核對已啟用的更新來源"
+          }
+        }
+      }
+    },
+    "%lld 项可用更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld updates available"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 項可用更新"
+          }
+        }
+      }
+    },
+    "%lld 项可在 Upovi 中更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld can be updated in Upovi"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 項可在 Upovi 中更新"
+          }
+        }
+      }
+    },
+    "可自动更新 %lld 项 · 需官方处理 %lld 项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld automatic updates · %2$lld require the official updater"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可自動更新 %1$lld 項 · 需官方處理 %2$lld 項"
+          }
+        }
+      }
+    },
+    "命令行工具由原包管理器逐个更新，可能运行安装脚本；不修改项目依赖，不提供应用备份回滚。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Command-line tools update individually through their package managers and may run installation scripts. Project dependencies are unchanged; app backup rollback is unavailable."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令列工具由原套件管理器逐個更新，可能執行安裝腳本；不修改專案依賴，不提供應用程式備份回復。"
+          }
+        }
+      }
+    },
+    "本次更新完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected Updates Completed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本次更新完成"
+          }
+        }
+      }
+    },
+    "将更新以下项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The following items will be updated"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將更新以下項目"
+          }
+        }
+      }
+    },
+    "搜索应用、工具或 Bundle ID": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search apps, tools or bundle IDs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋應用程式、工具或 Bundle ID"
+          }
+        }
+      }
+    },
     "部分更新未完成": {
       "localizations": {
         "en": {

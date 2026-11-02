@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A0515CC7071B411ED126C274 /* ToolUpdateRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F65D4FA4417F1D53703844 /* ToolUpdateRow.swift */; };
 		01D4E068CB1F1CDDCBCBCCFB /* AppStore+BulkUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3566AAB106618C9412F4774D /* AppStore+BulkUpdates.swift */; };
 		0273607D380206FA93B47328 /* ApplicationRunningLocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F352C307B0CB0D4877BEBA /* ApplicationRunningLocationTests.swift */; };
 		02AD09876ECFD2A9E29A6C36 /* libUpoviCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D00051D55B6C5AEDD8FF9883 /* libUpoviCore.a */; };
@@ -300,6 +301,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		45F65D4FA4417F1D53703844 /* ToolUpdateRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolUpdateRow.swift; sourceTree = "<group>"; };
 		012B5E07EBC2A310572AA9C3 /* ToolSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSource.swift; sourceTree = "<group>"; };
 		0242521892B617E903F91134 /* DownloadTasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTasksView.swift; sourceTree = "<group>"; };
 		0266D077A496F87433981A50 /* StoreReceiptRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreReceiptRecovery.swift; sourceTree = "<group>"; };
@@ -630,6 +632,7 @@
 				A975C10358CBA7959D1A8E2A /* SettingsView.swift */,
 				F3B323BDE71CE1C122683B76 /* SourceEditorView.swift */,
 				6F180E81B400185753172D73 /* ToolSourcesView.swift */,
+				45F65D4FA4417F1D53703844 /* ToolUpdateRow.swift */,
 				9ABD141C086C1CA02015C7ED /* TransferViews.swift */,
 				93F69221DF91BCA0111F29FA /* UpdatesOverview.swift */,
 				E16F11787601C86A1217B362 /* UpdatesView.swift */,
@@ -1486,6 +1489,7 @@
 				98410AE03A6D0D2733F43950 /* SourceEditorView.swift in Sources */,
 				0E3C370FF5AF9E6689C94245 /* SourceFilter.swift in Sources */,
 				83BD56B929AD08E5503E89B0 /* ToolSourcesView.swift in Sources */,
+				A0515CC7071B411ED126C274 /* ToolUpdateRow.swift in Sources */,
 				CEE8F8C6D13C6EBD2B706356 /* TransferProgress.swift in Sources */,
 				2E54C16B5CB94546B7F356E2 /* TransferViews.swift in Sources */,
 				96B517174DF32592096EB4B5 /* UpdatesOverview.swift in Sources */,

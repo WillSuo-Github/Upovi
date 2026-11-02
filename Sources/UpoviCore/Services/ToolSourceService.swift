@@ -101,14 +101,14 @@ public struct ToolSourceService: Sendable {
             let data = try await command(executable, ["list", "--global", "--depth=0", "--json"])
             let json = try JSONSerialization.jsonObject(with: data)
             let roots = (json as? [[String: Any]]) ?? ((json as? [String: Any]).map { [$0] } ?? [])
-            guard !roots.isEmpty, !roots.contains(where: { $0["error"] != nil }) else { throw PeerError.invalid("Invalid global JavaScript inventory") }
+            guard (json is [[String: Any]] || json is [String: Any]), !roots.contains(where: { $0["error"] != nil }) else { throw PeerError.invalid("Invalid global JavaScript inventory") }
             var installed: [String: String] = [:]
             for root in roots {
                 for (name, item) in root["dependencies"] as? [String: [String: Any]] ?? [:] {
                     if let version = item["version"] as? String { installed[name] = version }
                 }
             }
-            let outdatedData = try await command(executable, ["outdated", "--global", "--json"], codes: [0, 1])
+            let outdatedData = try await command(executable, (source == .npm ? ["outdated", "--global", "--json"] : ["outdated", "--global", "--format", "json"]), codes: [0, 1])
             let decoded: Any = outdatedData.isEmpty ? [String: Any]() : try JSONSerialization.jsonObject(with: outdatedData)
             let raw: [String: Any]
             if let dictionary = decoded as? [String: Any], dictionary["error"] == nil { raw = dictionary }
@@ -159,43 +159,51 @@ public struct ToolSourceService: Sendable {
         }
     }
 
-    public func update(_ source: ToolSource, executable: URL, expectedContext: String?) async throws -> ToolSnapshot {
+    /// Update exactly the reviewed package. Other outdated packages do not affect its result.
+    public func update(_ item: ToolUpdateItem, executable: URL) async throws -> ToolSnapshot {
+        let source = item.source, package = item.package
+        guard Self.validName(package.name, source: source) else { throw PeerError.invalid("Invalid global package name") }
         let before = try await check(source, executable: executable)
-        if let expectedContext, before.context != expectedContext { throw PeerError.invalid("Global package scope changed; check again before updating") }
-        for item in before.updates {
-            guard Self.validName(item.name, source: source) else { throw PeerError.invalid("Invalid global package name") }
+        guard before.context == item.context else { throw PeerError.invalid("Global package scope changed; check again before updating") }
+        guard let installed = before.installed[package.name] else { throw PeerError.invalid("Selected global tool is no longer installed") }
+        // Dependencies or an external updater can finish a queued package first.
+        if Self.confirmed(package, in: before) { return before }
+        guard !before.held.contains(package.name),
+              let target = before.updates.first(where: { $0.name == package.name }),
+              target.available == package.available, installed == package.installed else {
+            throw PeerError.invalid("Global tool target or version constraint changed; check again before updating")
         }
+        let args: [String]
         switch source {
-        case .homebrew:
-            _ = try await command(executable, ["update"], updating: true)
-            _ = try await command(executable, ["upgrade", "--formula"], updating: true)
+        case .homebrew: args = ["upgrade", "--formula", "--", package.name]
         case .npm, .pnpm:
-            if !before.updates.isEmpty {
-                let packages = try before.updates.map { item in
-                    guard Self.validVersion(item.available) else { throw PeerError.invalid("Invalid JavaScript target version") }
-                    return item.name + "@" + item.available
-                }
-                _ = try await command(executable, (source == .npm ? ["install", "--global", "--no-fund", "--no-audit", "--"] : ["add", "--global", "--"]) + packages, updating: true)
-            }
-        case .uv:
-            for item in before.updates { _ = try await command(executable, ["tool", "upgrade", item.name], updating: true) }
-        case .pipx:
-            for item in before.updates { _ = try await command(executable, ["upgrade", item.name], updating: true) }
-        case .cargo:
-            if !before.updates.isEmpty { _ = try await command(executable, ["install-update"] + before.updates.map(\.name), updating: true) }
-        case .rustup:
-            if !before.updates.isEmpty { _ = try await command(executable, ["update", "--no-self-update"] + before.updates.map(\.name), updating: true) }
+            guard Self.validVersion(package.available) else { throw PeerError.invalid("Invalid JavaScript target version") }
+            args = (source == .npm ? ["install", "--global", "--no-fund", "--no-audit", "--"] : ["add", "--global", "--"]) + [package.name + "@" + package.available]
+        case .uv: args = ["tool", "upgrade", package.name]
+        case .pipx: args = ["upgrade", package.name]
+        case .cargo: args = ["install-update", package.name]
+        case .rustup: args = ["update", "--no-self-update", package.name]
         }
+        _ = try await command(executable, args, updating: true)
         let after = try await check(source, executable: executable)
-        guard after.context == before.context else { throw PeerError.invalid("Global package scope changed during update") }
-        for item in before.updates {
-            guard let version = after.installed[item.name], version != item.installed,
-                  !after.updates.contains(where: { $0.name == item.name }) else {
-                throw PeerError.unavailable("Package manager did not confirm the selected update: " + item.name)
-            }
+        guard after.context == item.context else { throw PeerError.invalid("Global package scope changed during update") }
+        guard Self.confirmed(package, in: after) else {
+            throw PeerError.unavailable("Package manager did not confirm the selected update: " + package.name)
         }
-        guard after.updates.isEmpty else { throw PeerError.unavailable("Package manager still reports available global tool updates") }
         return after
+    }
+
+    private static func confirmed(_ package: ToolPackage, in snapshot: ToolSnapshot) -> Bool {
+        guard let version = snapshot.installed[package.name] else { return false }
+        if let order = VersionOrder.compare(version, package.available) {
+            if order == .orderedDescending { return true }
+            // Rust rolling channels can publish a new revision with the same semantic version.
+            return order == .orderedSame && (version != package.installed || !snapshot.updates.contains { $0.name == package.name })
+        }
+        // Native revisions may not be semver-comparable. Require an actual change and a fresh
+        // manager report that this package has no remaining update, without hiding other failures.
+        return version != package.installed && !snapshot.updates.contains { $0.name == package.name }
+            && !snapshot.held.contains(package.name)
     }
 
     public static func parseUV(_ text: String) throws -> ToolSnapshot {

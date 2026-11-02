@@ -14,7 +14,7 @@ struct ContentView: View {
                 .overlay(alignment: .bottom) { ActivityPill(store: store).padding(.bottom, 16) }
         }
         .tint(Theme.accent)
-        .searchable(text: $store.search, placement: .toolbar, prompt: "搜索应用或 Bundle ID")
+        .searchable(text: $store.search, placement: .toolbar, prompt: "搜索应用、工具或 Bundle ID")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { store.refreshAll() } label: { Label("刷新并检查", systemImage: "arrow.clockwise") }

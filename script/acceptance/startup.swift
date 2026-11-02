@@ -67,8 +67,9 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
             let sources: [ToolSource] = [.homebrew, .npm, .uv, .rustup]
             store.toolLocations = Dictionary(uniqueKeysWithValues: sources.map { ($0, URL(fileURLWithPath: "/fixture/" + $0.executableName)) })
             store.enabledToolSources = Set(sources)
-            store.checkToolSource = { source, _ in .init(source: source, installed: ["fixture-tool":"1"], updates: source == .npm ? [.init(name: "fixture-tool", installed: "1", available: "2")] : []) }
-            store.updateToolSource = { source, _, _ in .init(source: source, installed: ["fixture-tool":"2"], updates: []) }
+            let fixtureTools = CompletionToolFixtures(failOne: CommandLine.arguments.contains("--tool-failure"))
+            store.checkToolSource = { source, _ in await fixtureTools.check(source) }
+            store.updateToolPackage = { item, _ in try await fixtureTools.update(item) }
             store.runningUpdateApplications = { _ in [] }
             store.installStoreUpdate = { _, app, _ in
                 if app.name == "zoom.us" && !allSucceeded { throw InstallationSpaceError(required: 6_000_000_000, available: 5_000_000_000) }
@@ -90,7 +91,7 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
             store.toolLocations = [.npm: URL(fileURLWithPath: "/opt/homebrew/bin/npm")]
             store.enabledToolSources = [.npm]
             store.checkToolSource = { source, executable in try await service.check(source, executable: executable) }
-            store.updateToolSource = { source, executable, context in try await service.update(source, executable: executable, expectedContext: context) }
+            store.updateToolPackage = { item, executable in try await service.update(item, executable: executable) }
         } else if preview {
             store.runningUpdateApplications = { $0 }
             store.quitUpdateApplication = { _ in }
@@ -133,5 +134,24 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
         if let data = try? JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]) {
             try? data.write(to: root.appending(path: "startup-result.json"), options: .atomic)
         }
+    }
+}
+
+/// Offline package inventory: exercising rows and retries never touches a real package manager.
+private actor CompletionToolFixtures {
+    let packages: [ToolSource: [String]] = [.homebrew: ["asc", "aws-c-auth", "ripgrep"], .npm: ["ccusage", "wrangler"], .uv: ["tavily-cli"], .rustup: ["stable-aarch64-apple-darwin"]]
+    var completed = Set<String>()
+    var failOne: Bool
+    init(failOne: Bool) { self.failOne = failOne }
+    func check(_ source: ToolSource) -> ToolSnapshot {
+        let names = packages[source] ?? []
+        return .init(source: source, installed: Dictionary(uniqueKeysWithValues: names.map { ($0, completed.contains($0) ? "2" : "1") }),
+                     updates: names.filter { !completed.contains($0) }.map { .init(name: $0, installed: "1", available: "2") })
+    }
+    func update(_ item: ToolUpdateItem) async throws -> ToolSnapshot {
+        try await Task.sleep(for: .milliseconds(700))
+        if item.package.name == "ccusage", failOne { failOne = false; throw PeerError.unavailable("Offline fixture: selected package could not be updated") }
+        completed.insert(item.package.name)
+        return check(item.source)
     }
 }

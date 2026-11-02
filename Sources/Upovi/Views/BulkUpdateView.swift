@@ -15,22 +15,12 @@ struct BulkUpdateView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     if !store.bulkHasRun, !notes.isEmpty { notesPanel }
-                    if !installable.isEmpty {
-                        section(store.bulkHasRun ? String(localized: "更新任务") : String(localized: "将由 Upovi 下载、验证并安装"),
-                                items: installable)
+                    if !installable.isEmpty || !store.toolBatchItems.isEmpty {
+                        section(store.bulkHasRun ? String(localized: "更新任务") : String(localized: "将更新以下项目"),
+                                items: installable, tools: store.toolBatchItems)
                     }
                     if !manual.isEmpty {
                         section(String(localized: "需要你通过官方渠道处理"), items: manual)
-                    }
-                    if !store.toolBatchSources.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("全局工具来源").font(.headline)
-                            ForEach(store.toolBatchSources) { source in
-                                Label(source.title, systemImage: "terminal").frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            Text("将依次更新这些来源管理的全局工具。可能运行安装脚本，不修改项目依赖，不提供应用备份回滚；停止只影响尚未执行的来源。")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }.padding(12).modifier(UpdatesSurface())
                     }
                     if !store.bulkHasRun {
                         Text("使用全部应用的检测结果，不受搜索和列表筛选影响；已忽略、跳过或稍后提醒的更新不参与。")
@@ -63,16 +53,16 @@ struct BulkUpdateView: View {
             Image(nsImage: NSApp.applicationIconImage).resizable().interpolation(.high)
                 .frame(width: 56, height: 56).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
-                Text(store.bulkHasRun ? (store.bulkUpdating ? "正在更新…" : "更新已结束") : (store.toolBatchSources.isEmpty ? "确认更新应用" : "确认更新"))
+                Text(store.bulkHasRun ? (store.bulkUpdating ? "正在更新…" : "更新已结束") : (store.toolBatchItems.isEmpty ? "确认更新应用" : "确认更新"))
                     .font(.system(size: 20, weight: .bold))
                 Group {
                     if store.bulkHasRun {
-                        Text("已完成 \(store.bulkCompletedCount) 个 · 失败 \(store.bulkFailedCount) 个 · 共 \(store.bulkItems.count + store.toolBatchSources.count) 个")
+                        Text("已完成 \(store.bulkCompletedCount) 个 · 失败 \(store.bulkFailedCount) 个 · 共 \(store.bulkItems.count + store.toolBatchItems.count) 个")
                     } else {
-                        if store.toolBatchSources.isEmpty {
+                        if store.toolBatchItems.isEmpty {
                             Text("可自动更新 \(store.bulkInstallableCount) 个 · 需官方处理 \(store.bulkItems.count - store.bulkAppInstallableCount) 个")
                         } else {
-                            Text("\(store.bulkAppInstallableCount) 个应用 · \(store.toolBatchSources.count) 个工具来源")
+                            Text("可自动更新 \(store.bulkInstallableCount) 项 · 需官方处理 \(store.bulkItems.count - store.bulkAppInstallableCount) 项")
                         }
                     }
                 }
@@ -112,6 +102,9 @@ struct BulkUpdateView: View {
             notes.append(Note(id: "pkg", symbol: "exclamationmark.triangle.fill",
                               text: String(localized: "清单包含 PKG 安装包，可运行脚本并修改系统。恢复主应用不能撤销脚本或系统改动。"), tone: .warning))
         }
+        if !store.toolBatchItems.isEmpty {
+            notes.append(Note(id: "tools", symbol: "terminal", text: String(localized: "命令行工具由原包管理器逐个更新，可能运行安装脚本；不修改项目依赖，不提供应用备份回滚。")))
+        }
         return notes
     }
 
@@ -136,20 +129,30 @@ struct BulkUpdateView: View {
 
     // MARK: Rows
 
-    private func section(_ title: String, items: [BulkUpdateItem]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+    private enum Entry: Identifiable {
+        case application(BulkUpdateItem), tool(ToolUpdateItem)
+        var id: String { switch self { case .application(let item): "app:" + item.id; case .tool(let item): "tool:" + item.id } }
+        var name: String { switch self { case .application(let item): item.application.name; case .tool(let item): item.package.name } }
+    }
+
+    private func section(_ title: String, items: [BulkUpdateItem], tools: [ToolUpdateItem] = []) -> some View {
+        let entries = (items.map(Entry.application) + tools.map(Entry.tool))
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(title)
-                Text(items.count.formatted()).monospacedDigit().foregroundStyle(.tertiary)
+                Text(entries.count.formatted()).monospacedDigit().foregroundStyle(.tertiary)
             }
             .font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).padding(.leading, 4)
             VStack(spacing: 0) {
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                     if index > 0 { Divider().padding(.leading, 14 + 32 + 12) }
-                    row(item)
+                    switch entry {
+                    case .application(let item): row(item)
+                    case .tool(let item): ToolUpdateRow(store: store, item: item, confirmation: true)
+                    }
                 }
-            }
-            .modifier(UpdatesSurface())
+            }.modifier(UpdatesSurface())
         }
     }
 
@@ -216,7 +219,7 @@ struct BulkUpdateView: View {
                     .keyboardShortcut(.cancelAction)
             }
             if !store.bulkHasRun {
-                Button(store.toolBatchSources.isEmpty ? String(localized: "开始更新 \(store.bulkInstallableCount) 个应用") : String(localized: "开始更新 \(store.bulkInstallableCount) 项任务")) { store.startAllUpdates() }
+                Button(store.toolBatchItems.isEmpty ? String(localized: "开始更新 \(store.bulkInstallableCount) 个应用") : String(localized: "开始更新 \(store.bulkInstallableCount) 项任务")) { store.startAllUpdates() }
                     .buttonStyle(PillButtonStyle(prominent: true, large: true)).keyboardShortcut(.defaultAction)
                     .disabled(store.bulkInstallableCount == 0 || !store.networkAvailable)
                     .accessibilityIdentifier("bulk-update-start")

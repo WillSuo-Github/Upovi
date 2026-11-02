@@ -4,7 +4,7 @@ import UpoviCore
 extension ToolSource {
     var scopeDescription: String {
         switch self {
-        case .homebrew: String(localized: "Homebrew 本身、软件索引与 Formula 命令行工具；图形应用仍使用原有更新流程。")
+        case .homebrew: String(localized: "通过 Homebrew 安装的 Formula 命令行工具；每个待更新工具独立列出，图形应用仍使用原有更新流程。")
         case .npm: String(localized: "当前 npm 环境中全局安装的命令行工具，不修改项目依赖。")
         case .pnpm: String(localized: "当前 pnpm 环境中全局安装的命令行工具。")
         case .uv: String(localized: "通过 uv tool 安装的独立 Python 工具。")
@@ -51,52 +51,6 @@ struct ToolSourcesSettings: View {
     }
 }
 
-struct ToolSourcesSection: View {
-    @Bindable var store: AppStore
-    private var sources: [ToolSource] { store.visibleToolSources }
-    var body: some View {
-        if !sources.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("全局工具").font(.system(size: 14, weight: .semibold))
-                    Spacer()
-                    if store.toolChecking { ProgressView().controlSize(.small) }
-                }
-                VStack(spacing: 0) {
-                    ForEach(sources, id: \.self) { source in
-                        if source.id != sources.first?.id { Divider().padding(.leading, 60) }
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: "terminal.fill").font(.title2).foregroundStyle(Theme.accent).frame(width: 36, height: 36)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(source.title).font(.system(size: 14, weight: .semibold))
-                                Text(detail(source)).font(.caption).foregroundStyle(store.toolCheckErrors[source] == nil ? Color.secondary : Color.orange)
-                                    .lineLimit(3).help(detail(source))
-                            }.frame(maxWidth: .infinity, alignment: .leading)
-                            if store.toolRunningSource == source { ProgressView().controlSize(.small) }
-                            else if (store.bulkSummaryVisible && store.toolFailedSources.contains(source)) || store.toolCheckErrors[source] != nil {
-                                Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange)
-                                    .accessibilityLabel(Text("更新未完成"))
-                            }
-                        }.padding(16).accessibilityIdentifier("tool-source-row-" + source.rawValue)
-                    }
-                }.modifier(UpdatesSurface())
-            }
-        }
-    }
-    private func detail(_ source: ToolSource) -> String {
-        if store.toolRunningSource == source { return String(localized: "包管理器正在更新并核对结果…") }
-        if let result = store.toolOutcomes[source], store.bulkSummaryVisible { return result.detail }
-        if store.bulkUpdating { return String(localized: "排队中") }
-        if let error = store.toolCheckErrors[source] { return error }
-        if let result = store.toolSnapshots[source] {
-            let summary = String(localized: "已检查 \(result.installed.count) 个全局工具 · \(result.updates.count) 个有更新")
-            let held = result.held.isEmpty ? "" : " · " + String(localized: "\(result.held.count) 个按原配置保留")
-            return summary + held + (result.updates.isEmpty ? "" : "\n" + result.updates.prefix(4).map { $0.name + " " + $0.installed + " → " + $0.available }.joined(separator: " · "))
-        }
-        return store.toolChecking ? String(localized: "正在检查全局工具…") : String(localized: "尚未检查全局工具")
-    }
-}
-
 struct ToolHistoryView: View {
     let store: AppStore
     var body: some View {
@@ -110,7 +64,8 @@ struct ToolHistoryView: View {
                     Text(record.detail).font(.caption).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
                 } label: {
                     HStack {
-                        Text(record.source.title)
+                        Text(record.item?.package.name ?? record.source.title)
+                        if record.item != nil { Text(record.source.title).foregroundStyle(.secondary) }
                         Spacer()
                         Text(state(record.state)).foregroundStyle(record.state == .failed ? Color.orange : Color.secondary)
                         Text(record.startedAt.formatted(date: .abbreviated, time: .shortened)).foregroundStyle(.secondary)

@@ -42,7 +42,7 @@ final class ToolSourceTests: XCTestCase {
     func testNpmUsesGlobalExactVersionArgumentsAndVerifiesTheInstalledResult() async throws {
         let runner = NpmToolReplies()
         let service = ToolSourceService(runner: { try await runner.run($0) })
-        let result = try await service.update(.npm, executable: URL(fileURLWithPath: "/fixture/npm"), expectedContext: "/fixture/global")
+        let result = try await service.update(.init(source: .npm, package: .init(name: "@scope/tool", installed: "1.0.0", available: "2.0.0"), context: "/fixture/global"), executable: URL(fileURLWithPath: "/fixture/npm"))
         XCTAssertEqual(result.installed["@scope/tool"], "2.0.0")
         XCTAssertTrue(result.updates.isEmpty)
         let commands = await runner.commands
@@ -53,24 +53,24 @@ final class ToolSourceTests: XCTestCase {
     func testChangedGlobalScopeAndUnconfirmedInstallationNeverSucceed() async throws {
         let changed = NpmToolReplies()
         do {
-            _ = try await ToolSourceService(runner: { try await changed.run($0) }).update(.npm, executable: URL(fileURLWithPath: "/fixture/npm"), expectedContext: "/other/prefix")
+            _ = try await ToolSourceService(runner: { try await changed.run($0) }).update(.init(source: .npm, package: .init(name: "@scope/tool", installed: "1.0.0", available: "2.0.0"), context: "/other/prefix"), executable: URL(fileURLWithPath: "/fixture/npm"))
             XCTFail("Changed scope must block writes")
         } catch { }
         let changedCommands = await changed.commands
         XCTAssertFalse(changedCommands.contains(where: \.updating))
         let failed = NpmToolReplies(installWorks: false)
         do {
-            _ = try await ToolSourceService(runner: { try await failed.run($0) }).update(.npm, executable: URL(fileURLWithPath: "/fixture/npm"), expectedContext: nil)
+            _ = try await ToolSourceService(runner: { try await failed.run($0) }).update(.init(source: .npm, package: .init(name: "@scope/tool", installed: "1.0.0", available: "2.0.0"), context: "/fixture/global"), executable: URL(fileURLWithPath: "/fixture/npm"))
             XCTFail("Exit zero without a version change cannot be success")
         } catch { }
     }
     func testHomebrewUsesFormulaOwnershipAndKeepsPinnedPackagesOut() async throws {
         let replies = BrewToolReplies()
         let service = ToolSourceService(runner: { try await replies.run($0) })
-        let result = try await service.update(.homebrew, executable: URL(fileURLWithPath: "/fixture/brew"), expectedContext: nil)
+        let result = try await service.update(.init(source: .homebrew, package: .init(name: "tool", installed: "1.0", available: "2.0")), executable: URL(fileURLWithPath: "/fixture/brew"))
         XCTAssertTrue(result.updates.isEmpty)
         let commands = await replies.commands
-        XCTAssertEqual(commands.filter(\.updating).map(\.arguments), [["update"], ["upgrade", "--formula"]])
+        XCTAssertEqual(commands.filter(\.updating).map(\.arguments), [["upgrade", "--formula", "--", "tool"]])
         XCTAssertFalse(commands.contains { $0.arguments.contains("--cask") || $0.arguments.contains("--force") })
     }
     func testProcessCommandAcceptsDocumentedNonzeroReadStatusAndUsesNeutralDirectory() async throws {
@@ -81,7 +81,7 @@ final class ToolSourceTests: XCTestCase {
     func testOtherNativeManagersUseScopedCommandsAndRecheckVersions() async throws {
         for source in [ToolSource.uv, .pipx, .cargo, .rustup] {
             let replies = OtherToolReplies(source: source)
-            let result = try await ToolSourceService(runner: { try await replies.run($0) }).update(source, executable: URL(fileURLWithPath: "/fixture/manager"), expectedContext: nil)
+            let result = try await ToolSourceService(runner: { try await replies.run($0) }).update(.init(source: source, package: .init(name: source == .rustup ? "stable-aarch64-apple-darwin" : "foo", installed: "1.0.0", available: "2.0.0")), executable: URL(fileURLWithPath: "/fixture/manager"))
             XCTAssertTrue(result.updates.isEmpty)
             let commands = await replies.commands
             let writes = commands.filter(\.updating).map(\.arguments)
@@ -102,9 +102,70 @@ final class ToolSourceTests: XCTestCase {
             XCTFail("Empty global inventory must not install tools")
             return Data()
         }
-        let result = try await service.update(.pnpm, executable: URL(fileURLWithPath: "/fixture/pnpm"), expectedContext: "/fixture/pnpm")
+        let result = try await service.check(.pnpm, executable: URL(fileURLWithPath: "/fixture/pnpm"))
         XCTAssertTrue(result.installed.isEmpty); XCTAssertTrue(result.updates.isEmpty)
     }
+    func testSelectedPackageSucceedsWhileSiblingStillHasAnUpdate() async throws {
+        for source in [ToolSource.npm, .pnpm, .homebrew] {
+            let replies = SelectedToolReplies(source: source)
+            let result = try await ToolSourceService(runner: { try await replies.run($0) }).update(
+                .init(source: source, package: .init(name: "first", installed: "1.0", available: "2.0"), context: source == .homebrew ? "" : "/fixture/global"),
+                executable: URL(fileURLWithPath: "/fixture/manager"))
+            XCTAssertEqual(result.installed["first"], "2.0")
+            XCTAssertEqual(result.installed["second"], "1.0")
+            XCTAssertEqual(result.updates.map(\.name), ["second"])
+            let writes = await replies.commands.filter(\.updating).map(\.arguments)
+            XCTAssertEqual(writes.count, 1)
+            XCTAssertEqual(writes[0].last, source == .homebrew ? "first" : "first@2.0")
+        }
+    }
+    func testAlreadyCurrentToolDoesNotWriteAndLowerVersionCannotSucceed() async throws {
+        for version in ["2.0", "3.0", "1.5"] {
+            let replies = SelectedToolReplies(source: .npm, initial: version)
+            let service = ToolSourceService(runner: { try await replies.run($0) })
+            let item = ToolUpdateItem(source: .npm, package: .init(name: "first", installed: "1.0", available: "2.0"), context: "/fixture/global")
+            do {
+                _ = try await service.update(item, executable: URL(fileURLWithPath: "/fixture/npm"))
+                XCTAssertNotEqual(version, "1.5", "A lower version with no outdated row is not the reviewed target")
+            } catch { XCTAssertEqual(version, "1.5") }
+            let commands = await replies.commands
+            XCTAssertFalse(commands.contains(where: \.updating))
+        }
+    }
+    func testChangedTargetDoesNotSilentlyUpgradeBeyondReview() async throws {
+        let replies = SelectedToolReplies(source: .npm)
+        do {
+            _ = try await ToolSourceService(runner: { try await replies.run($0) }).update(
+                .init(source: .npm, package: .init(name: "first", installed: "1.0", available: "1.8"), context: "/fixture/global"),
+                executable: URL(fileURLWithPath: "/fixture/npm"))
+            XCTFail("Target must be re-reviewed")
+        } catch { }
+        let commands = await replies.commands
+        XCTAssertFalse(commands.contains(where: \.updating))
+    }
+    func testPnpmUsesDocumentedOutdatedFormatAndAcceptsAnEmptyList() async throws {
+        let service = ToolSourceService { command in
+            switch command.arguments.first {
+            case "root": return Data("/fixture/global".utf8)
+            case "list": return Data("[]".utf8)
+            case "outdated":
+                XCTAssertEqual(command.arguments, ["outdated", "--global", "--format", "json"])
+                return Data("{}".utf8)
+            default: XCTFail("Checking must not write"); return Data()
+            }
+        }
+        let result = try await service.check(.pnpm, executable: URL(fileURLWithPath: "/fixture/pnpm"))
+        XCTAssertTrue(result.installed.isEmpty); XCTAssertTrue(result.updates.isEmpty)
+    }
+
+    func testRollingRustChannelWithSameVersionMustStillRunItsUpdate() async throws {
+        let replies = RollingRustReplies()
+        let item = ToolUpdateItem(source: .rustup, package: .init(name: "nightly-aarch64-apple-darwin", installed: "1.99.0", available: "1.99.0"))
+        _ = try await ToolSourceService(runner: { await replies.run($0) }).update(item, executable: URL(fileURLWithPath: "/fixture/rustup"))
+        let writes = await replies.commands.filter(\.updating).map(\.arguments)
+        XCTAssertEqual(writes, [["update", "--no-self-update", "nightly-aarch64-apple-darwin"]])
+    }
+
 }
 
 private actor NpmToolReplies {
@@ -134,7 +195,7 @@ private actor BrewToolReplies {
         if command.arguments.first == "outdated" {
             return Data((upgraded ? #"{"formulae":[{"name":"pinned","current_version":"2.0","pinned":true}]}"# : #"{"formulae":[{"name":"tool","current_version":"2.0"},{"name":"pinned","current_version":"2.0","pinned":true}]}"#).utf8)
         }
-        if command.arguments == ["upgrade", "--formula"] { upgraded = true }
+        if command.arguments == ["upgrade", "--formula", "--", "tool"] { upgraded = true }
         return Data()
     }
 }
@@ -160,5 +221,40 @@ private actor OtherToolReplies {
         default: throw PeerError.invalid("Unexpected manager")
         }
         return Data(output.utf8)
+    }
+}
+
+private actor SelectedToolReplies {
+    let source: ToolSource
+    var first: String
+    var commands: [ToolCommand] = []
+    init(source: ToolSource, initial: String = "1.0") { self.source = source; first = initial }
+    func run(_ command: ToolCommand) throws -> Data {
+        commands.append(command)
+        if command.updating { first = "2.0"; return Data() }
+        let response: String
+        switch command.arguments.first {
+        case "prefix", "root": response = "/fixture/global"
+        case "list":
+            response = source == .homebrew ? "first \(first)\nsecond 1.0" : "{\"dependencies\":{\"first\":{\"version\":\"\(first)\"},\"second\":{\"version\":\"1.0\"}}}"
+        case "outdated":
+            if source == .homebrew {
+                response = "{\"formulae\":[" + (first == "1.0" ? "{\"name\":\"first\",\"current_version\":\"2.0\"}," : "") + "{\"name\":\"second\",\"current_version\":\"2.0\"}]}"
+            } else {
+                response = "{" + (first == "1.0" ? "\"first\":{\"latest\":\"2.0\"}," : "") + "\"second\":{\"latest\":\"2.0\"}}"
+            }
+        default: throw PeerError.invalid("Unexpected command")
+        }
+        return Data(response.utf8)
+    }
+}
+
+private actor RollingRustReplies {
+    var commands: [ToolCommand] = []
+    var updated = false
+    func run(_ command: ToolCommand) -> Data {
+        commands.append(command)
+        if command.updating { updated = true; return Data() }
+        return Data(("nightly-aarch64-apple-darwin - " + (updated ? "up to date : 1.99.0 (new hash)" : "update available: 1.99.0 (old hash) -> 1.99.0 (new hash)")).utf8)
     }
 }

@@ -18,7 +18,7 @@ import UpoviCore
     func testSourcesDefaultOffAndEnablingOnlyChecksAndPersists() async throws {
         let (value, preferences) = try store()
         XCTAssertTrue(value.enabledToolSources.isEmpty)
-        value.updateToolSource = { _, _, _ in XCTFail("A toggle must not update packages"); throw PeerError.invalid("Unexpected write") }
+        value.updateToolPackage = { _, _ in XCTFail("A toggle must not update packages"); throw PeerError.invalid("Unexpected write") }
         value.setToolSource(.npm, enabled: true)
         await value.toolCheckTask?.value
         XCTAssertEqual(value.toolSnapshots[.npm]?.updates.count, 1)
@@ -29,7 +29,7 @@ import UpoviCore
     }
     func testToolsOnlyParticipateInUpdateAllAndPersistVerifiedHistory() async throws {
         let (value, preferences) = try store()
-        value.updateToolSource = { source, _, _ in .init(source: source, context: "/fixture/global", installed: ["tool":"2.0"], updates: []) }
+        value.updateToolPackage = { item, _ in .init(source: item.source, context: "/fixture/global", installed: ["tool":"2.0"], updates: []) }
         value.setToolSource(.npm, enabled: true); await value.toolCheckTask?.value
         value.reviewAllUpdates()
         XCTAssertTrue(value.bulkUpdatePresented); XCTAssertEqual(value.bulkInstallableCount, 1)
@@ -37,7 +37,7 @@ import UpoviCore
         XCTAssertEqual(value.bulkCompletedCount, 1); XCTAssertEqual(value.bulkFailedCount, 0)
         XCTAssertTrue(value.batchHistory.isEmpty)
         XCTAssertEqual(value.toolHistory.first?.state, .succeeded)
-        XCTAssertTrue(value.visibleToolSources.isEmpty)
+        XCTAssertTrue(value.visibleToolUpdates.isEmpty)
         XCTAssertEqual(AppStore(preferences: preferences).toolHistory.first?.state, .succeeded)
         XCTAssertFalse(value.installationBusy)
     }
@@ -45,14 +45,15 @@ import UpoviCore
         let (value, _) = try store()
         value.setToolSource(.npm, enabled: true); await value.toolCheckTask?.value
         value.setToolSource(.uv, enabled: true); await value.toolCheckTask?.value
-        value.updateToolSource = { [weak value] source, _, _ in
+        value.updateToolPackage = { [weak value] item, _ in
+            let source = item.source
             XCTAssertEqual(source, .npm)
             await value?.stopAllUpdates()
             return .init(source: source, installed: ["tool":"2.0"], updates: [])
         }
         value.reviewAllUpdates(); value.startAllUpdates(); await value.bulkTask?.value
         XCTAssertEqual(value.bulkCompletedCount, 1)
-        XCTAssertEqual(value.toolOutcomes[.uv]?.state, .interrupted)
+        XCTAssertEqual(value.toolOutcomes[value.toolBatchItems.first { $0.source == .uv }!.id]?.state, .interrupted)
         XCTAssertEqual(value.toolHistory.count, 1)
     }
     func testInterruptedToolHistoryNeverAutomaticallyResumes() throws {
@@ -66,23 +67,24 @@ import UpoviCore
         let (value, _) = try store()
         value.setToolSource(.npm, enabled: true); await value.toolCheckTask?.value
         value.setToolSource(.uv, enabled: true); await value.toolCheckTask?.value
-        value.updateToolSource = { source, _, _ in
+        value.updateToolPackage = { item, _ in
+            let source = item.source
             if source == .npm { throw PeerError.unavailable("Synthetic manager failure") }
             return .init(source: source, installed: ["tool":"2.0"], updates: [])
         }
         value.reviewAllUpdates(); value.startAllUpdates(); await value.bulkTask?.value
         XCTAssertEqual(value.bulkCompletedCount, 1); XCTAssertEqual(value.bulkFailedCount, 1)
-        XCTAssertEqual(value.visibleToolSources, [.npm]); XCTAssertEqual(value.toolHistory.count, 2)
+        XCTAssertEqual(value.visibleToolUpdates.map(\.source), [.npm]); XCTAssertEqual(value.toolHistory.count, 2)
         value.retryLatestBulkRun()
-        XCTAssertEqual(value.toolBatchSources, [.npm])
-        value.updateToolSource = { source, _, _ in .init(source: source, installed: ["tool":"2.0"], updates: []) }
+        XCTAssertEqual(value.toolBatchItems.map(\.source), [.npm])
+        value.updateToolPackage = { item, _ in .init(source: item.source, installed: ["tool":"2.0"], updates: []) }
         value.startAllUpdates(); await value.bulkTask?.value
-        XCTAssertTrue(value.visibleToolSources.isEmpty)
+        XCTAssertTrue(value.visibleToolUpdates.isEmpty)
         XCTAssertEqual(value.toolHistory.count, 3)
     }
     func testGlobalRefreshClearsFinishedSummaryAndChecksEnabledTools() async throws {
         let (value, _) = try store()
-        value.updateToolSource = { source, _, _ in .init(source: source, installed: ["tool":"2.0"], updates: []) }
+        value.updateToolPackage = { item, _ in .init(source: item.source, installed: ["tool":"2.0"], updates: []) }
         value.setToolSource(.npm, enabled: true); await value.toolCheckTask?.value
         value.reviewAllUpdates(); value.startAllUpdates(); await value.bulkTask?.value
         XCTAssertTrue(value.bulkSummaryVisible)
@@ -90,6 +92,59 @@ import UpoviCore
         XCTAssertFalse(value.bulkSummaryVisible)
         await value.checkTask?.value; await value.toolCheckTask?.value
         XCTAssertEqual(value.toolSnapshots[.npm]?.updates.count, 1)
-        XCTAssertEqual(value.visibleToolSources, [.npm])
+        XCTAssertEqual(value.visibleToolUpdates.map(\.source), [.npm])
     }
+    func testOneSourceCreatesIndividualTasksAndRetriesOnlyTheFailedPackage() async throws {
+        let (value, preferences) = try store()
+        value.enabledToolSources = [.npm]
+        value.toolSnapshots[.npm] = .init(source: .npm, context: "/fixture/global", installed: ["alpha":"1", "beta":"1"], updates: [
+            .init(name: "alpha", installed: "1", available: "2"), .init(name: "beta", installed: "1", available: "2")])
+        value.updateToolPackage = { item, _ in
+            if item.package.name == "alpha" { throw PeerError.unavailable("Synthetic alpha failure") }
+            return .init(source: .npm, context: item.context, installed: ["alpha":"1", "beta":"2"], updates: [.init(name: "alpha", installed: "1", available: "2")])
+        }
+        XCTAssertEqual(value.toolUpdateCount, 2)
+        XCTAssertTrue(value.matchesSearch(value.pendingToolUpdates[0]))
+        value.search = "BETA"; XCTAssertTrue(value.matchesSearch(value.pendingToolUpdates[1])); XCTAssertFalse(value.matchesSearch(value.pendingToolUpdates[0]))
+        value.reviewAllUpdates()
+        XCTAssertEqual(value.bulkInstallableCount, 2, "Search must not narrow Update All")
+        value.startAllUpdates(); await value.bulkTask?.value
+        XCTAssertEqual(value.bulkCompletedCount, 1); XCTAssertEqual(value.bulkFailedCount, 1)
+        XCTAssertEqual(value.visibleToolUpdates.map { $0.package.name }, ["alpha"])
+        XCTAssertNil(value.toolCheckErrors[.npm], "One failed package cannot hide or fail its siblings")
+        value.retryLatestBulkRun()
+        XCTAssertEqual(value.toolBatchItems.map { $0.package.name }, ["alpha"])
+        let saved = AppStore(preferences: preferences).toolHistory
+        XCTAssertEqual(Set(saved.compactMap { $0.item?.package.name }), ["alpha", "beta"])
+    }
+    func testSingleToolUpdateAndEmptySourcesDoNotUpgradeTheWholeSource() async throws {
+        let (value, _) = try store()
+        value.enabledToolSources = [.npm, .uv]
+        value.toolSnapshots[.npm] = .init(source: .npm, installed: ["alpha":"1", "beta":"1"], updates: [
+            .init(name: "alpha", installed: "1", available: "2"), .init(name: "beta", installed: "1", available: "2")])
+        value.toolSnapshots[.uv] = .init(source: .uv, installed: ["current":"2"], updates: [])
+        let selected = value.pendingToolUpdates[0]
+        value.reviewToolUpdates([selected])
+        XCTAssertEqual(value.bulkInstallableCount, 1)
+        value.updateToolPackage = { item, _ in
+            XCTAssertEqual(item.package.name, "alpha")
+            return .init(source: .npm, installed: ["alpha":"2", "beta":"1"], updates: [.init(name: "beta", installed: "1", available: "2")])
+        }
+        value.startAllUpdates(); await value.bulkTask?.value
+        XCTAssertEqual(value.visibleToolUpdates.map { $0.package.name }, ["beta"])
+        XCTAssertFalse(value.bulkSummaryVisible, "Single-package success must return to the remaining updates")
+        value.reviewAllUpdates()
+        XCTAssertEqual(value.bulkInstallableCount, 1, "An enabled but current source is not an upgrade task")
+    }
+    func testOldSourceHistoryStillDecodesWithoutPackageAndIdentityIncludesEnvironment() throws {
+        let (_, preferences) = try store()
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode([ToolUpdateRecord(source: .npm)])) as! [[String: Any]]
+        json[0].removeValue(forKey: "item")
+        preferences.set(try JSONSerialization.data(withJSONObject: json), forKey: "toolHistoryV1")
+        XCTAssertNil(AppStore(preferences: preferences).toolHistory.first?.item)
+        let package = ToolPackage(name: "same", installed: "1", available: "2")
+        XCTAssertNotEqual(ToolUpdateItem(source: .npm, package: package).id, ToolUpdateItem(source: .pnpm, package: package).id)
+        XCTAssertNotEqual(ToolUpdateItem(source: .npm, package: package, context: "/a").id, ToolUpdateItem(source: .npm, package: package, context: "/b").id)
+    }
+
 }
