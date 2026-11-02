@@ -1,0 +1,104 @@
+{
+  "version": "0.4.10",
+  "build": "202611020003",
+  "productRevision": "24c13488abd1f6a4bf800cec82d68a015894c5f8",
+  "releaseRevision": "24c13488abd1f6a4bf800cec82d68a015894c5f8",
+  "localValidation": {
+    "sourceRevision": "24c13488abd1f6a4bf800cec82d68a015894c5f8",
+    "swift": {
+      "application": 46,
+      "core": 224,
+      "failures": 0
+    },
+    "xcode": {
+      "passed": 46,
+      "failures": 0
+    },
+    "metadata": {
+      "passed": 8,
+      "failed": 0
+    }
+  },
+  "nativeAcceptance": {
+    "timeoutRetryAndExhaustionMessagesVerified": true,
+    "timeoutNotMisreportedAsOffline": true,
+    "remoteCopilotUpdateVerified": false
+  },
+  "isolatedTransmissionAcceptance": {
+    "officialOldVersion": "4.0.6",
+    "targetVersion": "4.1.4",
+    "oldDSAKeyWithoutEd25519Key": true,
+    "failureReproduced": true,
+    "sourceTargetAndBuildPreserved": true,
+    "independentChecksumSelectedBeforeDownload": true,
+    "productionInstallerUpgradedAndRestored": true,
+    "normalApplicationsModified": false,
+    "remoteInstalledVersionKnown": false
+  },
+  "githubActionsEnabled": false,
+  "appleNotarization": {
+    "status": "Accepted",
+    "submissionID": "71a43116-517a-4df5-b4fa-7cc8cb8779f4"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-02T07:38:11Z",
+      "tagName": "build-202611020003",
+      "targetCommitish": "24c13488abd1f6a4bf800cec82d68a015894c5f8",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611020003"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202611020003.zip",
+        "size": 19854969,
+        "sha256": "25cae4b21c0bbde268d11beb9426d2956c2a674a8d3cc375e32a8b8ba512b6b9",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611020003.zip.sha256",
+        "size": 96,
+        "sha256": "1572f4670557afa2225cc8c54d897ed2345dd7dce763d121153eefd714fbda13",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "31484af36494268861391b5a428f241db3f8c50784380ab8607c7837b4c283fe",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "32f9f622081482e013148c146e7ea344c54915e7706bd1a80b107aba5d76cf10",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "ae857ce16249b35dcbf51a5d51a89bfbfef9010a00d67e26219ddc76e7438ff0",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611020003",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "25cae4b21c0bbde268d11beb9426d2956c2a674a8d3cc375e32a8b8ba512b6b9",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerified": true,
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "intelRuntimeTested": false
+}
