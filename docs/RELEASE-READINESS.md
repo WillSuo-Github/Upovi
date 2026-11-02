@@ -1,3 +1,15 @@
+# Upovi 0.4.10 build 202611020001
+
+Global tools are individual update items in the same alphabetized list as desktop applications. Homebrew, npm and other managers are source labels, not aggregate update rows. Single-tool actions use targeted native commands; Update All counts each pending package independently. Successful rows leave the list, failures and retries stay package-specific, and history stores each tool result while keeping older source records readable. Empty sources create no update tasks. Native managers may still update dependencies required by a selected package.
+
+This build fixes pnpm outdated-output format selection and empty inventories. It rechecks source context, constraints and reviewed targets before writing, recognizes already-installed targets without another install, and continues updating rolling Rust revisions that share a semantic version. Pinned tools and the global-only project-dependency boundary remain intact.
+
+Product/release revision `d88703a` passed 264 Swift tests, 45 hosted Xcode workflow tests and 8 release-metadata tests. Native offline acceptance checked the mixed list, individual update, an 8-success/1-failure mixed run, retry of only the failed package and individual history. Real private-prefix npm acceptance updated mkdirp 2.1.6 → 3.0.1 while semver stayed 7.6.3, then Update All updated only semver to 7.8.5. The signed local Apple Silicon build was installed before publication and showed real app/npm updates in one list. User global tools were not upgraded by these acceptance fixtures. GitHub Actions remain disabled; all validation was local.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611020001) is published as Latest. Apple notarization, ticket stapling and Gatekeeper passed. All five public assets match verified local bytes; fresh extraction passes nested bundle signatures, ticket, Gatekeeper and Sparkle feed/archive signatures. The five-asset public download check used a build query after an initial 404; the unqueried latest feed and direct release archive were also verified. See [release evidence](evidence/0.4.10-build-202611020001.json). This publication did not replace the normal installed local build, exercise a fresh Sparkle self-replacement or test physical Intel runtime. The offline mixed fixtures do not represent real Store/privileged installation coverage.
+
+---
+
 # Upovi 0.4.10 build 202611010002
 
 Application and enabled global-tool checks now share the toolbar refresh action and one Update All flow. Source-specific check/update buttons are removed. Successful tool rows leave the updates list, while unfinished rows remain beside one retry action. Completed runs link directly to the relevant history tab, and batch-history totals exclude manual-channel applications. Failed application details can wrap onto multiple readable lines.
