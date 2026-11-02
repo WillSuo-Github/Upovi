@@ -1,6 +1,54 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "下载连接超时，已自动重试 %lld 次。请检查到下载服务器的连接，再重新检测并下载。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download connection timed out after %lld automatic retries. Check the connection to the download server, then recheck and download."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下載連線逾時，已自動重試 %lld 次。請檢查到下載伺服器的連線，再重新檢查並下載。"
+          }
+        }
+      }
+    },
+    "到下载服务器的连接中断，请检查连接后重新检测并下载。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The connection to the download server was interrupted. Check the connection, then recheck and download."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "到下載伺服器的連線中斷，請檢查連線後重新檢查並下載。"
+          }
+        }
+      }
+    },
+    "下载或校验未通过。请回到“可用更新”查看此应用的具体报错，再重新检测来源。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download or verification failed. Open Updates to see this app’s specific error, then recheck its source."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下載或校驗未通過。請回到「可用更新」查看此應用程式的具體錯誤，再重新檢查來源。"
+          }
+        }
+      }
+    },
     "安装包下载超时，自动重试 %lld 次后仍未完成。请检查网络后重试未完成项；本次尚未安装更新。": {
       "localizations": {
         "en": {

@@ -105,10 +105,12 @@ private struct DownloadTaskRow: View {
     private func failure(_ issue: DiagnosticIssue) -> String {
         let message: String
         switch issue.kind {
-        case .offline, .connection, .timeout: message = String(localized: "网络连接未恢复，请联网后重新检测并下载。")
+        case .offline: message = String(localized: "网络连接未恢复，请联网后重新检测并下载。")
+        case .timeout: message = String(localized: "下载连接超时，已自动重试 \(record.retries) 次。请检查到下载服务器的连接，再重新检测并下载。")
+        case .connection: message = String(localized: "到下载服务器的连接中断，请检查连接后重新检测并下载。")
         case .tls: message = String(localized: "安全连接未通过，请检查网络或使用官方更新。")
         case .http: message = String(localized: "服务器未能提供安装包，请稍后重新检测来源。")
-        case .validationRejected, .invalidMetadata: message = String(localized: "下载或完整性校验未通过，请重新检测来源或使用官方更新。")
+        case .validationRejected, .invalidMetadata: message = String(localized: "下载或校验未通过。请回到“可用更新”查看此应用的具体报错，再重新检测来源。")
         default: message = String(localized: "下载未完成，请重新检测来源；需要排查时可导出诊断报告。")
         }
         return message + (issue.httpStatus.map { " HTTP \($0)" } ?? "")

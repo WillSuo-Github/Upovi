@@ -80,6 +80,34 @@ final class DownloadTrustTests: XCTestCase {
         var buildOnly = target; buildOnly.usesBuildVersion = true
         XCTAssertNil(UpdateChecker.supplementDownloads([buildOnly, cask], for: app())[0].download)
     }
+    func testEd25519OfferWithoutInstalledKeyUsesIndependentMatchingChecksumBeforeDownload() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-key-migration-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root.appending(path: "Contents"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let installed = InstalledApp(name: "Old Sparkle app", bundleID: "app.synthetic.old", version: "4.0.6", path: root.path, teamID: "SYNTHETIC1")
+        let url = URL(string: "https://example.invalid/App-4.1.4.dmg")!
+        let signature = DownloadDescriptor(url: url, edSignature: Data(repeating: 7, count: 64))
+        let digest = DownloadDescriptor(url: url, sha256: String(repeating: "a", count: 64))
+        let target = candidate("4.1.4", build: "14718.1.499", download: signature)
+        let cask = candidate("4.1.4", download: digest)
+        for key in [nil, "invalid", Data(repeating: 4, count: 31).base64EncodedString()] as [String?] {
+            var info = ["SUPublicDSAKeyFile":"dsa_pub.pem"]
+            info["SUPublicEDKey"] = key
+            try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0).write(to: root.appending(path: "Contents/Info.plist"))
+            let result = UpdateChecker.supplementDownloads([target, cask], for: installed)
+            XCTAssertEqual(result[0].download, digest)
+            XCTAssertEqual(result[0].build, target.build)
+            XCTAssertEqual(result[0].source, target.source)
+            XCTAssertNil(UpdateChecker.supplementDownloads([target], for: installed)[0].download)
+            XCTAssertNil(UpdateChecker.supplementDownloads([target, candidate("4.1.3", download: digest)], for: installed)[0].download)
+            XCTAssertNil(UpdateChecker.supplementDownloads([target, candidate("4.1.4", build: "different", download: digest)], for: installed)[0].download)
+        }
+        let info = ["SUPublicEDKey":Data(repeating: 4, count: 32).base64EncodedString()]
+        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0).write(to: root.appending(path: "Contents/Info.plist"))
+        XCTAssertEqual(UpdateChecker.supplementDownloads([target, cask], for: installed)[0].download, signature,
+                       "An available key must retain the advertised signature; verification failures cannot downgrade to another proof")
+    }
+
     func testUnprovenDownloadCannotUseForgedInstalledMetadataAsTrustAnchor() throws {
         let file = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         try Data("untrusted".utf8).write(to: file); defer { try? FileManager.default.removeItem(at: file) }

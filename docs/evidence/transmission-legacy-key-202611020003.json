@@ -1,0 +1,38 @@
+{
+  "testedBuild": "202611020003",
+  "officialOldVersion": "4.0.6",
+  "officialTargetVersion": "4.1.4",
+  "targetBuild": "14718.1.499",
+  "developerTeam": "5DPYRBHEAR",
+  "oldKeyMetadata": {
+    "hasDSAKey": true,
+    "hasEd25519Key": false
+  },
+  "reproducedFailure": "Sparkle archive signature could not be verified against the installed application",
+  "fixedSelection": {
+    "sourceTargetPreserved": true,
+    "selectedIndependentSHA256": "495c5d21d515c8deb859b0db6692fd5606644a1613c2cac87c1d3e7672755a59",
+    "appcastBuildPreserved": true,
+    "availableInstalledKeyRetainsAdvertisedSignature": true
+  },
+  "officialArchive": {
+    "url": "https://github.com/transmission/transmission/releases/download/4.1.4/Transmission-4.1.4.dmg",
+    "size": 11545854,
+    "sha256": "495c5d21d515c8deb859b0db6692fd5606644a1613c2cac87c1d3e7672755a59"
+  },
+  "productionInstallerOnIsolatedCopy": {
+    "prepared": true,
+    "installed": "4.1.4",
+    "restored": "4.0.6",
+    "normalApplicationsModified": false
+  },
+  "sourceTests": {
+    "swiftPassed": 270,
+    "hostedXcodePassed": 46,
+    "metadataPassed": 8
+  },
+  "nativeTimeoutMessageSeparatedFromOffline": true,
+  "remoteCopilotCauseConfirmed": false,
+  "remoteTransmissionInstalledVersionKnown": false,
+  "publicReleasePublished": false
+}

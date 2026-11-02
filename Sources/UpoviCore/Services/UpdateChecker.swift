@@ -115,18 +115,34 @@ public enum UpdateChecker {
     /// Preserve the source's target/build. A second source may fill a missing download for that version;
     /// the installer still checks the downloaded bundle against the original target, including its build.
     static func supplementDownloads(_ candidates: [UpdateCandidate], for app: InstalledApp) -> [UpdateCandidate] {
-        candidates.map { candidate in
-            guard !candidate.isCommunity, candidate.download == nil, !candidate.usesBuildVersion else { return candidate }
+        // An older Sparkle/DSA-only installation cannot verify an Ed25519 enclosure.
+        // Choose a separately proven matching artifact before downloading, never after a failed signature.
+        let hasEdKey: Bool = {
+            guard candidates.contains(where: { $0.download?.edSignature != nil }),
+                  let data = try? Data(contentsOf: URL(fileURLWithPath: app.path).appending(path: "Contents/Info.plist")),
+                  let info = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+                  let encoded = info["SUPublicEDKey"] as? String, let key = Data(base64Encoded: encoded), key.count == 32 else { return false }
+            return true
+        }()
+        func usable(_ descriptor: DownloadDescriptor?) -> Bool {
+            guard let descriptor, descriptor.edSignature == nil || hasEdKey else { return false }
+            return descriptor.canVerify(for: app)
+        }
+        return candidates.map { candidate in
+            guard !candidate.isCommunity else { return candidate }
+            var result = candidate
+            if candidate.download?.edSignature != nil, !hasEdKey { result.download = nil }
+            guard result.download == nil, !candidate.usesBuildVersion else { return result }
             let matches = candidates.filter {
-                !$0.isCommunity && !$0.usesBuildVersion && $0.download?.canVerify(for: app) == true &&
+                !$0.isCommunity && !$0.usesBuildVersion && usable($0.download) &&
                     VersionOrder.compare($0.version, candidate.version) == .orderedSame &&
                     ($0.build.isEmpty || $0.build == candidate.build)
             }
             // Prefer independent archive proof. Ambiguous download URLs remain manual.
             let proven = matches.filter { $0.download?.hasIntegrityProof == true }
             let choices = proven.isEmpty ? matches : proven
-            guard Set(choices.compactMap(\.download)).count == 1, let download = choices.first?.download else { return candidate }
-            var result = candidate; result.download = download
+            guard Set(choices.compactMap(\.download)).count == 1, let download = choices.first?.download else { return result }
+            result.download = download
             return result
         }
     }
