@@ -29,7 +29,7 @@ public struct AdministratorInstallPlan: Codable, Sendable {
               application.path == target.path, target.resolvingSymlinksInPath().path == target.path,
               application.bundleID != "app.upovi.Upovi", !application.isAppStore,
               let team = ApplicationSourceCatalog.replacementTeam(for: application), team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,
-              operation != .package || ApplicationSourceCatalog.legacyMigration(for: application) == nil else {
+              operation != .package || (ApplicationSourceCatalog.legacyMigration(for: application) == nil && ApplicationSourceCatalog.developerTeamMigration(for: application) == nil) else {
             throw PeerError.invalid("Administrator installation requires a signed direct-distribution app directly in /Applications")
         }
         guard ![.restore, .discardBackup, .inspect].contains(operation) else { return }

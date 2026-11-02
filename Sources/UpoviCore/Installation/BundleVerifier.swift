@@ -9,9 +9,9 @@ public enum BundleVerifier {
         guard !app.isAppStore, !candidate.isCommunity, let team = app.teamID, !team.isEmpty,
               target.resolvingSymlinksInPath().path == target.path,
               let current = AppScanner.read(target), !current.isAppStore,
-              current.bundleID == app.bundleID, current.teamID == team else { return false }
+              current.bundleID == app.bundleID, current.teamID == ApplicationSourceCatalog.replacementTeam(for: app) else { return false }
         let order: ComparisonResult?
-        if candidate.usesBuildVersion {
+        if candidate.comparesUsingBuild {
             guard !current.build.isEmpty, !candidate.build.isEmpty else { return false }
             order = VersionOrder.compare(current.build, candidate.build)
         } else {
@@ -29,11 +29,15 @@ public enum BundleVerifier {
     }
     /// Apple-anchored Developer ID, rather than just an embedded team string, binds signature-only downloads.
     public static func checkDeveloperIDSignature(_ url: URL, like app: InstalledApp) throws {
-        guard let team = ApplicationSourceCatalog.replacementTeam(for: app), team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,
-              app.bundleID.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) != nil else {
+        guard let team = ApplicationSourceCatalog.replacementTeam(for: app) else { throw PeerError.invalid("Invalid developer identity") }
+        try checkDeveloperIDSignature(url, bundleID: app.bundleID, team: team)
+    }
+    private static func checkDeveloperIDSignature(_ url: URL, bundleID: String, team: String) throws {
+        guard team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,
+              bundleID.range(of: #"^[A-Za-z0-9.-]+$"#, options: .regularExpression) != nil else {
             throw PeerError.invalid("Invalid developer identity")
         }
-        let expression = "anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = \"\(team)\" and identifier \"\(app.bundleID)\""
+        let expression = "anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = \"\(team)\" and identifier \"\(bundleID)\""
         var code: SecStaticCode?, requirement: SecRequirement?
         guard SecRequirementCreateWithString(expression as CFString, [], &requirement) == errSecSuccess, let requirement,
               SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code,
@@ -46,9 +50,11 @@ public enum BundleVerifier {
         if descriptor.hasIntegrityProof { try verifyArchive(archive, descriptor: descriptor, app: app); return }
         guard descriptor.canVerify(for: app) else { throw PeerError.invalid("Missing download verification method") }
         // No archive proof exists. Revalidate the installed trust anchor now; the incoming app is checked after extraction.
-        try checkDeveloperIDSignature(URL(fileURLWithPath: app.path), like: app)
+        if ApplicationSourceCatalog.developerTeamMigration(for: app) != nil {
+            try checkSignature(URL(fileURLWithPath: app.path), like: app)
+        } else { try checkDeveloperIDSignature(URL(fileURLWithPath: app.path), like: app) }
     }
-    public static func validate(_ url: URL, replacing app: InstalledApp, expectedVersion: String, expectedBuild: String) throws -> InstalledApp {
+    public static func validate(_ url: URL, replacing app: InstalledApp, expectedVersion: String, expectedBuild: String, buildIsAuthoritative: Bool = false) throws -> InstalledApp {
         guard let incoming = AppScanner.read(url), incoming.bundleID == app.bundleID,
               let team = ApplicationSourceCatalog.replacementTeam(for: app), incoming.teamID == team,
               !incoming.isAppStore, !app.isAppStore else { throw PeerError.invalid("Application identity or developer Team ID mismatch") }
@@ -60,17 +66,36 @@ public enum BundleVerifier {
                 throw PeerError.invalid("Update requires a newer macOS version")
             }
         }
-        guard VersionOrder.compare(incoming.version, expectedVersion) == .orderedSame ||
-                (expectedVersion == incoming.build && expectedBuild == incoming.build) ||
-                (!incoming.build.isEmpty && expectedVersion == incoming.version + "." + incoming.build),
-              expectedBuild.isEmpty || incoming.build == expectedBuild,
-              VersionOrder.isNewer(version: incoming.version, build: incoming.build, than: app) else {
+        guard matchesSelectedVersion(incoming, replacing: app, expectedVersion: expectedVersion,
+                                     expectedBuild: expectedBuild, buildIsAuthoritative: buildIsAuthoritative) else {
             throw PeerError.invalid("Downloaded application \(incoming.version) (\(incoming.build)) does not match selected update \(expectedVersion) (\(expectedBuild))")
         }
         return incoming
     }
+    /// Sparkle orders releases by CFBundleVersion. Its display label may differ from the signed plist.
+    /// This route still requires the exact advertised build, a strictly newer installed build, and all
+    /// of validate's archive, application identity and signature checks.
+    static func matchesSelectedVersion(_ incoming: InstalledApp, replacing app: InstalledApp,
+                                       expectedVersion: String, expectedBuild: String, buildIsAuthoritative: Bool) -> Bool {
+        if buildIsAuthoritative {
+            return !expectedBuild.isEmpty && incoming.build == expectedBuild && !app.build.isEmpty
+                && VersionOrder.compare(incoming.build, app.build) == .orderedDescending
+        }
+        return (VersionOrder.compare(incoming.version, expectedVersion) == .orderedSame ||
+                (expectedVersion == incoming.build && expectedBuild == incoming.build) ||
+                (!incoming.build.isEmpty && expectedVersion == incoming.version + "." + incoming.build))
+            && (expectedBuild.isEmpty || incoming.build == expectedBuild)
+            && VersionOrder.isNewer(version: incoming.version, build: incoming.build, than: app)
+    }
     public static func checkSignature(_ url: URL, like app: InstalledApp) throws {
         guard let metadata = AppScanner.read(url), metadata.bundleID == app.bundleID else { throw PeerError.invalid("Backup signature identity mismatch") }
+        if let successor = ApplicationSourceCatalog.developerTeamMigration(for: app) {
+            guard let team = metadata.teamID, team == app.teamID || team == successor else {
+                throw PeerError.invalid("Application developer Team ID does not match the reviewed transfer")
+            }
+            try checkDeveloperIDSignature(url, bundleID: app.bundleID, team: team)
+            return
+        }
         if let legacy = ApplicationSourceCatalog.legacyMigration(for: app) {
             if metadata.teamID == nil {
                 guard metadata.version == legacy.version, metadata.build == legacy.build,

@@ -12,8 +12,15 @@ public enum ApplicationInstallation {
             }
             try BundleVerifier.checkDeveloperIDSignature(url, like: expected)
         }, assess: { url in
-            _ = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", url.path])
+            try await assess(url)
         })
+    }
+
+    static func assess(_ bundle: URL) async throws {
+        do {
+            _ = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", bundle.path])
+        } catch is CancellationError { throw CancellationError() }
+        catch { throw PeerError.invalid(String(localized: "macOS 安全检查未批准此更新。请使用官方更新器；若当前离线，请联网后重试。")) }
     }
 
     static func finalize(_ bundle: URL, validate: @Sendable (URL) throws -> Void,

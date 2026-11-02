@@ -1,0 +1,59 @@
+{
+  "build": "202611020004",
+  "marketingVersion": "0.4.10",
+  "remote": {
+    "upoviBuildReported": "202611020003",
+    "installedAppIdentitiesRead": false,
+    "updatesVerified": false
+  },
+  "validation": {
+    "swiftTests": 275,
+    "swiftFailures": 0,
+    "hostedXcodeTests": 46,
+    "hostedXcodeFailures": 0,
+    "releaseMetadataTests": 8,
+    "signedLocalCandidate": "Developer ID; strict nested all-architecture verification passed"
+  },
+  "openclaw": {
+    "oldVersion": "2026.3.1",
+    "oldBuild": "2026030190",
+    "oldTeam": "Y5PE65HELJ",
+    "oldArchiveSHA256": "f2d53c476a28d660c16d6b496a3096778193e11548dce58354f73e70a433eec3",
+    "newVersion": "2026.10.9",
+    "newBuild": "2610000990",
+    "newTeam": "FWJYW4S8P8",
+    "newArchiveSHA256": "8a041aa23b708b474cfd9b143f6d7d4cb0e91f08e15a0357a550c65884ace71d",
+    "bundleID": "ai.openclaw.mac",
+    "sameSparklePublicKey": true,
+    "isolatedProductionInstall": "passed",
+    "alreadyCurrentRecheck": "passed",
+    "isolatedRestore": "passed",
+    "unknownDeveloperRejected": true,
+    "firstLaunchTested": false,
+    "olderBotMoltIdentifier": "manual migration"
+  },
+  "playcover": {
+    "advertisedVersion": "4.0.0",
+    "payloadVersion": "3.1.0",
+    "advertisedAndPayloadBuild": "1633",
+    "oldBuild": "856",
+    "archiveSHA256": "54e01381205ed7de05f8316ca229eab39ab8f6202b0dda4de07e98396e64d79e",
+    "sparkleArchiveSignature": "passed",
+    "authoritativeBuildAndDeveloperID": "passed",
+    "gatekeeper": "rejected: Unnotarized Developer ID",
+    "productionPreparation": "blocked",
+    "originalPreserved": true,
+    "installed": false
+  },
+  "pnpm": {
+    "actualEmptyEnvironmentServiceChecks": [
+      "9.15.9",
+      "10.20.0"
+    ],
+    "passed": true,
+    "noGlobalPackageInstalled": true
+  },
+  "normalApplicationsReplaced": false,
+  "systemSecuritySettingsChanged": false,
+  "published": false
+}

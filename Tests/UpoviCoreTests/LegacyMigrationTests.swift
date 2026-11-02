@@ -8,6 +8,31 @@ final class LegacyMigrationTests: XCTestCase {
     private func current(version: String = "4.2.1", build: String = "20260531.1", team: String? = "N7Z52F27XK") -> InstalledApp {
         .init(name: "Mos", bundleID: "com.caldis.Mos", version: version, build: build, path: old().path, teamID: team)
     }
+    func testOpenClawDeveloperTransferIsOneWayAndBoundToExactIdentity() {
+        func app(_ bundle: String = "ai.openclaw.mac", _ team: String? = "Y5PE65HELJ", store: Bool = false) -> InstalledApp {
+            .init(name: "OpenClaw", bundleID: bundle, version: "2026.3.1", build: "2026030190", path: "/Applications/OpenClaw.app", teamID: team, isAppStore: store)
+        }
+        let original = app()
+        XCTAssertEqual(ApplicationSourceCatalog.replacementTeam(for: original), "FWJYW4S8P8")
+        for unsupported in [app("bot.molt.mac"), app("com.lookalike.OpenClaw"), app("ai.openclaw.mac", nil),
+                            app("ai.openclaw.mac", "OTHERTEAM1"), app(store: true), app("ai.openclaw.mac", "FWJYW4S8P8")] {
+            XCTAssertNil(ApplicationSourceCatalog.developerTeamMigration(for: unsupported))
+        }
+        XCTAssertEqual(ApplicationSourceCatalog.replacementTeam(for: app("ai.openclaw.mac", "FWJYW4S8P8")), "FWJYW4S8P8")
+        XCTAssertNoThrow(try AdministratorInstallPlan(operation: .application, application: original, version: "2026.10.9", build: "2610000990", artifactPath: "/nonexistent/Prepared.app").validate())
+        XCTAssertThrowsError(try AdministratorInstallPlan(operation: .package, application: original, version: "2026.10.9", artifactPath: "/nonexistent/Update.pkg", sha256: String(repeating: "a", count: 64)).validate())
+        let successor = InstalledApp(name: original.name, bundleID: original.bundleID, version: "2026.10.9", build: "2610000990", path: original.path, teamID: "FWJYW4S8P8")
+        XCTAssertTrue(AdministratorRecoveryPolicy.permits(current: successor, original: original, selectedVersion: successor.version, selectedBuild: successor.build))
+        XCTAssertFalse(AdministratorRecoveryPolicy.permits(current: successor, original: app("ai.openclaw.mac", "OTHERTEAM1"), selectedVersion: successor.version, selectedBuild: successor.build))
+    }
+    func testRenamedEarlyOpenClawRemainsVisibleAsManualMigration() {
+        let early = InstalledApp(name: "OpenClaw", bundleID: "bot.molt.mac", version: "2026.2.15", build: "11213", path: "/Applications/OpenClaw.app", teamID: "Y5PE65HELJ")
+        let candidate = UpdateCandidate(version: "2026.10.9", build: "2610000990", source: "Developer appcast", isCommunity: false, url: URL(string: "https://github.com/openclaw/openclaw/releases"), download: .init(url: URL(string: "https://github.com/openclaw/openclaw/releases/download/v2026.10.9/OpenClaw-2026.10.9.zip")!, sha256: String(repeating: "a", count: 64)), buildIsAuthoritative: true)
+        let items = BulkUpdatePlan.make(apps: [early], results: [early.id: .init(appID: early.id, candidates: [candidate], note: "", status: .updates)], ignored: [])
+        XCTAssertEqual(items.count, 1)
+        XCTAssertFalse(items[0].canInstall)
+        XCTAssertNotNil(items[0].manualReason)
+    }
     func testOnlyReviewedLegacyIdentityCanMigrateWithoutATeam() {
         XCTAssertEqual(ApplicationSourceCatalog.replacementTeam(for: old()), "N7Z52F27XK")
         for unsupported in [old(version: "3.4.0"), old(build: "unknown"), old(bundle: "com.lookalike.Mos"), old(store: true)] {

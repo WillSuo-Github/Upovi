@@ -123,6 +123,19 @@ final class InstallationTests: XCTestCase {
         let update = try fixture(root, name: "Prepared", version: "2.0")
         XCTAssertThrowsError(try BundleVerifier.validate(URL(fileURLWithPath: update.path), replacing: app, expectedVersion: "2.0", expectedBuild: "2.0"))
     }
+    func testSparklePayloadUsesExactAuthoritativeBuildDespiteIncorrectDisplayLabel() {
+        let old = InstalledApp(name: "PlayCover", bundleID: "io.playcover.PlayCover", version: "3.1.0", build: "856", path: "/fixture/old.app")
+        func payload(_ version: String = "3.1.0", _ build: String = "1633") -> InstalledApp {
+            .init(name: old.name, bundleID: old.bundleID, version: version, build: build, path: "/fixture/incoming.app")
+        }
+        XCTAssertTrue(BundleVerifier.matchesSelectedVersion(payload(), replacing: old, expectedVersion: "4.0.0", expectedBuild: "1633", buildIsAuthoritative: true))
+        XCTAssertFalse(BundleVerifier.matchesSelectedVersion(payload(), replacing: old, expectedVersion: "4.0.0", expectedBuild: "1633", buildIsAuthoritative: false))
+        for build in ["", "856", "1632", "1634"] {
+            XCTAssertFalse(BundleVerifier.matchesSelectedVersion(payload("4.0.0", build), replacing: old, expectedVersion: "4.0.0", expectedBuild: "1633", buildIsAuthoritative: true))
+        }
+        XCTAssertFalse(BundleVerifier.matchesSelectedVersion(payload(), replacing: payload(), expectedVersion: "4.0.0", expectedBuild: "1633", buildIsAuthoritative: true))
+        XCTAssertFalse(BundleVerifier.matchesSelectedVersion(payload(), replacing: old, expectedVersion: "4.0.0", expectedBuild: "", buildIsAuthoritative: true))
+    }
     func testArchiveChecksumMustMatch() throws {
         let root = try directory(), app = try fixture(root, name: "Installed", version: "1.0")
         let archive = root.appending(path: "file.zip"), data = Data("fixture".utf8)

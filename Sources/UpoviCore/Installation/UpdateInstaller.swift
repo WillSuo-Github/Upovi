@@ -43,7 +43,7 @@ public actor UpdateInstaller {
         let downloaded = workspace.appending(path: "update." + (descriptor.declaredFormat ?? "download"))
         var downloadID: UUID?
         do {
-            if ApplicationSourceCatalog.legacyMigration(for: app) != nil {
+            if ApplicationSourceCatalog.legacyMigration(for: app) != nil || ApplicationSourceCatalog.developerTeamMigration(for: app) != nil {
                 let check = Task.detached { try BundleVerifier.checkSignature(URL(fileURLWithPath: app.path), like: app) }
                 try await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
             }
@@ -80,7 +80,7 @@ public actor UpdateInstaller {
                 let staged = workspace.appending(path: "Prepared.app")
                 try FileManager.default.copyItem(at: source, to: staged)
                 if let mounted { _ = try await ProcessCommand().run("/usr/bin/hdiutil", ["detach", mounted.path]) }
-                let replacement = try BundleVerifier.validate(staged, replacing: app, expectedVersion: candidate.version, expectedBuild: candidate.build)
+                let replacement = try BundleVerifier.validate(staged, replacing: app, expectedVersion: candidate.version, expectedBuild: candidate.build, buildIsAuthoritative: candidate.comparesUsingBuild)
                 if !descriptor.hasIntegrityProof { try BundleVerifier.checkDeveloperIDSignature(staged, like: app) }
                 if let executable = Bundle(url: staged)?.executableURL { try MachOCompatibility.validate(executable) }
                 else { throw PeerError.invalid("Update has no application executable") }
@@ -91,7 +91,7 @@ public actor UpdateInstaller {
                     setxattr(staged.path, "com.apple.quarantine", pointer, strlen(pointer), 0, 0)
                 }
                 guard status == 0 else { throw PeerError.unavailable("Cannot quarantine the downloaded application") }
-                _ = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", staged.path])
+                try await ApplicationInstallation.assess(staged)
                 if let downloadID { await downloads.finishApplicationVerification(downloadID) }
                 let value = PreparedUpdate(id: UUID(), application: app, replacement: replacement, workspace: workspace, bundle: staged,
                                            archiveIntegrityVerified: descriptor.hasIntegrityProof)
@@ -152,7 +152,7 @@ public actor UpdateInstaller {
         exclusive = true; defer { exclusive = false }
         try await Self.quit(receipt.application)
         try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.backupPath), like: receipt.application)
-        if ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil,
+        if (ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil || ApplicationSourceCatalog.developerTeamMigration(for: receipt.application) != nil),
            FileManager.default.fileExists(atPath: receipt.application.path) {
             try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         }
@@ -168,7 +168,7 @@ public actor UpdateInstaller {
         exclusive = true; defer { exclusive = false }
         guard let retainedPath = receipt.retainedPath else { throw PeerError.invalid("Keep interrupted installation backups for recovery") }
         let backup = URL(fileURLWithPath: retainedPath)
-        if ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil {
+        if (ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil || ApplicationSourceCatalog.developerTeamMigration(for: receipt.application) != nil) {
             try BundleVerifier.checkSignature(backup, like: receipt.application)
             try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         }

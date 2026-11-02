@@ -108,6 +108,11 @@ public struct ToolSourceService: Sendable {
                     if let version = item["version"] as? String { installed[name] = version }
                 }
             }
+            // pnpm 9/10 has no global manifest until the first global package is installed.
+            // Its valid empty inventory then makes `outdated` fail with a plain-text diagnostic.
+            if source == .pnpm, installed.isEmpty {
+                return .init(source: source, context: context, installed: [:], updates: [])
+            }
             let outdatedData = try await command(executable, (source == .npm ? ["outdated", "--global", "--json"] : ["outdated", "--global", "--format", "json"]), codes: [0, 1])
             let decoded: Any = outdatedData.isEmpty ? [String: Any]() : try JSONSerialization.jsonObject(with: outdatedData)
             let raw: [String: Any]

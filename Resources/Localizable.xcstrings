@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "此早期 OpenClaw 的应用标识已更换，请通过官方安装器完成迁移。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This early OpenClaw application identifier has changed. Use the official installer to complete the migration."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此早期 OpenClaw 的應用程式識別碼已更換，請透過官方安裝器完成遷移。"
+          }
+        }
+      }
+    },
+    "macOS 安全检查未批准此更新。请使用官方更新器；若当前离线，请联网后重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS security checks did not approve this update. Use the official updater; if you are offline, reconnect and retry."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 安全檢查未批准此更新。請使用官方更新器；若目前離線，請連線後重試。"
+          }
+        }
+      }
+    },
     "下载连接超时，已自动重试 %lld 次。请检查到下载服务器的连接，再重新检测并下载。": {
       "localizations": {
         "en": {

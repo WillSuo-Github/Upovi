@@ -75,7 +75,15 @@ public enum ApplicationSourceCatalog {
               let rule = legacyMigrations[app.bundleID], app.version == rule.version, app.build == rule.build else { return nil }
         return rule
     }
+    /// Reviewed one-way Developer ID transfer, keeping the exact application identifier.
+    /// Official OpenClaw 2026.3.1 and 2026.10.9 retain the same Sparkle Ed25519 key.
+    /// Original and incoming bundles must independently pass Apple-anchored Developer ID checks.
+    public static func developerTeamMigration(for app: InstalledApp) -> String? {
+        guard !app.isAppStore, app.bundleID == "ai.openclaw.mac", app.teamID == "Y5PE65HELJ" else { return nil }
+        return "FWJYW4S8P8"
+    }
     public static func replacementTeam(for app: InstalledApp) -> String? {
+        if let successor = developerTeamMigration(for: app) { return successor }
         if let team = app.teamID, !team.isEmpty { return team }
         return legacyMigration(for: app)?.successorTeamID
     }

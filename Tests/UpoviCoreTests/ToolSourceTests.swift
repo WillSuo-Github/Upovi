@@ -147,7 +147,7 @@ final class ToolSourceTests: XCTestCase {
         let service = ToolSourceService { command in
             switch command.arguments.first {
             case "root": return Data("/fixture/global".utf8)
-            case "list": return Data("[]".utf8)
+            case "list": return Data(#"[{"dependencies":{"tool":{"version":"1.0.0"}}}]"#.utf8)
             case "outdated":
                 XCTAssertEqual(command.arguments, ["outdated", "--global", "--format", "json"])
                 return Data("{}".utf8)
@@ -155,7 +155,31 @@ final class ToolSourceTests: XCTestCase {
             }
         }
         let result = try await service.check(.pnpm, executable: URL(fileURLWithPath: "/fixture/pnpm"))
+        XCTAssertEqual(result.installed["tool"], "1.0.0"); XCTAssertTrue(result.updates.isEmpty)
+    }
+
+    func testPnpmWithoutGlobalPackagesDoesNotQueryAMissingManifest() async throws {
+        let service = ToolSourceService { command in
+            switch command.arguments.first {
+            case "root": return Data("/fixture/global/5/node_modules".utf8)
+            case "list": return Data(#"[{"path":"/fixture/global/5","private":false}]"#.utf8)
+            default: XCTFail("An empty valid inventory must not call outdated or write"); return Data()
+            }
+        }
+        let result = try await service.check(.pnpm, executable: URL(fileURLWithPath: "/fixture/pnpm"))
         XCTAssertTrue(result.installed.isEmpty); XCTAssertTrue(result.updates.isEmpty)
+        XCTAssertEqual(result.context, "/fixture/global/5/node_modules")
+    }
+
+    func testMalformedPnpmInventoryAndNonemptyOutdatedErrorsStillFail() async throws {
+        for inventory in ["ERR_PNPM_INVALID", #"{"error":"failed"}"#, #"[{"dependencies":{"tool":{"version":"1.0"}}}]"#] {
+            let service = ToolSourceService { command in
+                if command.arguments.first == "root" { return Data("/fixture/global".utf8) }
+                return Data((command.arguments.first == "list" ? inventory : "ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND").utf8)
+            }
+            do { _ = try await service.check(.pnpm, executable: URL(fileURLWithPath: "/fixture/pnpm")); XCTFail("Invalid or nonempty failed inventory must not become current") }
+            catch { }
+        }
     }
 
     func testRollingRustChannelWithSameVersionMustStillRunItsUpdate() async throws {

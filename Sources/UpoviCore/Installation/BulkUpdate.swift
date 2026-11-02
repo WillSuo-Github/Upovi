@@ -38,6 +38,9 @@ public enum BulkUpdatePlan {
         if app.bundleID == "app.upovi.Upovi" { return String(localized: "请使用 Upovi 自身更新") }
         // Unity Hub installs editors side by side and projects pin a version; the cask PKG cannot replace one.
         if app.path.contains("/Unity/Hub/Editor/") { return String(localized: "此安装格式需使用官方更新") }
+        if app.bundleID == "bot.molt.mac" {
+            return String(localized: "此早期 OpenClaw 的应用标识已更换，请通过官方安装器完成迁移。")
+        }
         guard ApplicationSourceCatalog.replacementTeam(for: app) != nil else { return String(localized: "无法确认已安装应用的开发者，请使用官方更新") }
         guard let download = candidate.download, download.canVerify(for: app) else { return String(localized: "来源未提供可验证的下载，请使用官方更新") }
         guard download.declaredFormat != nil || download.formatResolvableAfterDownload else { return String(localized: "此安装格式需使用官方更新") }
