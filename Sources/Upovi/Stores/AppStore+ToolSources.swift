@@ -65,41 +65,39 @@ extension AppStore {
         bulkStopRequested = false; bulkSummaryVisible = false; bulkUpdatePresented = true
     }
 
-    func runToolBatch() async {
-        for item in toolBatchItems {
-            let source = item.source
-            var record = ToolUpdateRecord(source: source, item: item)
-            if bulkStopRequested {
-                record.state = .interrupted; record.detail = String(localized: "已停止后续任务，此工具未执行。")
-                record.finishedAt = Date(); toolOutcomes[item.id] = record
-                continue
-            }
-            guard enabledToolSources.contains(source), let executable = toolLocations[source] else {
-                record.state = .failed; record.detail = String(localized: "此工具来源已关闭或不再可用。")
-                record.finishedAt = Date(); toolOutcomes[item.id] = record; continue
-            }
-            toolHistory.insert(record, at: 0); toolHistory = Array(toolHistory.prefix(500))
-            guard saveToolHistory() else {
-                record.state = .failed; record.detail = String(localized: "无法保存更新记录，未执行工具更新。")
-                record.finishedAt = Date()
-                if let index = toolHistory.firstIndex(where: { $0.id == record.id }) { toolHistory[index] = record }
-                toolOutcomes[item.id] = record; bulkStopRequested = true; continue
-            }
-            toolRunningID = item.id
-            do {
-                let result = try await updateToolPackage(item, executable)
-                toolSnapshots[source] = result; toolCheckErrors[source] = nil
-                record.state = .succeeded
-                record.detail = item.package.name + ": " + item.package.installed + " → " + (result.installed[item.package.name] ?? item.package.available)
-            } catch {
-                record.state = .failed; record.detail = ToolSourceService.sanitized(error.localizedDescription)
-                // A package failure is local to this row, not a failed inventory for every sibling.
-            }
+    func runToolUpdate(_ item: ToolUpdateItem) async {
+        let source = item.source
+        var record = ToolUpdateRecord(source: source, item: item)
+        if bulkStopRequested {
+            record.state = .interrupted; record.detail = String(localized: "已停止后续任务，此工具未执行。")
             record.finishedAt = Date(); toolOutcomes[item.id] = record
-            if let index = toolHistory.firstIndex(where: { $0.id == record.id }) { toolHistory[index] = record }
-            if !saveToolHistory() { bulkStopRequested = true }
-            toolRunningID = nil
+            return
         }
+        guard enabledToolSources.contains(source), let executable = toolLocations[source] else {
+            record.state = .failed; record.detail = String(localized: "此工具来源已关闭或不再可用。")
+            record.finishedAt = Date(); toolOutcomes[item.id] = record; return
+        }
+        toolHistory.insert(record, at: 0); toolHistory = Array(toolHistory.prefix(500))
+        guard saveToolHistory() else {
+            record.state = .failed; record.detail = String(localized: "无法保存更新记录，未执行工具更新。")
+            record.finishedAt = Date()
+            if let index = toolHistory.firstIndex(where: { $0.id == record.id }) { toolHistory[index] = record }
+            toolOutcomes[item.id] = record; bulkStopRequested = true; return
+        }
+        toolRunningID = item.id
+        do {
+            let result = try await updateToolPackage(item, executable)
+            toolSnapshots[source] = result; toolCheckErrors[source] = nil
+            record.state = .succeeded
+            record.detail = item.package.name + ": " + item.package.installed + " → " + (result.installed[item.package.name] ?? item.package.available)
+        } catch {
+            record.state = .failed; record.detail = ToolSourceService.sanitized(error.localizedDescription)
+            // A package failure is local to this row, not a failed inventory for every sibling.
+        }
+        record.finishedAt = Date(); toolOutcomes[item.id] = record
+        if let index = toolHistory.firstIndex(where: { $0.id == record.id }) { toolHistory[index] = record }
+        if !saveToolHistory() { bulkStopRequested = true }
+        toolRunningID = nil
     }
     @discardableResult func saveToolHistory() -> Bool {
         guard let data = try? JSONEncoder().encode(toolHistory) else { return false }

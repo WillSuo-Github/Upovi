@@ -1,14 +1,15 @@
 import XCTest
-import UpoviCore
+@testable import UpoviCore
 @testable import Upovi
 
 @MainActor final class ToolSourceWorkflowTests: XCTestCase {
-    private func store() throws -> (AppStore, AppPreferences) {
+    private func store(downloads: DownloadCoordinator? = nil) throws -> (AppStore, AppPreferences) {
         let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-tool-workflow-\(UUID().uuidString)")
         addTeardownBlock { try? FileManager.default.removeItem(at: root) }
         let preferences = AppPreferences(url: root.appending(path: "settings.plist"), migrateUserDefaults: false)
         preferences.set(false, forKey: GlobalP2PSettings.key)
-        let installer = UpdateInstaller(journalDirectory: root.appending(path: "Journal"), downloadCache: ArtifactDownloadCache(directory: root.appending(path: "Cache")))
+        let installer = UpdateInstaller(journalDirectory: root.appending(path: "Journal"),
+            downloadCache: ArtifactDownloadCache(directory: root.appending(path: "Cache")), downloads: downloads)
         let value = AppStore(preferences: preferences, installer: installer, scanApplications: { _ in [] }, revalidateSources: { })
         value.administrator = AdministratorInstallationService(directory: root.appending(path: "Attempts"), downloads: installer.downloads)
         value.toolLocations = [.npm: URL(fileURLWithPath: "/fixture/npm"), .uv: URL(fileURLWithPath: "/fixture/uv")]
@@ -40,6 +41,44 @@ import UpoviCore
         XCTAssertTrue(value.visibleToolUpdates.isEmpty)
         XCTAssertEqual(AppStore(preferences: preferences).toolHistory.first?.state, .succeeded)
         XCTAssertFalse(value.installationBusy)
+    }
+    func testMixedUpdateAllStartsInDisplayOrderInsteadOfGroupingBySource() async throws {
+        let downloads = DownloadCoordinator { _, _, _, _, _, _ in
+            throw PeerError.unavailable("Synthetic download failure")
+        }
+        let (value, _) = try store(downloads: downloads)
+        let clash = InstalledApp(name: "Clash Verge", bundleID: "app.synthetic.clash", version: "1",
+            path: "/synthetic/Z.app", teamID: "SYNTHETIC")
+        let code = InstalledApp(name: "Code", bundleID: "app.synthetic.code", version: "1",
+            path: "/synthetic/A.app", teamID: "SYNTHETIC")
+        value.apps = [code, clash]
+        value.bulkConcurrency = 1
+        let candidate = UpdateCandidate(version: "2", source: "Fixture", isCommunity: false, url: nil,
+            download: .init(url: URL(string: "https://example.invalid/update.zip")!, sha256: String(repeating: "a", count: 64)))
+        for app in value.apps {
+            value.sourceResults[app.id] = .init(appID: app.id, candidates: [candidate], note: "", status: .updates)
+        }
+        let first = ToolPackage(name: "ccusage", installed: "1", available: "2")
+        let last = ToolPackage(name: "z-tool", installed: "1", available: "2")
+        value.enabledToolSources = [.npm]
+        value.toolSnapshots[.npm] = .init(source: .npm, installed: [first.name: "1", last.name: "1"], updates: [last, first])
+        value.updateToolPackage = { [weak value] item, _ in
+            let started = await downloads.snapshot()
+            if item.package.name == first.name {
+                XCTAssertTrue(started.isEmpty)
+                let phases = await MainActor.run { [value?.transfers[clash.id]?.phase, value?.transfers[code.id]?.phase] }
+                XCTAssertEqual(phases, [.queued, .queued])
+                return .init(source: .npm, installed: [first.name: "2", last.name: "1"], updates: [last])
+            }
+            XCTAssertEqual(started.reversed().map(\.applicationID), [clash.id, code.id])
+            return .init(source: .npm, installed: [first.name: "2", last.name: "2"], updates: [])
+        }
+        value.reviewAllUpdates()
+        XCTAssertEqual(value.bulkInstallableCount, 4)
+        value.startAllUpdates(); await value.bulkTask?.value
+        XCTAssertEqual(value.toolHistory.reversed().compactMap { $0.item?.package.name }, [first.name, last.name])
+        XCTAssertEqual(value.bulkCompletedCount, 2)
+        XCTAssertEqual(value.bulkFailedCount, 2)
     }
     func testStoppingFinishesCurrentSourceAndDoesNotStartTheNext() async throws {
         let (value, _) = try store()

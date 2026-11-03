@@ -2,6 +2,30 @@ import AppKit
 import Foundation
 import UpoviCore
 
+/// Shared ordering for the Updates list, confirmation sheet, and batch admission.
+enum UpdateQueueEntry: Identifiable {
+    case application(BulkUpdateItem)
+    case tool(ToolUpdateItem)
+
+    var id: String {
+        switch self { case .application(let item): "app:" + item.id; case .tool(let item): "tool:" + item.id }
+    }
+    private var name: String {
+        switch self { case .application(let item): item.application.name; case .tool(let item): item.package.name }
+    }
+    var application: BulkUpdateItem? {
+        if case .application(let item) = self { return item }
+        return nil
+    }
+
+    static func ordered(applications: [BulkUpdateItem], tools: [ToolUpdateItem]) -> [Self] {
+        (applications.map(Self.application) + tools.map(Self.tool)).sorted {
+            let order = $0.name.localizedStandardCompare($1.name)
+            return order == .orderedSame ? $0.id < $1.id : order == .orderedAscending
+        }
+    }
+}
+
 extension AppStore {
     var hasUnselectedUpdates: Bool {
         let appIDs = Set(bulkItems.map(\.id)), toolIDs = Set(toolBatchItems.map(\.id))
@@ -107,7 +131,8 @@ extension AppStore {
         for item in bulkItems where item.canInstall { transfers[item.id] = TransferProgress() }
         // Progress now lives on the Updates page rows instead of the confirmation sheet.
         bulkSummaryVisible = true; bulkUpdatePresented = false; section = .updates
-        let items = bulkItems, width = bulkConcurrency
+        let queue = UpdateQueueEntry.ordered(applications: bulkItems, tools: toolBatchItems)
+        let width = bulkConcurrency
         bulkTask = Task { [self] in
             var failedToQuit = Set<String>()
             for app in applicationsToQuit {
@@ -117,18 +142,14 @@ extension AppStore {
                 catch {
                     failedToQuit.insert(app.id)
                     recordDiagnostic(.batchPreparation, appID: app.id, error: error)
-                    if let item = items.first(where: { $0.id == app.id }) {
+                    if let item = bulkItems.first(where: { $0.id == app.id }) {
                         recordBulkEvent(.finished(.init(item: item, status: .failed, detail: error.localizedDescription)))
                     }
                 }
             }
             let authorization = makeInstallationAuthorizationBatch()
-            _ = await BulkUpdateRunner.run(items.filter { !failedToQuit.contains($0.id) }, concurrency: width, shouldStop: { await self.bulkStopRequested },
-                operation: { try await self.installBulkItem($0, authorization: authorization) }, report: { event in
-                    await self.recordBulkPreparationEvent(event, authorization: authorization)
-                })
+            await runUpdateQueue(queue, excluding: failedToQuit, concurrency: width, authorization: authorization)
             await installAuthorizedBulkItems(authorization)
-            await runToolBatch()
             bulkActiveIDs = []; bulkCancellers = [:]
             await refreshInstallations()
             apps = await scanInventory()
@@ -139,6 +160,27 @@ extension AppStore {
             installing = false; bulkUpdating = false
             if bulkItems.isEmpty, toolBatchItems.count == 1, bulkFailedCount == 0, hasUnselectedUpdates { dismissBulkSummary() }
             if networkEnabled { p2pBatchOffset = 0; restartP2P() }
+        }
+    }
+
+    private func runUpdateQueue(_ queue: [UpdateQueueEntry], excluding failedToQuit: Set<String>,
+                                concurrency: Int, authorization: InstallationAuthorizationBatch) async {
+        var remaining = queue[...]
+        while let entry = remaining.first {
+            switch entry {
+            case .tool(let item):
+                // Keep package manager updates serial and do not let later rows bypass a tool.
+                remaining.removeFirst()
+                await runToolUpdate(item)
+            case .application:
+                let apps = remaining.prefix { $0.application != nil }
+                remaining = remaining.dropFirst(apps.count)
+                let items = apps.compactMap(\.application).filter { !failedToQuit.contains($0.id) }
+                _ = await BulkUpdateRunner.run(items, concurrency: concurrency, shouldStop: { await self.bulkStopRequested },
+                    operation: { try await self.installBulkItem($0, authorization: authorization) }, report: { event in
+                        await self.recordBulkPreparationEvent(event, authorization: authorization)
+                    })
+            }
         }
     }
 

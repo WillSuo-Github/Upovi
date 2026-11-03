@@ -13,17 +13,6 @@ struct UpdatesView: View {
             .sorted { $0.application.name.localizedStandardCompare($1.application.name) == .orderedAscending }
     }
 
-    private enum Entry: Identifiable {
-        case application(BulkUpdateItem, batch: Bool)
-        case tool(ToolUpdateItem)
-        var id: String {
-            switch self { case .application(let item, _): "app:" + item.id; case .tool(let item): "tool:" + item.id }
-        }
-        var name: String {
-            switch self { case .application(let item, _): item.application.name; case .tool(let item): item.package.name }
-        }
-    }
-
     var body: some View {
         let plan = plan
         let visible = plan.filter { store.matchesSearch($0.application) }
@@ -35,14 +24,13 @@ struct UpdatesView: View {
         // Installed batch rows leave the list; only running, queued and failed ones stay.
         let pending = batch.filter { store.matchesSearch($0.application) && store.transfers[$0.id]?.phase != .installed }
         let tools = store.visibleToolUpdates.filter { store.matchesSearch($0) }
-        let entries = (pending.map { Entry.application($0, batch: true) } + installable.map { Entry.application($0, batch: false) } + tools.map { Entry.tool($0) })
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        let entries = UpdateQueueEntry.ordered(applications: pending + installable, tools: tools)
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 UpdatesOverview(store: store, total: plan.count + store.toolUpdateCount,
                                 installable: plan.filter(\.canInstall).count + store.toolUpdateCount)
                     .entrance(0)
-                if !entries.isEmpty { updateList(entries).entrance(1) }
+                if !entries.isEmpty { updateList(entries, batchIDs: batchIDs).entrance(1) }
                 if !manual.isEmpty {
                     group(String(localized: "需通过官方渠道更新"), items: manual).entrance(2)
                 }
@@ -66,13 +54,13 @@ struct UpdatesView: View {
 
     // MARK: Lists
 
-    private func updateList(_ entries: [Entry]) -> some View {
+    private func updateList(_ entries: [UpdateQueueEntry], batchIDs: Set<String>) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                 if index > 0 { UpdateRow.separator }
                 Group {
                     switch entry {
-                    case .application(let item, let batch): UpdateRow(store: store, item: item, isBatch: batch)
+                    case .application(let item): UpdateRow(store: store, item: item, isBatch: batchIDs.contains(item.id))
                     case .tool(let item): ToolUpdateRow(store: store, item: item)
                     }
                 }.transition(.listRow)

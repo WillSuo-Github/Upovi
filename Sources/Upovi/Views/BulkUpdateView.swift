@@ -129,15 +129,8 @@ struct BulkUpdateView: View {
 
     // MARK: Rows
 
-    private enum Entry: Identifiable {
-        case application(BulkUpdateItem), tool(ToolUpdateItem)
-        var id: String { switch self { case .application(let item): "app:" + item.id; case .tool(let item): "tool:" + item.id } }
-        var name: String { switch self { case .application(let item): item.application.name; case .tool(let item): item.package.name } }
-    }
-
     private func section(_ title: String, items: [BulkUpdateItem], tools: [ToolUpdateItem] = []) -> some View {
-        let entries = (items.map(Entry.application) + tools.map(Entry.tool))
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        let entries = UpdateQueueEntry.ordered(applications: items, tools: tools)
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(title)
