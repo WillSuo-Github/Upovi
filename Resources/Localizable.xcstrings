@@ -101679,6 +101679,412 @@
           }
         }
       }
+    },
+    "下载包中的 %@ 为 %@，与来源标注的 %@ 不一致，已停止安装。请使用官方更新": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إصدار %1$@ في الحزمة التي تم تنزيلها هو %2$@، ولا يطابق الإصدار %3$@ المذكور في المصدر، لذا توقف التثبيت. استخدم أداة التحديث الرسمية"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La descàrrega conté %1$@ %2$@, que no coincideix amb la versió %3$@ indicada per la font; s’ha aturat la instal·lació. Utilitza l’actualitzador oficial"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stažený balíček obsahuje %1$@ %2$@, což neodpovídá verzi %3$@ uvedené ve zdroji; instalace byla zastavena. Použijte oficiální aktualizaci"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Den hentede pakke indeholder %1$@ %2$@, som ikke svarer til version %3$@ angivet af kilden, så installationen blev stoppet. Brug den officielle opdatering"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Download enthält %1$@ %2$@, was nicht der von der Quelle angegebenen Version %3$@ entspricht. Die Installation wurde gestoppt. Verwende die offizielle Aktualisierung"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Το πακέτο λήψης περιέχει %1$@ %2$@, που δεν ταιριάζει με την έκδοση %3$@ της πηγής· η εγκατάσταση διακόπηκε. Χρησιμοποιήστε την επίσημη ενημέρωση"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The download contains %1$@ %2$@, which doesn’t match version %3$@ listed by the source, so installation stopped. Use the official updater"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La descarga contiene %1$@ %2$@, que no coincide con la versión %3$@ indicada por la fuente; se detuvo la instalación. Usa la actualización oficial"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lataus sisältää sovelluksen %1$@ %2$@, joka ei vastaa lähteen ilmoittamaa versiota %3$@, joten asennus pysäytettiin. Käytä virallista päivitystä"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le téléchargement contient %1$@ %2$@, qui ne correspond pas à la version %3$@ indiquée par la source ; l’installation a été arrêtée. Utilisez la mise à jour officielle"
+          }
+        },
+        "he": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ההורדה מכילה את %1$@ בגרסה %2$@, שאינה תואמת לגרסה %3$@ שצוינה במקור, ולכן ההתקנה הופסקה. השתמש במעדכן הרשמי"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "डाउनलोड में %1$@ %2$@ है, जो स्रोत में बताए गए संस्करण %3$@ से मेल नहीं खाता, इसलिए इंस्टॉलेशन रोक दिया गया। आधिकारिक अपडेटर का उपयोग करें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preuzimanje sadrži %1$@ %2$@, što se ne podudara s verzijom %3$@ navedenom u izvoru, pa je instalacija zaustavljena. Upotrijebite službeno ažuriranje"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A letöltés a(z) %1$@ %2$@ verzióját tartalmazza, ami nem egyezik a forrásban megadott %3$@ verzióval, ezért a telepítés leállt. Használja a hivatalos frissítést"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unduhan berisi %1$@ %2$@, yang tidak cocok dengan versi %3$@ dari sumber, sehingga instalasi dihentikan. Gunakan pembaru resmi"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il download contiene %1$@ %2$@, che non corrisponde alla versione %3$@ indicata dalla fonte; l’installazione è stata interrotta. Usa l’aggiornamento ufficiale"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダウンロードした %1$@ は %2$@ で、ソースに記載された %3$@ と一致しないため、インストールを中止しました。公式のアップデートを使用してください"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다운로드한 %1$@은(는) %2$@(으)로, 소스에 표시된 %3$@과(와) 일치하지 않아 설치를 중단했습니다. 공식 업데이트를 사용하십시오"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muat turun mengandungi %1$@ %2$@, yang tidak sepadan dengan versi %3$@ daripada sumber, jadi pemasangan dihentikan. Gunakan pengemas kini rasmi"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nedlastingen inneholder %1$@ %2$@, som ikke samsvarer med versjon %3$@ oppgitt av kilden, så installasjonen ble stoppet. Bruk den offisielle oppdateringen"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De download bevat %1$@ %2$@, wat niet overeenkomt met versie %3$@ van de bron; de installatie is gestopt. Gebruik de officiële update"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pobrany pakiet zawiera %1$@ %2$@, co nie odpowiada wersji %3$@ podanej przez źródło, więc instalację przerwano. Użyj oficjalnego uaktualnienia"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O download contém %1$@ %2$@, que não corresponde à versão %3$@ indicada pela fonte; a instalação foi interrompida. Use a atualização oficial"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A transferência contém %1$@ %2$@, que não corresponde à versão %3$@ indicada pela fonte; a instalação foi interrompida. Utilize a atualização oficial"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descărcarea conține %1$@ %2$@, care nu corespunde versiunii %3$@ indicate de sursă, așa că instalarea a fost oprită. Folosiți actualizarea oficială"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузка содержит %1$@ %2$@, что не совпадает с версией %3$@, указанной источником, поэтому установка остановлена. Используйте официальное обновление"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stiahnutý balík obsahuje %1$@ %2$@, čo nezodpovedá verzii %3$@ uvedenej v zdroji, preto sa inštalácia zastavila. Použite oficiálnu aktualizáciu"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hämtningen innehåller %1$@ %2$@, som inte stämmer med version %3$@ som källan anger, så installationen stoppades. Använd den officiella uppdateringen"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "แพ็กเกจที่ดาวน์โหลดมี %1$@ เวอร์ชัน %2$@ ซึ่งไม่ตรงกับเวอร์ชัน %3$@ ที่แหล่งระบุ จึงหยุดการติดตั้ง โปรดใช้ตัวอัปเดตทางการ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirilen paket %1$@ %2$@ içeriyor; bu, kaynağın belirttiği %3$@ sürümüyle eşleşmiyor, bu nedenle yükleme durduruldu. Resmi güncelleyiciyi kullanın"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завантаження містить %1$@ %2$@, що не збігається з версією %3$@, указаною джерелом, тому встановлення зупинено. Використовуйте офіційне оновлення"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gói tải về chứa %1$@ %2$@, không khớp với phiên bản %3$@ do nguồn ghi, nên đã dừng cài đặt. Hãy dùng trình cập nhật chính thức"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下載套件中的 %1$@ 為 %2$@，與來源標示的 %3$@ 不一致，已停止安裝。請使用官方更新"
+          }
+        }
+      }
+    },
+    "下载包中的 %@ 为 %@，不比已安装的 %@ 新，已停止安装。请稍后重试或使用官方更新": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إصدار %1$@ في الحزمة التي تم تنزيلها هو %2$@، وهو ليس أحدث من الإصدار المثبّت %3$@، لذا توقف التثبيت. أعد المحاولة لاحقًا أو استخدم أداة التحديث الرسمية"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La descàrrega conté %1$@ %2$@, que no és més recent que la versió instal·lada %3$@; s’ha aturat la instal·lació. Torna-ho a provar més tard o utilitza l’actualitzador oficial"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stažený balíček obsahuje %1$@ %2$@, což není novější než nainstalovaná verze %3$@; instalace byla zastavena. Zkuste to později nebo použijte oficiální aktualizaci"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Den hentede pakke indeholder %1$@ %2$@, som ikke er nyere end den installerede %3$@, så installationen blev stoppet. Prøv igen senere, eller brug den officielle opdatering"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Download enthält %1$@ %2$@, was nicht neuer als die installierte Version %3$@ ist. Die Installation wurde gestoppt. Versuche es später erneut oder verwende die offizielle Aktualisierung"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Το πακέτο λήψης περιέχει %1$@ %2$@, που δεν είναι νεότερη από την εγκατεστημένη %3$@· η εγκατάσταση διακόπηκε. Δοκιμάστε ξανά αργότερα ή χρησιμοποιήστε την επίσημη ενημέρωση"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The download contains %1$@ %2$@, which isn’t newer than the installed %3$@, so installation stopped. Try again later or use the official updater"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La descarga contiene %1$@ %2$@, que no es más reciente que la versión instalada %3$@; se detuvo la instalación. Inténtalo más tarde o usa la actualización oficial"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lataus sisältää sovelluksen %1$@ %2$@, joka ei ole asennettua versiota %3$@ uudempi, joten asennus pysäytettiin. Yritä myöhemmin uudelleen tai käytä virallista päivitystä"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le téléchargement contient %1$@ %2$@, qui n’est pas plus récent que la version installée %3$@ ; l’installation a été arrêtée. Réessayez plus tard ou utilisez la mise à jour officielle"
+          }
+        },
+        "he": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ההורדה מכילה את %1$@ בגרסה %2$@, שאינה חדשה מהגרסה המותקנת %3$@, ולכן ההתקנה הופסקה. נסה שוב מאוחר יותר או השתמש במעדכן הרשמי"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "डाउनलोड में %1$@ %2$@ है, जो इंस्टॉल किए गए %3$@ से नया नहीं है, इसलिए इंस्टॉलेशन रोक दिया गया। बाद में फिर कोशिश करें या आधिकारिक अपडेटर का उपयोग करें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preuzimanje sadrži %1$@ %2$@, što nije novije od instalirane verzije %3$@, pa je instalacija zaustavljena. Pokušajte ponovno kasnije ili upotrijebite službeno ažuriranje"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A letöltés a(z) %1$@ %2$@ verzióját tartalmazza, ami nem újabb a telepített %3$@ verziónál, ezért a telepítés leállt. Próbálja újra később, vagy használja a hivatalos frissítést"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unduhan berisi %1$@ %2$@, yang tidak lebih baru dari versi terinstal %3$@, sehingga instalasi dihentikan. Coba lagi nanti atau gunakan pembaru resmi"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il download contiene %1$@ %2$@, che non è più recente della versione installata %3$@; l’installazione è stata interrotta. Riprova più tardi o usa l’aggiornamento ufficiale"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダウンロードした %1$@ は %2$@ で、インストール済みの %3$@ より新しくないため、インストールを中止しました。後でもう一度試すか、公式のアップデートを使用してください"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다운로드한 %1$@은(는) %2$@(으)로, 설치된 %3$@보다 최신이 아니어서 설치를 중단했습니다. 나중에 다시 시도하거나 공식 업데이트를 사용하십시오"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muat turun mengandungi %1$@ %2$@, yang tidak lebih baharu daripada %3$@ yang dipasang, jadi pemasangan dihentikan. Cuba lagi nanti atau gunakan pengemas kini rasmi"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nedlastingen inneholder %1$@ %2$@, som ikke er nyere enn installert %3$@, så installasjonen ble stoppet. Prøv igjen senere, eller bruk den offisielle oppdateringen"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De download bevat %1$@ %2$@, wat niet nieuwer is dan de geïnstalleerde %3$@; de installatie is gestopt. Probeer het later opnieuw of gebruik de officiële update"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pobrany pakiet zawiera %1$@ %2$@, co nie jest nowsze niż zainstalowana wersja %3$@, więc instalację przerwano. Spróbuj później lub użyj oficjalnego uaktualnienia"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O download contém %1$@ %2$@, que não é mais recente que a versão instalada %3$@; a instalação foi interrompida. Tente mais tarde ou use a atualização oficial"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A transferência contém %1$@ %2$@, que não é mais recente do que a versão instalada %3$@; a instalação foi interrompida. Tente mais tarde ou utilize a atualização oficial"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descărcarea conține %1$@ %2$@, care nu este mai nouă decât versiunea instalată %3$@, așa că instalarea a fost oprită. Încercați mai târziu sau folosiți actualizarea oficială"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузка содержит %1$@ %2$@, что не новее установленной версии %3$@, поэтому установка остановлена. Повторите позже или используйте официальное обновление"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stiahnutý balík obsahuje %1$@ %2$@, čo nie je novšie ako nainštalovaná verzia %3$@, preto sa inštalácia zastavila. Skúste to neskôr alebo použite oficiálnu aktualizáciu"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hämtningen innehåller %1$@ %2$@, som inte är nyare än installerade %3$@, så installationen stoppades. Försök igen senare eller använd den officiella uppdateringen"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "แพ็กเกจที่ดาวน์โหลดมี %1$@ เวอร์ชัน %2$@ ซึ่งไม่ใหม่กว่า %3$@ ที่ติดตั้งไว้ จึงหยุดการติดตั้ง โปรดลองใหม่ภายหลังหรือใช้ตัวอัปเดตทางการ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirilen paket %1$@ %2$@ içeriyor; bu, yüklü %3$@ sürümünden daha yeni değil, bu nedenle yükleme durduruldu. Daha sonra yeniden deneyin veya resmi güncelleyiciyi kullanın"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завантаження містить %1$@ %2$@, що не новіше за встановлену версію %3$@, тому встановлення зупинено. Повторіть пізніше або використовуйте офіційне оновлення"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gói tải về chứa %1$@ %2$@, không mới hơn bản %3$@ đã cài, nên đã dừng cài đặt. Hãy thử lại sau hoặc dùng trình cập nhật chính thức"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下載套件中的 %1$@ 為 %2$@，不比已安裝的 %3$@ 新，已停止安裝。請稍後重試或使用官方更新"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

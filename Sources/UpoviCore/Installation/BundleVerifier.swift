@@ -68,9 +68,23 @@ public enum BundleVerifier {
         }
         guard matchesSelectedVersion(incoming, replacing: app, expectedVersion: expectedVersion,
                                      expectedBuild: expectedBuild, buildIsAuthoritative: buildIsAuthoritative) else {
-            throw PeerError.invalid("Downloaded application \(incoming.version) (\(incoming.build)) does not match selected update \(expectedVersion) (\(expectedBuild))")
+            throw PeerError.invalid(versionMismatchMessage(incoming, replacing: app, expectedVersion: expectedVersion, expectedBuild: expectedBuild))
         }
         return incoming
+    }
+    /// Explains a signed package whose own version differs from the source label, without exposing empty builds.
+    static func versionMismatchMessage(_ incoming: InstalledApp, replacing app: InstalledApp,
+                                       expectedVersion: String, expectedBuild: String) -> String {
+        let found = versionLabel(incoming.version, incoming.build)
+        guard VersionOrder.isNewer(version: incoming.version, build: incoming.build, than: app) else {
+            let installed = versionLabel(app.version, app.build)
+            return String(localized: "下载包中的 \(app.name) 为 \(found)，不比已安装的 \(installed) 新，已停止安装。请稍后重试或使用官方更新")
+        }
+        let expected = versionLabel(expectedVersion, expectedBuild)
+        return String(localized: "下载包中的 \(app.name) 为 \(found)，与来源标注的 \(expected) 不一致，已停止安装。请使用官方更新")
+    }
+    private static func versionLabel(_ version: String, _ build: String) -> String {
+        build.isEmpty || build == version ? version : "\(version) (\(build))"
     }
     /// Sparkle orders releases by CFBundleVersion. Its display label may differ from the signed plist.
     /// This route still requires the exact advertised build, a strictly newer installed build, and all

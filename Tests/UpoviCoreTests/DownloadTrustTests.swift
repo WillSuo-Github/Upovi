@@ -134,8 +134,40 @@ final class DownloadTrustTests: XCTestCase {
         XCTAssertEqual(refreshed.status, .current)
         XCTAssertTrue(refreshed.candidates.isEmpty)
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.2", download: official))
+        XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.3", download: URL(string: "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.3.zip")))
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: app(team: "OTHERTEAM1"), sourceVersion: "7.50.1", download: official))
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.1", download: URL(string: "https://example.com/Other.zip")))
+    }
+    func testReviewedPatchPackagingExceptionUpgradesFromPreviousReviewedBuild() async throws {
+        let json = #"{"token":"istat-menus","version":"7.50.2","url":"https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.2.zip","sha256":"no_check","artifacts":[{"app":["iStat Menus.app"]}]}"#
+        let payload = Data(json.utf8)
+        let base = app()
+        let previous = InstalledApp(name: base.name, bundleID: base.bundleID, version: "7.50", build: "2356", path: base.path, teamID: base.teamID)
+        let result = await UpdateChecker.check(previous, fetch: { _, _ in payload }, catalog: { _ in nil })
+        let candidate = try XCTUnwrap(result.candidates.first)
+        XCTAssertEqual(candidate.version, "7.50")
+        XCTAssertEqual(candidate.build, "2394")
+        let downloaded = InstalledApp(name: base.name, bundleID: base.bundleID, version: "7.50", build: "2394", path: base.path, teamID: base.teamID)
+        XCTAssertTrue(BundleVerifier.matchesSelectedVersion(downloaded, replacing: previous, expectedVersion: candidate.version,
+                                                            expectedBuild: candidate.build, buildIsAuthoritative: candidate.comparesUsingBuild))
+        let refreshed = await UpdateChecker.check(downloaded, fetch: { _, _ in payload }, catalog: { _ in nil })
+        XCTAssertEqual(refreshed.status, .current)
+        XCTAssertTrue(refreshed.candidates.isEmpty)
+    }
+    func testVersionMismatchMessageNamesPackageAndOmitsEmptyBuild() {
+        let base = app()
+        let installed = InstalledApp(name: "iStat Menus", bundleID: base.bundleID, version: "7.50", build: "2356", path: base.path, teamID: base.teamID)
+        let newer = InstalledApp(name: "iStat Menus", bundleID: base.bundleID, version: "7.50", build: "2394", path: base.path, teamID: base.teamID)
+        let relabeled = BundleVerifier.versionMismatchMessage(newer, replacing: installed, expectedVersion: "7.50.2", expectedBuild: "")
+        XCTAssertTrue(relabeled.contains("iStat Menus"))
+        XCTAssertTrue(relabeled.contains("7.50 (2394)"))
+        XCTAssertTrue(relabeled.contains("7.50.2"))
+        XCTAssertFalse(relabeled.contains("()"))
+        let stale = BundleVerifier.versionMismatchMessage(installed, replacing: newer, expectedVersion: "7.50.2", expectedBuild: "")
+        XCTAssertTrue(stale.contains("7.50 (2356)"))
+        XCTAssertTrue(stale.contains("7.50 (2394)"))
+        XCTAssertFalse(stale.contains("7.50.2"))
+        XCTAssertNotEqual(relabeled, stale)
     }
     func testCaskFullVersionRemainsExactForAppsUsingItInBothBundleKeys() async throws {
         let payload = Data(#"{"token":"jetbrains-toolbox","version":"3.9.1,3.9.1.89198","url":"https://download.jetbrains.com/toolbox/jetbrains-toolbox-3.9.1.89198-arm64.dmg","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifacts":[{"app":["JetBrains Toolbox.app"]}]}"#.utf8)

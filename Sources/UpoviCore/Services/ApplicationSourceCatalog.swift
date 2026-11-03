@@ -88,12 +88,17 @@ public enum ApplicationSourceCatalog {
         return legacyMigration(for: app)?.successorTeamID
     }
 
-    /// The official 7.50.1 ZIP contains a signed 7.50 / 2356 app. Keep this exact reviewed
-    /// packaging exception instead of accepting arbitrary version mismatches or altering scanned versions.
+    /// Official iStat Menus ZIPs name patch releases that the signed app reports only through its build:
+    /// 7.50.1 contains 7.50 / 2356 and 7.50.2 contains 7.50 / 2394. Keep these exact reviewed packaging
+    /// exceptions instead of accepting arbitrary version mismatches or altering scanned versions.
+    static let reviewedBundleReleases: [String: (version: String, build: String)] = [
+        "7.50.1": ("7.50", "2356"),
+        "7.50.2": ("7.50", "2394")
+    ]
     public static func bundleRelease(for app: InstalledApp, sourceVersion: String, download: URL?) -> (version: String, build: String)? {
-        guard app.bundleID == "com.bjango.istatmenus", app.teamID == "Y93TK974AT", sourceVersion == "7.50.1",
-              download?.absoluteString == "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.1.zip" else { return nil }
-        return ("7.50", "2356")
+        guard app.bundleID == "com.bjango.istatmenus", app.teamID == "Y93TK974AT", let release = reviewedBundleReleases[sourceVersion],
+              download?.absoluteString == "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus\(sourceVersion).zip" else { return nil }
+        return release
     }
 
     /// Apps whose own updater reads a feed set at runtime, not `SUFeedURL`. These endpoints stage rollouts
