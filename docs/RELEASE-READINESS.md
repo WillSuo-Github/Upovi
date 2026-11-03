@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611030001
+
+Update All now starts applications and command-line tools in the same order as the confirmation list. Consecutive application downloads still use the configured concurrency. The build also applies consistent entrance animations when navigating between sidebar pages.
+
+Revision `7d067d8` passed 229 core tests and 47 hosted workflow tests in each of English and Simplified Chinese, plus eight release metadata tests. An isolated macOS batch showed the first tool running while four lower rows were queued, then showed the applications downloading concurrently. The fixture uses synthetic updates. GitHub Actions remain disabled.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611030001) is published as Latest. Apple notarization, ticket stapling and Gatekeeper passed. All five anonymously downloaded assets match the verified local bytes. Fresh extraction passed nested signatures, notarization and Sparkle feed/archive verification. The canonical latest feed and direct archive also match. See [release evidence](evidence/0.4.10-build-202611030001.json). This release was not installed over the normal local Upovi, and a Sparkle self-replacement and physical Intel runtime were not exercised.
+
+---
+
 # Upovi 0.4.10 build 202611020004
 
 This build supports the reviewed one-way OpenClaw Developer ID transfer for the exact `ai.openclaw.mac` application, from `Y5PE65HELJ` to `FWJYW4S8P8`. Original and replacement Apple-anchored signatures, selected version/build, Gatekeeper, backups and recovery remain mandatory. The earlier `bot.molt.mac` identifier stays visible as an official-installer migration rather than entering an automatic replacement.
