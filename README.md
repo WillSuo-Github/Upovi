@@ -4,7 +4,7 @@ A native, open-source macOS application update detector with globally controlled
 
 **SwiftUI · Swift 6 · macOS 14+ · MIT · Experimental 0.4.10 (202610280001)**
 
-[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202611030001 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
+[Download the signed and notarized universal test preview](https://github.com/WillSuo-Github/Upovi/releases/latest). Version 0.4.10, build 202611030002 includes Developer ID signing and a stapled Apple notarization ticket, and passes Gatekeeper. This remains an experimental test package; notarization does not establish the remaining runtime acceptance checks. The release includes its source revision, checksum and validation results.
 
 ## What it does
 
@@ -41,7 +41,7 @@ This uses `xcodebuild` and stages the built, ad-hoc signed application at `dist/
 
 The checked-in project opens directly without XcodeGen. `project.yml` is its reproducible specification; after changing project structure, run `xcodegen generate` and commit both files. Existing SwiftPM tools and tests remain available through `Package.swift` for diagnostic/acceptance scripts. The main app development entrypoint is `Upovi.xcodeproj`. See [Xcode project details](docs/XCODE-PROJECT.md) for targets and build settings.
 
-Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md). The [notarized universal release 0.4.10 (build 202611030001)](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611030001) and signed latest feed are published. Update All starts applications and command-line tools in confirmation-list order while keeping consecutive app downloads concurrent. The native batch workflow and all five public release assets were verified. See [release evidence](docs/evidence/0.4.10-build-202611030001.json).
+Current implementation and acceptance boundaries are tracked in [release readiness](docs/RELEASE-READINESS.md). The [notarized universal release 0.4.10 (build 202611030002)](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611030002) and signed latest feed are published. It accepts the reviewed iStat Menus 7.50.2 package and explains version mismatches in plain language. All five public release assets were verified. See [release evidence](docs/evidence/0.4.10-build-202611030002.json).
 
 ## Public community discovery
 

@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611030002
+
+The official iStat Menus 7.50.2 ZIP contains a notarized Bjango app that reports 7.50 (2394). Upovi now accepts this exact reviewed package by build, alongside the earlier 7.50.1 entry, without loosening version checks for other releases. A downloaded app whose version doesn't match the selected update now produces a localized message naming the app and both versions, without empty build parentheses.
+
+Revision `527dce4` passed 231 core tests and 47 hosted workflow tests in each of English and Simplified Chinese, plus eight release metadata tests. GitHub Actions remain disabled.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611030002) is published as Latest. Apple notarization, ticket stapling and Gatekeeper passed. All five anonymously downloaded assets match the verified local bytes. Fresh extraction passed nested signatures, notarization and Sparkle feed/archive verification. The canonical latest feed and direct archive also match. See [release evidence](evidence/0.4.10-build-202611030002.json). This release was not installed over the normal local Upovi, the iStat Menus update was not retried in a running app, and a Sparkle self-replacement and physical Intel runtime were not exercised.
+
+---
+
 # Upovi 0.4.10 build 202611030001
 
 Update All now starts applications and command-line tools in the same order as the confirmation list. Consecutive application downloads still use the configured concurrency. The build also applies consistent entrance animations when navigating between sidebar pages.

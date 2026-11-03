@@ -1,0 +1,92 @@
+{
+  "version": "0.4.10",
+  "build": "202611030002",
+  "productRevision": "198050f",
+  "releaseRevision": "527dce42928dded0a0c21b9d5706525f8d4ae25b",
+  "localValidation": {
+    "xcodeTestLanguages": [
+      "en",
+      "zh-Hans"
+    ],
+    "coreTestsPerLanguage": 231,
+    "hostedWorkflowTestsPerLanguage": 47,
+    "testFailures": 0,
+    "releaseMetadataTests": 8
+  },
+  "reviewedPackage": {
+    "bundleID": "com.bjango.istatmenus",
+    "sourceVersion": "7.50.2",
+    "bundleVersion": "7.50",
+    "bundleBuild": "2394",
+    "teamID": "Y93TK974AT",
+    "officialArchiveGatekeeper": "Notarized Developer ID"
+  },
+  "versionMismatchMessageLocalizations": 34,
+  "githubActionsEnabled": false,
+  "appleNotarization": {
+    "status": "Accepted",
+    "submissionID": "4006089f-ea2d-4d8c-b231-408c1406abbe"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-03T08:14:49Z",
+      "tagName": "build-202611030002",
+      "targetCommitish": "527dce42928dded0a0c21b9d5706525f8d4ae25b",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611030002"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202611030002.zip",
+        "size": 19857757,
+        "sha256": "0076ecfd5ab8bb803420d3ce108920e69e0ed795518c9a6f7e190c5f7da302f9",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611030002.zip.sha256",
+        "size": 96,
+        "sha256": "456e2f6ebc484257fc991ed45a3324ce83381a932553f891f257b32ebeb16b55",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "aa23c0c73496290f9f2bd928e70dbb098cbbc755405ad67338ba2c30f269be1f",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "3f4a3661ad3ac1b07b016faf11314d4df4d0fa099daca4d94875272b2fc61c18",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "326b36f731b0e9f4b743341f7530099cc8ae10722d35903c9540929cb9c4d1fa",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611030002",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "0076ecfd5ab8bb803420d3ce108920e69e0ed795518c9a6f7e190c5f7da302f9",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerified": true,
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "iStatMenusUpdateRetriedInRunningApp": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "intelRuntimeTested": false
+}
