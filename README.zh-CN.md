@@ -7,7 +7,7 @@
 <p align="center"><strong>发现应用更新，看清更新来源，由你决定何时安装。</strong></p>
 
 <p align="center">
-  免费、开源的 macOS 应用更新工具，尝试成为 MacUpdater 的替代选择。<br>
+  源码可见、非商用免费的 macOS 应用更新工具，尝试成为 MacUpdater 的替代选择。<br>
   使用 SwiftUI 构建，集中检查应用版本、安装支持的更新，并通过 P2P 发现社区版本线索。
 </p>
 
@@ -19,7 +19,7 @@
   <a href="README.md">English</a>
 </p>
 
-<p align="center">macOS 14+ · Apple Silicon 与 Intel · MIT 许可 · 实验性预览版</p>
+<p align="center">macOS 14+ · Apple Silicon 与 Intel · 非商用许可 · 实验性预览版</p>
 
 ![Upovi 应用列表：集中查看已安装版本、更新状态、更新来源和应用详情](docs/images/app-library.png)
 
@@ -129,4 +129,6 @@ Upovi 可以预览和导出本地诊断报告。分享前请先检查，只提�
 
 ## 许可
 
-采用 [MIT 许可](LICENSE)。第三方组件及其许可证见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+采用 [PolyForm Noncommercial License 1.0.0](LICENSE)。源码可见，允许在该许可证规定的用途下免费使用、修改和分发，包括非商用用途。超出许可范围的商业用途须另行获得相关著作权人的授权。这不是 OSI 认可的开源许可证。
+
+变更从引入此许可证的提交开始适用。截至 [`6408734`](https://github.com/WillSuo-Github/Upovi/commit/6408734337ae029423111a3c28c11995207b1d5e) 的历史版本以 MIT 许可发布，已授予这些版本的权利不受本次变更撤销。详见[许可变更说明](docs/LICENSING.md)及[历史 MIT 条款](docs/licenses/MIT-before-noncommercial.txt)。第三方组件保留各自许可证，见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。

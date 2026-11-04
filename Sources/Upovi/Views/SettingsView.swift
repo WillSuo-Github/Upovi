@@ -186,7 +186,7 @@ private struct AboutSettings: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Upovi").font(Theme.display(22))
                         Text("版本 \(AppMetadata.displayVersion)").font(.callout.monospacedDigit()).foregroundStyle(.secondary)
-                        Text("开源 · 原生 · 让应用常新 — SwiftUI · MIT · macOS 14+").font(.caption).foregroundStyle(.tertiary)
+                        Text(verbatim: "SwiftUI · PolyForm Noncommercial 1.0.0 · macOS 14+").font(.caption).foregroundStyle(.tertiary)
                     }
                 }.padding(.vertical, 4)
                 Link(destination: URL(string: "https://github.com/WillSuo-Github/Upovi")!) { Label("项目主页与问题反馈", systemImage: "arrow.up.forward.square") }

@@ -24,6 +24,8 @@ args=['codesign','--force','--identifier','app.upovi.StoreBridge','--sign',ident
 if identity!='-':args+=['--options','runtime','--timestamp']
 subprocess.run(args+[str(helper)],check=True)
 subprocess.run(['codesign','--verify','--strict','--all-architectures',str(helper)],check=True)
+shutil.copyfile(root/'LICENSE',app/'Contents/Resources/Upovi-LICENSE')
+shutil.copyfile(root/'THIRD-PARTY-NOTICES.md',app/'Contents/Resources/THIRD-PARTY-NOTICES.md')
 shutil.copyfile(root/'Vendor/mas-LICENSE',app/'Contents/Resources/mas-LICENSE')
 
 shutil.copytree(root/'Vendor/mas-dependency-licenses',app/'Contents/Resources/mas-dependency-licenses',dirs_exist_ok=True)

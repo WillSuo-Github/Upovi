@@ -1,5 +1,13 @@
 # Contributing
 
+## Licensing contributions
+
+Upovi is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). By submitting a contribution for inclusion, you agree to offer your contribution under those terms and confirm that you have the rights needed to do so. Identify any third-party code and preserve its original license and notices. This statement does not transfer copyright or provide blanket permission to relicense contributions.
+
+The [licensing transition](docs/LICENSING.md) explains the earlier MIT versions and third-party exceptions.
+
+## Development
+
 Open `Upovi.xcodeproj` in Xcode 16 or newer on macOS 14 or newer. Select the Upovi scheme and My Mac; use Cmd-R to run, Cmd-U to test, and Product > Archive for a release archive. The checked-in project requires no generator to open or build. If you change target membership or build settings through `project.yml`, regenerate with XcodeGen and commit the project alongside the specification.
 
 ```sh

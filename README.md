@@ -7,7 +7,7 @@
 <p align="center"><strong>Find app updates. See where they come from. Update on your terms.</strong></p>
 
 <p align="center">
-  A free, open-source MacUpdater alternative for macOS, built with SwiftUI.<br>
+  A source-available MacUpdater alternative for macOS, free for noncommercial use and built with SwiftUI.<br>
   Check your apps in one place, install supported updates, and discover version leads through P2P.
 </p>
 
@@ -19,7 +19,7 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-<p align="center">macOS 14+ · Apple Silicon & Intel · MIT licensed · Experimental preview</p>
+<p align="center">macOS 14+ · Apple Silicon & Intel · Noncommercial license · Experimental preview</p>
 
 ![Upovi’s All Apps window showing installed versions, update status, source information and the app detail panel](docs/images/app-library.png)
 
@@ -129,4 +129,6 @@ First-time dependency resolution and the pinned Store bridge download require ne
 
 ## License
 
-[MIT](LICENSE). Third-party components and licenses are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+[PolyForm Noncommercial License 1.0.0](LICENSE). Upovi is source-available and free for the purposes permitted by that license, including noncommercial use, modification and redistribution. Commercial purposes outside those permissions require a separate license from the relevant copyright holders. This is not an OSI-approved open-source license.
+
+The change applies from the commit introducing this license onward. Earlier versions through [`6408734`](https://github.com/WillSuo-Github/Upovi/commit/6408734337ae029423111a3c28c11995207b1d5e) were published under MIT; permissions already granted for those versions remain in place. See the [licensing transition](docs/LICENSING.md) and [historical MIT terms](docs/licenses/MIT-before-noncommercial.txt). Third-party components retain their own licenses, listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
