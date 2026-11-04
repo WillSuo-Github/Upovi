@@ -129,6 +129,4 @@ First-time dependency resolution and the pinned Store bridge download require ne
 
 ## License
 
-[PolyForm Noncommercial License 1.0.0](LICENSE). Upovi is source-available and free for the purposes permitted by that license, including noncommercial use, modification and redistribution. Commercial purposes outside those permissions require a separate license from the relevant copyright holders. This is not an OSI-approved open-source license.
-
-The change applies from the commit introducing this license onward. Earlier versions through [`6408734`](https://github.com/WillSuo-Github/Upovi/commit/6408734337ae029423111a3c28c11995207b1d5e) were published under MIT; permissions already granted for those versions remain in place. See the [licensing transition](docs/LICENSING.md) and [historical MIT terms](docs/licenses/MIT-before-noncommercial.txt). Third-party components retain their own licenses, listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+[PolyForm Noncommercial License 1.0.0](LICENSE). Free for noncommercial use; commercial use requires separate permission. Third-party licenses are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

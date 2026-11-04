@@ -1,6 +1,6 @@
 # Third-party notices
 
-Upovi's project-owned code is offered under the [PolyForm Noncommercial License 1.0.0](LICENSE). Third-party components remain under their original licenses below; the Upovi noncommercial restriction does not relicense them. Earlier MIT-licensed Upovi versions are described in [the licensing transition](docs/LICENSING.md).
+Upovi's project-owned code is offered under the [PolyForm Noncommercial License 1.0.0](LICENSE). Third-party components remain under their original licenses below; the Upovi noncommercial restriction does not relicense them.
 
 Upovi links Apple's system libarchive for bounded ZIP extraction; no libarchive binary is bundled.
 

@@ -129,6 +129,4 @@ Upovi 可以预览和导出本地诊断报告。分享前请先检查，只提�
 
 ## 许可
 
-采用 [PolyForm Noncommercial License 1.0.0](LICENSE)。源码可见，允许在该许可证规定的用途下免费使用、修改和分发，包括非商用用途。超出许可范围的商业用途须另行获得相关著作权人的授权。这不是 OSI 认可的开源许可证。
-
-变更从引入此许可证的提交开始适用。截至 [`6408734`](https://github.com/WillSuo-Github/Upovi/commit/6408734337ae029423111a3c28c11995207b1d5e) 的历史版本以 MIT 许可发布，已授予这些版本的权利不受本次变更撤销。详见[许可变更说明](docs/LICENSING.md)及[历史 MIT 条款](docs/licenses/MIT-before-noncommercial.txt)。第三方组件保留各自许可证，见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+采用 [PolyForm Noncommercial License 1.0.0](LICENSE)。非商用免费，商业用途须另行获得授权。第三方组件许可见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
