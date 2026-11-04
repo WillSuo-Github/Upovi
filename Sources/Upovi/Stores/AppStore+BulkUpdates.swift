@@ -151,8 +151,29 @@ extension AppStore {
                 }
             }
             let authorization = makeInstallationAuthorizationBatch()
-            await runUpdateQueue(queue, excluding: failedToQuit, concurrency: width, authorization: authorization)
-            await installAuthorizedBulkItems(authorization)
+            bulkCancellers["authorizationBatch"] = { authorization.stop() }
+            let privileged = queue.compactMap(\.application).filter {
+                $0.canInstall && !failedToQuit.contains($0.id) && Self.requiresBatchAuthorization($0)
+            }
+            do {
+                if bulkStopRequested { throw CancellationError() }
+                guard networkAvailable else { throw URLError(.notConnectedToInternet) }
+                for item in privileged { setTransferPhase(item.id, .authorizing) }
+                // Authenticate before any download or installation, then retain only this batch's capability.
+                try await authorization.start(privileged)
+                for item in privileged { setTransferPhase(item.id, .queued) }
+                await runUpdateQueue(queue, excluding: failedToQuit, concurrency: width, authorization: authorization)
+            } catch {
+                for item in bulkItems where item.canInstall && bulkOutcomes[item.id] == nil {
+                    if !(error is CancellationError) { recordDiagnostic(.batchPreparation, appID: item.id, error: error) }
+                    recordBulkEvent(.finished(.init(item: item, status: error is CancellationError ? .cancelled : .failed,
+                        detail: error.localizedDescription)))
+                }
+                bulkStopRequested = true
+                for item in toolBatchItems { await runToolUpdate(item) }
+            }
+            await authorization.finish()
+            bulkCancellers["authorizationBatch"] = nil
             bulkActiveIDs = []; bulkCancellers = [:]
             await refreshInstallations()
             apps = await scanInventory()
@@ -166,23 +187,42 @@ extension AppStore {
         }
     }
 
+    static func requiresBatchAuthorization(_ item: BulkUpdateItem) -> Bool {
+        item.application.isAppStore || item.candidate.download?.url.pathExtension.lowercased() == "pkg"
+            || !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: item.application.path).deletingLastPathComponent().path)
+    }
+
     private func runUpdateQueue(_ queue: [UpdateQueueEntry], excluding failedToQuit: Set<String>,
                                 concurrency: Int, authorization: InstallationAuthorizationBatch) async {
-        var remaining = queue[...]
-        while let entry = remaining.first {
-            switch entry {
-            case .tool(let item):
-                // Keep package manager updates serial and do not let later rows bypass a tool.
-                remaining.removeFirst()
-                await runToolUpdate(item)
-            case .application:
-                let apps = remaining.prefix { $0.application != nil }
-                remaining = remaining.dropFirst(apps.count)
-                let items = apps.compactMap(\.application).filter { !failedToQuit.contains($0.id) }
-                _ = await BulkUpdateRunner.run(items, concurrency: concurrency, shouldStop: { await self.bulkStopRequested },
-                    operation: { try await self.installBulkItem($0, authorization: authorization) }, report: { event in
-                        await self.recordBulkPreparationEvent(event, authorization: authorization)
-                    })
+        var remaining = queue.filter { $0.application.map { !failedToQuit.contains($0.id) } ?? true }
+        let width = min(max(concurrency, BulkUpdateRunner.concurrencyRange.lowerBound), BulkUpdateRunner.concurrencyRange.upperBound)
+        await withTaskGroup(of: Bool.self) { group in
+            var running = 0, toolBusy = false
+            while !remaining.isEmpty || running > 0 {
+                // Admit in display order; a busy package manager never blocks later applications.
+                while running < width, let index = remaining.firstIndex(where: { $0.application != nil || !toolBusy }) {
+                    let entry = remaining.remove(at: index)
+                    running += 1
+                    switch entry {
+                    case .tool(let item):
+                        toolBusy = true
+                        group.addTask { await self.runToolUpdate(item); return true }
+                    case .application(let item):
+                        // Publish admission before scheduling another row, preserving visible start order.
+                        if item.canInstall && !bulkStopRequested { recordBulkEvent(.started(item)) }
+                        group.addTask {
+                            _ = await BulkUpdateRunner.run([item], shouldStop: { await self.bulkStopRequested },
+                                operation: { try await self.installBulkItem($0, authorization: authorization) }, report: { event in
+                                    if case .finished = event { await self.recordBulkPreparationEvent(event, authorization: authorization) }
+                                })
+                            return false
+                        }
+                    }
+                }
+                if let finishedTool = await group.next() {
+                    running -= 1
+                    if finishedTool { toolBusy = false }
+                }
             }
         }
     }
@@ -193,20 +233,15 @@ extension AppStore {
         recordBulkEvent(event)
     }
 
-    private func installAuthorizedBulkItems(_ batch: InstallationAuthorizationBatch) async {
-        guard !batch.jobs.isEmpty else { return }
-        bulkCancellers["authorizationBatch"] = { batch.stop() }
-        defer { bulkCancellers["authorizationBatch"] = nil }
-        if bulkStopRequested { batch.stop() }
-        await withTaskGroup(of: Void.self) { group in
-            for job in batch.jobs {
-                group.addTask { await self.installAuthorizedBulkJob(job, batch: batch) }
-            }
-        }
+    private func enqueueAuthorizedBulkItem(_ item: BulkUpdateItem, batch: InstallationAuthorizationBatch,
+                                           cleanup: @escaping @MainActor @Sendable () async -> Void = {},
+                                           operation: @escaping @MainActor @Sendable (InstallationAuthorization) async throws -> Void) {
+        batch.enqueue(item, cleanup: cleanup, operation: operation, run: { [self] job in
+            await installAuthorizedBulkJob(job, batch: batch)
+        })
     }
 
     private func installAuthorizedBulkJob(_ job: InstallationAuthorizationBatch.Job, batch: InstallationAuthorizationBatch) async {
-        defer { batch.finishRegistration(job.item.id) }
         _ = await BulkUpdateRunner.run([job.item], shouldStop: { await self.bulkStopRequested }, operation: { _ in
             do {
                 guard await !self.bulkPersistenceFailed else { throw PeerError.unavailable("Batch history could not be saved; installation was not started") }
@@ -303,8 +338,8 @@ extension AppStore {
                 try Task.checkCancellation()
                 guard saveBulkPhase(id, phase: .installing, detail: candidate.storeReceiptRecovery == nil ? String(localized: "等待商店下载和管理员认证") : String(localized: "正在完成商店安装收尾")) else { throw PeerError.unavailable("Batch history could not be saved") }
                 stage = .batchInstallation
-                setTransferPhase(id, .waitingForAuthorization)
-                authorization.enqueue(item) { [self] authorize in
+                setTransferPhase(id, .installing)
+                enqueueAuthorizedBulkItem(item, batch: authorization) { [self] authorize in
                     setTransferPhase(id, .installing)
                     try await installStoreUpdate(candidate, app, authorize)
                 }
@@ -313,8 +348,8 @@ extension AppStore {
                 do {
                     if bulkStopRequested { throw CancellationError() }
                     guard saveBulkPhase(id, phase: .installing, detail: String(localized: "等待管理员安装")) else { throw PeerError.unavailable("Batch history could not be saved") }
-                    setTransferPhase(id, .waitingForAuthorization)
-                    authorization.enqueue(item, cleanup: { [self] in administrator.discard(package) }) { [self] authorize in
+                    setTransferPhase(id, .installing)
+                    enqueueAuthorizedBulkItem(item, batch: authorization, cleanup: { [self] in administrator.discard(package) }) { [self] authorize in
                         setTransferPhase(id, .installing)
                         try await administrator.perform(package.plan, authorize: authorize)
                     }
@@ -325,12 +360,12 @@ extension AppStore {
                     if bulkStopRequested { throw CancellationError() }
                     guard saveBulkPhase(id, phase: .installing, detail: String(localized: "正在安装")) else { throw PeerError.unavailable("Batch history could not be saved") }
                     stage = .batchInstallation
-                    if !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path) {
+                    if Self.requiresBatchAuthorization(item) {
                         let plan = AdministratorInstallPlan(operation: .application, application: app,
                             version: prepared.replacement.version, build: prepared.replacement.build,
                             artifactPath: prepared.bundle.resolvingSymlinksInPath().path, permitsPrerelease: prepared.permitsPrerelease)
-                        setTransferPhase(id, .waitingForAuthorization)
-                        authorization.enqueue(item, cleanup: { [self] in await installer.discard(prepared.id) }) { [self] authorize in
+                        setTransferPhase(id, .installing)
+                        enqueueAuthorizedBulkItem(item, batch: authorization, cleanup: { [self] in await installer.discard(prepared.id) }) { [self] authorize in
                             setTransferPhase(id, .installing)
                             try await administrator.perform(plan, authorize: authorize)
                         }

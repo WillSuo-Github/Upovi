@@ -96,6 +96,13 @@ public enum ApplicationInstallation {
             }
         }
         // Clear the directory last, so an incomplete traversal retains its isolation marker.
+        // Even removing an absent xattr can be denied on protected vendor files.
+        // Do not request a write unless there is actually quarantine to release.
+        let quarantine = fgetxattr(descriptor, "com.apple.quarantine", nil, 0, 0, 0)
+        if quarantine < 0 {
+            guard errno == ENOATTR else { throw posixError() }
+            return
+        }
         if fremovexattr(descriptor, "com.apple.quarantine", 0) != 0, errno != ENOATTR { throw posixError() }
     }
 

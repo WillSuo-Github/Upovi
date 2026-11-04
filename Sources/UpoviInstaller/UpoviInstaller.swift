@@ -10,7 +10,20 @@ struct UpoviInstaller {
 
     static func main() async {
         do {
-            guard geteuid() == 0, CommandLine.arguments.count == 2 else { throw PeerError.invalid("Administrator authorization is required") }
+            guard geteuid() == 0 else { throw PeerError.invalid("Administrator authorization is required") }
+            if CommandLine.arguments.count == 4, CommandLine.arguments[1] == "--session" {
+                let manifest = URL(fileURLWithPath: CommandLine.arguments[2])
+                let work = URL(fileURLWithPath: CommandLine.arguments[3])
+                try requireRootOwnership(work)
+                try requireRootOwnership(manifest)
+                let attributes = try files.attributesOfItem(atPath: manifest.path)
+                guard attributes[.type] as? FileAttributeType == .typeRegular,
+                      (attributes[.size] as? NSNumber)?.intValue ?? Int.max <= 2_000_000 else { throw PeerError.invalid("Invalid session manifest") }
+                let session = try JSONDecoder().decode(AdministratorInstallSession.self, from: Data(contentsOf: manifest))
+                try await session.serve(work: work)
+                return
+            }
+            guard CommandLine.arguments.count == 2 else { throw PeerError.invalid("Administrator authorization is required") }
             let input = URL(fileURLWithPath: CommandLine.arguments[1])
             let attributes = try files.attributesOfItem(atPath: input.path)
             let owner = (attributes[.ownerAccountID] as? NSNumber)?.intValue ?? -1
@@ -135,6 +148,8 @@ struct UpoviInstaller {
             }
             try validateUpdate(target, plan: supplied)
             if supplied.operation == .package {
+                attempt.installedApplication = AppScanner.read(target)
+                attempt.state = "finalizing"; attempt.updatedAt = Date(); try save(attempt, in: job)
                 guard let installed = AppScanner.read(target) else { throw PeerError.invalid("Installed application is missing") }
                 try await ApplicationInstallation.finalize(target, matching: installed)
             }
@@ -146,6 +161,12 @@ struct UpoviInstaller {
             attempt.state = "installed"; attempt.updatedAt = Date(); try save(attempt, in: job)
             return attempt
         } catch {
+            if attempt.state == "finalizing", attempt.installedApplication != nil {
+                attempt.state = "finalizationPending"; attempt.updatedAt = Date()
+                attempt.finalizationFailure = .init(error)
+                try save(attempt, in: job)
+                return attempt
+            }
             attempt.state = "failed"; attempt.updatedAt = Date(); try? save(attempt, in: job)
             // Preserve the full transaction for explicit recovery; PKG scripts are not automatically reversed.
             throw error

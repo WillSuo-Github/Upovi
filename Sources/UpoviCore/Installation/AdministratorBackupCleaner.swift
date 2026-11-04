@@ -5,7 +5,7 @@ public enum AdministratorBackupCleaner {
         request.id == stored.id && request.application == stored.plan.application && request.version == stored.plan.version && request.build == stored.plan.build
     }
     public static func canRestore(_ state: String) -> Bool {
-        ["preparing", "backedUp", "installing", "installed", "failed", "interruptedOrFailed", "awaitingAuthorization"].contains(state)
+        ["preparing", "backedUp", "installing", "installed", "failed", "interruptedOrFailed", "awaitingAuthorization", "finalizing", "finalizationPending"].contains(state)
     }
     public static func canDiscard(_ stored: AdministratorInstallAttempt, current: InstalledApp?) -> Bool {
         if stored.state == "backupDiscarded" { return stored.cleanupComplete == false }

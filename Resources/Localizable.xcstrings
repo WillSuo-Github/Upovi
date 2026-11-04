@@ -101788,6 +101788,38 @@
           }
         }
       }
+    },
+    "主程序已更新，但安装收尾未完成：%@。请在“安装与恢复”中核对记录；未发现新版本不代表收尾成功。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app was updated, but installation finalization did not finish: %@. Inspect its record in History & Recovery; no available update does not confirm finalization."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主程式已更新，但安裝收尾未完成：%@。請在「安裝與復原」中核對記錄；未發現新版本不代表收尾成功。"
+          }
+        }
+      }
+    },
+    "主程序已更新，但安装收尾未完成；请核对管理员记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app was updated, but finalization did not finish; inspect the administrator record"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主程式已更新，但安裝收尾未完成；請核對管理員記錄"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

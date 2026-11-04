@@ -11,6 +11,7 @@ import XCTest
         let installer = UpdateInstaller(journalDirectory: root.appending(path: "Journal"),
             downloadCache: ArtifactDownloadCache(directory: root.appending(path: "Cache")), downloads: downloads)
         let value = AppStore(preferences: preferences, installer: installer, scanApplications: { _ in [] }, revalidateSources: { })
+        value.makeInstallationAuthorizationBatch = { InstallationAuthorizationBatch(start: { _ in }) }
         value.administrator = AdministratorInstallationService(directory: root.appending(path: "Attempts"), downloads: installer.downloads)
         value.toolLocations = [.npm: URL(fileURLWithPath: "/fixture/npm"), .uv: URL(fileURLWithPath: "/fixture/uv")]
         value.checkToolSource = { source, _ in .init(source: source, context: "/fixture/global", installed: ["tool":"1.0"], updates: [.init(name: "tool", installed: "1.0", available: "2.0")]) }
@@ -186,4 +187,70 @@ import XCTest
         XCTAssertNotEqual(ToolUpdateItem(source: .npm, package: package, context: "/a").id, ToolUpdateItem(source: .npm, package: package, context: "/b").id)
     }
 
+}
+
+extension ToolSourceWorkflowTests {
+    func testMixedQueueFillsFiveSlotsAcrossToolsAndReplenishesBeforeSlowDownloadFinishes() async throws {
+        let latch = DownloadAdmissionLatch()
+        let downloads = DownloadCoordinator { _, app, _, _, _, _ in
+            await latch.started(app.name)
+            throw PeerError.unavailable("Synthetic transfer failure")
+        }
+        let (value, _) = try store(downloads: downloads)
+        value.bulkConcurrency = 5
+        let candidate = UpdateCandidate(version: "2", source: "Fixture", isCommunity: false, url: nil,
+            download: .init(url: URL(string: "https://example.invalid/update.zip")!, sha256: String(repeating: "a", count: 64)))
+        let names = ["A slow", "B ready", "D ready", "E ready", "G later", "H later"]
+        value.apps = names.map { .init(name: $0, bundleID: "app.synthetic." + $0.replacingOccurrences(of: " ", with: ""),
+            version: "1", path: "/synthetic/\($0).app", teamID: "SYNTHETIC1") }
+        for app in value.apps { value.sourceResults[app.id] = .init(appID: app.id, candidates: [candidate], note: "", status: .updates) }
+        let tools = [ToolPackage(name: "C tool", installed: "1", available: "2"), ToolPackage(name: "F tool", installed: "1", available: "2")]
+        value.enabledToolSources = [.npm]
+        value.toolSnapshots[.npm] = .init(source: .npm, installed: Dictionary(uniqueKeysWithValues: tools.map { ($0.name, "1") }), updates: tools)
+        var activeTools = 0, maximumTools = 0
+        value.updateToolPackage = { item, _ in
+            await MainActor.run { activeTools += 1; maximumTools = max(maximumTools, activeTools) }
+            await latch.toolStarted()
+            await MainActor.run { activeTools -= 1 }
+            return .init(source: .npm, installed: [item.package.name: "2"], updates: [])
+        }
+        value.reviewAllUpdates(); value.startAllUpdates()
+        for _ in 0..<200 {
+            if await latch.initialSlotsFull { break }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        let initial = await latch.names
+        XCTAssertEqual(Set(initial), Set(names.prefix(4)), "Four apps plus the serial tool must occupy all five slots")
+        XCTAssertEqual(value.transfers[value.apps.last!.id]?.phase, .queued)
+        await latch.releaseFastTasks()
+        for _ in 0..<200 {
+            if await latch.names.contains("H later") { break }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        let admitted = await latch.names
+        XCTAssertTrue(admitted.contains("H later"), "Later apps must start while the first download remains blocked")
+        XCTAssertNil(value.bulkOutcomes[value.apps[0].id])
+        await latch.releaseSlowTask()
+        await value.bulkTask?.value
+        XCTAssertEqual(maximumTools, 1)
+        XCTAssertEqual(value.bulkFailedCount, 6); XCTAssertEqual(value.bulkCompletedCount, 2)
+    }
+}
+
+private actor DownloadAdmissionLatch {
+    private(set) var names: [String] = []
+    private var toolArrived = false
+    private var fastReleased = false
+    private var slowReleased = false
+    var initialSlotsFull: Bool { names.count == 4 && toolArrived }
+    func started(_ name: String) async {
+        names.append(name)
+        while name == "A slow" ? !slowReleased : !fastReleased { try? await Task.sleep(for: .milliseconds(5)) }
+    }
+    func toolStarted() async {
+        toolArrived = true
+        while !fastReleased { try? await Task.sleep(for: .milliseconds(5)) }
+    }
+    func releaseFastTasks() { fastReleased = true }
+    func releaseSlowTask() { slowReleased = true }
 }

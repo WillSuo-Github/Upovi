@@ -157,3 +157,94 @@ extension AdministratorInstallationTests {
         }
     }
 }
+
+extension AdministratorInstallationTests {
+    private func sessionFixture(store: Bool = false) throws -> (AdministratorInstallSession, BulkUpdateItem) {
+        let directory = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appending(path: "Upovi-session-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+        let candidate = UpdateCandidate(version: "2.0", build: "2", source: "Fixture", isCommunity: false, url: nil,
+            download: store ? nil : .init(url: URL(string: "https://example.invalid/app.zip")!, sha256: String(repeating: "a", count: 64)), appStoreID: store ? 123 : nil)
+        let item = BulkUpdateItem(application: app(appStore: store), candidate: candidate, manualReason: nil)
+        return (AdministratorInstallSession(items: [item], requests: directory, hostTeam: "SYNTHETIC1"), item)
+    }
+    func testSessionOnlyAcceptsConfirmedApplicationVersionAndInstallOperation() throws {
+        let (session, item) = try sessionFixture()
+        try session.validate()
+        func request(version: String = "2.0", build: String = "2", operation: AdministratorInstallPlan.Operation = .application,
+                     application: InstalledApp? = nil, beta: Bool = false) -> AdministratorInstallSession.Request {
+            .application(.init(operation: operation, application: application ?? item.application, version: version, build: build,
+                artifactPath: "/nonexistent/Prepared.app", permitsPrerelease: beta))
+        }
+        XCTAssertNoThrow(try session.validate(request(), index: 0))
+        XCTAssertThrowsError(try session.validate(request(), index: 1))
+        XCTAssertThrowsError(try session.validate(request(version: "3.0"), index: 0))
+        XCTAssertThrowsError(try session.validate(request(build: "3"), index: 0))
+        XCTAssertThrowsError(try session.validate(request(operation: .inspect), index: 0))
+        XCTAssertThrowsError(try session.validate(request(operation: .restore), index: 0))
+        XCTAssertThrowsError(try session.validate(request(beta: true), index: 0))
+        XCTAssertThrowsError(try session.validate(request(application: app(path: "/Applications/Other.app")), index: 0))
+    }
+    func testStoreSessionPinsStoreIDUserAndReceiptRecovery() throws {
+        let (session, item) = try sessionFixture(store: true)
+        try session.validate()
+        func request(storeID: UInt64 = 123, userID: UInt32? = nil, version: String = "2.0", recovery: StoreReceiptRecovery? = nil) -> AdministratorInstallSession.Request {
+            .store(.init(application: item.application, storeID: storeID, version: version, userID: userID ?? session.userID, receiptRecovery: recovery))
+        }
+        XCTAssertNoThrow(try session.validate(request(), index: 0))
+        XCTAssertThrowsError(try session.validate(request(storeID: 456), index: 0))
+        XCTAssertThrowsError(try session.validate(request(userID: session.userID + 1), index: 0))
+        XCTAssertThrowsError(try session.validate(request(version: "3.0"), index: 0))
+        XCTAssertThrowsError(try session.validate(request(recovery: .init(transactionID: UUID(), path: "/private/var/folders/fixture/receipt")), index: 0))
+    }
+    func testSessionBootstrapFreezesSelectionAndVerifiesHelpersBeforeStarting() throws {
+        let (session, _) = try sessionFixture(store: true)
+        let command = try session.bootstrap(helper: URL(fileURLWithPath: "/fixture/UpoviInstaller"),
+            storeHelper: URL(fileURLWithPath: "/fixture/UpoviStoreInstaller.app"), bridge: URL(fileURLWithPath: "/fixture/UpoviStoreBridge"))
+        XCTAssertTrue(command.contains("/usr/bin/base64 -D > \"$work/session.json\""))
+        XCTAssertTrue(command.contains("identifier \"app.upovi.Installer\""))
+        XCTAssertTrue(command.contains("identifier \"app.upovi.StoreInstaller\""))
+        XCTAssertTrue(command.contains("identifier \"app.upovi.StoreBridge\""))
+        XCTAssertTrue(command.hasSuffix("\"$work/UpoviInstaller\" --session \"$work/session.json\" \"$work\""))
+        XCTAssertFalse(command.contains("sudo"))
+        _ = try JSONDecoder().decode(AdministratorInstallSession.self, from: JSONEncoder().encode(session))
+    }
+    func testSessionRequestReaderRejectsSymlinksDevicesAndOversizedInputs() throws {
+        let (session, _) = try sessionFixture()
+        let directory = open(session.requestsPath, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)
+        XCTAssertGreaterThanOrEqual(directory, 0)
+        defer { close(directory) }
+        let file = URL(fileURLWithPath: session.requestsPath).appending(path: "0.json")
+        XCTAssertNil(try AdministratorInstallSession.readRequest(directory: directory, name: "0.json", owner: getuid()))
+        try Data("fixture".utf8).write(to: file)
+        XCTAssertEqual(try AdministratorInstallSession.readRequest(directory: directory, name: "0.json", owner: getuid()), Data("fixture".utf8))
+        XCTAssertThrowsError(try AdministratorInstallSession.readRequest(directory: directory, name: "0.json", owner: getuid() + 1))
+        try FileManager.default.removeItem(at: file)
+        try FileManager.default.createSymbolicLink(at: file, withDestinationURL: URL(fileURLWithPath: "/etc/passwd"))
+        XCTAssertThrowsError(try AdministratorInstallSession.readRequest(directory: directory, name: "0.json", owner: getuid()))
+        try FileManager.default.removeItem(at: file)
+        XCTAssertEqual(mkfifo(file.path, 0o600), 0)
+        XCTAssertThrowsError(try AdministratorInstallSession.readRequest(directory: directory, name: "0.json", owner: getuid()))
+        try FileManager.default.removeItem(at: file)
+        try Data(repeating: 0, count: 65537).write(to: file)
+        XCTAssertThrowsError(try AdministratorInstallSession.readRequest(directory: directory, name: "0.json", owner: getuid()))
+    }
+}
+
+extension AdministratorInstallationTests {
+    func testPostInstallFinalizationFailurePreservesInstalledVersionAndRecoveryEvidence() throws {
+        let original = app()
+        let plan = AdministratorInstallPlan(operation: .package, application: original, version: "2.0", build: "2",
+            artifactPath: "/nonexistent/Update.pkg", sha256: String(repeating: "a", count: 64))
+        var attempt = AdministratorInstallAttempt(plan: plan, state: "finalizationPending")
+        attempt.installedApplication = .init(name: original.name, bundleID: original.bundleID, version: "2.0", build: "2", path: original.path, teamID: original.teamID)
+        attempt.finalizationFailure = AdministratorFinalizationError(POSIXError(.EPERM))
+        let receipt = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: JSONEncoder().encode(attempt))
+        XCTAssertEqual(receipt.state, "finalizationPending")
+        XCTAssertEqual(receipt.installedApplication?.version, "2.0")
+        XCTAssertEqual(receipt.finalizationFailure?.domain, NSPOSIXErrorDomain)
+        XCTAssertEqual(receipt.finalizationFailure?.code, Int(EPERM))
+        XCTAssertTrue(AdministratorBackupCleaner.canRestore(receipt.state))
+        XCTAssertFalse(AdministratorBackupCleaner.canDiscard(receipt, current: receipt.installedApplication))
+    }
+}

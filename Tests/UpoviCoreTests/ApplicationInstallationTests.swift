@@ -80,3 +80,27 @@ final class ApplicationInstallationTests: XCTestCase {
         XCTAssertTrue(hasMarker(app)); XCTAssertTrue(hasMarker(binary))
     }
 }
+
+extension ApplicationInstallationTests {
+    func testFinalizationDoesNotWriteToProtectedEntriesWithoutQuarantine() async throws {
+        let app = try fixture(), binary = app.appending(path: "Contents/MacOS/Fixture")
+        try mark(app)
+        // Removing an absent xattr from an immutable file returns EPERM, not ENOATTR.
+        XCTAssertEqual(chflags(binary.path, UInt32(UF_IMMUTABLE)), 0)
+        defer { _ = chflags(binary.path, 0) }
+        try await ApplicationInstallation.finalize(app, validate: { _ in }, assess: { _ in })
+        XCTAssertFalse(hasMarker(app)); XCTAssertFalse(hasMarker(binary))
+        XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: binary.path)[.immutable] as? Bool, true)
+    }
+    func testProtectedEntryWithActualQuarantineStillFailsWithoutChangingProtection() async throws {
+        let app = try fixture(), binary = app.appending(path: "Contents/MacOS/Fixture")
+        try mark(app); try mark(binary)
+        XCTAssertEqual(chflags(binary.path, UInt32(UF_IMMUTABLE)), 0)
+        defer { _ = chflags(binary.path, 0) }
+        do {
+            try await ApplicationInstallation.finalize(app, validate: { _ in }, assess: { _ in })
+            XCTFail("Actual quarantine cannot be ignored when removal fails")
+        } catch let error as POSIXError { XCTAssertEqual(error.code, .EPERM) }
+        XCTAssertTrue(hasMarker(app)); XCTAssertTrue(hasMarker(binary))
+    }
+}

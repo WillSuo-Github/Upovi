@@ -16,7 +16,7 @@ Only global tools are managed. Upovi does not edit project dependencies, manifes
 
 ## Execution and results
 
-App updates run first, followed by individual reviewed tool packages sequentially. Every package is one task with independent progress, success/failure, retry and history. Enabled sources without outdated packages create no update tasks. A single-package action cannot request a source-wide upgrade; the native manager may still update dependencies required by that package. Checks can access configured registries and update manager caches; they do not run package upgrade commands.
+Applications and reviewed tool packages enter a shared bounded queue in display order. Empty slots are replenished across application/tool boundaries. Tool packages remain serial; a running package manager does not block later application downloads. Privileged installations use the batch session independently of download preparation slots. Every package is one task with independent progress, success/failure, retry and history. Enabled sources without outdated packages create no update tasks. A single-package action cannot request a source-wide upgrade; the native manager may still update dependencies required by that package. Checks can access configured registries and update manager caches; they do not run package upgrade commands.
 
 Commands use argument arrays and a private neutral working directory. They do not use a shell or sudo. Existing managers retain ownership of registries, credentials, constraints and installation scripts. Source and target names are validated; npm/pnpm global scope is checked again before and after a write. A native installation can run package scripts and is not an Upovi desktop-app backup transaction.
 

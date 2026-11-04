@@ -266,3 +266,29 @@ final class BatchRetryTests: XCTestCase {
         XCTAssertEqual(store.bulkItems.map(\.id), [app.id])
     }
 }
+
+extension ToolbarWorkflowTests {
+    func testScheduledCheckPreservesFailedBatchWhenNewVersionIsAlreadyOnDisk() async throws {
+        let old = app(1)
+        let current = InstalledApp(name: old.name, bundleID: old.bundleID, version: "2.0", path: old.path, teamID: old.teamID)
+        let target = try XCTUnwrap(update(for: old).candidates.first)
+        let item = BulkUpdateItem(application: old, candidate: target, manualReason: nil)
+        let store = AppStore(preferences: try preferences(), checkApplication: { app, _ in
+            .init(appID: app.id, candidates: [], note: "Already at the selected version", status: .current)
+        })
+        let failure = AdministratorFinalizationError(POSIXError(.EPERM))
+        store.apps = [current]; store.bulkItems = [item]; store.bulkHasRun = true
+        store.bulkSummaryVisible = true
+        store.bulkOutcomes = [old.id: .init(item: item, status: .failed, detail: failure.localizedDescription)]
+        var transfer = TransferProgress(phase: .installing); transfer.finish(.failed)
+        store.transfers[old.id] = transfer
+        store.beginChecking(preservingBatchResults: true)
+        await store.checkTask?.value
+        XCTAssertEqual(store.updateCount, 0, "The same version must not be offered for reinstallation")
+        XCTAssertEqual(store.sourceResults[current.id]?.status, .current)
+        XCTAssertTrue(store.bulkSummaryVisible, "A source check must not dismiss an unresolved installation result")
+        XCTAssertEqual(store.transfers[old.id]?.phase, .failed)
+        XCTAssertEqual(store.bulkOutcomes[old.id]?.detail, failure.localizedDescription)
+        XCTAssertNil(store.installationTask); XCTAssertNil(store.bulkTask)
+    }
+}

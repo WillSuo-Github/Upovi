@@ -77,12 +77,16 @@ final class AdministratorInstallationService {
         defer { try? FileManager.default.removeItem(at: input) }
         do {
             let command = try AdministratorAuthorization.command(helper: helper, plan: input, hostTeam: team)
-            let data = try await authorize.run(command, directory.appending(path: plan.id.uuidString + "-authorization.log"))
+            let data = try await authorize.perform(.application(plan), command: command, log: directory.appending(path: plan.id.uuidString + "-authorization.log"))
             let result = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: data)
-            let accepted = plan.operation == .inspect || (plan.operation == .discardBackup ? result.state == "backupDiscarded" : plan.operation == .restore ? result.state == "restored" : result.state == "installed")
+            let accepted = plan.operation == .inspect || (plan.operation == .discardBackup ? result.state == "backupDiscarded" : plan.operation == .restore ? result.state == "restored" : ["installed", "finalizationPending"].contains(result.state))
             guard result.id == plan.id, accepted else { throw PeerError.invalid("Unexpected administrator transaction result") }
             try save(result)
-        } catch {
+            if installing, result.state == "finalizationPending" {
+                throw result.finalizationFailure ?? AdministratorFinalizationError(PeerError.unavailable("Installation finalization did not complete"))
+            }
+        } catch let error as AdministratorFinalizationError { throw error }
+        catch {
             if installing {
                 attempt.state = "interruptedOrFailed"; attempt.updatedAt = Date(); try? save(attempt)
             }
@@ -94,14 +98,25 @@ final class AdministratorInstallationService {
 /// An authorization boundary shared by direct and App Store installations.
 struct InstallationAuthorization: Sendable {
     let run: @MainActor @Sendable (String, URL?) async throws -> Data
-    static let system = Self { command, log in
+    private let submit: (@MainActor @Sendable (AdministratorInstallSession.Request, URL?) async throws -> Data)?
+    init(run: @escaping @MainActor @Sendable (String, URL?) async throws -> Data) {
+        self.run = run; submit = nil
+    }
+    init(submit: @escaping @MainActor @Sendable (AdministratorInstallSession.Request, URL?) async throws -> Data) {
+        self.submit = submit
+        run = { _, _ in throw PeerError.invalid("A batch authorization accepts only typed installation plans") }
+    }
+    func perform(_ request: AdministratorInstallSession.Request, command: String, log: URL?) async throws -> Data {
+        if let submit { return try await submit(request, log) }
+        return try await run(command, log)
+    }
+    static let system = Self(run: { command, log in
         try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
             timeoutSeconds: 2100, outputFile: log)
-    }
+    })
 }
 
-/// Downloads finish before the pending privileged commands are submitted together.
-/// Only this batch's signed-helper commands run, in order, under one system prompt.
+/// One upfront authorization and live submissions as each unprivileged download finishes.
 @MainActor
 final class InstallationAuthorizationBatch {
     struct Job: Sendable {
@@ -109,61 +124,112 @@ final class InstallationAuthorizationBatch {
         let operation: @MainActor @Sendable (InstallationAuthorization) async throws -> Void
         let cleanup: @MainActor @Sendable () async -> Void
     }
-    private(set) var jobs: [Job] = []
-    private var arrived = Set<String>()
-    private var requests: [String: (String, URL?, CheckedContinuation<Data, any Error>)] = [:]
+    private var tasks: [Task<Void, Never>] = []
+    private var registered = Set<String>()
+    private var session: AdministratorInstallSession?
     private var execution: Task<Void, Never>?
+    private var executionError: (any Error)?
+    private var executionFinished = false
     private var stopped = false
-    private let stopFile = FileManager.default.temporaryDirectory.appending(path: "Upovi-stop-\(UUID().uuidString)")
-    private let execute: @MainActor @Sendable (String, Int) async throws -> Data
+    private var ready = false
+    private var submitted = Set<Int>()
+    private let requests = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appending(path: "Upovi-session-\(UUID().uuidString)")
+    private let startOverride: (@MainActor @Sendable ([BulkUpdateItem]) async throws -> Void)?
+    private let submitOverride: (@MainActor @Sendable (AdministratorInstallSession.Request) async throws -> Data)?
 
-    init(execute: @escaping @MainActor @Sendable (String, Int) async throws -> Data = { command, count in
-        try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
-            timeoutSeconds: TimeInterval(2100 * count), maximumOutputBytes: max(65536, count * 100000))
-    }) { self.execute = execute }
+    init(start: (@MainActor @Sendable ([BulkUpdateItem]) async throws -> Void)? = nil,
+         submit: (@MainActor @Sendable (AdministratorInstallSession.Request) async throws -> Data)? = nil) {
+        startOverride = start; submitOverride = submit
+    }
+
+    func start(_ items: [BulkUpdateItem]) async throws {
+        guard !items.isEmpty else { return }
+        if let startOverride { try await startOverride(items); return }
+        guard let team = AdministratorAuthorization.teamID(at: Bundle.main.bundleURL),
+              let helper = Bundle.main.url(forAuxiliaryExecutable: "UpoviInstaller") else {
+            throw PeerError.unavailable("Use a complete Developer ID signed Upovi bundle for administrator installation")
+        }
+        try FileManager.default.createDirectory(at: requests, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
+        let session = AdministratorInstallSession(items: items, requests: requests, hostTeam: team)
+        try session.validate()
+        self.session = session
+        let command = try session.bootstrap(helper: helper,
+            storeHelper: Bundle.main.bundleURL.appending(path: "Contents/Helpers/UpoviStoreInstaller.app"),
+            bridge: Bundle.main.bundleURL.appending(path: "Contents/MacOS/UpoviStoreBridge"))
+        execution = Task { [self] in
+            do {
+                _ = try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
+                    timeoutSeconds: 6 * 3600 + 2100, outputFile: requests.appending(path: "session.log"), maximumOutputBytes: 65536)
+            } catch {
+                let log = (try? String(contentsOf: requests.appending(path: "session.log"), encoding: .utf8)) ?? ""
+                executionError = log.contains("(-128)") ? CancellationError() : error
+            }
+            executionFinished = true
+        }
+        while true {
+            try checkExecution()
+            if let attrs = try? FileManager.default.attributesOfItem(atPath: session.results.path),
+               (attrs[.ownerAccountID] as? NSNumber)?.intValue == 0,
+               ((attrs[.posixPermissions] as? NSNumber)?.intValue ?? 0o777) & 0o022 == 0,
+               FileManager.default.fileExists(atPath: session.results.appending(path: "ready").path) { break }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        ready = true
+        if stopped { throw CancellationError() }
+    }
 
     func enqueue(_ item: BulkUpdateItem, cleanup: @escaping @MainActor @Sendable () async -> Void = {},
-                 operation: @escaping @MainActor @Sendable (InstallationAuthorization) async throws -> Void) {
-        jobs.append(.init(item: item, operation: operation, cleanup: cleanup))
+                 operation: @escaping @MainActor @Sendable (InstallationAuthorization) async throws -> Void,
+                 run: @escaping @MainActor @Sendable (Job) async -> Void) {
+        registered.insert(item.id)
+        let job = Job(item: item, operation: operation, cleanup: cleanup)
+        tasks.append(Task { await run(job) })
     }
-    func contains(_ id: String) -> Bool { jobs.contains { $0.item.id == id } }
+    func contains(_ id: String) -> Bool { registered.contains(id) }
     func stop() {
         stopped = true
-        // The privileged shell reads only this marker's existence; it never executes its contents.
-        try? Data().write(to: stopFile, options: .atomic)
+        if !ready { execution?.cancel() }
+        try? Data().write(to: requests.appending(path: "stop"), options: .atomic)
     }
     func authorization(for id: String) -> InstallationAuthorization {
-        .init { [self] command, log in
+        .init(submit: { [self] request, log in
             guard !stopped else { throw CancellationError() }
-            return try await withCheckedThrowingContinuation { continuation in
-                requests[id] = (command, log, continuation)
-                finishRegistration(id)
-            }
-        }
-    }
-    /// Also called when preflight failed or the user stopped before submitting a command.
-    func finishRegistration(_ id: String) {
-        arrived.insert(id)
-        guard arrived.count == jobs.count, execution == nil else { return }
-        execution = Task { [self] in
-            defer { try? FileManager.default.removeItem(at: stopFile) }
-            let ordered = jobs.compactMap { requests[$0.item.id] }
-            guard !ordered.isEmpty else { return }
-            do {
-                if stopped { throw CancellationError() }
-                let command = AdministratorAuthorization.batchCommand(ordered.map { $0.0 }, stopFile: stopFile)
-                let data = try await execute(command, ordered.count)
-                let results = try AdministratorAuthorization.batchResults(data, count: ordered.count)
-                for (request, result) in zip(ordered, results) {
-                    if let log = request.1 { try? result.output.write(to: log, options: .atomic) }
-                    if result.status == 0 { request.2.resume(returning: result.output) }
-                    else if result.status == -1 { request.2.resume(throwing: CancellationError()) }
-                    else { request.2.resume(throwing: PeerError.unavailable("Authorized installer failed (\(result.status)): \(String(decoding: result.output.prefix(4096), as: UTF8.self))")) }
+            let output: Data
+            if let submitOverride { output = try await submitOverride(request) }
+            else {
+                guard let session, let index = session.items.firstIndex(where: { $0.id == id }), !submitted.contains(index) else {
+                    throw PeerError.invalid("Installation has no active batch authorization")
                 }
-            } catch {
-                for request in ordered { request.2.resume(throwing: error) }
+                try session.validate(request, index: index)
+                submitted.insert(index)
+                try JSONEncoder().encode(request).write(to: requests.appending(path: "\(index).json"), options: .atomic)
+                while true {
+                    try checkExecution()
+                    if let data = try? Data(contentsOf: session.results.appending(path: "\(index).json")),
+                       let result = try? JSONDecoder().decode(AdministratorInstallSession.Result.self, from: data) {
+                        if let log { try? result.output.write(to: log, options: .atomic) }
+                        if result.status == -1 { throw CancellationError() }
+                        guard result.status == 0 else {
+                            throw PeerError.unavailable("Authorized installer failed: \(String(decoding: result.output.prefix(4096), as: UTF8.self))")
+                        }
+                        output = result.output; break
+                    }
+                    try await Task.sleep(for: .milliseconds(50))
+                }
             }
-            requests = [:]
-        }
+            if let log { try? output.write(to: log, options: .atomic) }
+            return output
+        })
+    }
+    private func checkExecution() throws {
+        if let executionError { throw executionError }
+        if executionFinished { throw PeerError.unavailable("Installation authorization session ended") }
+    }
+    func finish() async {
+        for task in tasks { await task.value }
+        if session != nil { try? Data().write(to: requests.appending(path: "finish"), options: .atomic) }
+        await execution?.value
+        tasks = []; execution = nil
+        try? FileManager.default.removeItem(at: requests)
     }
 }

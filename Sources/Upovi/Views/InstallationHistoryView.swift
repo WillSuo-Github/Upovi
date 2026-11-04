@@ -229,6 +229,7 @@ struct AdministratorBackupRow: View {
     private var status: String {
         switch attempt.state {
         case "installed": String(localized: "安装完成，受保护的主应用备份已保留")
+        case "finalizing", "finalizationPending": String(localized: "主程序已更新，但安装收尾未完成；请核对管理员记录")
         case "restored": String(localized: "主应用已恢复，其他系统改动未回滚")
         case "backupDiscarded": attempt.cleanupComplete == true ? String(localized: "保留数据已清理，恢复已停用") : String(localized: "清理未完成，恢复已停用；可继续清理残留")
         case "cleanupPending": String(localized: "清理状态尚未确认，请先核对管理员记录")

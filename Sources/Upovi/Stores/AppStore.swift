@@ -295,10 +295,11 @@ final class AppStore {
         }
     }
 
-    func beginChecking() {
+    func beginChecking(preservingBatchResults: Bool = false) {
         guard !refreshing, !checking, !scanning, !installationBusy else { return }
         guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，联网后再检查更新。"); return }
-        dismissBulkSummary()
+        // A scheduled source check must not erase a failed installation's explanation.
+        if !preservingBatchResults || bulkFailedCount == 0 { dismissBulkSummary() }
         checking = true; lastCheckAttempt = Date()
         checkTask = Task {
             await checkUpdates()

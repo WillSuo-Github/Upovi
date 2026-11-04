@@ -60,7 +60,7 @@ import UpoviCore
         let command = try AppStoreUpdatePlan.authorizationCommand(helper: helper, bridge: bridge, plan: request, hostTeam: team)
         let log = directory.appending(path: plan.id.uuidString + "-authorization.log")
         let data: Data
-        do { data = try await authorize.run(command, log) }
+        do { data = try await authorize.perform(.store(plan), command: command, log: log) }
         catch is CancellationError { throw CancellationError() }
         catch {
             let detail = (try? String(contentsOf: log, encoding: .utf8)).map(StoreInstallationFailure.sanitized)

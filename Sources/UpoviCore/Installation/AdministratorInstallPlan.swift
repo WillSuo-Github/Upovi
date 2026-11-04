@@ -56,7 +56,22 @@ public struct AdministratorInstallAttempt: Codable, Identifiable, Sendable {
     public var backupBytes: Int64?
     public var backupBytesIsLowerBound: Bool?
     public var cleanupComplete: Bool?
+    public var finalizationFailure: AdministratorFinalizationError?
     public init(plan: AdministratorInstallPlan, state: String) { self.plan = plan; self.state = state; updatedAt = Date() }
+}
+
+/// The selected application was verified on disk, but post-install finalization failed.
+public struct AdministratorFinalizationError: Codable, LocalizedError, Sendable {
+    public let message: String
+    public let domain: String
+    public let code: Int
+    public init(_ error: any Error) {
+        let value = error as NSError
+        message = String(error.localizedDescription.prefix(2000)); domain = value.domain; code = value.code
+    }
+    public var errorDescription: String? {
+        String(localized: "主程序已更新，但安装收尾未完成：\(message)。请在“安装与恢复”中核对记录；未发现新版本不代表收尾成功。")
+    }
 }
 
 public enum AdministratorAuthorization {

@@ -195,3 +195,12 @@ private actor Tracker {
         await withCheckedContinuation { waiter = $0 }
     }
 }
+
+extension BulkUpdateTests {
+    func testInstalledApplicationWithFinalizationFailureRemainsAnUnfinishedOutcome() async {
+        let items = plan(1), failure = AdministratorFinalizationError(POSIXError(.EPERM))
+        let outcomes = await BulkUpdateRunner.run(items, shouldStop: { false }, operation: { _ in throw failure }, report: { _ in })
+        XCTAssertEqual(outcomes.map(\.status), [.failed])
+        XCTAssertEqual(outcomes.first?.detail, failure.localizedDescription)
+    }
+}

@@ -13,7 +13,7 @@ extension AppStore {
                 policyClock = Date()
                 if CheckSchedule.isDue(enabled: automaticChecks && !apps.isEmpty, online: networkAvailable,
                     busy: refreshing || scanning || checking || installationBusy, lastAttempt: lastCheckAttempt,
-                    intervalMinutes: checkIntervalMinutes) { beginChecking() }
+                    intervalMinutes: checkIntervalMinutes) { beginChecking(preservingBatchResults: true) }
                 if networkEnabled && !syncing && !scanning && !refreshing && !installationBusy &&
                     (lastSyncAttempt.map { Date().timeIntervalSince($0) >= 600 } ?? true) { beginSync() }
                 try? await Task.sleep(for: .seconds(30))

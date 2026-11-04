@@ -36,7 +36,7 @@ It also explores a different way to discover versions: Macs can share app versio
 ## What you can do
 
 - **Check your app library at once.** Scan `/Applications`, `~/Applications` and extra folders you choose. Filter by update status, source coverage or App Store distribution, and inspect each app’s version and source.
-- **Update individually or in a batch.** Review the proposed changes before installation. Supported app updates can run concurrently, with per-app progress and results; administrator and App Store installation steps are serialized. Failed items can be retried.
+- **Update individually or in a batch.** Review the proposed changes before installation. Supported app updates can run concurrently, with per-app progress and results; batches needing administrator access authorize once before work begins, then serialize privileged installation steps as downloads become ready. Failed items can be retried.
 - **Manage ignored updates in the sidebar.** The Ignored section brings together apps with all updates ignored and apps with skipped versions. Restore either rule independently; restoring reminders never starts installation.
 - **Choose Stable or Beta, then update when you decide.** Select supported release channels per app. Startup and scheduled checks only discover updates and notify you; downloading and installation always require an explicit Update or Update All action. See [checks and release channels](docs/AUTOMATIC-UPDATES-AND-CHANNELS.md).
 - **Keep control of reminders.** Skip a specific version, postpone a reminder, or ignore an app. Optional scheduled checks, notifications and a menu bar entry help you keep up between manual checks.

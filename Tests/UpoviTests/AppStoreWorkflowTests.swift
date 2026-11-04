@@ -13,6 +13,7 @@ import UpoviCore
         store.apps = [app]
         let candidate = UpdateCandidate(version:"2",source:"App Store",isCommunity:false,url:nil,appStoreID:12345)
         var invoked = false
+        store.makeInstallationAuthorizationBatch = { InstallationAuthorizationBatch(start: { _ in }) }
         store.installStoreUpdate = { value,target,_ in invoked = true; XCTAssertEqual(value.appStoreID,12345); XCTAssertEqual(target,app); XCTAssertFalse(store.canCancelInstallation) }
         store.reviewStoreUpdate(app,candidate:candidate)
         XCTAssertTrue(store.bulkUpdatePresented); XCTAssertEqual(store.bulkInstallableCount,1)
@@ -30,6 +31,7 @@ import UpoviCore
         preferences.set(false,forKey:GlobalP2PSettings.key)
         let app = InstalledApp(name:"Store fixture",bundleID:"app.synthetic.store",version:"1",path:"/Applications/Upovi Synthetic Store.app",teamID:"SYNTHETIC1",isAppStore:true)
         let store = AppStore(preferences:preferences,scanApplications:{_ in [app]}); store.apps = [app]
+        store.makeInstallationAuthorizationBatch = { InstallationAuthorizationBatch(start: { _ in }) }
         store.installStoreUpdate = { _,_,_ in throw AppStoreAlreadyCurrent() }
         store.reviewStoreUpdate(app,candidate:.init(version:"1",source:"App Store",isCommunity:false,url:nil,appStoreID:12345))
         store.startAllUpdates(); await store.bulkTask?.value
@@ -57,28 +59,38 @@ extension AppStoreWorkflowTests {
         store.sourceResults = Dictionary(uniqueKeysWithValues: apps.map { app in
             (app.id, SourceResult(appID: app.id, candidates: [.init(version: "2", source: "App Store", isCommunity: false, url: nil, appStoreID: 12345)], note: "", status: .updates))
         })
+        store.makeInstallationAuthorizationBatch = { InstallationAuthorizationBatch(start: { _ in }) }
         return (store, apps)
     }
 
-    func testBulkWaitsForEveryPreflightAndRunsOneAuthorizationDespiteAnInstallerFailure() async throws {
+    func testBulkAuthorizesBeforeWorkAndInstallsReadyItemsWithoutWaitingForSlowSiblings() async throws {
         let (store, apps) = try batchFixture()
-        var preflights = 0, authorizations = 0
+        var preflights = 0, authorizations = 0, submitted: [String] = []
         store.makeInstallationAuthorizationBatch = {
-            InstallationAuthorizationBatch { command, count in
+            InstallationAuthorizationBatch(start: { items in
                 authorizations += 1
-                XCTAssertEqual(preflights, 3)
-                XCTAssertEqual(count, 3)
-                XCTAssertEqual(store.bulkCompletedCount, 0)
-                return try await ProcessCommand().run("/bin/sh", ["-c", command])
-            }
+                XCTAssertEqual(preflights, 0)
+                XCTAssertEqual(items.count, 3)
+            }, submit: { request in
+                XCTAssertEqual(authorizations, 1)
+                submitted.append(request.application.id)
+                if request.application.id == apps[1].id { throw PeerError.unavailable("Synthetic installer failure") }
+                return Data("installed".utf8)
+            })
         }
-        store.installStoreUpdate = { _, app, authorization in
-            if app.id == apps[0].id { try await Task.sleep(for: .milliseconds(40)) }
+        store.installStoreUpdate = { candidate, app, authorization in
+            XCTAssertEqual(authorizations, 1)
+            if app.id == apps[0].id {
+                for _ in 0..<100 where submitted.count < 2 { try await Task.sleep(for: .milliseconds(5)) }
+                XCTAssertEqual(submitted.count, 2, "Other ready installations must not wait for this preflight")
+            }
             preflights += 1
-            _ = try await authorization.run(app.id == apps[1].id ? "exit 23" : "printf 'installed'", nil)
+            _ = try await authorization.perform(.store(.init(application: app, storeID: 12345, version: candidate.version, userID: 501)),
+                command: "must not execute arbitrary commands", log: nil)
         }
         store.reviewAllUpdates(); store.startAllUpdates(); await store.bulkTask?.value
         XCTAssertEqual(authorizations, 1)
+        XCTAssertEqual(submitted.count, 3)
         XCTAssertEqual(store.bulkCompletedCount, 2)
         XCTAssertEqual(store.bulkFailedCount, 1)
         XCTAssertEqual(store.bulkOutcomes[apps[1].id]?.status, .failed)
@@ -87,38 +99,53 @@ extension AppStoreWorkflowTests {
 
     func testFailedPreflightCannotDeadlockOtherInstallersOrCreateAnotherPrompt() async throws {
         let (store, apps) = try batchFixture()
-        var authorizations = 0
+        var authorizations = 0, submissions = 0
         store.makeInstallationAuthorizationBatch = {
-            InstallationAuthorizationBatch { command, count in
-                authorizations += 1; XCTAssertEqual(count, 2)
-                return try await ProcessCommand().run("/bin/sh", ["-c", command])
-            }
+            InstallationAuthorizationBatch(start: { items in
+                authorizations += 1; XCTAssertEqual(items.count, 3)
+            }, submit: { _ in submissions += 1; return Data("installed".utf8) })
         }
-        store.installStoreUpdate = { _, app, authorization in
+        store.installStoreUpdate = { candidate, app, authorization in
             if app.id == apps[0].id { throw PeerError.unavailable("Synthetic preflight failure") }
-            _ = try await authorization.run("printf 'installed'", nil)
+            _ = try await authorization.perform(.store(.init(application: app, storeID: 12345, version: candidate.version, userID: 501)), command: "", log: nil)
         }
         store.reviewAllUpdates(); store.startAllUpdates(); await store.bulkTask?.value
-        XCTAssertEqual(authorizations, 1)
+        XCTAssertEqual(authorizations, 1); XCTAssertEqual(submissions, 2)
         XCTAssertEqual(store.bulkCompletedCount, 2)
         XCTAssertEqual(store.bulkFailedCount, 1)
     }
 
-    func testStoppingBeforeAuthorizationDoesNotLaunchAnyPrivilegedCommand() async throws {
+    func testCancellingUpfrontAuthorizationStartsNoInstallation() async throws {
         let (store, _) = try batchFixture()
         var authorizations = 0
         store.makeInstallationAuthorizationBatch = {
-            InstallationAuthorizationBatch { _, _ in authorizations += 1; return Data() }
+            InstallationAuthorizationBatch(start: { _ in authorizations += 1; throw CancellationError() })
         }
-        store.installStoreUpdate = { _, _, authorization in
-            store.stopAllUpdates()
-            _ = try await authorization.run("exit 99", nil)
-        }
+        store.installStoreUpdate = { _, _, _ in XCTFail("Rejected authorization must not start an installer") }
         store.reviewAllUpdates(); store.startAllUpdates(); await store.bulkTask?.value
-        XCTAssertEqual(authorizations, 0)
+        XCTAssertEqual(authorizations, 1)
         XCTAssertEqual(store.bulkOutcomes.values.filter { $0.status == .cancelled }.count, 3)
         XCTAssertFalse(store.bulkUpdating)
     }
+
+    func testStoppingAfterUpfrontAuthorizationDoesNotSubmitUnstartedInstallations() async throws {
+        let (store, _) = try batchFixture()
+        var authorizations = 0
+        store.makeInstallationAuthorizationBatch = {
+            InstallationAuthorizationBatch(start: { _ in authorizations += 1 }, submit: { _ in
+                XCTFail("Stopping must prevent new privileged submissions"); return Data()
+            })
+        }
+        store.installStoreUpdate = { candidate, app, authorization in
+            store.stopAllUpdates()
+            _ = try await authorization.perform(.store(.init(application: app, storeID: 12345, version: candidate.version, userID: 501)), command: "", log: nil)
+        }
+        store.reviewAllUpdates(); store.startAllUpdates(); await store.bulkTask?.value
+        XCTAssertEqual(authorizations, 1)
+        XCTAssertEqual(store.bulkOutcomes.values.filter { $0.status == .cancelled }.count, 3)
+        XCTAssertFalse(store.bulkUpdating)
+    }
+
 }
 
 extension AppStoreWorkflowTests {
