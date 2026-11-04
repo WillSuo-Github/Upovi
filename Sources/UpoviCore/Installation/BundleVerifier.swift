@@ -54,7 +54,7 @@ public enum BundleVerifier {
             try checkSignature(URL(fileURLWithPath: app.path), like: app)
         } else { try checkDeveloperIDSignature(URL(fileURLWithPath: app.path), like: app) }
     }
-    public static func validate(_ url: URL, replacing app: InstalledApp, expectedVersion: String, expectedBuild: String, buildIsAuthoritative: Bool = false) throws -> InstalledApp {
+    public static func validate(_ url: URL, replacing app: InstalledApp, expectedVersion: String, expectedBuild: String, buildIsAuthoritative: Bool = false, allowPrerelease: Bool = false) throws -> InstalledApp {
         guard let incoming = AppScanner.read(url), incoming.bundleID == app.bundleID,
               let team = ApplicationSourceCatalog.replacementTeam(for: app), incoming.teamID == team,
               !incoming.isAppStore, !app.isAppStore else { throw PeerError.invalid("Application identity or developer Team ID mismatch") }
@@ -67,7 +67,7 @@ public enum BundleVerifier {
             }
         }
         guard matchesSelectedVersion(incoming, replacing: app, expectedVersion: expectedVersion,
-                                     expectedBuild: expectedBuild, buildIsAuthoritative: buildIsAuthoritative) else {
+                                     expectedBuild: expectedBuild, buildIsAuthoritative: buildIsAuthoritative, allowPrerelease: allowPrerelease) else {
             throw PeerError.invalid(versionMismatchMessage(incoming, replacing: app, expectedVersion: expectedVersion, expectedBuild: expectedBuild))
         }
         return incoming
@@ -90,7 +90,7 @@ public enum BundleVerifier {
     /// This route still requires the exact advertised build, a strictly newer installed build, and all
     /// of validate's archive, application identity and signature checks.
     static func matchesSelectedVersion(_ incoming: InstalledApp, replacing app: InstalledApp,
-                                       expectedVersion: String, expectedBuild: String, buildIsAuthoritative: Bool) -> Bool {
+                                       expectedVersion: String, expectedBuild: String, buildIsAuthoritative: Bool, allowPrerelease: Bool = false) -> Bool {
         if buildIsAuthoritative {
             return !expectedBuild.isEmpty && incoming.build == expectedBuild && !app.build.isEmpty
                 && VersionOrder.compare(incoming.build, app.build) == .orderedDescending
@@ -99,7 +99,7 @@ public enum BundleVerifier {
                 (expectedVersion == incoming.build && expectedBuild == incoming.build) ||
                 (!incoming.build.isEmpty && expectedVersion == incoming.version + "." + incoming.build))
             && (expectedBuild.isEmpty || incoming.build == expectedBuild)
-            && VersionOrder.isNewer(version: incoming.version, build: incoming.build, than: app)
+            && VersionOrder.isNewer(version: incoming.version, build: incoming.build, than: app, allowPrerelease: allowPrerelease)
     }
     public static func checkSignature(_ url: URL, like app: InstalledApp) throws {
         guard let metadata = AppScanner.read(url), metadata.bundleID == app.bundleID else { throw PeerError.invalid("Backup signature identity mismatch") }

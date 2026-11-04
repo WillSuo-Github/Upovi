@@ -188,7 +188,7 @@ struct UpdateRow: View {
                                 if transfer != nil {
                                     Text("已完成").foregroundStyle(.green).lineLimit(1)
                                 } else {
-                                    Text(candidate.source).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
+                                    Text(candidate.displaySource).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
                                     if let notes = candidate.releaseNotes, !notes.isEmpty {
                                         ReleaseNotesControl(expanded: $notesExpanded).labelStyle(.iconOnly).help("更新说明")
                                     }

@@ -1,6 +1,7 @@
 import Foundation
 import UpoviCore
 import Darwin
+import AppKit
 
 @main
 struct UpoviPeer {
@@ -18,6 +19,11 @@ struct UpoviPeer {
         }
         func required(_ name: String) throws -> String {
             guard let value = option(name) else { throw PeerError.invalid("Missing \(name)") }; return value
+        }
+        let channel = ReleaseChannel(rawValue: option("--channel") ?? "stable") ?? .stable
+        if ["check-sources", "install-check", "unattended-check"].contains(command),
+           ReleaseChannel(rawValue: option("--channel") ?? "stable") == nil {
+            throw PeerError.invalid("Use stable or beta as the release channel")
         }
         func identity() throws -> PeerIdentity {
             try JSONDecoder().decode(PeerIdentity.self, from: Data(contentsOf: URL(fileURLWithPath: required("--identity"))))
@@ -45,7 +51,7 @@ struct UpoviPeer {
                 var iterator = apps.makeIterator()
                 func check(_ app: InstalledApp) async -> SourceResult {
                     if app.isAppStore, let storeCatalog { return await storeCatalog.check(app) }
-                    return await UpdateChecker.check(app)
+                    return await UpdateChecker.check(app, override: .init(releaseChannel: channel))
                 }
                 for _ in 0..<5 { if let app = iterator.next() { group.addTask { await check(app) } } }
                 for await result in group {
@@ -60,7 +66,9 @@ struct UpoviPeer {
                 return result.candidates.contains { $0.appStoreID != nil || ($0.download?.canVerify(for: app) == true && ApplicationSourceCatalog.replacementTeam(for: app) != nil) }
             }.count
             let summary: [String: Int] = counts.merging(["applications": apps.count, "versionConfirmedApps": confirmed,
-                "updatesWithVerifiableInstallation": verifiable, "updateCandidates": results.reduce(0) { $0 + $1.candidates.count }]) { _, b in b }
+                "updatesWithVerifiableInstallation": verifiable, "updateCandidates": results.reduce(0) { $0 + $1.candidates.count },
+                "nativeStoreRefreshConfirmedApps": results.filter { $0.checks.contains { $0.source == .appStoreNative && $0.outcome == .checked } }.count,
+                "nativeStoreRefreshDeniedApps": results.filter { $0.checks.contains { $0.source == .appStoreNative && $0.issue?.code == 505 } }.count]) { _, b in b }
             let data = try JSONSerialization.data(withJSONObject: summary, options: [.prettyPrinted, .sortedKeys])
             print(String(decoding: data, as: UTF8.self))
             if let path = option("--summary-file") { try data.write(to: URL(fileURLWithPath: path), options: .atomic) }
@@ -71,6 +79,7 @@ struct UpoviPeer {
                             "status": result.status.rawValue, "note": result.note,
                             "checkedSources": result.checks.filter { $0.outcome == .checked }.map { $0.source.rawValue },
                             "targetVersions": result.candidates.map(\.version),
+                            "prereleaseCandidates": result.candidates.filter(\.isPrerelease).count,
                             "hasArchiveProof": result.candidates.contains { $0.download?.hasIntegrityProof == true }]
                 }.sorted { ($0["path"] as? String ?? "") < ($1["path"] as? String ?? "") }
                 let detailsData = try JSONSerialization.data(withJSONObject: details, options: [.prettyPrinted, .sortedKeys])
@@ -84,19 +93,33 @@ struct UpoviPeer {
                     print("\(result.status.rawValue)\t\(app?.name ?? "Unknown")\t\(app?.bundleID ?? "")\t\(result.note)")
                 }
             }
-        case "install-check":
+        case "install-check", "unattended-check":
             let appPath = try required("--app")
             guard let app = AppScanner.read(URL(fileURLWithPath: appPath)),
                   let url = URL(string: try required("--url")) else { throw PeerError.invalid("Invalid installation test input") }
             let folder = URL(fileURLWithPath: try required("--journal-directory"))
             let installer = UpdateInstaller(journalDirectory: folder)
             guard option("--sha256") != nil || option("--sha512") != nil else { throw PeerError.invalid("A source archive checksum is required") }
-            let candidate = UpdateCandidate(version: try required("--version"), source: "Explicit diagnostic source", isCommunity: false, url: url,
-                download: .init(url: url, sha256: option("--sha256"), sha512: option("--sha512")))
+            let candidate = UpdateCandidate(version: try required("--version"), build: option("--build") ?? "", source: "Explicit diagnostic source", isCommunity: false, url: url,
+                download: .init(url: url, sha256: option("--sha256"), sha512: option("--sha512")), releaseChannel: channel == .beta ? .beta : nil)
+            if command == "unattended-check" {
+                var state = UnattendedUpdateState(); state.enabled = true
+                state.grants = [try .init(application: app, channel: channel)]
+                let running = NSRunningApplication.runningApplications(withBundleIdentifier: app.bundleID).contains {
+                    $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: app.path) } ?? false
+                }
+                let writable = FileManager.default.isWritableFile(atPath: app.path) && FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path)
+                guard UnattendedUpdatePolicy.deferral(app: app, candidate: candidate,
+                    result: .init(appID: app.id, candidates: [candidate], note: "Explicit isolated acceptance", status: .updates),
+                    state: state, channel: channel, ignored: [], updatePolicy: .init(), running: running, writable: writable) == nil else {
+                    throw PeerError.invalid("Application is not eligible for unattended acceptance")
+                }
+                print("unattended_policy=eligible authorization_prompts=none force_quit=disabled")
+            }
             let prepared = try await installer.prepare(app: app, candidate: candidate, progress: { _, _ in })
             print("archive_integrity=valid developer_signature=valid gatekeeper=accepted prepared_version=\(prepared.replacement.version)")
             if args.contains("--apply") {
-                let receipt = try await installer.install(prepared.id)
+                let receipt = try await installer.install(prepared.id, requireNotRunning: command == "unattended-check")
                 print("installation=completed backup_retained=true")
                 if args.contains("--restore") { try await installer.restore(receipt); print("restore=completed") }
             } else { await installer.discard(prepared.id) }
@@ -179,8 +202,9 @@ struct UpoviPeer {
 
     static let usage = """
     UpoviPeer scan
-    UpoviPeer install-check --app <path> --url <https-archive> --version <version> (--sha256 <hex>|--sha512 <base64>) --journal-directory <path> [--apply] [--restore]
-    UpoviPeer check-sources [--app <path>] [--store-bridge <signed-helper-path>] [--summary-file <path>] [--details-file <private-local-path>] [--verbose]
+    UpoviPeer install-check --app <path> --url <https-archive> --version <version> (--sha256 <hex>|--sha512 <base64>) --journal-directory <path> [--channel stable|beta] [--apply] [--restore]
+    UpoviPeer unattended-check <same explicit install-check arguments; intended for isolated acceptance copies>
+    UpoviPeer check-sources [--app <path>] [--channel stable|beta] [--store-bridge <signed-helper-path>] [--summary-file <path>] [--details-file <private-local-path>] [--verbose]
     UpoviPeer identity --output <private-key-file>
     UpoviPeer probe
     UpoviPeer share-public --identity <file> --bundle <synthetic-id> --version <version> [--duration 60]

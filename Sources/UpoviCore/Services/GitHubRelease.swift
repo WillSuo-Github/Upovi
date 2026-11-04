@@ -14,6 +14,7 @@ public struct GitHubRelease: Decodable, Sendable {
     }
     public var version: String { tag_name.hasPrefix("v") ? String(tag_name.dropFirst()) : tag_name }
     public var page: URL { html_url }
+    public var isPrerelease: Bool { prerelease || VersionOrder.isPrerelease(version) }
     public var releaseNotes: String? { body.map { String($0.prefix(20_000)) } }
     public var download: DownloadDescriptor? {
         let compatible = assets.filter { asset in
@@ -38,14 +39,22 @@ public struct GitHubRelease: Decodable, Sendable {
         return parts.count == 2 && parts.allSatisfy { !$0.isEmpty && $0.count <= 100 && $0.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || "._-".contains($0)) } }
             && !parts.contains(".") && !parts.contains("..")
     }
-    public static func latest(repository: String) async throws -> GitHubRelease {
-        try await latest(repository: repository, fetch: { try await UpdateChecker.fetch($0, limit: $1) })
+    public static func latest(repository: String, channel: ReleaseChannel = .stable) async throws -> GitHubRelease {
+        try await latest(repository: repository, channel: channel, fetch: { try await UpdateChecker.fetch($0, limit: $1) })
     }
-    static func latest(repository: String, fetch: @Sendable (URL, Int) async throws -> Data) async throws -> GitHubRelease {
+    static func latest(repository: String, channel: ReleaseChannel = .stable, fetch: @Sendable (URL, Int) async throws -> Data) async throws -> GitHubRelease {
         guard validRepository(repository) else { throw PeerError.invalid("Invalid GitHub owner/repository") }
-        let data = try await fetch(URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!, 3_000_000)
-        let release = try JSONDecoder().decode(Self.self, from: data)
-        guard !release.draft, !release.prerelease, release.page.scheme == "https", release.page.host == "github.com" else {
+        let suffix = channel == .stable ? "/latest" : "?per_page=50"
+        let data = try await fetch(URL(string: "https://api.github.com/repos/\(repository)/releases\(suffix)")!, 3_000_000)
+        let releases = channel == .stable ? [try JSONDecoder().decode(Self.self, from: data)] : try JSONDecoder().decode([Self].self, from: data)
+        guard releases.count <= 50 else { throw PeerError.invalid("Oversized GitHub release list") }
+        let eligible = releases.filter { release in
+            !release.draft && (channel == .beta || !release.isPrerelease) &&
+                release.page.scheme == "https" && release.page.host == "github.com" &&
+                release.page.path.lowercased().hasPrefix("/\(repository.lowercased())/releases/tag/") && VersionOrder.compare(release.version, "0") != nil
+        }
+        guard let release = eligible.max(by: { VersionOrder.compare($0.version, $1.version) == .orderedAscending }),
+              eligible.filter({ VersionOrder.compare($0.version, release.version) == .orderedSame }).count == 1 else {
             throw PeerError.invalid("Invalid stable GitHub release")
         }
         return release

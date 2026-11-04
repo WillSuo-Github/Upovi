@@ -91,6 +91,9 @@ extension AppStore {
 
     func startAllUpdates() {
         guard canStartBulkUpdates else { return }
+        guard bulkItems.allSatisfy({ releaseChannel(for: $0.application).permits($0.candidate) }) else {
+            errorMessage = String(localized: "更新渠道已变化，请重新检查后再安装。"); return
+        }
         let running = runningUpdateApplications(bulkItems.filter(\.canInstall).map(\.application))
         if !running.isEmpty {
             bulkQuitApplications = running
@@ -291,6 +294,7 @@ extension AppStore {
             guard !bulkPersistenceFailed else { throw PeerError.unavailable("Batch history could not be saved; installation was not started") }
             guard networkAvailable else { throw URLError(.notConnectedToInternet) }
             let app = item.application, candidate = item.candidate, id = item.id
+            guard releaseChannel(for: app).permits(candidate) else { throw PeerError.unavailable("Update channel changed; check again before installing") }
             if try BundleVerifier.selectedUpdateIsInstalled(app, candidate: candidate) { throw ApplicationAlreadyCurrent() }
             let progress: @Sendable (Int64, Int64) -> Void = { [weak self] received, expected in
                 Task { @MainActor in self?.reportDownload(id, received: received, expected: expected) }
@@ -324,7 +328,7 @@ extension AppStore {
                     if !FileManager.default.isWritableFile(atPath: URL(fileURLWithPath: app.path).deletingLastPathComponent().path) {
                         let plan = AdministratorInstallPlan(operation: .application, application: app,
                             version: prepared.replacement.version, build: prepared.replacement.build,
-                            artifactPath: prepared.bundle.resolvingSymlinksInPath().path)
+                            artifactPath: prepared.bundle.resolvingSymlinksInPath().path, permitsPrerelease: prepared.permitsPrerelease)
                         setTransferPhase(id, .waitingForAuthorization)
                         authorization.enqueue(item, cleanup: { [self] in await installer.discard(prepared.id) }) { [self] authorize in
                             setTransferPhase(id, .installing)

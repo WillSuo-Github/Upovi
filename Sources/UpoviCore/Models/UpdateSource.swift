@@ -7,8 +7,9 @@ public enum SourceStatus: String, Codable, Sendable {
 public struct SourceOverride: Codable, Sendable {
     public var appcast: URL?
     public var githubRepository: String?
-    public init(appcast: URL? = nil, githubRepository: String? = nil) {
-        self.appcast = appcast; self.githubRepository = githubRepository
+    public var releaseChannel: ReleaseChannel?
+    public init(appcast: URL? = nil, githubRepository: String? = nil, releaseChannel: ReleaseChannel? = nil) {
+        self.appcast = appcast; self.githubRepository = githubRepository; self.releaseChannel = releaseChannel
     }
 }
 

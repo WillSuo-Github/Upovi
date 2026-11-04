@@ -27,6 +27,7 @@ extension AppStore {
     private func saveUpdatePolicy(_ value: UpdatePolicy) -> Bool {
         guard let data = try? JSONEncoder().encode(value), preferences.set(data, forKey: "updatePolicyV1") else { return false }
         updatePolicy = value; policyClock = Date()
+        unattendedTask?.cancel()
         return true
     }
     func scanInventory() async -> [InstalledApp] {

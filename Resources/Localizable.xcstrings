@@ -1,6 +1,630 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "系统拒绝了 Upovi 的原生商店刷新请求（505）；请打开 App Store 刷新后再确认。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS denied Upovi’s native Store refresh request (505). Open the App Store to refresh and confirm."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系統拒絕了 Upovi 的原生商店重新整理請求（505）；請開啟 App Store 重新整理後再確認。"
+          }
+        }
+      }
+    },
+    "系统拒绝原生商店刷新（505）。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS denied native Store refresh (505)."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系統拒絕原生商店重新整理（505）。"
+          }
+        }
+      }
+    },
+    "Beta 与预发布": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beta and prereleases"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beta 與預發佈"
+          }
+        }
+      }
+    },
+    "Beta 与预发布版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beta or prerelease version"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beta 與預發佈版本"
+          }
+        }
+      }
+    },
+    "Upovi 会尝试原生只读刷新。若系统拒绝第三方访问，将保持未确认状态；不会通过启动再取消下载来探测更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upovi attempts a native read-only refresh. If macOS denies third-party access, offers stay unconfirmed. Checks never start and cancel downloads."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upovi 會嘗試原生唯讀重新整理。若系統拒絕第三方存取，將保持未確認狀態；不會透過啟動再取消下載來探測更新。"
+          }
+        }
+      }
+    },
+    "上次无人值守任务中断；不会自动恢复该次安装。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The previous unattended task was interrupted; that installation will not resume automatically."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次無人值守工作中斷；不會自動恢復該次安裝。"
+          }
+        }
+      }
+    },
+    "停止自动更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Automatic Updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止自動更新"
+          }
+        }
+      }
+    },
+    "允许无人值守更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow unattended updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許無人值守更新"
+          }
+        }
+      }
+    },
+    "切换渠道后请重新检查；不会降级，且会撤销此应用的自动更新授权。无人值守更新还需在设置中开启总开关。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check again after changing channels. Upovi never downgrades, and changing channels revokes this app’s automatic-update permission. Also enable the master switch in Settings."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切換管道後請重新檢查；不會降級，且會撤銷此應用程式的自動更新授權。無人值守更新還需在設定中開啟總開關。"
+          }
+        }
+      }
+    },
+    "原生商店刷新未完成，公开目录结果不能证明本机可更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Native Store refresh did not complete. Public catalog results do not establish an update offer on this Mac."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原生商店重新整理未完成，公開目錄結果不能證明本機可更新。"
+          }
+        }
+      }
+    },
+    "启用后，Upovi 运行期间会按通用设置中的检查间隔执行；休眠或退出后暂停。旧主应用保留在历史与恢复中。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "While Upovi is running, updates follow the check interval in General settings. Sleep or quitting pauses the schedule. Previous app bundles remain in History & Recovery."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟用後，Upovi 執行期間會按一般設定中的檢查間隔執行；睡眠或結束後暫停。舊主應用程式保留在歷史與復原中。"
+          }
+        }
+      }
+    },
+    "启用并逐个授权应用后，自动更新结果会出现在这里。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable unattended updates and authorize individual apps to see their results here."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟用並逐個授權應用程式後，自動更新結果會出現在這裡。"
+          }
+        }
+      }
+    },
+    "启用无人值守更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable unattended updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟用無人值守更新"
+          }
+        }
+      }
+    },
+    "商店更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Store Updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店更新"
+          }
+        }
+      }
+    },
+    "尚无自动更新记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Automatic Update History"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚無自動更新記錄"
+          }
+        }
+      }
+    },
+    "已安装": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已安裝"
+          }
+        }
+      }
+    },
+    "已授权的应用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authorized Apps"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已授權的應用程式"
+          }
+        }
+      }
+    },
+    "已推迟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deferred"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已推遲"
+          }
+        }
+      }
+    },
+    "应用状态或自动更新权限已变化，安装已推迟。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App state or automatic-update permission changed; installation was deferred."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "應用程式狀態或自動更新權限已變更，安裝已推遲。"
+          }
+        }
+      }
+    },
+    "打开 App Store 刷新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open App Store Updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟 App Store 重新整理"
+          }
+        }
+      }
+    },
+    "授权绑定应用路径、开发者和渠道。切换渠道会撤销自动更新授权；忽略、跳过和稍后提醒规则仍然生效。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permission is bound to the app path, developer and channel. Changing channels revokes permission. Ignore, skip and snooze rules still apply."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授權綁定應用程式路徑、開發者和管道。切換管道會撤銷自動更新授權；忽略、跳過和稍後提醒規則仍然生效。"
+          }
+        }
+      }
+    },
+    "无人值守更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unattended Updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無人值守更新"
+          }
+        }
+      }
+    },
+    "无需更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already Current"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無需更新"
+          }
+        }
+      }
+    },
+    "更新渠道": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Release Channel"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新管道"
+          }
+        }
+      }
+    },
+    "更新渠道已变化，请重新检查后再安装。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The release channel changed. Check again before installing."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新管道已變更，請重新檢查後再安裝。"
+          }
+        }
+      }
+    },
+    "本机商店报告了更新，但目标版本未能与公开目录精确匹配。请主动检查并更新此应用。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The native Store reported an update, but its target version could not be matched to the public catalog. Check and update this app explicitly."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本機商店回報了更新，但目標版本未能與公開目錄精確匹配。請主動檢查並更新此應用程式。"
+          }
+        }
+      }
+    },
+    "本机系统不允许第三方主动刷新商店（505）；请打开 App Store 刷新后再确认。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS denied third-party Store refresh (505). Open the App Store to refresh and confirm."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本機系統不允許第三方主動重新整理商店（505）；請開啟 App Store 重新整理後再確認。"
+          }
+        }
+      }
+    },
+    "查看自动更新记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View Automatic Update History"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檢視自動更新記錄"
+          }
+        }
+      }
+    },
+    "检查并执行已授权更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check and Run Authorized Updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檢查並執行已授權更新"
+          }
+        }
+      }
+    },
+    "正在准备": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在準備"
+          }
+        }
+      }
+    },
+    "正在处理已授权应用；已开始的文件替换会安全完成。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processing authorized apps. File replacements already in progress will finish safely."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在處理已授權應用程式；已開始的檔案替換會安全完成。"
+          }
+        }
+      }
+    },
+    "正式版": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stable"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正式版"
+          }
+        }
+      }
+    },
+    "此应用的身份不支持无人值守更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This app’s identity does not support unattended updates."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此應用程式的身分不支援無人值守更新。"
+          }
+        }
+      }
+    },
+    "筛选应用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter Apps"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "篩選應用程式"
+          }
+        }
+      }
+    },
+    "自动更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic Updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自動更新"
+          }
+        }
+      }
+    },
+    "自动更新完成，主应用备份已保留。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic update completed; the previous app bundle was retained."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自動更新完成，主應用程式備份已保留。"
+          }
+        }
+      }
+    },
+    "运行与记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schedule and History"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "執行與記錄"
+          }
+        }
+      }
+    },
+    "逐个授权应用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authorize Individual Apps"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逐個授權應用程式"
+          }
+        }
+      }
+    },
+    "默认关闭。仅更新逐个授权、未运行、具有可验证下载且无需管理员权限的应用。不会自动处理 App Store、PKG、全局工具或 Upovi 自身；失败的同一版本会等待 24 小时再自动尝试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off by default. Only individually authorized, closed apps with verifiable downloads and no administrator requirement are updated. App Store apps, PKGs, global tools and Upovi itself stay manual. Failed versions wait 24 hours before another automatic attempt."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "預設關閉。僅更新逐個授權、未執行、具有可驗證下載且無需管理員權限的應用程式。不會自動處理 App Store、PKG、全域工具或 Upovi 本身；失敗的同一版本會等待 24 小時再自動嘗試。"
+          }
+        }
+      }
+    },
   "已检查 Electron 更新源": {
     "localizations": {
       "en": {

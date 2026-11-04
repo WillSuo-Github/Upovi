@@ -46,7 +46,7 @@ final class AdministratorInstallationService {
             }.value
             try await InstallerPackageVerifier.validate(package, sha256: hash, app: app)
             let plan = AdministratorInstallPlan(operation: .package, application: app, version: candidate.version,
-                                                build: candidate.build, artifactPath: package.path, sha256: hash)
+                                                build: candidate.build, artifactPath: package.path, sha256: hash, permitsPrerelease: candidate.releaseChannel == .beta)
             try plan.validate()
             try Task.checkCancellation()
             return .init(plan: plan, workspace: workspace)

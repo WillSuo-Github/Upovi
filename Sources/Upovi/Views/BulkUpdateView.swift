@@ -157,7 +157,7 @@ struct BulkUpdateView: View {
                 HStack(spacing: 6) {
                     VersionTransition(from: item.application.version, to: item.candidate.version, font: .system(size: 11))
                     Text(verbatim: "·").foregroundStyle(.tertiary)
-                    Text(item.candidate.source).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
+                    Text(item.candidate.displaySource).foregroundStyle(.secondary).lineLimit(1).layoutPriority(-1)
                 }
                 .font(.system(size: 11))
                 if let detail = detail(for: item) {

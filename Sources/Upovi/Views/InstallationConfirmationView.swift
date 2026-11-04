@@ -5,6 +5,9 @@ struct InstallationConfirmationView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
+            if store.preparedUpdate?.permitsPrerelease == true || store.preparedPackage?.plan.permitsPrerelease == true {
+                Label("Beta 与预发布版本", systemImage: "testtube.2").foregroundStyle(.orange)
+            }
             if let update = store.preparedUpdate {
                 header(path: update.application.path, title: update.application.name, badge: String(localized: "更新已验证"),
                        from: update.application.version, to: update.replacement.version)

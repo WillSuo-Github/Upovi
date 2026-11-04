@@ -13,6 +13,9 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable {
     public init(_ error: any Error) {
         if error is DownloadTimeoutError { kind = .timeout; code = NSURLErrorTimedOut; httpStatus = nil; return }
         if error is CancellationError { kind = .cancelled; code = nil; httpStatus = nil; return }
+        if let refresh = error as? StoreUpdateAvailability.RefreshFailure {
+            kind = .operationFailed; code = refresh == .notEntitled ? 505 : nil; httpStatus = nil; return
+        }
         if let http = error as? HTTPStatusError { kind = .http; code = nil; httpStatus = http.statusCode; rateLimited = http.rateLimited; retryAt = http.retryAt; return }
         httpStatus = nil
         let value = error as NSError
@@ -37,7 +40,7 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable {
 }
 
 public struct SourceCheckDetail: Codable, Sendable, Equatable {
-    public enum Source: String, Codable, Sendable { case appcast, homebrew, github, electron, manual, appStore }
+    public enum Source: String, Codable, Sendable { case appcast, homebrew, github, electron, manual, appStore, appStoreNative }
     public enum Outcome: String, Codable, Sendable { case checked, uncomparable, failed, cancelled, manual }
     public let source: Source
     public let outcome: Outcome

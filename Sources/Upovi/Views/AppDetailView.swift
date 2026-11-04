@@ -21,6 +21,7 @@ struct AppDetailView: View {
                     }
                     info(app)
                     source(app)
+                    if !app.isAppStore { updateOptions(app) }
                     actions(app)
                 }
                 .padding(22).frame(maxWidth: .infinity, alignment: .leading)
@@ -152,6 +153,7 @@ struct AppDetailView: View {
                 HStack(spacing: 12) {
                     Button("设置更新来源…") { sourceEditor = true }.buttonStyle(.link)
                     if let url = store.sourceResults[app.id]?.manualURL { Button("官方更新入口") { store.open(url) }.buttonStyle(.link) }
+                    if app.isAppStore { Button("打开 App Store 刷新") { store.open(URL(string: "macappstore://showUpdatesPage")) }.buttonStyle(.link) }
                 }.font(.callout)
             }.card(padding: 14)
         }
@@ -167,6 +169,20 @@ struct AppDetailView: View {
                       systemImage: store.ignored.contains(app.bundleID) ? "eye" : "eye.slash")
             }
         }.controlSize(.small)
+    }
+
+    private func updateOptions(_ app: InstalledApp) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Picker("更新渠道", selection: Binding(get: { store.releaseChannel(for: app) }, set: { store.setReleaseChannel($0, for: app) })) {
+                Text("正式版").tag(ReleaseChannel.stable)
+                Text("Beta 与预发布").tag(ReleaseChannel.beta)
+            }.disabled(store.operationBusy).accessibilityIdentifier("application-release-channel")
+            Toggle("允许无人值守更新", isOn: Binding(get: { store.unattendedState.grant(for: app, channel: store.releaseChannel(for: app)) != nil }, set: { store.setUnattendedAllowed($0, for: app) }))
+                .disabled((try? UnattendedGrant(application: app, channel: store.releaseChannel(for: app))) == nil)
+                .accessibilityIdentifier("application-unattended-allowed")
+            Text("切换渠道后请重新检查；不会降级，且会撤销此应用的自动更新授权。无人值守更新还需在设置中开启总开关。")
+                .font(.caption).foregroundStyle(.secondary)
+        }.card(padding: 14)
     }
 }
 
@@ -185,7 +201,7 @@ private struct UpdateCandidateCard: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(muted ? "已跳过或推迟" : "可更新").font(.caption.weight(.semibold)).foregroundStyle(muted ? Color.secondary : Theme.accent)
                 Spacer()
-                StatusBadge(text: candidate.source)
+                StatusBadge(text: candidate.displaySource)
             }
             VersionTransition(from: app.version, to: candidate.version, tone: muted ? .neutral : .accent, font: Theme.display(17, weight: .medium))
             if let deferred { Text("稍后提醒至 \(deferred.display())").font(.caption).foregroundStyle(.secondary) }

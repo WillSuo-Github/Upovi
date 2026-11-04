@@ -13,7 +13,7 @@ final class SourceDiagnosticsTests: XCTestCase {
         XCTAssertEqual(result.checks, [.init(.github, .checked)])
     }
     func testFailedFeedAndSuccessfulFallbackRemainPartialWithStructuredTLSError() async {
-        let data = Data(release.utf8)
+        let data = Data(release.replacingOccurrences(of: "WillSuo-Github/livehub-desktop", with: "PlayCover/PlayCover").utf8)
         let app = InstalledApp(name: "PlayCover", bundleID: "io.playcover.PlayCover", version: "1.0", path: "/fixture.app", feedURL: URL(string: "https://feed.invalid/private"))
         let result = await UpdateChecker.check(app, fetch: { url, _ in
             if url.host == "feed.invalid" { throw URLError(.secureConnectionFailed) }; return data

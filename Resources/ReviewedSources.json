@@ -3,7 +3,7 @@
   "entries": [
     {"bundleID": "app.motrix.native", "application": "Motrix.app", "cask": "motrix", "homepage": "https://motrix.app/", "reviewedAt": "2026-11-04", "replaceBrokenElectronForVersionPrefixes": ["1."]},
     {"bundleID": "com.bohemiancoding.sketch3", "application": "Sketch.app", "cask": "sketch", "homepage": "https://www.sketch.com/", "reviewedAt": "2026-11-04"},
-    {"bundleID": "io.hoppscotch.desktop", "application": "Hoppscotch.app", "cask": "hoppscotch", "homepage": "https://hoppscotch.com/", "reviewedAt": "2026-11-04"},
+    {"bundleID": "io.hoppscotch.desktop", "application": "Hoppscotch.app", "cask": "hoppscotch", "homepage": "https://hoppscotch.com/", "reviewedAt": "2026-11-04", "validatedPayloadSourceVersion": "26.10.0-0"},
     {"bundleID": "jp.mahdi.MacSymbolicator", "application": "MacSymbolicator.app", "cask": "macsymbolicator", "homepage": "https://github.com/inket/MacSymbolicator/", "reviewedAt": "2026-11-04"},
     {"bundleID": "org.localsend.localsendApp", "application": "LocalSend.app", "cask": "localsend", "homepage": "https://localsend.org/", "reviewedAt": "2026-11-04"},
     {"bundleID": "org.torproject.torbrowser", "application": "Tor Browser.app", "cask": "tor-browser", "homepage": "https://www.torproject.org/", "reviewedAt": "2026-11-04"}

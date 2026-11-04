@@ -1,6 +1,10 @@
 import Foundation
 import UpoviCore
 
+extension UpdateCandidate {
+    var displaySource: String { source + (isPrerelease ? " · Beta" : "") }
+}
+
 /// One user-facing status per application, derived only from source results, policy and community leads.
 enum AppStatus: Equatable {
     case ignored, update(String), postponed, community(String), current, partial, failed, unsupported(manual: Bool), appStore, unchecked

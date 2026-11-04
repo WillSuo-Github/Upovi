@@ -8,7 +8,7 @@ Upovi reads `Contents/Resources/app-update.yml` from the installed bundle. It su
 
 The bounded parser supports electron-builder's scalar fields and file list, including legacy path/SHA-512 metadata. Duplicate fields, YAML aliases/tags/arbitrary nesting and oversized input are rejected. Archive selection uses the host architecture and requires a unique DMG or ZIP with a valid source SHA-512. Ambiguous or unproven downloads remain manual. Checksums are rechecked after downloading; installed bundle identity, developer signature, target version, architecture and Gatekeeper checks still apply.
 
-Special channels, required manifest signatures, staged rollouts and incompatible minimum kernel versions stay with the application's own updater. A staging restriction cannot be bypassed by a second source. Placeholder `.invalid` sources are manual rather than network failures. Beta channel discovery and signed Electron manifest verification are not implemented.
+Special unsupported channels, required manifest signatures, staged rollouts and incompatible minimum kernel versions stay with the application's own updater. A staging restriction cannot be bypassed by a second source. Placeholder `.invalid` sources are manual rather than network failures. Supported Beta discovery is explicitly opt-in; signed Electron manifest verification is not implemented. See [automatic updates and channels](AUTOMATIC-UPDATES-AND-CHANNELS.md).
 
 ## Reviewed identities
 
@@ -25,9 +25,11 @@ The live check fetches individual public Homebrew cask records, verifies an enab
 
 The initial reviewed additions are Motrix, Sketch, Hoppscotch, MacSymbolicator, LocalSend and Tor Browser. Motrix 1.x has an explicitly reviewed dead-feed exception; later versions can use their own Electron source. Uncomparable source versions remain manual instead of weakening version comparison globally.
 
+The signed arm64 Hoppscotch `v26.10.0-0` payload was reviewed separately: its short version and build are both `26.10.0`, and the publisher marks the release stable. That exact source version, download URL and installed developer identity have a payload alias. A future version or another architecture is not inferred. The live catalog check fails when this pinned source version changes, requiring another payload review.
+
 ## Store availability
 
-See [App Store support](APP-STORE-UPDATES.md). Public version lookup and the native cached offer are separate evidence. Only exact matching positive offers enter automatic update counts; missing evidence stays manual. Explicit check-and-update remains available for supported identities. This does not refresh the native cache or find native-only/build-only offers.
+See [App Store support](APP-STORE-UPDATES.md). Public version lookup and the native offer are separate evidence. Only exact matching positive offers enter update counts; missing evidence stays manual. Explicit check-and-update remains available for supported identities. A native read-only refresh is now attempted, but this Mac's system rejects it with 505; native-only/build-only offers without a reliable target remain manual.
 
 ## Local measurement
 

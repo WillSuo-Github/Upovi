@@ -32,6 +32,7 @@ public enum UpdateChecker {
             return .init(appID: app.id, candidates: [], note: hint.note, status: .unsupported, manualURL: hint.url, checks: [.init(.manual, .manual)])
         }
         var candidates: [UpdateCandidate] = [], notes: [String] = []
+        let channel = override?.releaseChannel ?? .stable
         var checked = 0, failed = 0, uncomparable = 0
         var checks: [SourceCheckDetail] = []
         var electronRepository: String?, electronNeedsOwnUpdater = false
@@ -40,7 +41,7 @@ public enum UpdateChecker {
         if let feed = override?.appcast ?? app.feedURL ?? ApplicationSourceCatalog.officialFeed(for: app) {
             do {
                 let data = try await fetch(feed, 3_000_000)
-                let offers = try AppcastReader.read(data)
+                let offers = try AppcastReader.read(data, channel: channel)
                 officialOffers = offers
                 candidates += offers.filter { $0.isNewer(than: app) }
                 checked += 1; notes.append(String(localized: "已检查开发者 appcast")); checks.append(.init(.appcast, .checked))
@@ -50,9 +51,9 @@ public enum UpdateChecker {
         if Task.isCancelled { return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed) }
         if officialOffers == nil, override?.appcast == nil, override?.githubRepository == nil, !ReviewedSourceCatalog.replacesBrokenElectron(for: app) {
             do {
-                if let electron = try ElectronUpdateSource.installed(in: app) {
+                if let electron = try ElectronUpdateSource.installed(in: app, channel: channel) {
                     if case .github(let repository) = electron { electronRepository = repository }
-                    let offer = try await electron.check(app, fetch: fetch)
+                    let offer = try await electron.check(app, channel: channel, fetch: fetch)
                     officialOffers = [offer]
                     if offer.isNewer(than: app) { candidates.append(offer) }
                     checked += 1; notes.append(String(localized: "已检查 Electron 更新源")); checks.append(.init(.electron, .checked))
@@ -92,10 +93,12 @@ public enum UpdateChecker {
                 let comparable = SourceVersion.comparable(version, installed: app.version)
                 let installed = InstalledApp(name: app.name, bundleID: app.bundleID, version: SourceVersion.normalize(app.version),
                                              build: app.build, path: app.path, teamID: app.teamID)
-                if comparable && VersionOrder.isNewer(version: version, build: build, than: installed) {
+                if comparable && (channel == .beta || !VersionOrder.isPrerelease(version)) &&
+                    VersionOrder.isNewer(version: version, build: build, than: installed, allowPrerelease: channel == .beta) {
                     candidates.append(.init(version: version, build: build, source: "Homebrew", isCommunity: false,
                         url: URL(string: "https://formulae.brew.sh/cask/\(metadata.token)"), download: download,
-                        releaseNotes: identity == nil ? nil : String(localized: "来源发布版本：\(sourceVersion)；主应用版本：\(version)（\(build)）。")))
+                        releaseNotes: identity == nil ? nil : String(localized: "来源发布版本：\(sourceVersion)；主应用版本：\(version)（\(build)）。"),
+                        releaseChannel: VersionOrder.isPrerelease(version) ? .beta : nil))
                 }
                 if comparable { checked += 1; notes.append(String(localized: "已检查 Homebrew")); checks.append(.init(.homebrew, .checked)) }
                 else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append(String(localized: "Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新")) }
@@ -103,10 +106,11 @@ public enum UpdateChecker {
         } catch { failed += 1; notes.append("Homebrew：\(failureDescription(error))"); checks.append(.init(.homebrew, .failed, error: error)) }
         if let repository = override?.githubRepository ?? githubRepositories[app.bundleID], repository != electronRepository, !Task.isCancelled {
             do {
-                let release = try await GitHubRelease.latest(repository: repository, fetch: fetch)
-                if VersionOrder.isNewer(version: release.version, than: app) {
+                let release = try await GitHubRelease.latest(repository: repository, channel: channel, fetch: fetch)
+                if VersionOrder.isNewer(version: release.version, than: app, allowPrerelease: channel == .beta) {
                     candidates.append(.init(version: release.version, source: "GitHub Release", isCommunity: false,
-                                            url: release.page, download: release.download, releaseNotes: release.releaseNotes))
+                                            url: release.page, download: release.download, releaseNotes: release.releaseNotes,
+                                            releaseChannel: release.isPrerelease ? .beta : nil))
                 }
                 checked += 1; notes.append(String(localized: "已检查 GitHub Release")); checks.append(.init(.github, .checked))
             } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
@@ -122,7 +126,7 @@ public enum UpdateChecker {
                 }
             }
         }
-        candidates = supplementDownloads(candidates, for: app)
+        candidates = supplementDownloads(candidates.filter { channel.permits($0) }, for: app)
         let status: SourceStatus = failed > 0 ? (checked > 0 ? .partial : .failed)
             : !candidates.isEmpty ? .updates : checked > 0 ? (uncomparable > 0 ? .partial : .current) : .unsupported
         let hint = ManualUpdateSource.forBundle(app.bundleID)

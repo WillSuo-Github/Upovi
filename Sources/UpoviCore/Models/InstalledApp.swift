@@ -38,22 +38,25 @@ public struct UpdateCandidate: Identifiable, Hashable, Codable, Sendable {
     public var releaseNotes: String? = nil
     public var appStoreID: UInt64? = nil
     public var storeReceiptRecovery: StoreReceiptRecovery? = nil
+    public var releaseChannel: ReleaseChannel? = nil
 
     public init(version: String, build: String = "", source: String, isCommunity: Bool, url: URL?, usesBuildVersion: Bool = false,
                 observedAt: Date = Date(), peerID: String? = nil, expiresAt: Date? = nil, download: DownloadDescriptor? = nil, releaseNotes: String? = nil, appStoreID: UInt64? = nil,
-                buildIsAuthoritative: Bool? = nil) {
+                buildIsAuthoritative: Bool? = nil, releaseChannel: ReleaseChannel? = nil) {
         self.version = version; self.build = build; self.source = source; self.isCommunity = isCommunity; self.url = url
         self.usesBuildVersion = usesBuildVersion; self.observedAt = observedAt; self.peerID = peerID
         self.expiresAt = expiresAt; self.download = isCommunity ? nil : download
         self.releaseNotes = isCommunity ? nil : releaseNotes.map { String($0.prefix(20_000)) }
         self.appStoreID = isCommunity ? nil : appStoreID
         self.buildIsAuthoritative = isCommunity ? nil : buildIsAuthoritative
+        self.releaseChannel = isCommunity ? nil : releaseChannel
     }
 
     public var comparesUsingBuild: Bool { usesBuildVersion || buildIsAuthoritative == true }
+    public var isPrerelease: Bool { releaseChannel == .beta || VersionOrder.isPrerelease(version) }
     public func isNewer(than app: InstalledApp) -> Bool {
         comparesUsingBuild
             ? !app.build.isEmpty && VersionOrder.compare(build, app.build) == .orderedDescending
-            : VersionOrder.isNewer(version: version, build: build, than: app)
+            : VersionOrder.isNewer(version: version, build: build, than: app, allowPrerelease: releaseChannel == .beta)
     }
 }

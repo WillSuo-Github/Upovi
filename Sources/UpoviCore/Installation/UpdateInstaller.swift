@@ -9,6 +9,7 @@ public struct PreparedUpdate: Identifiable, Sendable {
     public let workspace: URL
     public let bundle: URL
     public let archiveIntegrityVerified: Bool
+    public var permitsPrerelease = false
     public var usesLegacyMigration: Bool { ApplicationSourceCatalog.legacyMigration(for: application) != nil }
 }
 
@@ -80,7 +81,7 @@ public actor UpdateInstaller {
                 let staged = workspace.appending(path: "Prepared.app")
                 try FileManager.default.copyItem(at: source, to: staged)
                 if let mounted { _ = try await ProcessCommand().run("/usr/bin/hdiutil", ["detach", mounted.path]) }
-                let replacement = try BundleVerifier.validate(staged, replacing: app, expectedVersion: candidate.version, expectedBuild: candidate.build, buildIsAuthoritative: candidate.comparesUsingBuild)
+                let replacement = try BundleVerifier.validate(staged, replacing: app, expectedVersion: candidate.version, expectedBuild: candidate.build, buildIsAuthoritative: candidate.comparesUsingBuild, allowPrerelease: candidate.releaseChannel == .beta)
                 if !descriptor.hasIntegrityProof { try BundleVerifier.checkDeveloperIDSignature(staged, like: app) }
                 if let executable = Bundle(url: staged)?.executableURL { try MachOCompatibility.validate(executable) }
                 else { throw PeerError.invalid("Update has no application executable") }
@@ -94,7 +95,7 @@ public actor UpdateInstaller {
                 try await ApplicationInstallation.assess(staged)
                 if let downloadID { await downloads.finishApplicationVerification(downloadID) }
                 let value = PreparedUpdate(id: UUID(), application: app, replacement: replacement, workspace: workspace, bundle: staged,
-                                           archiveIntegrityVerified: descriptor.hasIntegrityProof)
+                                           archiveIntegrityVerified: descriptor.hasIntegrityProof, permitsPrerelease: candidate.releaseChannel == .beta)
                 prepared[value.id] = value; return value
             } catch {
                 if let mounted { _ = try? await ProcessCommand().run("/usr/bin/hdiutil", ["detach", mounted.path]) }
@@ -111,7 +112,7 @@ public actor UpdateInstaller {
         try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
     }
 
-    public func install(_ id: UUID) async throws -> InstallationReceipt {
+    public func install(_ id: UUID, requireNotRunning: Bool = false) async throws -> InstallationReceipt {
         guard !exclusive, let value = prepared[id], !activePaths.contains(value.application.path) else { throw PeerError.invalid("Prepared update is no longer available") }
         activePaths.insert(value.application.path); defer { activePaths.remove(value.application.path) }
         let target = UpdateCandidate(version: value.replacement.version, build: value.replacement.build, source: "Prepared update", isCommunity: false, url: nil)
@@ -119,22 +120,34 @@ public actor UpdateInstaller {
             try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
             throw ApplicationAlreadyCurrent()
         }
-        try await Self.quit(value.application)
+        if requireNotRunning { try Self.requireClosed(value.application) }
+        else { try await Self.quit(value.application) }
         try Task.checkCancellation()
         try await ApplicationInstallation.finalize(value.bundle, matching: value.replacement)
+        try Task.checkCancellation()
+        if requireNotRunning { try Self.requireClosed(value.application) }
         // Once the rename transaction starts it runs to completion or recovery, even if the UI task is cancelled.
         let journal = journalDirectory
         let receipt = try await Task.detached {
             try BundleTransaction(journalDirectory: journal, validate: { url in
                 _ = try BundleVerifier.validate(url, replacing: value.application,
-                    expectedVersion: value.replacement.version, expectedBuild: value.replacement.build)
+                    expectedVersion: value.replacement.version, expectedBuild: value.replacement.build, allowPrerelease: value.permitsPrerelease)
                 if !value.archiveIntegrityVerified { try BundleVerifier.checkDeveloperIDSignature(url, like: value.application) }
                 try ApplicationInstallation.verifyFinalized(url)
-            }, validateOriginal: { url in try BundleVerifier.checkSignature(url, like: value.application) }).commit(prepared: value.bundle, replacing: value.application,
+            }, validateOriginal: { url in
+                if requireNotRunning { try Self.requireClosed(value.application) }
+                try BundleVerifier.checkSignature(url, like: value.application)
+            }).commit(prepared: value.bundle, replacing: value.application,
                       newVersion: value.replacement.version, newBuild: value.replacement.build)
         }.value
         try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
         return receipt
+    }
+
+    private static func requireClosed(_ app: InstalledApp) throws {
+        guard !NSRunningApplication.runningApplications(withBundleIdentifier: app.bundleID).contains(where: {
+            $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: app.path) } ?? false
+        }) else { throw PeerError.unavailable("Application is running; unattended installation deferred") }
     }
 
     public func receipts() throws -> [InstallationReceipt] {

@@ -47,6 +47,7 @@ public actor AppStoreCatalog {
         var lookupError: (any Error)? = nil
         var regionalErrors: [UInt64: any Error] = [:]
         var availability: StoreUpdateAvailability? = nil
+        var availabilityError: (any Error)? = nil
     }
     private struct ProductIdentity: Decodable { let adamID: UInt64 }
     private let execute: @Sendable ([String]) async throws -> Data
@@ -132,6 +133,11 @@ public actor AppStoreCatalog {
         guard available else { return .init(appID: app.id, candidates: [], note: String(localized: "请使用包含商店更新组件的完整 Upovi 应用包。"), status: .appStore, checks: [.init(.appStore, .manual)]) }
         do {
             let loaded = try await load()
+            let nativeChecks: [SourceCheckDetail] = nativeAvailability == nil ? [] :
+                [.init(.appStoreNative, loaded.availability == nil ? .manual : .checked, error: loaded.availabilityError)]
+            let nativeNote: String = loaded.availabilityError as? StoreUpdateAvailability.RefreshFailure == .notEntitled ?
+                String(localized: "系统拒绝了 Upovi 的原生商店刷新请求（505）；请打开 App Store 刷新后再确认。") :
+                loaded.availabilityError != nil ? String(localized: "原生商店刷新未完成，公开目录结果不能证明本机可更新。") : ""
             let entries = loaded.entries
             let matches = entries.filter { $0.matches(app) }
             guard matches.count == 1, let entry = matches.first,
@@ -149,9 +155,15 @@ public actor AppStoreCatalog {
                              checks: [.init(.appStore, .failed, error: PeerError.unavailable("No exact compatible Store release was confirmed"))])
             }
             let newer = VersionOrder.isNewer(version: target, than: app)
+            if !newer, loaded.availability?.refreshedAt != nil,
+               loaded.availability?.offers.contains(where: { $0.storeID == entry.adamID && $0.bundleID == app.bundleID }) == true {
+                return .init(appID: app.id, candidates: [], note: String(localized: "本机商店报告了更新，但目标版本未能与公开目录精确匹配。请主动检查并更新此应用。"),
+                    status: .appStore, manualURL: URL(string: "https://apps.apple.com/app/id\(entry.adamID)"), checks: [.init(.appStore, .manual)] + nativeChecks,
+                    appStoreID: entry.storeRegion == nil ? entry.adamID : nil)
+            }
             if newer, nativeAvailability != nil, loaded.availability?.confirms(app, storeID: entry.adamID, version: target) != true {
-                return .init(appID: app.id, candidates: [], note: String(localized: "公开商店版本为 \(target)，但本机商店尚未确认向此安装提供该更新。请使用原下载账户在 App Store 中确认；此版本暂不计入可用更新。"),
-                             status: .appStore, manualURL: URL(string: "https://apps.apple.com/app/id\(entry.adamID)"), checks: [.init(.appStore, .manual)],
+                return .init(appID: app.id, candidates: [], note: String(localized: "公开商店版本为 \(target)，但本机商店尚未确认向此安装提供该更新。请使用原下载账户在 App Store 中确认；此版本暂不计入可用更新。") + nativeNote,
+                             status: .appStore, manualURL: URL(string: "https://apps.apple.com/app/id\(entry.adamID)"), checks: [.init(.appStore, .manual)] + nativeChecks,
                              appStoreID: entry.storeRegion == nil ? entry.adamID : nil)
             }
             let storeID: UInt64? = entry.storeRegion == nil ? entry.adamID : nil
@@ -160,7 +172,7 @@ public actor AppStoreCatalog {
                 url: URL(string: url), appStoreID: storeID)] : []
             let note = entry.storeRegion.map { String(localized: "已核对 \($0) 地区的 Mac App Store 公开版本。如需更新，请使用原下载账户所在地区的 App Store；公开信息可能存在同步延迟。") }
                 ?? String(localized: "已检查公开商店版本，信息可能存在同步延迟。可在 Upovi 中发起更新，可能要求 Apple 账户或管理员认证。")
-            return .init(appID: app.id, candidates: candidates, note: note, status: newer ? .updates : .current, checks: [.init(.appStore, .checked)], appStoreID: storeID)
+            return .init(appID: app.id, candidates: candidates, note: note + nativeNote, status: newer ? .updates : .current, checks: [.init(.appStore, .checked)] + nativeChecks, appStoreID: storeID)
         } catch {
             return .init(appID: app.id, candidates: [], note: String(localized: "商店检测未完成，无法读取本机商店清单或查询服务暂不可用。请稍后重试；不会将检测失败视为已经最新。"), status: .failed, checks: [.init(.appStore, .failed, error: error)])
         }
@@ -232,8 +244,11 @@ public actor AppStoreCatalog {
                     return StoreApplication(adamID: item.adamID, bundleID: item.bundleID, path: item.path, version: item.version,
                                             newVersion: compatible ? match[0].version : nil, storeRegion: recoveredRegions[item.adamID])
                 }
-                let availability = try? await nativeAvailability?()
-                return Snapshot(entries: entries, regionalErrors: regionalErrors, availability: availability)
+                var availability: StoreUpdateAvailability?, availabilityError: (any Error)?
+                do { availability = try await nativeAvailability?() }
+                catch is CancellationError { throw CancellationError() }
+                catch { availabilityError = error }
+                return Snapshot(entries: entries, regionalErrors: regionalErrors, availability: availability, availabilityError: availabilityError)
             })
             pending = request
         }

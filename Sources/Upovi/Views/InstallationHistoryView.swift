@@ -27,6 +27,7 @@ struct InstallationHistoryView: View {
                     case .batches: BatchHistoryList(store: store)
                     case .checks: checks
                     case .tools: ToolHistoryView(store: store)
+                    case .automatic: UnattendedHistoryView(store: store)
                     }
                 }
                 .id(tab).transition(.opacity)

@@ -9,6 +9,14 @@ public enum VersionOrder {
 
     private static func parse(_ value: String) -> Parsed? {
         let value = SourceVersion.normalize(value)
+        if value.count <= 128, let regex = try? NSRegularExpression(pattern: #"^v?(\d+(?:\.\d+)*)-(\d+)(?:\+[0-9A-Za-z.-]+)?$"#),
+           let match = regex.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)),
+           let numbers = Range(match.range(at: 1), in: value), let revision = Range(match.range(at: 2), in: value),
+           let number = Int(value[revision]) {
+            let parts = value[numbers].split(separator: ".").compactMap { Int($0) }
+            guard parts.count == value[numbers].split(separator: ".").count else { return nil }
+            return .init(numbers: parts, stage: -1, revision: number)
+        }
         let unity = #"^(?:Unity version )?(\d+(?:\.\d+){2})([abfp])(\d+)$"#
         if let regex = try? NSRegularExpression(pattern: unity),
            let match = regex.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)),
@@ -53,8 +61,8 @@ public enum VersionOrder {
 
     public static func isPrerelease(_ version: String) -> Bool { (parse(version)?.stage ?? 4) < 4 }
 
-    public static func isNewer(version: String, build: String = "", than app: InstalledApp) -> Bool {
-        if isPrerelease(version) && !isPrerelease(app.version) { return false }
+    public static func isNewer(version: String, build: String = "", than app: InstalledApp, allowPrerelease: Bool = false) -> Bool {
+        if !allowPrerelease && isPrerelease(version) && !isPrerelease(app.version) { return false }
         guard let order = compare(version, app.version) else { return false }
         // Casks often publish "short.build" (5.80.8.66675) for an app that reports 5.80.8 (66675).
         if order == .orderedDescending { return app.build.isEmpty || version != app.version + "." + app.build }

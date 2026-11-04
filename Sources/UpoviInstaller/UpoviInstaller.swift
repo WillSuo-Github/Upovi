@@ -153,7 +153,7 @@ struct UpoviInstaller {
     }
 
     private static func validateUpdate(_ url: URL, plan: AdministratorInstallPlan) throws {
-        _ = try BundleVerifier.validate(url, replacing: plan.application, expectedVersion: plan.version, expectedBuild: plan.build)
+        _ = try BundleVerifier.validate(url, replacing: plan.application, expectedVersion: plan.version, expectedBuild: plan.build, allowPrerelease: plan.permitsPrerelease == true)
         guard let executable = Bundle(url: url)?.executableURL else { throw PeerError.invalid("Missing update executable") }
         try MachOCompatibility.validate(executable)
     }

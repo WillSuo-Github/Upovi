@@ -60,6 +60,28 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertTrue(result.candidates.isEmpty)
         XCTAssertNotNil(result.manualURL)
     }
+    func testFreshNativeOfferWithUnknownVersionIsNotMistakenForCurrent() async {
+        let replies = StoreReplies()
+        let current = InstalledApp(name: app.name, bundleID: app.bundleID, version: "2", path: app.path, teamID: app.teamID, isAppStore: true)
+        let bundle = app.bundleID
+        let catalog = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: {
+            .init(offers: [.init(storeID: 12345, bundleID: bundle, version: "")], refreshedAt: Date())
+        })
+        let result = await catalog.check(current)
+        XCTAssertEqual(result.status, .appStore); XCTAssertTrue(result.candidates.isEmpty)
+        XCTAssertEqual(result.appStoreID, 12345)
+        XCTAssertTrue(result.checks.contains { $0.source == .appStoreNative && $0.outcome == .checked })
+    }
+    func testNativeRefreshDenialKeepsPublicVersionAndExplicitUpdateIndependent() async {
+        let replies = StoreReplies()
+        let catalog = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: { throw StoreUpdateAvailability.RefreshFailure.notEntitled })
+        let result = await catalog.check(app)
+        XCTAssertEqual(result.status, .appStore); XCTAssertTrue(result.candidates.isEmpty)
+        XCTAssertEqual(result.appStoreID, 12345)
+        XCTAssertTrue(result.note.contains("505"))
+        XCTAssertEqual(result.checks.last?.source, .appStoreNative)
+        XCTAssertEqual(result.checks.last?.issue?.code, 505)
+    }
     func testPartialBridgeExitPreservesValidProductsAndIsolatesMissingMalformedAndAmbiguousRows() async throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "Upovi-StoreLookup-\(UUID())")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

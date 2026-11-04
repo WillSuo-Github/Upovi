@@ -11,11 +11,13 @@ public struct AdministratorInstallPlan: Codable, Sendable {
     public let build: String
     public let artifactPath: String
     public let sha256: String?
+    public let permitsPrerelease: Bool?
 
     public init(id: UUID = UUID(), operation: Operation, application: InstalledApp, version: String,
-                build: String = "", artifactPath: String = "", sha256: String? = nil) {
+                build: String = "", artifactPath: String = "", sha256: String? = nil, permitsPrerelease: Bool? = nil) {
         self.id = id; self.operation = operation; self.application = application; self.version = version
         self.build = build; self.artifactPath = artifactPath; self.sha256 = sha256
+        self.permitsPrerelease = permitsPrerelease
     }
     public func validate() throws {
         guard application.path.utf8.count <= 4096, artifactPath.utf8.count <= 4096,
@@ -35,7 +37,7 @@ public struct AdministratorInstallPlan: Codable, Sendable {
         guard ![.restore, .discardBackup, .inspect].contains(operation) else { return }
         let artifact = URL(fileURLWithPath: artifactPath).standardizedFileURL
         guard artifact.path == artifactPath, artifact.resolvingSymlinksInPath().path == artifact.path,
-              artifactPath != application.path, VersionOrder.isNewer(version: version, build: build, than: application) else {
+              artifactPath != application.path, VersionOrder.isNewer(version: version, build: build, than: application, allowPrerelease: permitsPrerelease == true) else {
             throw PeerError.invalid("Invalid installation artifact or selected version")
         }
         if operation == .package {

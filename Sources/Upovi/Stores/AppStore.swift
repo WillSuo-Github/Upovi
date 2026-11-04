@@ -24,12 +24,13 @@ enum AppSection: String, CaseIterable, Identifiable {
 }
 
 enum HistorySection: String, CaseIterable, Identifiable {
-    case installations = "安装与恢复", batches = "批量任务", checks = "检查记录", tools = "全局工具"
+    case installations = "安装与恢复", batches = "批量任务", checks = "检查记录", tools = "全局工具", automatic = "自动更新"
     var id: String { rawValue }
     var title: String {
         switch self {
         case .installations: String(localized: "安装与恢复"); case .batches: String(localized: "批量任务")
         case .checks: String(localized: "检查记录"); case .tools: String(localized: "全局工具")
+        case .automatic: String(localized: "自动更新")
         }
     }
 }
@@ -82,7 +83,7 @@ final class AppStore {
     var installationBusy: Bool {
         installing || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
             || administratorRestoreConfirmation != nil || administratorCleanupConfirmation != nil || backupDeletionConfirmation != nil
-            || bulkUpdating || (bulkUpdatePresented && !bulkHasRun)
+            || bulkUpdating || unattendedUpdating || (bulkUpdatePresented && !bulkHasRun)
     }
     var preparedUpdate: PreparedUpdate?
     var preparedPackage: PreparedInstallerPackage?
@@ -101,6 +102,16 @@ final class AppStore {
     var sourceFilter: SourceFilter = .all
     var checkHistory: [CheckHistoryEntry] = []
     var sourceOverrides: [String: SourceOverride] = [:]
+    var unattendedState = UnattendedUpdateState()
+    var unattendedUpdating = false
+    @ObservationIgnored var unattendedTask: Task<Void, Never>?
+    @ObservationIgnored var unattendedOperation: (@MainActor (BulkUpdateItem, @escaping @MainActor () throws -> Void) async throws -> Void)?
+    @ObservationIgnored var unattendedWritable: @MainActor (InstalledApp) -> Bool = { app in
+        let path = URL(fileURLWithPath: app.path).standardizedFileURL
+        return path.path == app.path && path.resolvingSymlinksInPath().path == path.path &&
+            FileManager.default.isWritableFile(atPath: path.path) &&
+            FileManager.default.isWritableFile(atPath: path.deletingLastPathComponent().path)
+    }
     var apps: [InstalledApp] = []
     var section: AppSection? {
         didSet { preferences.set(section?.rawValue, forKey: "lastSectionV1") }
@@ -208,6 +219,13 @@ final class AppStore {
         if let data = preferences.data(forKey: "sourceOverridesV1") {
             sourceOverrides = (try? JSONDecoder().decode([String: SourceOverride].self, from: data)) ?? [:]
         }
+        if let data = preferences.data(forKey: "unattendedUpdatesV1"),
+           var state = try? JSONDecoder().decode(UnattendedUpdateState.self, from: data),
+           state.grants.count <= 500, Set(state.grants.map(\.id)).count == state.grants.count,
+           state.attempts.count <= 500, state.history.count <= 100,
+           state.grants.allSatisfy({ (try? UnattendedGrant(application: $0.application, channel: $0.channel)) != nil }) {
+            state.recoverInterrupted(); unattendedState = state
+        }
         if let data = preferences.data(forKey: "checkHistoryV1") {
             checkHistory = (try? JSONDecoder().decode([CheckHistoryEntry].self, from: data)) ?? []
         }
@@ -258,7 +276,7 @@ final class AppStore {
         initialCheckStarted = true
         // A populated store already has an owner-driven refresh or preview data.
         guard apps.isEmpty, !operationBusy else { return }
-        refreshAll()
+        refreshAll(allowUnattended: true)
     }
 
     func scan() async {
@@ -275,7 +293,7 @@ final class AppStore {
         if networkEnabled && !refreshing { restartP2P() }
     }
 
-    func refreshAll() {
+    func refreshAll(allowUnattended: Bool = false) {
         guard !refreshing, !scanning, !checking, !installationBusy else { return }
         dismissBulkSummary()
         refreshing = true
@@ -291,17 +309,20 @@ final class AppStore {
             guard !Task.isCancelled else { return }
             checking = true; lastCheckAttempt = Date()
             await checkUpdates()
+            if allowUnattended { refreshing = false }
+            if allowUnattended && !Task.isCancelled { beginUnattendedUpdates() }
             if !Task.isCancelled { refreshToolSources() }
         }
     }
 
-    func beginChecking() {
+    func beginChecking(allowUnattended: Bool = false) {
         guard !refreshing, !checking, !scanning, !installationBusy else { return }
         guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，联网后再检查更新。"); return }
         dismissBulkSummary()
         checking = true; lastCheckAttempt = Date()
         checkTask = Task {
             await checkUpdates()
+            if allowUnattended && !Task.isCancelled { beginUnattendedUpdates() }
             if !Task.isCancelled { refreshToolSources() }
         }
     }
@@ -334,6 +355,7 @@ final class AppStore {
 
     func toggleIgnored(_ app: InstalledApp) {
         if ignored.contains(app.bundleID) { ignored.remove(app.bundleID) } else { ignored.insert(app.bundleID) }
+        if ignored.contains(app.bundleID) { unattendedTask?.cancel() }
     }
 
     func open(_ url: URL?) {

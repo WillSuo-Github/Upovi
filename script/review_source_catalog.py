@@ -29,6 +29,8 @@ def entries():
         url = urllib.parse.urlsplit(item['homepage'])
         assert url.scheme == 'https' and url.hostname and not url.username and not url.password and not url.query
         datetime.date.fromisoformat(item['reviewedAt'])
+        if 'validatedPayloadSourceVersion' in item:
+            assert re.fullmatch(r'[0-9A-Za-z.+,_-]{1,128}', item['validatedPayloadSourceVersion'])
         for prefix in item.get('replaceBrokenElectronForVersionPrefixes', []):
             assert re.fullmatch(r'\d+\.', prefix)
     return sorted(data['entries'], key=lambda x: x['bundleID'])
@@ -67,6 +69,8 @@ def live(items):
         with urllib.request.urlopen(f'https://formulae.brew.sh/api/cask/{token}.json', timeout=30) as response:
             data = json.load(response)
         assert data['token'] == token and not data.get('disabled'), f'Unavailable cask: {token}'
+        if 'validatedPayloadSourceVersion' in item:
+            assert data['version'] == item['validatedPayloadSourceVersion'], f'Review the signed payload version alias before updating: {token}'
         artifacts = data.get('artifacts', [])
         assert any(item['application'] in a.get('app', []) for a in artifacts), f'Application identity changed: {token}'
         references = set(strings(artifacts))

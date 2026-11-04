@@ -99,6 +99,13 @@ public enum ApplicationSourceCatalog {
         "7.50.2": ("7.50", "2394")
     ]
     public static func bundleRelease(for app: InstalledApp, sourceVersion: String, download: URL?) -> (version: String, build: String)? {
+        // Reviewed 2026-11-04: the official stable v26.10.0-0 arm64 DMG reports
+        // 26.10.0 for both signed version keys. Keep this exact alias; never strip
+        // prerelease suffixes globally or infer an unreviewed future payload.
+        if app.bundleID == "io.hoppscotch.desktop", app.teamID == "XBK86CMQGZ", sourceVersion == "26.10.0-0",
+           download?.absoluteString == "https://github.com/hoppscotch/releases/releases/download/v26.10.0-0/Hoppscotch_mac_aarch64.dmg" {
+            return ("26.10.0", "26.10.0")
+        }
         guard app.bundleID == "com.bjango.istatmenus", app.teamID == "Y93TK974AT", let release = reviewedBundleReleases[sourceVersion],
               download?.absoluteString == "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus\(sourceVersion).zip" else { return nil }
         return release

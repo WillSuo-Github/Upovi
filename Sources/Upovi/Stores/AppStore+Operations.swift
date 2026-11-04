@@ -11,9 +11,9 @@ extension AppStore {
             await refreshInstallations()
             while !Task.isCancelled {
                 policyClock = Date()
-                if CheckSchedule.isDue(enabled: automaticChecks && !apps.isEmpty, online: networkAvailable,
+                if CheckSchedule.isDue(enabled: (automaticChecks || unattendedState.enabled) && !apps.isEmpty, online: networkAvailable,
                     busy: refreshing || scanning || checking || installationBusy, lastAttempt: lastCheckAttempt,
-                    intervalMinutes: checkIntervalMinutes) { beginChecking() }
+                    intervalMinutes: checkIntervalMinutes) { beginChecking(allowUnattended: true) }
                 if networkEnabled && !syncing && !scanning && !refreshing && !installationBusy &&
                     (lastSyncAttempt.map { Date().timeIntervalSince($0) >= 600 } ?? true) { beginSync() }
                 try? await Task.sleep(for: .seconds(30))
@@ -53,13 +53,17 @@ extension AppStore {
         let url = feed.isEmpty ? nil : URL(string: feed)
         guard feed.isEmpty || (url?.scheme == "https" && url?.host != nil && url?.user == nil && url?.password == nil),
               repository.isEmpty || GitHubRelease.validRepository(repository) else { throw PeerError.invalid("Use an HTTPS appcast URL and a GitHub owner/repository") }
-        sourceOverrides[app.bundleID] = .init(appcast: url, githubRepository: repository.isEmpty ? nil : repository)
-        let data = try JSONEncoder().encode(sourceOverrides)
-        preferences.set(data, forKey: "sourceOverridesV1")
+        var next = sourceOverrides
+        next[app.bundleID] = .init(appcast: url, githubRepository: repository.isEmpty ? nil : repository,
+                                 releaseChannel: releaseChannel(for: app))
+        let data = try JSONEncoder().encode(next)
+        guard preferences.set(data, forKey: "sourceOverridesV1") else { throw PeerError.unavailable("Source settings could not be saved") }
+        sourceOverrides = next
         sourceResults[app.id] = nil
     }
     func prepareInstallation(_ candidate: UpdateCandidate, app: InstalledApp) {
         guard !installationBusy, !refreshing, !checking, !scanning else { return }
+        guard releaseChannel(for: app).permits(candidate) else { errorMessage = String(localized: "更新渠道已变化，请重新检查后再安装。"); return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新，再安装其他应用。"); return }
         installing = true; canCancelInstallation = true; installationProgress = String(localized: "正在下载并验证更新…")
         let id = app.id
@@ -94,7 +98,13 @@ extension AppStore {
         preparedUpdate = nil; installationConfirmation = false; installationProgress = ""
     }
     func confirmInstallation() {
+        if let value = preparedUpdate, value.permitsPrerelease, releaseChannel(for: value.application) != .beta {
+            errorMessage = String(localized: "更新渠道已变化，请重新检查后再安装。"); discardInstallation(); return
+        }
         if let package = preparedPackage {
+            guard package.plan.permitsPrerelease != true || releaseChannel(for: package.plan.application) == .beta else {
+                errorMessage = String(localized: "更新渠道已变化，请重新检查后再安装。"); discardInstallation(); return
+            }
             confirmAdministratorInstallation(package.plan)
             return
         }
@@ -102,7 +112,7 @@ extension AppStore {
         if administratorInstallRequested {
             confirmAdministratorInstallation(.init(operation: .application, application: value.application,
                 version: value.replacement.version, build: value.replacement.build,
-                artifactPath: value.bundle.resolvingSymlinksInPath().path))
+                artifactPath: value.bundle.resolvingSymlinksInPath().path, permitsPrerelease: value.permitsPrerelease))
             return
         }
         installationConfirmation = false; installing = true; canCancelInstallation = false; installationProgress = String(localized: "正在安装，旧版本将保留为备份…")
@@ -148,6 +158,7 @@ extension AppStore {
     }
     func restoreAdministratorInstallation(_ attempt: AdministratorInstallAttempt) {
         guard !installationBusy, !refreshing, !checking, !scanning, !SelfUpdateService.shared.sessionInProgress else { return }
+        guard revokeAutomaticUpdatesBeforeRestore(attempt.plan.application) else { return }
         installing = true; canCancelInstallation = false; installationProgress = String(localized: "正在请求管理员授权以恢复主应用…")
         installationTask = Task { [self] in
             defer { installing = false }
@@ -198,6 +209,7 @@ extension AppStore {
     func restoreInstallation(_ receipt: InstallationReceipt) {
         guard !installationBusy, !refreshing, !checking, !scanning else { return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新，再恢复其他应用。"); return }
+        guard revokeAutomaticUpdatesBeforeRestore(receipt.application) else { return }
         installing = true
         Task {
             defer { installing = false }

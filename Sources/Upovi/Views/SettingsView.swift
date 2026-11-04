@@ -11,6 +11,7 @@ struct SettingsView: View {
             GeneralSettings(store: store).tabItem { Label("通用", systemImage: "gearshape") }.tag("general")
             ScanSettings(store: store).tabItem { Label("扫描与安装", systemImage: "square.grid.2x2") }.tag("scan")
             ToolSourcesSettings(store: store).tabItem { Label("全局工具", systemImage: "terminal") }.tag("tools")
+            UnattendedSettingsView(store: store).tabItem { Label("自动更新", systemImage: "arrow.triangle.2.circlepath") }.tag("automatic")
             P2PSettings(store: store).tabItem { Label("P2P", systemImage: "point.3.connected.trianglepath.dotted") }.tag("p2p")
             AboutSettings(store: store).tabItem { Label("关于", systemImage: "info.circle") }.tag("about")
         }
@@ -43,7 +44,7 @@ private struct GeneralSettings: View {
                     Text("每 15 分钟").tag(15)
                     Text("每小时").tag(60)
                     Text("每 6 小时").tag(360)
-                }.disabled(!store.automaticChecks)
+                }.disabled(!store.automaticChecks && !store.unattendedState.enabled)
             } header: { Text("自动检查") } footer: {
                 Text("每次启动会自动扫描并检查一次；开启定时检查后，应用运行期间还会按间隔重复检查。休眠或退出应用会暂停定时检查。")
                     .font(.caption).foregroundStyle(.secondary)

@@ -69,7 +69,7 @@ public enum ElectronUpdateSource: Sendable, Equatable {
     case generic(URL)
     case github(String)
 
-    public static func installed(in app: InstalledApp) throws -> Self? {
+    public static func installed(in app: InstalledApp, channel: ReleaseChannel = .stable) throws -> Self? {
         guard !app.isAppStore else { return nil }
         let resources = URL(fileURLWithPath: app.path).appending(path: "Contents/Resources")
         let file = resources.appending(path: "app-update.yml")
@@ -78,12 +78,13 @@ public enum ElectronUpdateSource: Sendable, Equatable {
         guard resources.resolvingSymlinksInPath().path.hasPrefix(bundle + "/"),
               file.resolvingSymlinksInPath().path.hasPrefix(resources.resolvingSymlinksInPath().path + "/"),
               (try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) <= 65536 else { throw PeerError.invalid("Invalid installed Electron configuration") }
-        return try configuration(Data(contentsOf: file))
+        return try configuration(Data(contentsOf: file), channel: channel)
     }
-    public static func configuration(_ data: Data) throws -> Self {
+    public static func configuration(_ data: Data, channel: ReleaseChannel = .stable) throws -> Self {
         let info = try ElectronYAML(data).fields
         guard info["private"] != "true", info["requestHeaders"] == nil, info["updateManifestPublicKey"] == nil,
-              info["updateManifestPublicKeys"] == nil, info["channel"] == nil || info["channel"] == "latest" else {
+              info["updateManifestPublicKeys"] == nil,
+              info["channel"] == nil || info["channel"] == "latest" || (channel == .beta && info["channel"] == "beta") else {
             throw PeerError.unavailable("This Electron channel requires the application's own updater")
         }
         switch info["provider"] {
@@ -95,7 +96,8 @@ public enum ElectronUpdateSource: Sendable, Equatable {
             return .generic(url)
         case "github":
             guard let owner = info["owner"], let repo = info["repo"], GitHubRelease.validRepository(owner + "/" + repo),
-                  info["host"] == nil || info["host"] == "github.com", info["releaseType"] == nil || info["releaseType"] == "release" else {
+                  info["host"] == nil || info["host"] == "github.com",
+                  info["releaseType"] == nil || info["releaseType"] == "release" || (channel == .beta && info["releaseType"] == "prerelease") else {
                 throw PeerError.unavailable("Unsupported Electron GitHub channel")
             }
             return .github(owner + "/" + repo)
@@ -105,32 +107,53 @@ public enum ElectronUpdateSource: Sendable, Equatable {
     static func secure(_ url: URL) -> Bool {
         url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil && url.query == nil && url.fragment == nil
     }
-    func check(_ app: InstalledApp, fetch: @Sendable (URL, Int) async throws -> Data) async throws -> UpdateCandidate {
+    func check(_ app: InstalledApp, channel: ReleaseChannel = .stable, fetch: @Sendable (URL, Int) async throws -> Data) async throws -> UpdateCandidate {
         let feed: URL, page: URL, expectedVersion: String?
+        var prerelease = false
         switch self {
         case .generic(let base):
-            feed = base.appending(path: "latest-mac.yml"); page = base; expectedVersion = nil
+            let stableURL = base.appending(path: "latest-mac.yml")
+            let stable: UpdateCandidate?
+            do { stable = try Self.read(await fetch(stableURL, 3_000_000), feed: stableURL, page: base) }
+            catch let error as HTTPStatusError where error.statusCode == 404 && channel == .beta { stable = nil }
+            guard channel == .beta else {
+                guard let stable else { throw PeerError.unavailable("No stable Electron manifest") }; return stable
+            }
+            let betaURL = base.appending(path: "beta-mac.yml")
+            do {
+                let beta = try Self.read(await fetch(betaURL, 3_000_000), feed: betaURL, page: base, channel: .beta)
+                guard let stable else { return beta }
+                return VersionOrder.compare(beta.version, stable.version) == .orderedDescending ? beta : stable
+            } catch let error as HTTPStatusError where error.statusCode == 404 {
+                guard let stable else { throw PeerError.unavailable("No Electron channel manifest") }; return stable
+            }
         case .github(let repo):
-            let release = try await GitHubRelease.latest(repository: repo, fetch: fetch)
-            let feeds = release.assets.filter { $0.name == "latest-mac.yml" }
+            let release = try await GitHubRelease.latest(repository: repo, channel: channel, fetch: fetch)
+            prerelease = release.isPrerelease
+            let manifests = release.assets.filter { $0.name.hasSuffix("-mac.yml") }
+            let channelName: String = ["alpha", "beta", "preview", "rc"].first { release.version.lowercased().contains("-" + $0) } ?? "beta"
+            let preferred = prerelease ? "\(channelName)-mac.yml" : "latest-mac.yml"
+            let feeds = manifests.contains(where: { $0.name == preferred }) ? manifests.filter { $0.name == preferred } : manifests.filter { $0.name == "latest-mac.yml" }
             if feeds.isEmpty {
+                guard manifests.isEmpty else { throw PeerError.unavailable("Use the application's own Electron channel") }
                 // Some Electron releases omit their manifest: the official GitHub release may
                 // still provide an independently hashed, unambiguous native archive.
-                return .init(version: release.version, source: "Electron · GitHub", isCommunity: false, url: release.page, download: release.download, releaseNotes: release.releaseNotes)
+                return .init(version: release.version, source: "Electron · GitHub", isCommunity: false, url: release.page, download: release.download, releaseNotes: release.releaseNotes, releaseChannel: prerelease ? .beta : nil)
             }
             guard feeds.count == 1, let asset = feeds.first, Self.secure(asset.browser_download_url),
-                  asset.browser_download_url.host == "github.com", asset.browser_download_url.path.hasPrefix("/\(repo)/releases/download/") else {
+                  asset.browser_download_url.host == "github.com", asset.browser_download_url.path.lowercased().hasPrefix("/\(repo.lowercased())/releases/download/") else {
                 throw PeerError.invalid("Ambiguous Electron release manifest")
             }
             feed = asset.browser_download_url; page = release.page; expectedVersion = release.version
         }
-        return try Self.read(await fetch(feed, 3_000_000), feed: feed, page: page, expectedVersion: expectedVersion)
+        return try Self.read(await fetch(feed, 3_000_000), feed: feed, page: page, expectedVersion: expectedVersion, channel: prerelease ? .beta : .stable)
     }
     static func read(_ data: Data, feed: URL, page: URL? = nil, expectedVersion: String? = nil,
-                     architecture: String = hostArchitecture, kernelVersion: String = hostKernelVersion) throws -> UpdateCandidate {
+                     architecture: String = hostArchitecture, kernelVersion: String = hostKernelVersion, channel: ReleaseChannel = .stable) throws -> UpdateCandidate {
         let yaml = try ElectronYAML(data), info = yaml.fields
         guard let version = info["version"], version.count <= 128,
-              version.range(of: #"^\d+(?:\.\d+){1,3}(?:\+[A-Za-z0-9.-]+)?$"#, options: .regularExpression) != nil,
+              version.range(of: #"^\d+(?:\.\d+){1,3}(?:-(?:alpha|beta|preview|rc)[.-]?\d+|-\d+)?(?:\+[A-Za-z0-9.-]+)?$"#, options: .regularExpression) != nil,
+              channel == .beta || !VersionOrder.isPrerelease(version), VersionOrder.compare(version, "0") != nil,
               expectedVersion.map({ VersionOrder.compare($0, version) == .orderedSame }) ?? true else { throw PeerError.invalid("Invalid stable Electron version") }
         if let minimum = info["minimumSystemVersion"] {
             guard minimum.range(of: #"^\d+(?:\.\d+)*$"#, options: .regularExpression) != nil,
@@ -159,7 +182,7 @@ public enum ElectronUpdateSource: Sendable, Equatable {
         let choices = images.isEmpty ? compatible : images
         let download = choices.count == 1 ? choices.first : nil
         return .init(version: version, source: "Electron", isCommunity: false, url: page ?? feed.deletingLastPathComponent(), download: download,
-                     releaseNotes: info["releaseNotes"].flatMap { $0.isEmpty ? nil : $0 })
+                     releaseNotes: info["releaseNotes"].flatMap { $0.isEmpty ? nil : $0 }, releaseChannel: channel == .beta ? .beta : nil)
     }
     public static var hostArchitecture: String {
         #if arch(arm64)

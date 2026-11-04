@@ -1,4 +1,4 @@
-# In-application Mac App Store updates, 0.4.8
+# In-application Mac App Store updates
 
 Upovi can check compatible native Mac App Store installations and initiate their updates from its own detail/review/batch views. Opening the App Store window is no longer the normal action for supported Store apps. Download and purchase entitlement handling still belongs to Apple's Store services and requires the appropriate Apple Account to be signed in. Native account or administrator authentication may appear. Upovi does not request or store Apple Account passwords, acquire new apps, make purchases or bypass Store ownership.
 
@@ -6,7 +6,9 @@ Upovi can check compatible native Mac App Store installations and initiate their
 
 The bundled checksum-pinned mas 7.0.0 executable is invoked directly, without its shell wrapper, Homebrew or jq. Minimal structured installed-app records are read from Spotlight and matched by bundle ID and filesystem identity (including the APFS Data-volume alias). A single coalesced snapshot obtains public catalog versions for confirmed Store IDs. Unrecognized IDs, unavailable products, incompatible OS requirements, iOS-only releases, duplicate installations and failed checks are not silently reported current. TestFlight or missing-ID installations remain unconfirmed/manual. Public Store version metadata can lag behind the actual Store and does not establish ownership or detect every build-only update.
 
-Public catalog versions alone no longer establish an update offer. An optional unprivileged helper reads CommerceKit's existing update cache, requiring a unique exact Store ID, bundle ID and version before a newer public version participates in update counts, skip/snooze, notifications or Update all. Staged entries are excluded. The helper does not refresh the cache, start/cancel downloads, or authenticate; an empty/uninitialized/stale cache, unavailable selectors, a crash or a timeout leave the result unconfirmed/manual. This is a conservative filter, not a fresh native Store scan, ownership verification, or support for build-only native offers.
+Public catalog versions alone no longer establish an update offer. An unprivileged helper attempts a read-only native AppStoreDaemon background refresh, requiring a unique exact Store ID, bundle ID and version before a newer public version participates in update counts, skip/snooze, notifications or Update all. Staged entries are excluded. The helper does not start/cancel downloads, change automatic-update settings or authenticate. Missing interfaces, access rejection, unknown versions, crashes and timeouts leave results unconfirmed/manual. Native offers without a matching public target are shown for explicit confirmation rather than reported current. Neither a public listing nor a native cached offer establishes ownership.
+
+Local acceptance on macOS 27.2 returned `ASDErrorDomain` 505 (not entitled), including with a Developer ID signature. Upovi reports this rejection and offers an App Store Updates entry point. This host has **not** passed a fresh native-offer query. The older cache-only helper remains available for explicit diagnostics, and no private entitlement or Apple process impersonation is used. Details are in [automatic updates and channels](AUTOMATIC-UPDATES-AND-CHANNELS.md).
 
 An already checked supported Store installation still offers Check and update this application, including when the native cache has not confirmed a public new version. This explicit action lets the Store's download metadata decide whether an update is needed, including when public metadata is delayed. Its confirmation may show the same marketing version on both sides; that is a check-and-update request, not a claimed newer release. A successful unchanged result has its own current state and is not recorded as an installed upgrade. Unfinished batches still require a fresh source check and confirmation after relaunch. Background detection never uses mas's download-and-cancel accurate probe.
 
@@ -20,7 +22,7 @@ The protected helper shares the existing installation lock, creates a root-owned
 
 mas uses Apple's private Store frameworks. Compatibility and authentication behavior are OS/account-specific; this is an experimental integration rather than a public Apple management API. [Upstream documentation](https://github.com/mas-cli/mas/blob/v7.0.0/README.md) describes Store/account requirements and unsupported cases. Bundled and transitive dependency notices are retained in Vendor and the distribution Resources directory.
 
-## Acceptance
+## Historical 0.4.8 acceptance
 
 173 local tests passed (156 core, 17 application-store workflow tests), including Store metadata identity/OS/platform failures, snapshot reuse and invalidation, zero-ID handling, Unicode JSON record boundaries, denied input plans, current-versus-installed results, batch history and review routing. Actual read-only checks on this host recognized 23 receipt installations: 21 matched a compatible public Store product and were current; two had no confirmed Store ID and stayed manual. This does not establish download/installation success.
 

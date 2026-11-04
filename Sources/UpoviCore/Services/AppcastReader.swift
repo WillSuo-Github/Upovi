@@ -6,9 +6,11 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
     private var element = ""
     private var text = ""
     private var channel = ""
+    private var selectedChannel: ReleaseChannel = .stable
 
-    public static func read(_ data: Data) throws -> [UpdateCandidate] {
+    public static func read(_ data: Data, channel: ReleaseChannel = .stable) throws -> [UpdateCandidate] {
         let reader = AppcastReader()
+        reader.selectedChannel = channel
         let parser = XMLParser(data: data)
         parser.shouldResolveExternalEntities = false
         parser.delegate = reader
@@ -48,13 +50,15 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
         case "link": current?.link = value
         case "description": current?.notes = String(value.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression).prefix(20_000))
         case "item":
-            if let item = current, channel.isEmpty || channel == "stable" {
+            if let item = current, channel.isEmpty || channel == "stable" ||
+                (selectedChannel == .beta && ["alpha", "beta", "preview", "rc"].contains(channel.lowercased())) {
                 let os = ProcessInfo.processInfo.operatingSystemVersion
                 let osString = "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"
                 let minimumOrder = VersionOrder.compare(item.minimum, osString)
                 let compatible = item.minimum.isEmpty || minimumOrder == .orderedAscending || minimumOrder == .orderedSame
                 let version = item.version.isEmpty ? item.build : item.version
-                if compatible, !version.isEmpty {
+                let prerelease = !channel.isEmpty && channel != "stable" || VersionOrder.isPrerelease(version)
+                if compatible, !version.isEmpty, selectedChannel == .beta || !prerelease {
                     // A link is a user-reviewed update entry point; no peer or appcast payload is executed.
                     let url = URL(string: item.link).flatMap { $0.scheme == "https" ? $0 : nil }
                     entries.append(.init(version: version, build: item.build, source: "Developer appcast", isCommunity: false, url: url,
@@ -64,7 +68,7 @@ public final class AppcastReader: NSObject, XMLParserDelegate {
                                                    let signature = Data(base64Encoded: item.signature), signature.count == 64 else { return nil }
                                              return DownloadDescriptor(url: url, edSignature: signature)
                                          }, releaseNotes: item.notes.isEmpty ? nil : item.notes,
-                                         buildIsAuthoritative: !item.build.isEmpty))
+                                         buildIsAuthoritative: !item.build.isEmpty, releaseChannel: prerelease ? .beta : nil))
                 }
             }
             current = nil

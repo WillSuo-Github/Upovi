@@ -6,6 +6,16 @@ import UpoviCore
 @main struct UpoviStoreInstaller {
     static func main() async {
         do {
+            if Array(CommandLine.arguments.dropFirst()) == ["--refresh-updates"] {
+                do {
+                    let snapshot = try await StoreUpdateAvailability.refreshInHelper()
+                    print(String(decoding: try JSONEncoder().encode(snapshot), as: UTF8.self))
+                } catch {
+                    let failure = (error as? StoreUpdateAvailability.RefreshFailure) ?? .failed
+                    print(String(decoding: try JSONEncoder().encode(StoreUpdateAvailability.FailureMessage(failure)), as: UTF8.self))
+                }
+                return
+            }
             if Array(CommandLine.arguments.dropFirst()) == ["--cached-updates"] {
                 let snapshot = try await MainActor.run { try StoreUpdateAvailability.readCachedUpdatesInHelper() }
                 print(String(decoding: try JSONEncoder().encode(snapshot), as: UTF8.self)); return
