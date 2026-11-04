@@ -139,6 +139,13 @@ public enum BundleVerifier {
             let value = try sha256(of: archive)
             guard value.caseInsensitiveCompare(sha) == .orderedSame else { throw PeerError.invalid("Downloaded archive checksum mismatch") }
         }
+        if let sha = descriptor.sha512 {
+            guard let expected = Data(base64Encoded: sha), expected.count == 64 else { throw PeerError.invalid("Invalid SHA-512 proof") }
+            let input = try FileHandle(forReadingFrom: archive); defer { try? input.close() }
+            var hash = SHA512()
+            while let chunk = try input.read(upToCount: 1_048_576), !chunk.isEmpty { try Task.checkCancellation(); hash.update(data: chunk) }
+            guard Data(hash.finalize()) == expected else { throw PeerError.invalid("Downloaded archive checksum mismatch") }
+        }
         if let signature = descriptor.edSignature {
             guard let data = try? Data(contentsOf: URL(fileURLWithPath: app.path).appending(path: "Contents/Info.plist")),
                   let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],

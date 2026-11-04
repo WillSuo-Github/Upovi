@@ -36,20 +36,31 @@ struct UpoviPeer {
             for app in apps { print("\(app.name)\t\(app.bundleID)\t\(app.version)\t\(app.build)") }
             print("apps=\(apps.count)")
         case "check-sources":
+            let storeCatalog = option("--store-bridge").map { AppStoreCatalog(bridge: URL(fileURLWithPath: $0)) }
             let apps: [InstalledApp]
             if let path = option("--app"), let app = AppScanner.read(URL(fileURLWithPath: path)) { apps = [app] }
             else { apps = AppScanner.scan() }
             var results: [SourceResult] = []
             await withTaskGroup(of: SourceResult.self) { group in
                 var iterator = apps.makeIterator()
-                for _ in 0..<5 { if let app = iterator.next() { group.addTask { await UpdateChecker.check(app) } } }
+                func check(_ app: InstalledApp) async -> SourceResult {
+                    if app.isAppStore, let storeCatalog { return await storeCatalog.check(app) }
+                    return await UpdateChecker.check(app)
+                }
+                for _ in 0..<5 { if let app = iterator.next() { group.addTask { await check(app) } } }
                 for await result in group {
                     results.append(result)
-                    if let app = iterator.next() { group.addTask { await UpdateChecker.check(app) } }
+                    if let app = iterator.next() { group.addTask { await check(app) } }
                 }
             }
             let counts = Dictionary(grouping: results, by: { $0.status.rawValue }).mapValues(\.count)
-            let summary: [String: Int] = counts.merging(["applications": apps.count, "updateCandidates": results.reduce(0) { $0 + $1.candidates.count }]) { _, b in b }
+            let confirmed = results.filter { $0.checks.contains { $0.outcome == .checked } }.count
+            let verifiable = results.filter { result in
+                guard let app = apps.first(where: { $0.id == result.appID }) else { return false }
+                return result.candidates.contains { $0.appStoreID != nil || ($0.download?.canVerify(for: app) == true && ApplicationSourceCatalog.replacementTeam(for: app) != nil) }
+            }.count
+            let summary: [String: Int] = counts.merging(["applications": apps.count, "versionConfirmedApps": confirmed,
+                "updatesWithVerifiableInstallation": verifiable, "updateCandidates": results.reduce(0) { $0 + $1.candidates.count }]) { _, b in b }
             let data = try JSONSerialization.data(withJSONObject: summary, options: [.prettyPrinted, .sortedKeys])
             print(String(decoding: data, as: UTF8.self))
             if let path = option("--summary-file") { try data.write(to: URL(fileURLWithPath: path), options: .atomic) }
@@ -57,7 +68,10 @@ struct UpoviPeer {
                 let details: [[String: Any]] = results.map { result in
                     let app = apps.first { $0.id == result.appID }
                     return ["bundleID": app?.bundleID ?? "", "name": app?.name ?? "", "path": result.appID,
-                            "status": result.status.rawValue, "note": result.note]
+                            "status": result.status.rawValue, "note": result.note,
+                            "checkedSources": result.checks.filter { $0.outcome == .checked }.map { $0.source.rawValue },
+                            "targetVersions": result.candidates.map(\.version),
+                            "hasArchiveProof": result.candidates.contains { $0.download?.hasIntegrityProof == true }]
                 }.sorted { ($0["path"] as? String ?? "") < ($1["path"] as? String ?? "") }
                 let detailsData = try JSONSerialization.data(withJSONObject: details, options: [.prettyPrinted, .sortedKeys])
                 let file = URL(fileURLWithPath: path)
@@ -76,8 +90,9 @@ struct UpoviPeer {
                   let url = URL(string: try required("--url")) else { throw PeerError.invalid("Invalid installation test input") }
             let folder = URL(fileURLWithPath: try required("--journal-directory"))
             let installer = UpdateInstaller(journalDirectory: folder)
+            guard option("--sha256") != nil || option("--sha512") != nil else { throw PeerError.invalid("A source archive checksum is required") }
             let candidate = UpdateCandidate(version: try required("--version"), source: "Explicit diagnostic source", isCommunity: false, url: url,
-                download: .init(url: url, sha256: try required("--sha256")))
+                download: .init(url: url, sha256: option("--sha256"), sha512: option("--sha512")))
             let prepared = try await installer.prepare(app: app, candidate: candidate, progress: { _, _ in })
             print("archive_integrity=valid developer_signature=valid gatekeeper=accepted prepared_version=\(prepared.replacement.version)")
             if args.contains("--apply") {
@@ -164,8 +179,8 @@ struct UpoviPeer {
 
     static let usage = """
     UpoviPeer scan
-    UpoviPeer install-check --app <path> --url <https-archive> --version <version> --sha256 <hash> --journal-directory <path> [--apply] [--restore]
-    UpoviPeer check-sources [--app <path>] [--summary-file <path>] [--details-file <private-local-path>] [--verbose]
+    UpoviPeer install-check --app <path> --url <https-archive> --version <version> (--sha256 <hex>|--sha512 <base64>) --journal-directory <path> [--apply] [--restore]
+    UpoviPeer check-sources [--app <path>] [--store-bridge <signed-helper-path>] [--summary-file <path>] [--details-file <private-local-path>] [--verbose]
     UpoviPeer identity --output <private-key-file>
     UpoviPeer probe
     UpoviPeer share-public --identity <file> --bundle <synthetic-id> --version <version> [--duration 60]

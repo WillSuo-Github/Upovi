@@ -37,7 +37,7 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable {
 }
 
 public struct SourceCheckDetail: Codable, Sendable, Equatable {
-    public enum Source: String, Codable, Sendable { case appcast, homebrew, github, manual, appStore }
+    public enum Source: String, Codable, Sendable { case appcast, homebrew, github, electron, manual, appStore }
     public enum Outcome: String, Codable, Sendable { case checked, uncomparable, failed, cancelled, manual }
     public let source: Source
     public let outcome: Outcome

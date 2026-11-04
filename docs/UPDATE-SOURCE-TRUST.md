@@ -12,7 +12,7 @@
 
 ## Verification paths
 
-An archive with a source SHA-256 or Sparkle Ed25519 signature follows the existing archive verification path, followed by application identity/version, nested signatures, architecture and Gatekeeper checks.
+An archive with a source SHA-256, Electron SHA-512 or Sparkle Ed25519 signature follows the existing archive verification path, followed by application identity/version, nested signatures, architecture and Gatekeeper checks. SHA-512 is streamed and checked against the decoded 64-byte source digest; it is also part of the download-cache identity. A source checksum does not replace developer-signature checks.
 
 A reviewed official ZIP/DMG without an archive proof is downloaded for inspection. The installed application must satisfy an Apple-anchored Developer ID requirement. After bounded extraction, the incoming application must have the same bundle identity, the expected Developer ID, the exact selected version/build, valid nested code and a compatible executable, and pass Gatekeeper. The Developer ID requirement is checked again during the replacement transaction. PKG files remain ineligible for this fallback.
 

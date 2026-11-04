@@ -38,6 +38,28 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(result.status,.current); XCTAssertTrue(result.candidates.isEmpty)
         XCTAssertEqual(result.checks.first?.outcome,.checked)
     }
+    func testPublishedStoreUpdateRequiresExactNativeOfferWhenAvailabilityCheckingIsEnabled() async {
+        let exact = StoreUpdateAvailability.Offer(storeID: 12345, bundleID: app.bundleID, version: "2")
+        let cases: [[StoreUpdateAvailability.Offer]] = [
+            [exact], [], [exact, exact], [.init(storeID: 99999, bundleID: app.bundleID, version: "2")],
+            [.init(storeID: 12345, bundleID: "app.synthetic.other", version: "2")], [.init(storeID: 12345, bundleID: app.bundleID, version: "3")]
+        ]
+        for (index, offers) in cases.enumerated() {
+            let replies = StoreReplies()
+            let catalog = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: { .init(offers: offers) })
+            let result = await catalog.check(app)
+            XCTAssertEqual(result.status, index == 0 ? .updates : .appStore)
+            XCTAssertEqual(result.candidates.count, index == 0 ? 1 : 0)
+            XCTAssertEqual(result.appStoreID, 12345) // Explicit check-and-update is still available.
+            if index != 0 { XCTAssertEqual(result.checks.first?.outcome, .manual) }
+        }
+        let replies = StoreReplies()
+        let unavailable = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: { throw PeerError.unavailable("No native Store cache") })
+        let result = await unavailable.check(app)
+        XCTAssertEqual(result.status, .appStore)
+        XCTAssertTrue(result.candidates.isEmpty)
+        XCTAssertNotNil(result.manualURL)
+    }
     func testPartialBridgeExitPreservesValidProductsAndIsolatesMissingMalformedAndAmbiguousRows() async throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "Upovi-StoreLookup-\(UUID())")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

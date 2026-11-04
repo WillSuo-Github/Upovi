@@ -56,6 +56,7 @@ Actual application screenshots. The apps and available updates will vary on your
 | Source | What Upovi supports |
 | --- | --- |
 | **Developer feeds (Sparkle)** | Reads supported appcasts for versions, release notes and eligible downloads. |
+| **Electron** | Reads installed electron-builder generic/GitHub stable channels and SHA-512 archive proofs. Special or staged channels stay with the app's own updater. |
 | **Homebrew casks** | Matches desktop apps through declared bundle identifiers and curated identity mappings. You do not need Homebrew installed to check its public app catalog. |
 | **GitHub releases** | Checks supported repositories and release assets. You can assign an official repository to an app. |
 | **Mac App Store** | Checks supported installations and offers in-app updates through Apple’s services. The owning Apple Account and native authentication may be required. |
@@ -63,6 +64,8 @@ Actual application screenshots. The apps and available updates will vary on your
 | **Global package managers** | Uses your existing managers for supported global tools. Each source is off by default and enabled separately in Settings → Global Tools. |
 
 Detection and installation are separate: an app may have a known newer version but still need its official installer or built-in updater. Upovi shows unsupported sources and failed checks separately; an empty update list does not guarantee every app is current.
+
+Source maintenance and current coverage limits are described in [source coverage](docs/SOURCE-COVERAGE.md). A public App Store version is counted as an available update only when the native Store cache confirms that exact offer; otherwise it stays available for explicit checking.
 
 ## Install
 

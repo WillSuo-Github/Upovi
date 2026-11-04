@@ -18,7 +18,8 @@ public actor ArtifactDownloadCache {
         self.directory = directory.standardizedFileURL; self.configuration = configuration.copy() as! URLSessionConfiguration
     }
     static func key(_ descriptor: DownloadDescriptor) -> String {
-        let identity = descriptor.url.absoluteString + "|" + (descriptor.sha256 ?? "") + "|" + (descriptor.edSignature?.base64EncodedString() ?? "")
+        let identity = descriptor.url.absoluteString + "|" + (descriptor.sha256 ?? "") + "|" + (descriptor.edSignature?.base64EncodedString() ?? "") +
+            (descriptor.sha512.map { "|sha512:" + $0 } ?? "")
         return SHA256.hash(data: Data(identity.utf8)).map { String(format: "%02x", $0) }.joined()
     }
     private func ensureDirectory(_ url: URL) throws {

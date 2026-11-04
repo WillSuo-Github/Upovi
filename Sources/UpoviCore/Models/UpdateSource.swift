@@ -15,12 +15,14 @@ public struct SourceOverride: Codable, Sendable {
 public struct DownloadDescriptor: Hashable, Codable, Sendable {
     public let url: URL
     public let sha256: String?
+    public let sha512: String?
     public let edSignature: Data?
-    public init(url: URL, sha256: String? = nil, edSignature: Data? = nil) {
-        self.url = url; self.sha256 = sha256; self.edSignature = edSignature
+    public init(url: URL, sha256: String? = nil, edSignature: Data? = nil, sha512: String? = nil) {
+        self.url = url; self.sha256 = sha256; self.edSignature = edSignature; self.sha512 = sha512
     }
     public var hasIntegrityProof: Bool {
-        sha256.map { $0.count == 64 && $0.allSatisfy(\.isHexDigit) } == true || edSignature?.count == 64
+        sha256.map { $0.count == 64 && $0.allSatisfy(\.isHexDigit) } == true || edSignature?.count == 64 ||
+            sha512.flatMap { Data(base64Encoded: $0) }?.count == 64
     }
     /// The format named by the URL, or nil when it must be read from the verified bytes instead.
     public var declaredFormat: String? {
@@ -47,7 +49,7 @@ public struct DownloadDescriptor: Hashable, Codable, Sendable {
     }
     /// A signature-only download remains unverified until the extracted app passes the installer checks.
     public func canVerify(for app: InstalledApp) -> Bool {
-        hasIntegrityProof || (sha256 == nil && edSignature == nil &&
+        hasIntegrityProof || (sha256 == nil && sha512 == nil && edSignature == nil &&
             ApplicationSourceCatalog.permitsDeveloperDownload(url, for: app))
     }
 }

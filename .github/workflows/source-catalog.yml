@@ -1,0 +1,37 @@
+name: Reviewed source catalog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 19 * * *' # 03:23 Asia/Shanghai; GitHub schedules use UTC.
+  pull_request:
+    paths:
+      - '.github/workflows/source-catalog.yml'
+      - 'Resources/ReviewedSources.json'
+      - 'Sources/UpoviCore/Services/ReviewedSourceCatalog.swift'
+      - 'script/review_source_catalog.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/source-catalog.yml'
+      - 'Resources/ReviewedSources.json'
+      - 'Sources/UpoviCore/Services/ReviewedSourceCatalog.swift'
+      - 'script/review_source_catalog.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-catalog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate compiled catalog and live public identities
+        run: python3 script/review_source_catalog.py --live

@@ -75,6 +75,7 @@ targets:
     sources: [Sources/UpoviPeer]
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: app.upovi.Peer
+      OTHER_SWIFT_FLAGS: "$(inherited) -parse-as-library"
     scheme: {}
   Upovi:
     type: application

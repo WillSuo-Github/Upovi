@@ -1,0 +1,68 @@
+{
+  "marketingVersion": "0.4.10",
+  "build": "202611040005",
+  "publication": "not published",
+  "baselineRevision": "a273ddb",
+  "comparison": {
+    "scope": "Same local non-App-Store path and bundle identities, checked on 2026-11-04",
+    "matchedApplications": 61,
+    "baseline": {"current": 41, "updates": 1, "unsupported": 19},
+    "candidate": {"current": 43, "updates": 6, "unsupported": 12},
+    "newlyConfirmedSources": 7,
+    "newlyDiscoveredUpdateApplications": 5,
+    "floodtideSameMachineComparisonPerformed": false
+  },
+  "localReadOnlyScan": {
+    "applications": 99,
+    "versionConfirmedApps": 81,
+    "current": 75,
+    "updateCandidates": 6,
+    "unsupported": 13,
+    "appStoreUnconfirmedOrManual": 5,
+    "failed": 0,
+    "eligibleForExistingVerificationPath": 6,
+    "installationSuccessEstablishedForAllCandidates": false
+  },
+  "nativeUI": {
+    "observedInstalledBuild": "202611040005",
+    "visibleUpdateApplications": 5,
+    "ignoredUpdateApplications": 1,
+    "checkIssues": 0,
+    "unsupported": 13,
+    "storeReceiptApplications": 38,
+    "unconfirmedStoreVersionShownAsManual": true,
+    "explicitStoreCheckAndUpdatePreserved": true
+  },
+  "electronPreflight": {
+    "application": "T3 Code (Beta)",
+    "originalVersion": "0.1.6",
+    "preparedVersion": "0.1.7",
+    "source": "Installed public GitHub provider, official latest-mac.yml",
+    "archive": "T3-Code-0.1.7-arm64.dmg",
+    "sha512": "valid",
+    "developerSignature": "valid",
+    "gatekeeper": "accepted",
+    "preparedCopyDiscarded": true,
+    "installedApplicationUnchanged": true,
+    "newVersionInstallationOrLaunchTested": false
+  },
+  "validation": {
+    "coreTests": 250,
+    "coreFailures": 0,
+    "hostedWorkflowTests": 47,
+    "hostedWorkflowFailures": 0,
+    "releaseMetadataTests": 8,
+    "releaseMetadataFailures": 0,
+    "reviewedCatalogIdentitiesLiveChecked": 6,
+    "developerIDSignedLocalAppStrictVerification": "passed",
+    "localAppLaunch": "passed"
+  },
+  "limitations": [
+    "Native Store cache was uninitialized on this host. The helper fell back to manual confirmation; no refresh or download-and-cancel probe ran.",
+    "No fresh native-only or build-only Store offer scan is implemented.",
+    "Special Electron channels, staged releases and signed manifests remain with the original updater.",
+    "The reviewed catalog is compiled into the signed app. A remote signed catalog and unattended catalog writer are not implemented.",
+    "Daily read-only workflow is prepared locally; no remote scheduled run is claimed.",
+    "Unattended application installation, broad Beta selection and security-advisory matching are outside this change."
+  ]
+}

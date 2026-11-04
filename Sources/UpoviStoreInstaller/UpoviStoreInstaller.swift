@@ -6,6 +6,10 @@ import UpoviCore
 @main struct UpoviStoreInstaller {
     static func main() async {
         do {
+            if Array(CommandLine.arguments.dropFirst()) == ["--cached-updates"] {
+                let snapshot = try await MainActor.run { try StoreUpdateAvailability.readCachedUpdatesInHelper() }
+                print(String(decoding: try JSONEncoder().encode(snapshot), as: UTF8.self)); return
+            }
             guard geteuid() == 0 else { throw PeerError.invalid("Administrator authorization is required") }
             let args = Array(CommandLine.arguments.dropFirst())
             guard args.count == 2 else { throw PeerError.invalid("Explicit protected Store plan and helper required") }

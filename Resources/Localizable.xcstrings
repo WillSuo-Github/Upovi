@@ -1,6 +1,54 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+  "已检查 Electron 更新源": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Checked Electron update source"
+        }
+      },
+      "zh-Hant": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "已檢查 Electron 更新來源"
+        }
+      }
+    }
+  },
+  "此 Electron 更新渠道需在应用内确认（特殊渠道、分批发布、系统要求或来源签名限制）。": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Confirm this Electron channel in the app (special channel, staged rollout, system requirement or manifest signature)."
+        }
+      },
+      "zh-Hant": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "此 Electron 更新管道需在應用程式內確認（特殊管道、分批發佈、系統要求或來源簽章限制）。"
+        }
+      }
+    }
+  },
+  "公开商店版本为 %@，但本机商店尚未确认向此安装提供该更新。请使用原下载账户在 App Store 中确认；此版本暂不计入可用更新。": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The public Store version is %@, but this Mac has not confirmed an update offer for this installation. Check in the App Store using the original Apple Account; this version is not counted as an available update yet."
+        }
+      },
+      "zh-Hant": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "公開商店版本為 %@，但本機商店尚未確認向此安裝提供該更新。請使用原下載帳號在 App Store 中確認；此版本暫不計入可用更新。"
+        }
+      }
+    }
+  },
     "Notion 已停止通过 App Store 分发 Safari Web Clipper。请按照官网说明迁移到新版扩展；无法通过旧商店条目确认更新。": {
       "localizations": {
         "en": {

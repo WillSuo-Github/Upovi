@@ -34,6 +34,7 @@ public enum UpdateChecker {
         var candidates: [UpdateCandidate] = [], notes: [String] = []
         var checked = 0, failed = 0, uncomparable = 0
         var checks: [SourceCheckDetail] = []
+        var electronRepository: String?, electronNeedsOwnUpdater = false
         // Versions the app's own updater currently offers; nil when that channel is unknown or unreadable.
         var officialOffers: [UpdateCandidate]?
         if let feed = override?.appcast ?? app.feedURL ?? ApplicationSourceCatalog.officialFeed(for: app) {
@@ -47,6 +48,27 @@ public enum UpdateChecker {
             catch { failed += 1; notes.append("appcast：\(failureDescription(error))"); checks.append(.init(.appcast, .failed, error: error)) }
         }
         if Task.isCancelled { return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed) }
+        if officialOffers == nil, override?.appcast == nil, override?.githubRepository == nil, !ReviewedSourceCatalog.replacesBrokenElectron(for: app) {
+            do {
+                if let electron = try ElectronUpdateSource.installed(in: app) {
+                    if case .github(let repository) = electron { electronRepository = repository }
+                    let offer = try await electron.check(app, fetch: fetch)
+                    officialOffers = [offer]
+                    if offer.isNewer(than: app) { candidates.append(offer) }
+                    checked += 1; notes.append(String(localized: "已检查 Electron 更新源")); checks.append(.init(.electron, .checked))
+                }
+            } catch is CancellationError {
+                return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed, checks: [.init(.electron, .cancelled, error: CancellationError())])
+            } catch {
+                if case PeerError.unavailable = error {
+                    electronNeedsOwnUpdater = true
+                    notes.append(String(localized: "此 Electron 更新渠道需在应用内确认（特殊渠道、分批发布、系统要求或来源签名限制）。"))
+                    checks.append(.init(.electron, .manual))
+                } else {
+                    failed += 1; notes.append("Electron：\(failureDescription(error))"); checks.append(.init(.electron, .failed, error: error))
+                }
+            }
+        }
         let appcastCount = candidates.count
         do {
             let metadata: CaskMetadata?
@@ -79,7 +101,7 @@ public enum UpdateChecker {
                 else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append(String(localized: "Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新")) }
             }
         } catch { failed += 1; notes.append("Homebrew：\(failureDescription(error))"); checks.append(.init(.homebrew, .failed, error: error)) }
-        if let repository = override?.githubRepository ?? githubRepositories[app.bundleID], !Task.isCancelled {
+        if let repository = override?.githubRepository ?? githubRepositories[app.bundleID], repository != electronRepository, !Task.isCancelled {
             do {
                 let release = try await GitHubRelease.latest(repository: repository, fetch: fetch)
                 if VersionOrder.isNewer(version: release.version, than: app) {
@@ -88,6 +110,9 @@ public enum UpdateChecker {
                 }
                 checked += 1; notes.append(String(localized: "已检查 GitHub Release")); checks.append(.init(.github, .checked))
             } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
+        }
+        if electronNeedsOwnUpdater {
+            return .init(appID: app.id, candidates: [], note: notes.joined(separator: " · "), status: .unsupported, checks: checks)
         }
         if let officialOffers {
             candidates = Array(candidates.prefix(appcastCount)) + candidates.dropFirst(appcastCount).filter { candidate in

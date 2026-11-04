@@ -42,7 +42,7 @@ public enum ApplicationSourceCatalog {
         "org.pqrs.Karabiner-EventViewer": "karabiner-elements",
         "wang.jianing.app.OpenInTerminal": "openinterminal",
         "us.zoom.xos": "zoom"
-    ]
+    ].merging(ReviewedSourceCatalog.casks) { existing, _ in existing }
 
 
     /// Reviewed fallback for ordinary app replacement when an official source publishes no archive proof.

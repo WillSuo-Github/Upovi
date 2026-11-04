@@ -46,10 +46,12 @@ public actor AppStoreCatalog {
         let entries: [StoreApplication]
         var lookupError: (any Error)? = nil
         var regionalErrors: [UInt64: any Error] = [:]
+        var availability: StoreUpdateAvailability? = nil
     }
     private struct ProductIdentity: Decodable { let adamID: UInt64 }
     private let execute: @Sendable ([String]) async throws -> Data
     private let regionalLookup: (@Sendable ([UInt64], String) async throws -> [StoreProduct])?
+    private let nativeAvailability: (@Sendable () async throws -> StoreUpdateAvailability)?
     private let available: Bool
     private var snapshot = Snapshot(entries: [])
     private var loadedAt: Date?
@@ -59,14 +61,27 @@ public actor AppStoreCatalog {
         let bridge = Bundle.main.url(forAuxiliaryExecutable: "UpoviStoreBridge")
         available = bridge != nil
         regionalLookup = { try await Self.lookup($0, region: $1) }
+        let helper = Bundle.main.url(forAuxiliaryExecutable: "UpoviStoreInstaller")
+        nativeAvailability = {
+            guard let helper else { throw PeerError.unavailable("Native Store status helper is unavailable") }
+            return try await StoreUpdateAvailability.query(using: helper)
+        }
         execute = { args in
             guard let bridge else { throw PeerError.unavailable("App Store update bridge is unavailable") }
             return try await Self.command(bridge, arguments: args)
         }
     }
     public init(execute: @escaping @Sendable ([String]) async throws -> Data,
-                regionalLookup: (@Sendable ([UInt64], String) async throws -> [StoreProduct])? = nil) {
-        self.execute = execute; self.regionalLookup = regionalLookup; available = true
+                regionalLookup: (@Sendable ([UInt64], String) async throws -> [StoreProduct])? = nil,
+                nativeAvailability: (@Sendable () async throws -> StoreUpdateAvailability)? = nil) {
+        self.execute = execute; self.regionalLookup = regionalLookup; self.nativeAvailability = nativeAvailability; available = true
+    }
+    public init(bridge: URL) {
+        available = true
+        execute = { try await Self.command(bridge, arguments: $0) }
+        regionalLookup = { try await Self.lookup($0, region: $1) }
+        let helper = bridge.deletingLastPathComponent().appending(path: "UpoviStoreInstaller")
+        nativeAvailability = { try await StoreUpdateAvailability.query(using: helper) }
     }
     static func lookup(_ ids: [UInt64], region: String) async throws -> [StoreProduct] {
         guard !ids.isEmpty, ids.count <= 50, ids.allSatisfy({ $0 > 0 && $0 < UInt64(Int64.max) }),
@@ -134,6 +149,11 @@ public actor AppStoreCatalog {
                              checks: [.init(.appStore, .failed, error: PeerError.unavailable("No exact compatible Store release was confirmed"))])
             }
             let newer = VersionOrder.isNewer(version: target, than: app)
+            if newer, nativeAvailability != nil, loaded.availability?.confirms(app, storeID: entry.adamID, version: target) != true {
+                return .init(appID: app.id, candidates: [], note: String(localized: "公开商店版本为 \(target)，但本机商店尚未确认向此安装提供该更新。请使用原下载账户在 App Store 中确认；此版本暂不计入可用更新。"),
+                             status: .appStore, manualURL: URL(string: "https://apps.apple.com/app/id\(entry.adamID)"), checks: [.init(.appStore, .manual)],
+                             appStoreID: entry.storeRegion == nil ? entry.adamID : nil)
+            }
             let storeID: UInt64? = entry.storeRegion == nil ? entry.adamID : nil
             let url = entry.storeRegion.map { "https://apps.apple.com/\($0.lowercased())/app/id\(entry.adamID)" } ?? "https://apps.apple.com/app/id\(entry.adamID)"
             let candidates: [UpdateCandidate] = newer ? [.init(version: target, source: "App Store", isCommunity: false,
@@ -152,7 +172,7 @@ public actor AppStoreCatalog {
         let request: (UUID, Task<Snapshot, any Error>)
         if let pending { request = pending }
         else {
-            let execute = execute, regionalLookup = regionalLookup
+            let execute = execute, regionalLookup = regionalLookup, nativeAvailability = nativeAvailability
             request = (UUID(), Task {
                 let installed = try Self.decode(await execute(["list"]))
                 guard installed.contains(where: { $0.adamID > 0 }) else { return Snapshot(entries: installed) }
@@ -212,7 +232,8 @@ public actor AppStoreCatalog {
                     return StoreApplication(adamID: item.adamID, bundleID: item.bundleID, path: item.path, version: item.version,
                                             newVersion: compatible ? match[0].version : nil, storeRegion: recoveredRegions[item.adamID])
                 }
-                return Snapshot(entries: entries, regionalErrors: regionalErrors)
+                let availability = try? await nativeAvailability?()
+                return Snapshot(entries: entries, regionalErrors: regionalErrors, availability: availability)
             })
             pending = request
         }

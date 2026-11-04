@@ -55,7 +55,7 @@ struct AppDetailView: View {
             }
         } else if app.isAppStore, let id = store.sourceResults[app.id]?.appStoreID {
             statusCard(symbol: "bag.fill", tone: .accent, title: String(localized: "App Store 应用"),
-                       message: String(localized: "可以通过 Apple 商店服务检查并更新；可能需要拥有该应用的 Apple 账户认证。")) {
+                       message: store.sourceResults[app.id]?.note ?? String(localized: "可以通过 Apple 商店服务检查并更新；可能需要拥有该应用的 Apple 账户认证。")) {
                 Button("检查并更新此应用") {
                     store.reviewStoreUpdate(app, candidate: .init(version: app.version, source: "App Store", isCommunity: false, url: nil, appStoreID: id))
                 }
@@ -69,7 +69,11 @@ struct AppDetailView: View {
                 statusCard(symbol: "eye.slash", tone: .neutral, title: String(localized: "已忽略更新提醒"), message: String(localized: "此应用不会出现在可用更新、全部更新和通知中。")) {
                     Button("恢复更新提醒") { store.toggleIgnored(app) }
                 }
-            case .current, .appStore:
+            case .appStore:
+                statusCard(symbol: "bag.fill", tone: .neutral, title: String(localized: "App Store 应用"), message: result?.note ?? "") {
+                    if let url = result?.manualURL { Button("官方更新入口") { store.open(url) } }
+                }
+            case .current:
                 statusCard(symbol: "checkmark.circle.fill", tone: .success, title: String(localized: "来源未报告新版本"),
                            message: store.lastChecked.map { String(localized: "最近一次检查（\($0.relativeDescription)）没有发现更高版本。") } ?? "") { EmptyView() }
             case .failed, .partial:
