@@ -20,7 +20,8 @@ public enum ApplicationSourceCatalog {
         "com.knollsoft.Rectangle": "rxhanson/Rectangle", "eu.exelban.Stats": "exelban/stats",
         "com.caldis.Mos": "Caldis/Mos", "com.colliderli.iina": "iina/iina",
         "com.aone.keka": "aonez/Keka", "com.ranchero.NetNewsWire-Evergreen": "Ranchero-Software/NetNewsWire",
-        "com.steipete.codexbar": "steipete/CodexBar", "app.upovi.Upovi": "WillSuo-Github/Upovi",
+        // Upovi's build-* tags are not app versions; its signed Sparkle feed orders self updates.
+        "com.steipete.codexbar": "steipete/CodexBar",
         "com.willsuo.livehub": "WillSuo-Github/livehub-desktop",
         "io.playcover.PlayCover": "PlayCover/PlayCover",
         "com.stablyai.orca": "stablyai/orca", "com.audiout.Audiout": "aa-hh/Audiout"
