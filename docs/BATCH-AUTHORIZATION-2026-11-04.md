@@ -16,3 +16,7 @@ The queue admits mixed rows using the configured width (default five, range one 
 - The reproducible VM-only runner is `script/acceptance/authorization_session.swift`. Inputs must be extracted onto the guest filesystem before running, preserving application symlinks. It refuses execution without the existing protected disposable-VM marker.
 
 Not established by these checks: a new human-completed native password dialog, a real mixed App Store/PKG batch using this session, physical Intel runtime, notarization, public delivery, or the exact origin of every prompt reported by the user. Apple ID sign-in, privacy consent and vendor-owned installer interactions are outside the shared administrator authorization.
+
+## Distribution follow-up
+
+Build `202611040012` was published as the latest notarized universal release. Public archive/feed checks and acceptance boundaries are recorded in [release evidence](evidence/0.4.10-build-202611040012.json). The normal installed Upovi was not replaced by publication.

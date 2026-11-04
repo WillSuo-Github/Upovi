@@ -27,3 +27,7 @@ The old host receipt did not include a failing path/checkpoint, so the exact ori
 - The production recovery path restored the VM's original Zoom version and valid signature. The test transaction was removed. VM fixtures and processes are cleaned up after evidence capture.
 
 Not established: reproduction of the exact host privacy-policy denial on the same original file, a human-completed native authorization dialog for this build, GUI launch acceptance of the updated Zoom, Intel execution, notarization or public delivery. Vendor PKG system effects outside the main application are not rolled back by main-app recovery.
+
+## Distribution follow-up
+
+Build `202611040012` was published as the latest notarized universal release. Public archive/feed checks and acceptance boundaries are recorded in [release evidence](evidence/0.4.10-build-202611040012.json). The normal installed Upovi was not replaced by publication.
