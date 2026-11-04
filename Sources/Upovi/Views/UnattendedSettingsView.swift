@@ -39,7 +39,9 @@ struct UnattendedSettingsView: View {
                             Text(store.releaseChannel(for: app) == .beta ? String(localized: "Beta 与预发布") : String(localized: "正式版"))
                                 .font(.caption).foregroundStyle(.secondary)
                         }
-                    }.accessibilityIdentifier("unattended-allow-" + app.bundleID)
+                    }
+                    .accessibilityLabel(Text(app.name + " · " + (store.releaseChannel(for: app) == .beta ? String(localized: "Beta 与预发布") : String(localized: "正式版"))))
+                    .accessibilityIdentifier("unattended-allow-" + app.bundleID)
                 }
             } header: { Text("逐个授权应用") } footer: {
                 Text("授权绑定应用路径、开发者和渠道。切换渠道会撤销自动更新授权；忽略、跳过和稍后提醒规则仍然生效。")
