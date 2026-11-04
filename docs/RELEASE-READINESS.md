@@ -1,3 +1,15 @@
+# Upovi 0.4.10 build 202611040013
+
+Steam detection now compares a corroborated installed client build with Valve's official stable manifest; the bootstrapper's unchanged 6.1 version cannot establish that the client is current. Steam installs its own updates. The Updates page keeps incomplete check counts and individual failures visible alongside available updates. Recent official version evidence can survive a failed check as manual-only revalidation, without download or installation authority; a confirmed current version clears obsolete evidence.
+
+GitHub requests avoid redundant authoritative-feed checks and honor persistent server-directed cooldowns. An explicitly rate-limited stable API can use the same repository's official latest-stable page for version evidence while retaining the API failure and retry time. This does not remove shared-IP quotas or infer archive proofs. See [source behavior](SOURCE-COVERAGE.md).
+
+Product revision `2ccc6ccf7711fb9908849ec48a8bbb509760deef` passed 278 core tests, 59 application workflow tests and eight release metadata tests. The preceding UI/source revision `b1feb45` passed isolated native read-only acceptance against real Steam data, the live Valve manifest and real Audiout / WowUp-CF release pages with injected API throttling: three manual updates and two incomplete-check explanations remained visible together. The final cache-confirmation change is covered by the full regression suite. No normal app was downloaded or installed during acceptance.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611040013) is published as Latest. Apple notarization, ticket stapling, Gatekeeper, nested signatures and Sparkle feed/archive signatures passed. All five anonymously downloaded assets match the local verified bytes; fresh public extraction passed the release checks, and the canonical latest feed and direct archive match. See [release evidence](evidence/0.4.10-build-202611040013.json). The installed Upovi was not replaced. Genuine Sparkle self-replacement and physical Intel runtime remain unverified. Temporary test and verification app copies were removed.
+
+---
+
 # Upovi 0.4.10 build 202611040010
 
 This build routes Mac App Store detection and installation through the bundled mas executable, removes unattended installation, and adds a dedicated Ignored sidebar for permanent exclusions and skipped versions. Startup and scheduled checks only discover updates and notify; installation always requires an explicit user action. Stable/Beta selection and expanded Electron coverage remain available.

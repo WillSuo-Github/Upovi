@@ -1,0 +1,197 @@
+{
+  "version": "0.4.10",
+  "build": "202611040013",
+  "productRevision": "2ccc6ccf7711fb9908849ec48a8bbb509760deef",
+  "releaseTargetRevision": "2ccc6ccf7711fb9908849ec48a8bbb509760deef",
+  "features": [
+    "Compare corroborated Steam client builds with Valve official stable manifest instead of bootstrapper 6.1",
+    "Keep incomplete check counts and per-app reasons visible alongside available updates",
+    "Retain recent identity-scoped update evidence as manual-only revalidation, never stale installation authority",
+    "Reduce redundant GitHub calls, persist server-directed API cooldown and confirm stable versions via official release page when explicitly throttled"
+  ],
+  "localValidation": {
+    "coreTests": 278,
+    "applicationWorkflowTests": 59,
+    "testFailures": 0,
+    "releaseMetadataTests": 8,
+    "sourceCatalogValidation": "passed",
+    "releaseLocalizations": [
+      "en",
+      "zh-Hant"
+    ]
+  },
+  "readOnlyNativeAcceptance": {
+    "productionScannerAndViews": true,
+    "localSteamDataAndLiveValveManifest": true,
+    "githubAPIRateLimitInjected": true,
+    "realGitHubPublicStablePages": true,
+    "applications": [
+      {
+        "app": "Steam",
+        "bootstrapVersion": "6.1",
+        "candidates": [
+          {
+            "hasDownload": false,
+            "requiresRevalidation": false,
+            "source": "Steam",
+            "version": "1792618285"
+          }
+        ],
+        "installedVersion": "1785799196",
+        "note": "已核对 Steam 官方客户端清单；本机客户端构建 1785799196，官方构建 1792618285。更新须在 Steam 内完成。",
+        "status": "updates"
+      },
+      {
+        "app": "Audiout",
+        "bootstrapVersion": "0.1.0",
+        "candidates": [
+          {
+            "hasDownload": false,
+            "requiresRevalidation": false,
+            "source": "GitHub Release",
+            "version": "1.3.0"
+          }
+        ],
+        "installedVersion": "0.1.0",
+        "note": "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。 可在 11:29:34 PM 后重试。",
+        "status": "partial"
+      },
+      {
+        "app": "WowUp-CF",
+        "bootstrapVersion": "2.23.1",
+        "candidates": [
+          {
+            "hasDownload": false,
+            "requiresRevalidation": false,
+            "source": "Electron · GitHub",
+            "version": "2.25.4"
+          }
+        ],
+        "installedVersion": "2.23.1",
+        "note": "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。 可在 11:29:34 PM 后重试。",
+        "status": "partial"
+      }
+    ],
+    "updatesVisible": 3,
+    "incompleteChecksVisible": 2,
+    "sourceErrorsShownAlongsideUpdates": true,
+    "steamUpdateRowShowsClientBuild": true,
+    "noDownloadsOrInstalls": true,
+    "testAppsStoppedAndRemoved": true,
+    "testedSourceRevision": "b1feb458d52d50b24b5300c52d3c506fcc28d9a4",
+    "laterChange": "Final source additionally clears obsolete cache when the public stable page confirms a current version; covered by the final full test suite."
+  },
+  "sourceEvidenceSHA256": {
+    "liveValveManifest": "507ebd03173b44aa41ebaf7c3abd5771599699a5446c9d9a51e00702c4477a40"
+  },
+  "regressionCoverage": [
+    "Steam current build and failed manifest are distinct",
+    "Steam pending manifest, changed binary, beta channel and missing evidence cannot confirm current version",
+    "Retained evidence loses download authority, expires and is scoped to app identity and channel",
+    "Successful current checks clear previously confirmed updates",
+    "Retained candidates cannot notify or begin installation",
+    "Cold-start persisted throttling and successful last-quota response suppress new API requests",
+    "Plain HTTP 403 and Beta requests do not fall back to guessed stable versions",
+    "Canonical public release identity accepts current relative paths and rejects foreign/ambiguous/prerelease/body metadata"
+  ],
+  "manualInstallationPolicy": {
+    "SUAllowsAutomaticUpdates": false,
+    "SUAutomaticallyUpdate": false,
+    "installsRequireUserAction": true,
+    "steamRequiresOwnUpdater": true,
+    "retainedEvidenceCannotInstall": true
+  },
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "physicalIntelRuntimeTestedForThisRelease": false,
+  "githubServerQuotaEliminated": false,
+  "duplicateVerificationAppCopiesRemoved": true,
+  "appleNotarization": {
+    "status": "Accepted",
+    "submissionID": "e6006e99-f723-4729-aafe-038c76088e21"
+  },
+  "artifactValidation": {
+    "version": "0.4.10",
+    "build": "202611040013",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "37bc7dc8b93afda5eee607d1e44f373ac3ae00acd0ac41691dc253c3575da0c9",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-04T15:12:58Z",
+      "tagName": "build-202611040013",
+      "targetCommitish": "2ccc6ccf7711fb9908849ec48a8bbb509760deef",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611040013"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202611040013.zip",
+        "size": 21282092,
+        "sha256": "37bc7dc8b93afda5eee607d1e44f373ac3ae00acd0ac41691dc253c3575da0c9",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611040013.zip.sha256",
+        "size": 96,
+        "sha256": "dda5e9af821d6d48b29a5d0ba6098c5613a03f53f038b63f8ce04fa2fc59b559",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "2c6cf6655c95f2c46b8bcfadd6e9275c6e78bbd4940a6b92359452791d122161",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "34ff1d9f401121bc7220d2d768f17c30009ddf36aca12290997576eb1aef9530",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "53c7c5ab35f6fe80897f150827b67c73f006944d83c2733003043fa3b1f2cd32",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611040013",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "37bc7dc8b93afda5eee607d1e44f373ac3ae00acd0ac41691dc253c3575da0c9",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerification": [
+    {
+      "name": "appcast.xml",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+      "sha256": "2c6cf6655c95f2c46b8bcfadd6e9275c6e78bbd4940a6b92359452791d122161",
+      "matchesLocal": true
+    },
+    {
+      "name": "Upovi-0.4.10-202611040013.zip",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/download/build-202611040013/Upovi-0.4.10-202611040013.zip",
+      "sha256": "37bc7dc8b93afda5eee607d1e44f373ac3ae00acd0ac41691dc253c3575da0c9",
+      "matchesLocal": true
+    }
+  ]
+}
