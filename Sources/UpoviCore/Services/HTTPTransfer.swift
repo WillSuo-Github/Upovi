@@ -87,6 +87,7 @@ public enum HTTPTransfer {
 }
 
 private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    private let operation: UpoviLogOperation
     private let lock = NSLock()
     private let url: URL
     private let limit: Int64
@@ -120,8 +121,17 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
         self.url = url; self.limit = limit; self.destination = destination; self.progress = progress
         self.resuming = resuming; self.configuration = configuration; self.metadataHeaders = metadataHeaders
         self.onResume = onResume
+        operation = UpoviLogOperation("http.transfer", category: .network,
+            details: UpoviDiagnosticContext.source(url) + " kind=\(destination == nil ? "metadata" : "artifact") limit=\(limit) resuming=\(resuming)")
     }
     func run() async throws -> Data {
+        do {
+            let data = try await runTransfer()
+            operation.finish(details: lock.withLock { "status=\(responseStatus) received=\(received) expected=\(expected) resumed=\(offset)" })
+            return data
+        } catch { operation.fail(error); throw error }
+    }
+    private func runTransfer() async throws -> Data {
         guard url.scheme == "https", url.user == nil, url.password == nil, url.host != nil else { throw URLError(.unsupportedURL) }
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
@@ -177,8 +187,10 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
         guard request.url?.scheme == "https", request.url?.user == nil, request.url?.password == nil else {
+            operation.event("redirectRejected", level: .warning)
             lock.withLock { failure = URLError(.unsupportedURL) }; completionHandler(nil); return
         }
+        operation.event("redirect", details: UpoviDiagnosticContext.source(request.url) + " sameOrigin=\(request.url?.host == response.url?.host)")
         var redirected = request
         if request.url?.host?.lowercased() != response.url?.host?.lowercased() || request.url?.port != response.url?.port {
             redirected.setValue(nil, forHTTPHeaderField: "If-None-Match")
@@ -198,6 +210,7 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
         do {
             guard let http = response as? HTTPURLResponse, response.url?.scheme == "https" else { throw URLError(.badServerResponse) }
             if http.statusCode == 416 && offset > 0 { throw DownloadRestart.required }
+            operation.event("response", details: "status=\(http.statusCode) expected=\(response.expectedContentLength) mime=\(response.mimeType ?? "unknown")", level: http.statusCode >= 400 ? .warning : .info)
             responseStatus = http.statusCode
             for key in ["ETag", "Last-Modified", "Cache-Control", "Vary", "X-RateLimit-Remaining", "X-RateLimit-Reset"] {
                 if let value = http.value(forHTTPHeaderField: key) { responseHeaders[key.lowercased()] = value }

@@ -25,6 +25,7 @@ extension AppStore {
                 guard let self else { return }
                 defer { self.previousPath = signature }
                 let reconnected = !self.networkAvailable && path.status == .satisfied
+                if self.networkAvailable != (path.status == .satisfied) { UpoviLog.network.info("event=path.changed online=\(path.status == .satisfied)") }
                 self.networkAvailable = path.status == .satisfied
                 self.downloadCenter.networkChanged(self.networkAvailable)
                 if reconnected { self.lastCheckAttempt = nil }
@@ -37,7 +38,7 @@ extension AppStore {
         // Source scheduling recovers independently of whether optional P2P is enabled.
         if reason == "wake" { lastCheckAttempt = nil }
         guard networkEnabled else { return }
-        logger.info("network recovery requested reason=\(reason, privacy: .public)")
+        logger.info("network recovery requested reason=\(reason)")
         networkStatus = String(localized: "网络已变化，正在重新连接…")
         restartP2P()
     }
@@ -62,6 +63,7 @@ extension AppStore {
         sourceResults[app.id] = nil
     }
     func prepareInstallation(_ candidate: UpdateCandidate, app: InstalledApp) {
+        UpoviLog.installation.info("event=update.userRequested \(UpoviDiagnosticContext.application(app)) targetVersion=\(candidate.version) busy=\(operationBusy)")
         guard candidate.requiresRevalidation != true, app.bundleID != "com.valvesoftware.steam" else {
             errorMessage = String(localized: "此版本需要重新确认或使用应用自身更新器，未开始下载。")
             return
@@ -94,7 +96,7 @@ extension AppStore {
             catch { transfers[id] = nil; recordDiagnostic(.preparation, appID: app.id, error: error); installationProgress = String(localized: "下载或验证未完成"); if !Task.isCancelled && !(error is CancellationError) { errorMessage = AdministratorInstallationSpace.message(for: error) ?? error.localizedDescription } }
         }
     }
-    func cancelInstallation() { installationTask?.cancel() }
+    func cancelInstallation() { UpoviLog.installation.info("event=update.cancelRequested"); installationTask?.cancel() }
     func discardInstallation() {
         for id in [preparedUpdate?.application.id, preparedPackage?.plan.application.id].compactMap({ $0 }) { transfers[id] = nil }
         if let value = preparedUpdate { Task { await installer.discard(value.id) } }

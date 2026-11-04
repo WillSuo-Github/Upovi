@@ -49,7 +49,7 @@ public struct DiagnosticSnapshot: Sendable, Identifiable {
         let summaries = apps.map { app -> ApplicationSummary in
             let result = results[app.id]
             let candidates = result?.candidates.filter { !$0.isCommunity } ?? []
-            return .init(reference: references[app.id]!, bundleID: includingApplicationIdentifiers ? Self.identifier(app.bundleID) : nil,
+            return .init(reference: references[app.id]!, logReference: UpoviDiagnosticContext.applicationID(app.id), bundleID: includingApplicationIdentifiers ? Self.identifier(app.bundleID) : nil,
                          version: includingApplicationIdentifiers ? Self.version(app.version) : nil,
                          build: includingApplicationIdentifiers ? Self.version(app.build) : nil,
                          channel: app.isAppStore ? .appStore : .developer, status: result?.status,
@@ -57,7 +57,7 @@ public struct DiagnosticSnapshot: Sendable, Identifiable {
                          verifiableDownloadCount: candidates.filter { $0.download?.canVerify(for: app) == true }.count)
         }
         let counts = Dictionary(grouping: summaries, by: { $0.status?.rawValue ?? "notChecked" }).mapValues(\.count)
-        let report = Report(schemaVersion: 1, generatedAt: generatedAt, includingApplicationIdentifiers: includingApplicationIdentifiers,
+        let report = Report(schemaVersion: 2, generatedAt: generatedAt, includingApplicationIdentifiers: includingApplicationIdentifiers,
             environment: .init(version: Self.version(environment.version), build: Self.version(environment.build),
                                osMajor: max(0, environment.osMajor), osMinor: max(0, environment.osMinor), architecture: environment.architecture),
             online: online, operationInProgress: busy, totalApplications: applications.count,
@@ -87,6 +87,7 @@ public struct DiagnosticSnapshot: Sendable, Identifiable {
     private struct ApplicationSummary: Encodable {
         enum Channel: String, Encodable { case appStore, developer }
         let reference: String
+        let logReference: String
         let bundleID: String?, version: String?, build: String?
         let channel: Channel
         let status: SourceStatus?

@@ -161,7 +161,7 @@ final class AppStore {
     @ObservationIgnored var monitoringTask: Task<Void, Never>?
     @ObservationIgnored let pathMonitor = NWPathMonitor()
     @ObservationIgnored var previousPath: String?
-    @ObservationIgnored let logger = Logger(subsystem: "app.upovi.Upovi", category: "operations")
+    @ObservationIgnored let logger = UpoviLog.app
     @ObservationIgnored let community = CommunityNetwork()
     @ObservationIgnored var identity: PeerIdentity?
     @ObservationIgnored var syncTask: Task<Void, Never>?
@@ -264,7 +264,9 @@ final class AppStore {
     }
 
     func scan() async {
-        guard !scanning, !checking, !installationBusy else { return }
+        guard !scanning, !checking, !installationBusy else { UpoviLog.scan.info("event=scan.skipped reason=busy"); return }
+        let operation = UpoviLogOperation("inventory.scan", category: .scan, details: "customRoots=\(additionalScanDirectories.count)")
+        defer { operation.finish(Task.isCancelled ? "cancelled" : "completed", details: "applications=\(apps.count)") }
         scanning = true
         // A background community lookup must not block an explicit inventory refresh.
         if networkEnabled { restartP2P() }
@@ -278,6 +280,7 @@ final class AppStore {
     }
 
     func refreshAll() {
+        UpoviLog.app.info("event=refresh.userRequested busy=\(operationBusy) online=\(networkAvailable)")
         guard !refreshing, !scanning, !checking, !installationBusy else { return }
         dismissBulkSummary()
         refreshing = true
@@ -298,6 +301,7 @@ final class AppStore {
     }
 
     func beginChecking(preservingBatchResults: Bool = false) {
+        UpoviLog.sources.info("event=check.requested scheduled=\(preservingBatchResults) busy=\(operationBusy) online=\(networkAvailable)")
         guard !refreshing, !checking, !scanning, !installationBusy else { return }
         guard networkAvailable else { errorMessage = String(localized: "当前没有可用网络，联网后再检查更新。"); return }
         // A scheduled source check must not erase a failed installation's explanation.
@@ -308,8 +312,13 @@ final class AppStore {
             if !Task.isCancelled { refreshToolSources() }
         }
     }
-    func cancelChecking() { checkTask?.cancel(); toolCheckTask?.cancel(); toolChecking = false }
+    func cancelChecking() { UpoviLog.sources.info("event=check.cancelRequested"); checkTask?.cancel(); toolCheckTask?.cancel(); toolChecking = false }
     private func checkUpdates() async {
+        let operation = UpoviLogOperation("inventory.check", category: .sources, details: "applications=\(apps.count) concurrency=5")
+        await UpoviDiagnosticContext.$operationID.withValue(operation.id) { await runSourceChecks() }
+        operation.finish(Task.isCancelled ? "cancelled" : "completed", details: "completed=\(completedChecks) incomplete=\(incompleteCheckCount)")
+    }
+    private func runSourceChecks() async {
         completedChecks = 0; sourceResults = [:]
         defer { checking = false }
         let overrides = sourceOverrides
@@ -323,6 +332,7 @@ final class AppStore {
                 if let app = snapshot.first(where: { $0.id == result.appID }) {
                     sourceResults[result.appID] = sourceResultCache.resolving(result, app: app, sourceOverride: overrides[app.bundleID])
                     sourceResultCache.record(result, app: app, sourceOverride: overrides[app.bundleID])
+                    UpoviLog.sources.info("event=source.result app=\(UpoviDiagnosticContext.applicationID(app.id)) \(UpoviDiagnosticContext.sourceResult(sourceResults[result.appID] ?? result))")
                 }
                 completedChecks += 1
                 if let app = iterator.next() { group.addTask { await checkApplication(app, overrides[app.bundleID]) } }

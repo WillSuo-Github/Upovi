@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build isolated native update or diagnostics acceptance apps; never launches or replaces daily apps."""
 import argparse
+import json
 import pathlib
 import plistlib
 import subprocess
@@ -80,6 +81,12 @@ def main():
     info = dict(CFBundleExecutable='UpoviFixture', CFBundleIdentifier='app.upovi.TrustAcceptance',
                 CFBundleName={'bulk': 'Upovi Bulk Acceptance', 'admin-cleanup': 'Upovi Cleanup Acceptance', 'diagnostics': 'Upovi Diagnostics Acceptance', 'downloads': 'Upovi Download Acceptance', 'design': 'Upovi Design Preview', 'startup': 'Upovi Startup Acceptance', 'mos': 'Upovi Mos Acceptance'}[options.mode], CFBundlePackageType='APPL',
                 CFBundleShortVersionString='0.4.6', CFBundleVersion='12', LSMinimumSystemVersion='14.0', NSPrincipalClass='NSApplication')
+    if options.mode == 'diagnostics':
+        release = json.loads((root / 'Resources/Release.json').read_text())
+        info['CFBundleShortVersionString'] = release['version']
+        info['CFBundleVersion'] = release['build']
+        revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+        info['UpoviSourceRevision'] = 'acceptance-fixture:' + revision + '-dirty'
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
     run(['python3', 'script/embed_sparkle.py', str(app), options.signing_identity], cwd=root)
     command = ['codesign', '--force', '--sign', options.signing_identity]

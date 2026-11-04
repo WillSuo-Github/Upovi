@@ -4,8 +4,13 @@ import UpoviCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UpoviLog.app.info("event=application.launched version=\(AppMetadata.version) build=\(AppMetadata.build) revision=\(Bundle.main.object(forInfoDictionaryKey: "UpoviSourceRevision") as? String ?? "development") os=\(ProcessInfo.processInfo.operatingSystemVersionString)")
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+    }
+    func applicationWillTerminate(_ notification: Notification) {
+        UpoviLog.app.info("event=application.terminating")
+        UpoviLogManager.shared.flush()
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }

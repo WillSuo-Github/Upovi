@@ -1,0 +1,62 @@
+{
+  "build": "202611040014",
+  "source": "dirty working tree; isolated native fixture",
+  "nativeExportSaved": true,
+  "logPreviewConfirmed": true,
+  "archiveSHA256": "b17a7fdd987bacdeb81c9166cf65c032678007f55e215e6d2f9accfea2eeaad5",
+  "archiveBytes": 4069,
+  "archiveMode": "0600",
+  "payloadFiles": [
+    "README.txt",
+    "manifest.json",
+    "runtime.log",
+    "snapshot.json"
+  ],
+  "appReferencesCorrelate": true,
+  "permissionErrorChainRetained": true,
+  "sentinelSecretsAndPathsExcluded": true,
+  "realApplicationsUpdated": false,
+  "automaticUpload": false,
+  "stoppedAndRemovedTestApps": true,
+  "subsequentInternalChanges": "Final archive writer strips Apple filesystem metadata; independent unzip listing regression verifies only four payload files. Current-version/cancelled operation outcomes are info-level, covered by regression tests.",
+  "finalValidation": {
+    "coreTests": 294,
+    "applicationWorkflowTests": 59,
+    "releaseMetadataTests": 8,
+    "failures": 0,
+    "archiveContainsOnlyFourPayloadFiles": "passed (independent unzip regression)",
+    "currentAndCancelledOutcomesNotErrors": "passed",
+    "finalUniversalReleaseBuild": {
+      "build": "202611040014",
+      "sourceRevision": "8cde338a430a5ba7175a53d61254826eb83702c7-dirty",
+      "architectures": {
+        "Upovi": [
+          "x86_64",
+          "arm64"
+        ],
+        "UpoviInstaller": [
+          "x86_64",
+          "arm64"
+        ],
+        "UpoviStoreInstaller": [
+          "x86_64",
+          "arm64"
+        ],
+        "UpoviStoreBridge": [
+          "x86_64",
+          "arm64"
+        ]
+      },
+      "nestedCodeSignatures": "passed (ad hoc local verification build)",
+      "localizedResources": [
+        "en",
+        "zh-Hant"
+      ],
+      "nonPrivilegedHelperFailureMarker": "passed",
+      "releaseBuild": true,
+      "notarized": false,
+      "published": false,
+      "automaticInstallationEnabled": false
+    }
+  }
+}

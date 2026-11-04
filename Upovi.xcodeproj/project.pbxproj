@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0EACA65591D2D8B7BA262630 /* UpoviLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA30E590F00C3C1010421D8C; };
+		8C3322FF00CB58F9493F3FDB /* DiagnosticArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D29ED6FCEA437E32D31659; };
+		391B76D24320D7E0177CF27A /* UpoviDiagnosticContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C720F6148AD84715D47C14F8; };
+		1D15AD2ABC5A478940B16769 /* UpoviLogPrivacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3DFD859836905080B46B5A3; };
+		068F5AC2F164AA43B8BDE8F6 /* UpoviLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93850934C9F3A65CB7FFF1A9; };
 		A110AA11BB22CC33DD440005 /* SourceResultCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A110AA11BB22CC33DD440006; };
 		A110AA11BB22CC33DD440003 /* SteamUpdateSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A110AA11BB22CC33DD440004; };
 		A110AA11BB22CC33DD440001 /* AdministratorInstallSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A110AA11BB22CC33DD440002; };
@@ -312,6 +317,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		DA30E590F00C3C1010421D8C /* UpoviLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UpoviLogTests.swift"; sourceTree = "<group>"; };
+		E4D29ED6FCEA437E32D31659 /* DiagnosticArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logging/DiagnosticArchive.swift"; sourceTree = "<group>"; };
+		C720F6148AD84715D47C14F8 /* UpoviDiagnosticContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logging/UpoviDiagnosticContext.swift"; sourceTree = "<group>"; };
+		E3DFD859836905080B46B5A3 /* UpoviLogPrivacy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logging/UpoviLogPrivacy.swift"; sourceTree = "<group>"; };
+		93850934C9F3A65CB7FFF1A9 /* UpoviLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logging/UpoviLog.swift"; sourceTree = "<group>"; };
 		A110AA11BB22CC33DD440006 /* SourceResultCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceResultCache.swift; sourceTree = "<group>"; };
 		A110AA11BB22CC33DD440004 /* SteamUpdateSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SteamUpdateSource.swift; sourceTree = "<group>"; };
 		A110AA11BB22CC33DD440002 /* AdministratorInstallSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorInstallSession.swift; sourceTree = "<group>"; };
@@ -936,6 +946,10 @@
 			children = (
 				724712475346CB121C0893F5 /* DiagnosticIssue.swift */,
 				BBD965277FA32E3F0DC331CF /* DiagnosticSnapshot.swift */,
+				E4D29ED6FCEA437E32D31659 /* DiagnosticArchive.swift */,
+				C720F6148AD84715D47C14F8 /* UpoviDiagnosticContext.swift */,
+				E3DFD859836905080B46B5A3 /* UpoviLogPrivacy.swift */,
+				93850934C9F3A65CB7FFF1A9 /* UpoviLog.swift */,
 			);
 			path = Diagnostics;
 			sourceTree = "<group>";
@@ -1012,6 +1026,7 @@
 				3CA7C5CD32C37E1CFC6024A1 /* CommunityTests.swift */,
 				04D62D357ECB9559B00B391C /* CoreTests.swift */,
 				F0600F25FA5F74872B94E099 /* DiagnosticTests.swift */,
+				DA30E590F00C3C1010421D8C /* UpoviLogTests.swift */,
 				564086B40D4FF1345865886F /* DownloadCoordinatorTests.swift */,
 				6B1B8D4A15B28335B53815F5 /* DownloadTrustTests.swift */,
 				C1468606762ADB7D3DAFB1AE /* ElectronSourceTests.swift */,
@@ -1379,6 +1394,10 @@
 				5D304795169C1B6357414564 /* DHTSocket.swift in Sources */,
 				80122F335CB3C15D982010FD /* DiagnosticIssue.swift in Sources */,
 				B2E6911773CC013998C4CF30 /* DiagnosticSnapshot.swift in Sources */,
+				8C3322FF00CB58F9493F3FDB /* DiagnosticArchive.swift in Sources */,
+				391B76D24320D7E0177CF27A /* UpoviDiagnosticContext.swift in Sources */,
+				1D15AD2ABC5A478940B16769 /* UpoviLogPrivacy.swift in Sources */,
+				068F5AC2F164AA43B8BDE8F6 /* UpoviLog.swift in Sources */,
 				869F797431FCAC630407A73E /* DownloadCoordinator.swift in Sources */,
 				272B49653647DBA49D22431B /* DownloadRecord.swift in Sources */,
 				24C27B756F5C2A185924F582 /* ElectronUpdateSource.swift in Sources */,
@@ -1447,6 +1466,7 @@
 				9423D50A02811FCF748397EC /* CommunityTests.swift in Sources */,
 				9502FFF610A142C48A81AD7C /* CoreTests.swift in Sources */,
 				876D1007E2D44E81C1A02F47 /* DiagnosticTests.swift in Sources */,
+				0EACA65591D2D8B7BA262630 /* UpoviLogTests.swift in Sources */,
 				C2091C86BDE62E99168425C6 /* DownloadCoordinatorTests.swift in Sources */,
 				C5F79E108513EA934B3D393C /* DownloadTrustTests.swift in Sources */,
 				987630CBDEF7D704E0CA1173 /* ElectronSourceTests.swift in Sources */,

@@ -5,6 +5,7 @@ import UpoviCore
 /// Runs only as a verified, root-owned copy after a fresh macOS authorization prompt.
 @main
 struct UpoviInstaller {
+    private static let diagnostics = InstallerDiagnosticStage()
     private static var files: FileManager { .default }
     private static let base = URL(fileURLWithPath: "/Library/Application Support/Upovi/PrivilegedInstallations")
 
@@ -37,6 +38,10 @@ struct UpoviInstaller {
             let result = try await execute(plan)
             print(String(decoding: try JSONEncoder().encode(result), as: UTF8.self))
         } catch {
+            let value = error as NSError
+            let allowed = [NSCocoaErrorDomain, NSPOSIXErrorDomain, NSOSStatusErrorDomain, NSURLErrorDomain]
+            let domain = allowed.contains(value.domain) ? value.domain : "other"
+            fputs("UPOVI_INSTALLER_DIAGNOSTIC stage=\(diagnostics.value) domain=\(domain) code=\(value.code)\n", stderr)
             fputs("Upovi administrator installation did not complete: \(error.localizedDescription)\n", stderr)
             exit(1)
         }
@@ -70,6 +75,7 @@ struct UpoviInstaller {
     }
 
     private static func execute(_ supplied: AdministratorInstallPlan) async throws -> AdministratorInstallAttempt {
+        diagnostics.set("transaction.lock")
         let parent = base.deletingLastPathComponent()
         if !files.fileExists(atPath: parent.path) { try files.createDirectory(at: parent, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700]) }
         try requireRootOwnership(parent)
@@ -80,6 +86,7 @@ struct UpoviInstaller {
         defer { _ = flock(lockFile, LOCK_UN); close(lockFile) }
         guard flock(lockFile, LOCK_EX) == 0 else { throw PeerError.unavailable("Cannot lock administrator transactions") }
         let job = base.appending(path: supplied.id.uuidString)
+        diagnostics.set("recovery")
         if [.restore, .discardBackup, .inspect].contains(supplied.operation) {
             try requireRootOwnership(job)
             let journal = job.appending(path: "receipt.json")
@@ -113,7 +120,9 @@ struct UpoviInstaller {
         guard let current = AppScanner.read(target), !current.isAppStore, matches(current, supplied.application) else {
             throw PeerError.invalid("Application changed before administrator installation")
         }
+        diagnostics.set("target.signature")
         try BundleVerifier.checkSignature(target, like: supplied.application)
+        diagnostics.set("storage.preflight")
         try AdministratorInstallationSpace.validate(application: target, volumePath: job)
         var attempt = AdministratorInstallAttempt(plan: supplied, state: "preparing")
         try save(attempt, in: job)
@@ -128,19 +137,23 @@ struct UpoviInstaller {
             if supplied.operation == .package {
                 let package = job.appending(path: "Update.pkg")
                 try files.copyItem(at: URL(fileURLWithPath: supplied.artifactPath), to: package)
+                diagnostics.set("package.validate")
                 try await InstallerPackageVerifier.validate(package, sha256: supplied.sha256!, app: supplied.application)
                 let expanded = job.appending(path: "Expanded")
+                diagnostics.set("package.expand")
                 try await expand(package, to: expanded)
                 let matches = matchingApps(in: expanded, bundleID: supplied.application.bundleID)
                 guard matches.count == 1 else { throw PeerError.invalid("PKG must contain exactly one verifiable matching application payload") }
                 try validateUpdate(matches[0], plan: supplied)
                 attempt.state = "installing"; try save(attempt, in: job)
+                diagnostics.set("package.install")
                 _ = try await ProcessCommand().run("/usr/sbin/installer", ["-pkg", package.path, "-target", "/"], timeoutSeconds: 1800, outputFile: job.appending(path: "installer.log"))
             } else {
                 let incoming = job.appending(path: "Incoming.app")
                 try files.copyItem(at: URL(fileURLWithPath: supplied.artifactPath), to: incoming)
                 try validateUpdate(incoming, plan: supplied)
                 guard let replacement = AppScanner.read(incoming) else { throw PeerError.invalid("Prepared application is missing") }
+                diagnostics.set("payload.finalize")
                 try await ApplicationInstallation.finalize(incoming, matching: replacement)
                 attempt.state = "installing"; try save(attempt, in: job)
                 try files.moveItem(at: target, to: job.appending(path: "Previous.app"))
@@ -151,8 +164,10 @@ struct UpoviInstaller {
                 attempt.installedApplication = AppScanner.read(target)
                 attempt.state = "finalizing"; attempt.updatedAt = Date(); try save(attempt, in: job)
                 guard let installed = AppScanner.read(target) else { throw PeerError.invalid("Installed application is missing") }
+                diagnostics.set("installed.finalize")
                 try await ApplicationInstallation.finalize(target, matching: installed)
             }
+            diagnostics.set("installed.verify")
             try ApplicationInstallation.verifyFinalized(target)
             attempt.installedApplication = AppScanner.read(target)
             if let usage = try? AdministratorBackupCleaner.usage(in: job) {
@@ -247,4 +262,12 @@ struct UpoviInstaller {
         try save(result, in: job)
         return result
     }
+}
+
+/// One CLI transaction per process; only a fixed stage name is shared across async calls.
+private final class InstallerDiagnosticStage: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stage = "preflight"
+    var value: String { lock.withLock { stage } }
+    func set(_ value: String) { lock.withLock { stage = value } }
 }

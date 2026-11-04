@@ -15,12 +15,14 @@ public enum SteamUpdateSource {
             guard channel == .stable else { throw PeerError.unavailable("Steam beta detection requires its own updater") }
             installed = try installedVersion(root: root)
         } catch {
+            UpoviLog.sources.warning("event=steam.clientEvidenceUnconfirmed \(UpoviDiagnosticContext.errorSummary(error))")
             return .init(appID: app.id, candidates: [], note: String(localized: "无法可靠读取 Steam 的实际客户端版本或当前渠道。应用包的 6.1 是引导器版本，不能据此判断是否最新；请在 Steam 内检查客户端更新。"),
                 status: .unsupported, manualURL: page, checks: [.init(.steam, .manual)])
         }
         do {
             let remote = try version(in: await fetch(manifestURL, 1_000_000))
             let newer = VersionOrder.compare(remote, installed) == .orderedDescending
+            UpoviLog.sources.info("event=steam.clientCompared installed=\(installed) official=\(remote) newer=\(newer)")
             let candidate = UpdateCandidate(version: remote, source: "Steam", isCommunity: false, url: page,
                 releaseNotes: String(localized: "本机 Steam 客户端构建为 \(installed)，官方清单构建为 \(remote)。应用包版本属于引导器；请在 Steam 内检查并安装客户端更新。"))
             return .init(appID: app.id, candidates: newer ? [candidate] : [],

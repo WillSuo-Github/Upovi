@@ -44,12 +44,15 @@ extension AppStore {
         toolCheckTask = Task {
             for source in selected {
                 guard !Task.isCancelled, let executable = locations[source] else { break }
+                let operation = UpoviLogOperation("tools.check", category: .tools, details: "source=\(source.rawValue)")
                 do {
                     let snapshot = try await checker(source, executable)
+                    operation.finish()
                     guard !Task.isCancelled, enabledToolSources.contains(source) else { return }
                     toolSnapshots[source] = snapshot; toolCheckErrors[source] = nil
                 } catch {
                     guard !Task.isCancelled else { return }
+                    operation.fail(error)
                     toolCheckErrors[source] = ToolSourceService.sanitized(error.localizedDescription)
                 }
             }
@@ -68,6 +71,9 @@ extension AppStore {
     func runToolUpdate(_ item: ToolUpdateItem) async {
         let source = item.source
         var record = ToolUpdateRecord(source: source, item: item)
+        let operation = UpoviLogOperation("tools.update", category: .tools, details: "source=\(source.rawValue) package=\(UpoviDiagnosticContext.fingerprint(item.package.name)) installedVersion=\(item.package.installed) targetVersion=\(item.package.available)")
+        var operationFailure: (any Error)?
+        defer { if let operationFailure { operation.fail(operationFailure) } else { operation.finish(record.state.rawValue) } }
         if bulkStopRequested {
             record.state = .interrupted; record.detail = String(localized: "已停止后续任务，此工具未执行。")
             record.finishedAt = Date(); toolOutcomes[item.id] = record
@@ -91,6 +97,7 @@ extension AppStore {
             record.state = .succeeded
             record.detail = item.package.name + ": " + item.package.installed + " → " + (result.installed[item.package.name] ?? item.package.available)
         } catch {
+            operationFailure = error
             record.state = .failed; record.detail = ToolSourceService.sanitized(error.localizedDescription)
             // A package failure is local to this row, not a failed inventory for every sibling.
         }

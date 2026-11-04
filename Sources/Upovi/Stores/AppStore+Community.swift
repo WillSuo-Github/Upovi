@@ -45,6 +45,8 @@ extension AppStore {
     }
 
     private func syncCommunity(generation: UInt64) async {
+        let operation = UpoviLogOperation("community.sync", category: .community, details: "generation=\(generation) enabled=\(networkEnabled)")
+        defer { operation.finish(details: "cancelled=\(Task.isCancelled)") }
         defer { syncing = false; p2pProgress = "" }
         let localCopies = Dictionary(grouping: apps, by: { CommunityTopic.hash($0) })
         let scope = p2pScope

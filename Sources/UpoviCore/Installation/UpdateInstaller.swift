@@ -29,6 +29,18 @@ public actor UpdateInstaller {
 
     public func prepare(app: InstalledApp, candidate: UpdateCandidate,
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedUpdate {
+        let operation = UpoviLogOperation("installer.prepare", category: .installation,
+            details: UpoviDiagnosticContext.application(app) + " targetVersion=\(candidate.version) targetBuild=\(candidate.build) proof=\(candidate.download?.hasIntegrityProof == true)")
+        return try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do {
+                let update = try await prepareUpdate(app: app, candidate: candidate, progress: progress)
+                operation.finish("prepared", details: "preparedID=\(update.id) verifiedArchive=\(update.archiveIntegrityVerified)")
+                return update
+            } catch { operation.fail(error); throw error }
+        }
+    }
+    private func prepareUpdate(app: InstalledApp, candidate: UpdateCandidate,
+                        progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedUpdate {
         guard !exclusive, !activePaths.contains(app.path) else { throw PeerError.unavailable("An installation operation is already running") }
         guard !candidate.isCommunity, candidate.requiresRevalidation != true, app.bundleID != "com.valvesoftware.steam", !app.isAppStore, let descriptor = candidate.download, descriptor.canVerify(for: app),
               ApplicationSourceCatalog.replacementTeam(for: app) != nil, app.bundleID != "app.upovi.Upovi" else {
@@ -45,11 +57,12 @@ public actor UpdateInstaller {
         var downloadID: UUID?
         do {
             if ApplicationSourceCatalog.legacyMigration(for: app) != nil || ApplicationSourceCatalog.developerTeamMigration(for: app) != nil {
-                let check = Task.detached { try BundleVerifier.checkSignature(URL(fileURLWithPath: app.path), like: app) }
+                let check = UpoviDiagnosticContext.detached { try BundleVerifier.checkSignature(URL(fileURLWithPath: app.path), like: app) }
                 try await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
             }
             downloadID = try await downloads.download(descriptor, app: app, targetVersion: candidate.version, to: downloaded, progress: progress)
-            let verification = Task.detached { try BundleVerifier.validateDownload(downloaded, descriptor: descriptor, app: app) }
+            UpoviLog.installation.info("event=preparation.archiveValidation")
+            let verification = UpoviDiagnosticContext.detached { try BundleVerifier.validateDownload(downloaded, descriptor: descriptor, app: app) }
             try await withTaskCancellationHandler { try await verification.value } onCancel: { verification.cancel() }
             try Task.checkCancellation()
             var archive = downloaded
@@ -64,9 +77,10 @@ public actor UpdateInstaller {
             let source = archive
             let extracted: URL
             var mounted: URL?
+            UpoviLog.installation.info("event=preparation.extract format=\(archive.pathExtension)")
             if archive.pathExtension == "zip" {
                 extracted = workspace.appending(path: "Extracted")
-                let extraction = Task.detached { try ArchiveExtractor.extractZIP(source, to: extracted) }
+                let extraction = UpoviDiagnosticContext.detached { try ArchiveExtractor.extractZIP(source, to: extracted) }
                 try await withTaskCancellationHandler { try await extraction.value } onCancel: { extraction.cancel() }
             } else if archive.pathExtension == "dmg" {
                 extracted = workspace.appending(path: "Mounted")
@@ -108,11 +122,22 @@ public actor UpdateInstaller {
     }
 
     public func discard(_ id: UUID) {
+        UpoviLog.installation.info("event=preparation.discard preparedID=\(id)")
         guard let value = prepared[id], !activePaths.contains(value.application.path) else { return }
         try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
     }
 
     public func install(_ id: UUID, requireNotRunning: Bool = false) async throws -> InstallationReceipt {
+        let operation = UpoviLogOperation("installer.install", category: .installation, details: "preparedID=\(id) requireClosed=\(requireNotRunning)")
+        return try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do {
+                let receipt = try await performInstall(id, requireNotRunning: requireNotRunning)
+                operation.finish(details: "state=\(receipt.state.rawValue) receipt=\(receipt.id)")
+                return receipt
+            } catch { operation.fail(error); throw error }
+        }
+    }
+    private func performInstall(_ id: UUID, requireNotRunning: Bool) async throws -> InstallationReceipt {
         guard !exclusive, let value = prepared[id], !activePaths.contains(value.application.path) else { throw PeerError.invalid("Prepared update is no longer available") }
         activePaths.insert(value.application.path); defer { activePaths.remove(value.application.path) }
         let target = UpdateCandidate(version: value.replacement.version, build: value.replacement.build, source: "Prepared update", isCommunity: false, url: nil)
@@ -128,7 +153,7 @@ public actor UpdateInstaller {
         if requireNotRunning { try Self.requireClosed(value.application) }
         // Once the rename transaction starts it runs to completion or recovery, even if the UI task is cancelled.
         let journal = journalDirectory
-        let receipt = try await Task.detached {
+        let receipt = try await UpoviDiagnosticContext.detached {
             try BundleTransaction(journalDirectory: journal, validate: { url in
                 _ = try BundleVerifier.validate(url, replacing: value.application,
                     expectedVersion: value.replacement.version, expectedBuild: value.replacement.build, allowPrerelease: value.permitsPrerelease)
@@ -161,6 +186,7 @@ public actor UpdateInstaller {
     }
 
     public func restore(_ receipt: InstallationReceipt) async throws {
+        UpoviLog.recovery.info("event=restore.requested receipt=\(receipt.id) \(UpoviDiagnosticContext.application(receipt.application))")
         guard !exclusive, activePaths.isEmpty else { throw PeerError.unavailable("An installation operation is already running") }
         exclusive = true; defer { exclusive = false }
         try await Self.quit(receipt.application)
@@ -170,13 +196,14 @@ public actor UpdateInstaller {
             try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         }
         let journal = journalDirectory
-        _ = try await Task.detached {
+        _ = try await UpoviDiagnosticContext.detached {
             try BundleTransaction(journalDirectory: journal, validate: { _ in }).restore(receipt)
         }.value
     }
     public static func requestApplicationQuit(_ app: InstalledApp, timeoutSeconds: Int = 10) async throws { try await quit(app, timeoutSeconds: timeoutSeconds) }
 
     public func discardBackup(_ receipt: InstallationReceipt) async throws {
+        UpoviLog.recovery.info("event=discardBackup.requested receipt=\(receipt.id) \(UpoviDiagnosticContext.application(receipt.application))")
         guard !exclusive, activePaths.isEmpty else { throw PeerError.unavailable("An installation operation is already running") }
         exclusive = true; defer { exclusive = false }
         guard let retainedPath = receipt.retainedPath else { throw PeerError.invalid("Keep interrupted installation backups for recovery") }
@@ -190,7 +217,7 @@ public actor UpdateInstaller {
         }
         guard !running else { throw PeerError.invalid("Quit the backup application before moving it to Trash") }
         let journal = journalDirectory
-        _ = try await Task.detached {
+        _ = try await UpoviDiagnosticContext.detached {
             try BundleTransaction(journalDirectory: journal, validate: { _ in }).discardBackup(receipt) { url in
                 try FileManager.default.trashItem(at: url, resultingItemURL: nil)
             }
@@ -198,6 +225,7 @@ public actor UpdateInstaller {
     }
 
     private static func quit(_ app: InstalledApp, timeoutSeconds: Int = 10) async throws {
+        UpoviLog.installation.info("event=application.quitRequested \(UpoviDiagnosticContext.application(app)) timeoutSeconds=\(timeoutSeconds)")
         func running() async -> Bool {
             await MainActor.run { NSWorkspace.shared.runningApplications.contains { $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: app.path) } ?? false } }
         }
@@ -207,7 +235,7 @@ public actor UpdateInstaller {
             }
         }
         for _ in 0..<(min(300, max(1, timeoutSeconds)) * 4) {
-            if !(await running()) { return }
+            if !(await running()) { UpoviLog.installation.info("event=application.closed app=\(UpoviDiagnosticContext.applicationID(app.id))"); return }
             try await Task.sleep(for: .milliseconds(250))
         }
         throw PeerError.unavailable("Close the application and save its documents before installing")

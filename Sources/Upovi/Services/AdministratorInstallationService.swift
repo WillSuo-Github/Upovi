@@ -55,6 +55,14 @@ final class AdministratorInstallationService {
     func discard(_ prepared: PreparedInstallerPackage) { try? FileManager.default.removeItem(at: prepared.workspace) }
 
     func perform(_ plan: AdministratorInstallPlan, authorize: InstallationAuthorization = .system) async throws {
+        let operation = UpoviLogOperation("administrator.transaction", category: .installation,
+            details: "transaction=\(plan.id) kind=\(plan.operation.rawValue) \(UpoviDiagnosticContext.application(plan.application)) targetVersion=\(plan.version)")
+        try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do { try await performTransaction(plan, authorize: authorize); operation.finish() }
+            catch { operation.fail(error); throw error }
+        }
+    }
+    private func performTransaction(_ plan: AdministratorInstallPlan, authorize: InstallationAuthorization) async throws {
         try plan.validate()
         if [.application, .package].contains(plan.operation) {
             try await Task.detached { try AdministratorInstallationSpace.validate(application: URL(fileURLWithPath: plan.application.path)) }.value
@@ -81,6 +89,7 @@ final class AdministratorInstallationService {
             let result = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: data)
             let accepted = plan.operation == .inspect || (plan.operation == .discardBackup ? result.state == "backupDiscarded" : plan.operation == .restore ? result.state == "restored" : ["installed", "finalizationPending"].contains(result.state))
             guard result.id == plan.id, accepted else { throw PeerError.invalid("Unexpected administrator transaction result") }
+            UpoviLog.installation.info("event=administrator.receipt transaction=\(result.id) state=\(result.state) installedVersion=\(result.installedApplication?.version ?? "none") cleanupComplete=\(result.cleanupComplete ?? false)")
             try save(result)
             if installing, result.state == "finalizationPending" {
                 throw result.finalizationFailure ?? AdministratorFinalizationError(PeerError.unavailable("Installation finalization did not complete"))
@@ -107,8 +116,26 @@ struct InstallationAuthorization: Sendable {
         run = { _, _ in throw PeerError.invalid("A batch authorization accepts only typed installation plans") }
     }
     func perform(_ request: AdministratorInstallSession.Request, command: String, log: URL?) async throws -> Data {
-        if let submit { return try await submit(request, log) }
-        return try await run(command, log)
+        let operation = UpoviLogOperation("authorization.request", category: .authorization,
+            details: UpoviDiagnosticContext.application(request.application) + " mode=\(submit == nil ? "systemPrompt" : "batchSession")")
+        return try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do {
+                let data: Data
+                if let submit { data = try await submit(request, log) }
+                else { data = try await run(command, log) }
+                operation.finish(details: "resultBytes=\(data.count)")
+                return data
+            } catch {
+                var userCancelled = UpoviDiagnosticContext.isCancellation(error)
+                if let log, let attributes = try? log.resourceValues(forKeys: [.fileSizeKey]), (attributes.fileSize ?? Int.max) <= 65536,
+                   let data = try? Data(contentsOf: log) {
+                    if let summary = UpoviDiagnosticContext.helperFailureSummary(data) { UpoviLog.authorization.error("event=helper.failure \(summary)") }
+                    userCancelled = userCancelled || String(decoding: data, as: UTF8.self).contains("(-128)")
+                }
+                if userCancelled { operation.finish("cancelled") } else { operation.fail(error) }
+                throw error
+            }
+        }
     }
     static let system = Self(run: { command, log in
         try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
@@ -143,6 +170,13 @@ final class InstallationAuthorizationBatch {
     }
 
     func start(_ items: [BulkUpdateItem]) async throws {
+        let operation = UpoviLogOperation("authorization.batch", category: .authorization, details: "items=\(items.count)")
+        try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do { try await startSession(items); operation.finish("ready") }
+            catch { operation.fail(error); throw error }
+        }
+    }
+    private func startSession(_ items: [BulkUpdateItem]) async throws {
         guard !items.isEmpty else { return }
         if let startOverride { try await startOverride(items); return }
         guard let team = AdministratorAuthorization.teamID(at: Bundle.main.bundleURL),
@@ -153,6 +187,7 @@ final class InstallationAuthorizationBatch {
         let session = AdministratorInstallSession(items: items, requests: requests, hostTeam: team)
         try session.validate()
         self.session = session
+        UpoviLog.authorization.info("event=session.launch session=\(session.id) selectedItems=\(session.items.count)")
         let command = try session.bootstrap(helper: helper,
             storeHelper: Bundle.main.bundleURL.appending(path: "Contents/Helpers/UpoviStoreInstaller.app"),
             bridge: Bundle.main.bundleURL.appending(path: "Contents/MacOS/UpoviStoreBridge"))
@@ -175,6 +210,7 @@ final class InstallationAuthorizationBatch {
             try await Task.sleep(for: .milliseconds(50))
         }
         ready = true
+        UpoviLog.authorization.info("event=session.ready session=\(session.id)")
         if stopped { throw CancellationError() }
     }
 
@@ -187,6 +223,7 @@ final class InstallationAuthorizationBatch {
     }
     func contains(_ id: String) -> Bool { registered.contains(id) }
     func stop() {
+        UpoviLog.authorization.warning("event=session.stopRequested ready=\(ready) submitted=\(submitted.count)")
         stopped = true
         if !ready { execution?.cancel() }
         try? Data().write(to: requests.appending(path: "stop"), options: .atomic)
@@ -201,13 +238,16 @@ final class InstallationAuthorizationBatch {
                     throw PeerError.invalid("Installation has no active batch authorization")
                 }
                 try session.validate(request, index: index)
+                UpoviLog.authorization.info("event=session.submit session=\(session.id) index=\(index) app=\(UpoviDiagnosticContext.applicationID(id))")
                 submitted.insert(index)
                 try JSONEncoder().encode(request).write(to: requests.appending(path: "\(index).json"), options: .atomic)
                 while true {
                     try checkExecution()
                     if let data = try? Data(contentsOf: session.results.appending(path: "\(index).json")),
                        let result = try? JSONDecoder().decode(AdministratorInstallSession.Result.self, from: data) {
+                        UpoviLog.authorization.info("event=session.result session=\(session.id) index=\(index) status=\(result.status) outputBytes=\(result.output.count)")
                         if let log { try? result.output.write(to: log, options: .atomic) }
+                        if let summary = UpoviDiagnosticContext.helperFailureSummary(result.output) { UpoviLog.authorization.error("event=helper.failure \(summary)") }
                         if result.status == -1 { throw CancellationError() }
                         guard result.status == 0 else {
                             throw PeerError.unavailable("Authorized installer failed: \(String(decoding: result.output.prefix(4096), as: UTF8.self))")
@@ -226,6 +266,8 @@ final class InstallationAuthorizationBatch {
         if executionFinished { throw PeerError.unavailable("Installation authorization session ended") }
     }
     func finish() async {
+        let operation = UpoviLogOperation("authorization.finish", category: .authorization, details: "submitted=\(submitted.count)")
+        defer { operation.finish(details: "executionFailed=\(executionError != nil)") }
         for task in tasks { await task.value }
         if session != nil { try? Data().write(to: requests.appending(path: "finish"), options: .atomic) }
         await execution?.value

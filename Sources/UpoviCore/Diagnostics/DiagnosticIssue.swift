@@ -3,7 +3,7 @@ import Foundation
 /// Export only fixed classifications and numeric codes, never an error's message or userInfo.
 public struct DiagnosticIssue: Codable, Sendable, Equatable, Hashable {
     public enum Kind: String, Codable, Sendable {
-        case cancelled, offline, timeout, tls, connection, http, invalidMetadata, validationRejected, operationFailed, unknown
+        case cancelled, offline, timeout, tls, connection, http, invalidMetadata, validationRejected, operationFailed, permissionDenied, unknown
     }
     public let kind: Kind
     public let code: Int?
@@ -25,6 +25,10 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable, Hashable {
             case -1206 ... -1200: kind = .tls
             default: kind = .connection
             }
+        } else if [NSCocoaErrorDomain, NSPOSIXErrorDomain, NSOSStatusErrorDomain].contains(value.domain) {
+            code = value.code
+            kind = (value.domain == NSPOSIXErrorDomain && [1, 13].contains(value.code)) ||
+                (value.domain == NSCocoaErrorDomain && [257, 513].contains(value.code)) ? .permissionDenied : .operationFailed
         } else {
             code = nil
             if error is DecodingError { kind = .invalidMetadata }

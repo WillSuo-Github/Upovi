@@ -21,7 +21,7 @@ import UpoviCore
                   receipt.plan.application.teamID == app.teamID, receipt.plan.application.isAppStore,
                   VersionOrder.compare(app.version, receipt.plan.version) == .orderedSame,
                   let path = receipt.failure?.recoverableReceiptPath(application: app) else {
-                logger.error("Store receipt recovery target does not match the recorded failure for \(app.bundleID, privacy: .public)")
+                logger.error("Store receipt recovery target does not match the recorded failure for \(app.bundleID)")
                 continue
             }
             guard let canonical = try? CanonicalFilePath.resolve(URL(fileURLWithPath: path)) else { continue }
@@ -30,7 +30,7 @@ import UpoviCore
             let recovery = StoreReceiptRecovery(transactionID: receipt.plan.id, path: canonical)
             do { try recovery.validate() }
             catch {
-                logger.error("Store receipt recovery path validation failed for \(app.bundleID, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                logger.error("Store receipt recovery path validation failed for \(app.bundleID): \(error.localizedDescription)")
                 continue
             }
             var candidate = UpdateCandidate(version: receipt.plan.version, source: "App Store", isCommunity: false, url: nil,
@@ -42,6 +42,14 @@ import UpoviCore
     }
 
     func perform(_ candidate: UpdateCandidate, app: InstalledApp, authorize: InstallationAuthorization = .system) async throws {
+        let operation = UpoviLogOperation("store.install", category: .installation,
+            details: UpoviDiagnosticContext.application(app) + " targetVersion=\(candidate.version) receiptRecovery=\(candidate.storeReceiptRecovery != nil)")
+        try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do { try await performStore(candidate, app: app, authorize: authorize); operation.finish() }
+            catch { operation.fail(error); throw error }
+        }
+    }
+    private func performStore(_ candidate: UpdateCandidate, app: InstalledApp, authorize: InstallationAuthorization) async throws {
         let helper = Bundle.main.bundleURL.appending(path: "Contents/Helpers/UpoviStoreInstaller.app")
         guard !candidate.isCommunity, let id = candidate.appStoreID,
               FileManager.default.fileExists(atPath: helper.appending(path: "Contents/MacOS/UpoviStoreInstaller").path),
@@ -68,6 +76,7 @@ import UpoviCore
         }
         let receipt = try JSONDecoder().decode(AppStoreUpdateReceipt.self, from: data)
         guard receipt.plan.id == plan.id else { throw PeerError.invalid("Unexpected Store transaction identity") }
+        UpoviLog.installation.info("event=store.receipt transaction=\(receipt.plan.id) state=\(receipt.state) installedVersion=\(receipt.installedApplication?.version ?? "none")")
         if let failure = receipt.failure { throw StoreInstallationError(failure) }
         guard receipt.plan.id == plan.id, ["installed","current"].contains(receipt.state), let updated = receipt.installedApplication else {
             throw PeerError.invalid(String(localized: "商店更新结果尚未确认，请重新检测；不要立即重复发起更新。"))

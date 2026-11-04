@@ -33,9 +33,17 @@ public struct SourceResultCache: Codable, Sendable {
         if entries.count > 1000, let oldest = entries.min(by: { $0.value.result.checkedAt < $1.value.result.checkedAt })?.key { entries[oldest] = nil }
     }
     public func resolving(_ current: SourceResult, app: InstalledApp, sourceOverride: SourceOverride?, now: Date = Date()) -> SourceResult {
-        guard current.appID == app.id, [.failed, .partial].contains(current.status),
-              let old = entries[app.id], old.app == app, old.sourceOverride == sourceOverride,
-              now >= old.result.checkedAt, now.timeIntervalSince(old.result.checkedAt) <= 86400 else { return current }
+        guard current.appID == app.id, [.failed, .partial].contains(current.status) else { return current }
+        let reference = UpoviDiagnosticContext.applicationID(app.id)
+        guard let old = entries[app.id] else {
+            UpoviLog.sources.info("event=evidence.unavailable app=\(reference)"); return current
+        }
+        guard old.app == app, old.sourceOverride == sourceOverride else {
+            UpoviLog.sources.info("event=evidence.scopeChanged app=\(reference)"); return current
+        }
+        guard now >= old.result.checkedAt, now.timeIntervalSince(old.result.checkedAt) <= 86400 else {
+            UpoviLog.sources.info("event=evidence.expired app=\(reference)"); return current
+        }
         let failed = Set(current.checks.filter { [.failed, .cancelled].contains($0.outcome) }.map(\.source))
         let retained = old.result.candidates.filter { candidate in
             guard let source = Self.source(candidate), failed.contains(source),
@@ -49,6 +57,7 @@ public struct SourceResultCache: Codable, Sendable {
             return candidate
         }
         guard !retained.isEmpty else { return current }
+        UpoviLog.sources.warning("event=evidence.retained app=\(reference) confirmedAt=\(old.result.checkedAt.ISO8601Format()) candidates=\(retained.count)")
         return .init(appID: app.id, candidates: current.candidates + retained,
             note: current.note + " · " + String(localized: "已保留 \(old.result.checkedAt.formatted(date: .abbreviated, time: .shortened)) 确认的更新，当前结果待重新核对。"), status: .partial,
             manualURL: current.manualURL ?? old.result.manualURL, checks: current.checks, appStoreID: current.appStoreID,

@@ -21,6 +21,7 @@ public actor DownloadCoordinator {
     private var controls: [UUID: Control] = [:]
     private var records: [DownloadRecord] = []
     private var listeners: [UUID: AsyncStream<[DownloadRecord]>.Continuation] = [:]
+    private var progressMilestones: [UUID: Int] = [:]
     private var lastProgressSave: [UUID: Date] = [:]
     private(set) public var historySaveFailed = false
 
@@ -70,13 +71,19 @@ public actor DownloadCoordinator {
                 try JSONEncoder().encode(records).write(to: url, options: .atomic)
                 try files.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
                 historySaveFailed = false
-            } catch { historySaveFailed = true }
+            } catch { historySaveFailed = true; UpoviLog.storage.error("event=downloadHistory.saveFailed \(UpoviDiagnosticContext.errorSummary(error))") }
         }
         for listener in listeners.values { listener.yield(records) }
     }
     private func update(_ id: UUID, _ change: (inout DownloadRecord) -> Void, save: Bool = true) {
         guard let i = records.firstIndex(where: { $0.id == id }) else { return }
-        change(&records[i]); records[i].updatedAt = Date(); publish(save: save)
+        let previous = records[i]
+        change(&records[i]); records[i].updatedAt = Date()
+        let record = records[i]
+        if previous.state != record.state || previous.retries != record.retries || previous.resumedBytes != record.resumedBytes {
+            UpoviLog.downloads.logTransition(record, previous: previous.state)
+        }
+        publish(save: save)
     }
     public func pause(_ id: UUID) {
         guard let record = records.first(where: { $0.id == id }), record.state.canPause, controls[id] != nil else { return }
@@ -99,6 +106,7 @@ public actor DownloadCoordinator {
     public func setOnline(_ value: Bool) {
         guard online != value else { return }
         online = value
+        UpoviLog.downloads.info("event=network.changed online=\(value) active=\(controls.count)")
         for id in Array(controls.keys) {
             if !value, let state = records.first(where: { $0.id == id })?.state, [.downloading, .retrying].contains(state) {
                 controls[id]?.generation += 1; controls[id]?.work?.cancel()
@@ -120,12 +128,13 @@ public actor DownloadCoordinator {
               (try? FileManager.default.attributesOfItem(atPath: destination.path)) == nil else { throw PeerError.invalid("Download destination already exists") }
         guard controls.count < 10 else { throw PeerError.unavailable("Too many active artifact downloads") }
         let record = DownloadRecord(app: app, targetVersion: targetVersion), id = record.id
+        UpoviLog.downloads.info("event=download.queued download=\(id) \(UpoviDiagnosticContext.application(app)) targetVersion=\(targetVersion) \(UpoviDiagnosticContext.source(descriptor.url))")
         records.insert(record, at: 0)
         // Never evict a caller that is currently suspended in this coordinator.
         let active = records.filter { controls[$0.id] != nil }
         records = [record] + active + records.filter { $0.id != id && controls[$0.id] == nil }.prefix(max(0, 49 - active.count))
         controls[id] = Control(); publish()
-        defer { controls[id] = nil; lastProgressSave[id] = nil }
+        defer { controls[id] = nil; lastProgressSave[id] = nil; progressMilestones[id] = nil }
         do {
             try await withTaskCancellationHandler {
                 try await run(id, descriptor: descriptor, app: app, destination: destination, progress: progress)
@@ -135,6 +144,7 @@ public actor DownloadCoordinator {
             update(id) { $0.state = descriptor.hasIntegrityProof ? .verified : .downloaded; $0.issue = nil; if let bytes { $0.received = bytes; $0.expected = bytes } }
             return id
         } catch {
+            UpoviLog.log("event=download.ended download=\(id) \(UpoviDiagnosticContext.errorSummary(error))", level: UpoviDiagnosticContext.isCancellation(error) ? .info : .error, category: .downloads)
             update(id) { $0.state = error is CancellationError || Task.isCancelled ? .cancelled : .failed; $0.issue = .init(error) }
             if !Task.isCancelled, DiagnosticIssue(error).kind == .timeout, let record = records.first(where: { $0.id == id }) {
                 throw DownloadTimeoutError(retries: record.retries, received: record.received)
@@ -204,8 +214,22 @@ public actor DownloadCoordinator {
     private func progress(_ id: UUID, generation: Int, received: Int64, expected: Int64) {
         guard controls[id]?.generation == generation, controls[id]?.paused == false, controls[id]?.cancelled == false,
               records.first(where: { $0.id == id })?.state == .downloading else { return }
+        if expected > 0 {
+            let milestone = min(4, Int(Double(max(0, received)) / Double(expected) * 4))
+            if milestone > (progressMilestones[id] ?? 0) {
+                progressMilestones[id] = milestone
+                UpoviLog.downloads.info("event=download.progress download=\(id) percent=\(milestone * 25) received=\(received) expected=\(expected)")
+            }
+        }
         let save = Date().timeIntervalSince(lastProgressSave[id] ?? .distantPast) >= 1
         if save { lastProgressSave[id] = Date() }
         update(id, { $0.received = max(0, received); $0.expected = expected }, save: save)
+    }
+}
+
+private extension UpoviLog.Emitter {
+    func logTransition(_ record: DownloadRecord, previous: DownloadRecord.State) {
+        let issue = record.issue.map { "kind=\($0.kind.rawValue) code=\($0.httpStatus ?? $0.code ?? 0)" } ?? "none"
+        info("event=download.state download=\(record.id) app=\(UpoviDiagnosticContext.applicationID(record.applicationID)) from=\(previous.rawValue) state=\(record.state.rawValue) retries=\(record.retries) resumed=\(record.resumedBytes) received=\(record.received) expected=\(record.expected) issue=\(issue)")
     }
 }

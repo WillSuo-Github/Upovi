@@ -102044,6 +102044,262 @@
           }
         }
       }
+    },
+    "诊断与日志": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostics and Logs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診斷與日誌"
+          }
+        }
+      }
+    },
+    "诊断包包含当前检查摘要和近期运行日志，可追查检测、下载、授权与安装过程。摘要默认隐藏软件标识；日志包含版本、操作耗时和经过过滤的错误详情。密码、凭据和完整路径不会主动记录，导出前请确认内容。文件仅保存到你选择的位置，不会自动上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The diagnostic bundle includes a check summary and recent runtime logs covering checks, downloads, authorization and installation. The summary hides app identifiers by default. Logs include versions, timings and filtered error details. Passwords, credentials and full paths are not deliberately recorded. Review before sharing. Files are saved only where you choose and are never uploaded automatically."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診斷包包含目前檢查摘要和近期執行日誌，可追查檢測、下載、授權與安裝過程。摘要預設隱藏軟體識別碼；日誌包含版本、操作耗時和經過過濾的錯誤詳情。不會主動記錄密碼、憑據和完整路徑，匯出前請確認內容。檔案僅儲存到你選擇的位置，不會自動上傳。"
+          }
+        }
+      }
+    },
+    "包含近期运行日志（推荐用于排查问题）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include recent runtime logs (recommended for troubleshooting)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "包含近期執行日誌（建議用於排查問題）"
+          }
+        }
+      }
+    },
+    "近期运行日志": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent Runtime Logs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近期執行日誌"
+          }
+        }
+      }
+    },
+    "当前检查摘要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current Check Summary"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前檢查摘要"
+          }
+        }
+      }
+    },
+    "查看检查摘要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Check Summary"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示檢查摘要"
+          }
+        }
+      }
+    },
+    "预览近期运行日志": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview Runtime Logs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "預覽近期執行日誌"
+          }
+        }
+      }
+    },
+    "正在读取日志…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading logs…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在讀取日誌…"
+          }
+        }
+      }
+    },
+    "仅预览最近 128 KiB；完整日志包含在诊断包中。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previewing the most recent 128 KiB. The diagnostic bundle contains the full retained log."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "僅預覽最近 128 KiB；完整日誌包含在診斷包中。"
+          }
+        }
+      }
+    },
+    "日志读取失败，无法预览。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The logs could not be read for preview."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日誌讀取失敗，無法預覽。"
+          }
+        }
+      }
+    },
+    "正在准备诊断包…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing Diagnostic Bundle…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在準備診斷包…"
+          }
+        }
+      }
+    },
+    "导出诊断包…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export Diagnostic Bundle…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匯出診斷包…"
+          }
+        }
+      }
+    },
+    "诊断包已保存，未上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostic bundle saved. Nothing was uploaded."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診斷包已儲存，未上傳。"
+          }
+        }
+      }
+    },
+    "诊断包保存失败，请重新选择保存位置。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The diagnostic bundle could not be saved. Choose another location."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診斷包儲存失敗，請重新選擇儲存位置。"
+          }
+        }
+      }
+    },
+    "诊断包生成失败，未导出不完整日志。请检查日志目录的可读性和可用空间后重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The diagnostic bundle could not be prepared. No incomplete log was exported. Check log folder access and free space, then try again."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診斷包產生失敗，未匯出不完整日誌。請檢查日誌目錄的可讀性和可用空間後重試。"
+          }
+        }
+      }
+    },
+    "导出当前摘要与近期运行日志，便于反馈问题。日志按大小和日期自动清理，不会自动上传，也不读取系统或管理员授权原始日志。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export the current summary and recent runtime logs with your feedback. Logs are automatically limited by size and age. Nothing is uploaded automatically, and raw system or authorization logs are not collected."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匯出目前摘要與近期執行日誌，便於回報問題。日誌按大小和日期自動清理，不會自動上傳，也不讀取系統或管理員授權原始日誌。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

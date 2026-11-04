@@ -67,4 +67,12 @@ final class DiagnosticTests: XCTestCase {
         XCTAssertEqual((object["recentIssues"] as? [Any])?.count, 50)
         XCTAssertFalse(String(decoding: data, as: UTF8.self).contains(secret))
     }
+    func testPermissionFailuresRetainTheirSafeDomainClassificationAndCode() {
+        for (domain, code) in [(NSCocoaErrorDomain, 513), (NSCocoaErrorDomain, 257), (NSPOSIXErrorDomain, 1), (NSPOSIXErrorDomain, 13)] {
+            let issue = DiagnosticIssue(NSError(domain: domain, code: code))
+            XCTAssertEqual(issue.kind, .permissionDenied); XCTAssertEqual(issue.code, code)
+        }
+        XCTAssertEqual(DiagnosticIssue(NSError(domain: NSOSStatusErrorDomain, code: -67062)).code, -67062)
+    }
+
 }

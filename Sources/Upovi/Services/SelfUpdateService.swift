@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import Sparkle
+import UpoviCore
 
 @MainActor
 final class SelfUpdateService: NSObject, ObservableObject, SPUUpdaterDelegate {
@@ -29,14 +30,17 @@ final class SelfUpdateService: NSObject, ObservableObject, SPUUpdaterDelegate {
         controller.updater.publisher(for: \.sessionInProgress).assign(to: &$sessionInProgress)
     }
 
-    func check() { controller?.checkForUpdates(nil) }
-    func setAutomaticChecks(_ enabled: Bool) { controller?.updater.automaticallyChecksForUpdates = enabled }
+    func check() { UpoviLog.selfUpdate.info("event=selfUpdate.userRequested configured=\(isConfigured) canCheck=\(canCheck)"); controller?.checkForUpdates(nil) }
+    func setAutomaticChecks(_ enabled: Bool) { UpoviLog.selfUpdate.info("event=selfUpdate.automaticChecks enabled=\(enabled)"); controller?.updater.automaticallyChecksForUpdates = enabled }
 
     func updater(_ updater: SPUUpdater, shouldPostponeRelaunchForUpdate item: SUAppcastItem,
                  untilInvokingBlock installHandler: @escaping () -> Void) -> Bool {
         guard installationBusy() else { return false }
+        UpoviLog.selfUpdate.info("event=selfUpdate.relaunchPostponed")
         Task {
             while installationBusy() { try? await Task.sleep(for: .seconds(1)) }
+            UpoviLog.selfUpdate.info("event=selfUpdate.relaunchResumed")
+            UpoviLogManager.shared.flush()
             installHandler()
         }
         return true

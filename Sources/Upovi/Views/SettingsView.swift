@@ -205,7 +205,7 @@ private struct AboutSettings: View {
                 Button("预览并导出诊断报告…") { diagnostics = store.diagnosticSnapshot() }
                     .accessibilityIdentifier("open-diagnostics-report")
             } header: { Text("诊断") } footer: {
-                Text("先预览再保存，不会自动上传。默认隐藏软件标识，不读取系统或管理员授权日志。").font(.caption).foregroundStyle(.secondary)
+                Text("导出当前摘要与近期运行日志，便于反馈问题。日志按大小和日期自动清理，不会自动上传，也不读取系统或管理员授权原始日志。").font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

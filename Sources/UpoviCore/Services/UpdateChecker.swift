@@ -30,6 +30,18 @@ public enum UpdateChecker {
     static func check(_ app: InstalledApp, override: SourceOverride? = nil,
                       fetch: @Sendable (URL, Int) async throws -> Data,
                       catalog: @Sendable (InstalledApp) async throws -> CaskMetadata?, steamRoot: URL? = nil) async -> SourceResult {
+        let operation = UpoviLogOperation("source.check", category: .sources,
+            details: UpoviDiagnosticContext.application(app) + " customFeed=\(override?.appcast != nil) customRepository=\(override?.githubRepository != nil) selectedChannel=\(override?.releaseChannel?.rawValue ?? "stable")")
+        return await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            let result = await evaluate(app, override: override, fetch: fetch, catalog: catalog, steamRoot: steamRoot)
+            operation.finish(result.status.rawValue, details: UpoviDiagnosticContext.sourceResult(result), level: [.failed, .partial].contains(result.status) ? .warning : .info)
+            return result
+        }
+    }
+
+    private static func evaluate(_ app: InstalledApp, override: SourceOverride?,
+                      fetch: @Sendable (URL, Int) async throws -> Data,
+                      catalog: @Sendable (InstalledApp) async throws -> CaskMetadata?, steamRoot: URL?) async -> SourceResult {
         if app.bundleID == "com.valvesoftware.steam", !app.isAppStore {
             return await SteamUpdateSource.check(app, root: steamRoot ?? SteamUpdateSource.defaultRoot, channel: override?.releaseChannel ?? .stable, fetch: fetch)
         }

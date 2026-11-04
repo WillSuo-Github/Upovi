@@ -53,10 +53,12 @@ public struct GitHubRelease: Decodable, Sendable {
             // The public latest-stable page is a separate official version source. Do not retry the
             // throttled API, guess prerelease status from Atom tags, or invent asset hashes.
             do {
+                UpoviLog.sources.warning("event=github.publicFallbackRequested \(UpoviDiagnosticContext.errorSummary(limited))")
                 var fallback = try publicStable(await fetch(URL(string: "https://github.com/\(repository)/releases/latest")!, 2_000_000), repository: repository)
+                UpoviLog.sources.info("event=github.publicFallbackConfirmed version=\(fallback.version) downloadProof=false")
                 fallback.rateLimitIssue = DiagnosticIssue(limited)
                 return fallback
-            } catch { throw limited }
+            } catch { UpoviLog.sources.warning("event=github.publicFallbackRejected \(UpoviDiagnosticContext.errorSummary(error))"); throw limited }
         }
         let releases = channel == .stable ? [try JSONDecoder().decode(Self.self, from: data)] : try JSONDecoder().decode([Self].self, from: data)
         guard releases.count <= 50 else { throw PeerError.invalid("Oversized GitHub release list") }

@@ -11,9 +11,11 @@ final class DiagnosticsDelegate: NSObject, NSApplicationDelegate {
     @NSApplicationDelegateAdaptor(DiagnosticsDelegate.self) private var delegate
     @State private var store: AppStore
     init() {
-        guard let index = CommandLine.arguments.firstIndex(of: "--root"), CommandLine.arguments.indices.contains(index + 1) else { fatalError("Explicit --root required") }
+        guard let index = CommandLine.arguments.firstIndex(of: "--root"), CommandLine.arguments.indices.contains(index + 1) else { exit(0) }
         let root = URL(fileURLWithPath: CommandLine.arguments[index + 1]).standardizedFileURL
-        guard root.path.contains("/.local/"), root.resolvingSymlinksInPath().path == root.path else { fatalError("Use a private unlinked .local directory") }
+        guard root.path.contains("/.local/"), root.resolvingSymlinksInPath().path == root.path else { exit(0) }
+        setenv("UPOVI_LOG_DIRECTORY", root.appending(path: "Logs").path, 1)
+        UpoviLog.app.info("event=diagnostics.fixtureStarted")
         let preferences = AppPreferences(url: root.appending(path: "settings.plist"), migrateUserDefaults: false)
         preferences.set(false, forKey: GlobalP2PSettings.key); preferences.set(false, forKey: "automaticChecksV1"); preferences.set(false, forKey: "notificationsV1")
         let app = InstalledApp(name: "Private diagnostic fixture", bundleID: "app.synthetic.diagnostics", version: "1.0", path: root.appending(path: "Secret.app").path)
@@ -22,7 +24,13 @@ final class DiagnosticsDelegate: NSObject, NSApplicationDelegate {
         value.apps = [app]; value.selection = app.id; value.monitoringTask = Task { }
         value.sourceResults = [app.id: .init(appID: app.id, candidates: [], note: "TOP_SECRET_RAW_ERROR https://private.invalid/?token=TOP_SECRET_TOKEN", status: .failed,
                                            checks: [.init(.github, .failed, error: HTTPStatusError(statusCode: 429))])]
-        value.recordDiagnostic(.preparation, appID: app.id, error: PeerError.invalid("TOP_SECRET_RAW_ERROR"))
+        let failure = NSError(domain: NSCocoaErrorDomain, code: 513,
+            userInfo: [NSUnderlyingErrorKey: NSError(domain: NSPOSIXErrorDomain, code: 1),
+                       NSLocalizedDescriptionKey: "Synthetic permission failure token=TOP_SECRET_TOKEN /Users/PRIVATE_OWNER/Secret.app"])
+        let operation = UpoviLogOperation("fixture.update", category: .installation, details: UpoviDiagnosticContext.application(app))
+        operation.fail(failure)
+        value.recordDiagnostic(.preparation, appID: app.id, error: failure)
+        value.diagnosticsPresentation = value.diagnosticSnapshot()
         _store = State(initialValue: value)
     }
     var body: some Scene {

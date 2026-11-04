@@ -38,9 +38,19 @@ public actor SourceHTTPClient {
     }
 
     /// Manual refresh bypasses freshness, but retains validators and server-directed cooldowns.
-    public func revalidate() { generation &+= 1 }
+    public func revalidate() { generation &+= 1; UpoviLog.network.info("event=metadata.revalidate generation=\(generation)") }
 
     public func data(from url: URL, limit: Int) async throws -> Data {
+        let operation = UpoviLogOperation("metadata.request", category: .network, details: UpoviDiagnosticContext.source(url) + " limit=\(limit)")
+        return try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do {
+                let data = try await loadData(from: url, limit: limit)
+                operation.finish(details: "bytes=\(data.count)")
+                return data
+            } catch { operation.fail(error); throw error }
+        }
+    }
+    private func loadData(from url: URL, limit: Int) async throws -> Data {
         guard url.scheme == "https", url.user == nil, url.password == nil, let host = url.host, limit > 0 else {
             throw URLError(.unsupportedURL)
         }
@@ -57,9 +67,10 @@ public actor SourceHTTPClient {
            clock >= entry.validatedAt,
            clock.timeIntervalSince(entry.validatedAt) < Self.freshness(entry.response.headers) {
             guard entry.response.data.count <= limit else { throw URLError(.dataLengthExceedsMaximum) }
+            UpoviLog.network.info("event=metadata.cacheHit generation=\(generation) bytes=\(entry.response.data.count)")
             return entry.response.data
         }
-        if let value = cooldowns[origin] ?? cooldowns[url.absoluteString] { throw value.error }
+        if let value = cooldowns[origin] ?? cooldowns[url.absoluteString] { UpoviLog.network.warning("event=metadata.cooldown until=\(value.until.ISO8601Format()) \(UpoviDiagnosticContext.errorSummary(value.error))"); throw value.error }
         let requestGeneration = generation
         let previous = entries[url]
         var headers: [String: String] = ["Cache-Control": "no-cache"]
@@ -68,7 +79,9 @@ public actor SourceHTTPClient {
         if host.lowercased() == "api.github.com" { headers["Accept"] = "application/vnd.github+json" }
         for attempt in 0..<3 {
             do {
+                UpoviLog.network.info("event=metadata.attempt attempt=\(attempt + 1) conditional=\(headers["If-None-Match"] != nil || headers["If-Modified-Since"] != nil)")
                 let response = try await transport(url, limit, headers)
+                UpoviLog.network.info("event=metadata.response status=\(response.status) bytes=\(response.data.count)")
                 try Task.checkCancellation()
                 let effective: HTTPMetadataResponse
                 if response.status == 304 {
@@ -109,6 +122,7 @@ public actor SourceHTTPClient {
                     }
                 }
                 guard attempt < 2, Self.transient(error) else { throw error }
+                UpoviLog.network.warning("event=metadata.retry attempt=\(attempt + 1) \(UpoviDiagnosticContext.errorSummary(error))")
                 try await sleep(.seconds(attempt + 1))
             }
         }
@@ -158,7 +172,7 @@ public actor SourceHTTPClient {
                   (attrs[.ownerAccountID] as? NSNumber)?.uint32Value == getuid() else { return }
             try data.write(to: file, options: .atomic)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
-        } catch { /* A missing cache never relaxes the in-memory cooldown. */ }
+        } catch { UpoviLog.storage.warning("event=metadata.cooldownSaveFailed \(UpoviDiagnosticContext.errorSummary(error))") }
     }
 
     private static func transient(_ error: any Error) -> Bool {

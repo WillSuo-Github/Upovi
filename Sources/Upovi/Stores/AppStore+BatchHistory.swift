@@ -10,6 +10,7 @@ extension AppStore {
     @discardableResult
     func saveBulkPhase(_ id: String, phase: BulkUpdateRecord.Phase, detail: String) -> Bool {
         guard let index = batchHistory.firstIndex(where: { $0.id == bulkRecordID }) else { return false }
+        UpoviLog.installation.info("event=batch.phase batch=\(batchHistory[index].id) app=\(UpoviDiagnosticContext.applicationID(id)) phase=\(phase.rawValue)")
         batchHistory[index].update(id, phase: phase, detail: detail)
         let saved = saveBatchHistory()
         if !saved { bulkPersistenceFailed = true; bulkStopRequested = true }

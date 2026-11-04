@@ -90,6 +90,7 @@ extension AppStore {
     }
 
     func startAllUpdates() {
+        UpoviLog.installation.info("event=batch.startRequested applications=\(bulkItems.count) tools=\(toolBatchItems.count) concurrency=\(bulkConcurrency)")
         guard canStartBulkUpdates else { return }
         guard bulkItems.allSatisfy({ releaseChannel(for: $0.application).permits($0.candidate) }) else {
             errorMessage = String(localized: "更新渠道已变化，请重新检查后再安装。"); return
@@ -258,6 +259,7 @@ extension AppStore {
 
     /// Stops queued applications and cancels running downloads; installations already committing finish.
     func stopAllUpdates() {
+        UpoviLog.installation.warning("event=batch.stopRequested active=\(bulkActiveIDs.count)")
         guard bulkUpdating else { return }
         bulkStopRequested = true
         for cancel in bulkCancellers.values { cancel() }
