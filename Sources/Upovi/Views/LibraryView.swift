@@ -57,7 +57,7 @@ struct AppTable: View {
 
     var body: some View {
         ApplicationTable(
-            rows: store.visibleApps.map { .init(app: $0, status: store.status(for: $0)) },
+            rows: store.visibleApps.map { .init(app: $0, status: store.status(for: $0), installedVersion: store.displayedInstalledVersion(for: $0)) },
             selection: $store.selection,
             reveal: { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: $0.path)]) },
             toggleIgnored: { store.toggleIgnored($0) }

@@ -32,7 +32,7 @@ final class AdministratorInstallationService {
 
     func preparePackage(_ candidate: UpdateCandidate, app: InstalledApp,
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedInstallerPackage {
-        guard !candidate.isCommunity, !app.isAppStore, let descriptor = candidate.download,
+        guard !candidate.isCommunity, candidate.requiresRevalidation != true, app.bundleID != "com.valvesoftware.steam", !app.isAppStore, let descriptor = candidate.download,
               descriptor.hasIntegrityProof, descriptor.url.pathExtension.lowercased() == "pkg" else { throw PeerError.invalid("No verified package download") }
         try await Task.detached { try AdministratorInstallationSpace.validate(application: URL(fileURLWithPath: app.path)) }.value
         let workspace = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appending(path: "Upovi-package-\(UUID().uuidString)")

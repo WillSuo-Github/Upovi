@@ -118,3 +118,32 @@ private actor MetadataBlocker {
     func waitForEntry() async { if gate != nil { return }; await withCheckedContinuation { observer = $0 } }
     func release() { gate?.resume(); gate = nil }
 }
+
+extension SourceHTTPClientTests {
+    func testGitHubCooldownSurvivesRestartWithoutAnotherAPIRequest() async throws {
+        let file = FileManager.default.temporaryDirectory.appending(path: "Upovi-cooldown-\(UUID().uuidString)/state.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
+        let deadline = Date().addingTimeInterval(300)
+        let first = SourceHTTPClient(cooldownURL: file, transport: { _, _, _ in throw HTTPStatusError(statusCode: 403, retryAt: deadline, rateLimited: true) })
+        do { _ = try await first.data(from: url, limit: 100); XCTFail("Expected throttling") } catch { }
+        let restarted = SourceHTTPClient(cooldownURL: file, transport: { _, _, _ in XCTFail("Restart must not bypass the server cooldown"); return .init(data: Data(), status: 200, headers: [:]) })
+        await restarted.revalidate()
+        do { _ = try await restarted.data(from: url, limit: 100); XCTFail("Expected persisted cooldown") }
+        catch { XCTAssertTrue((error as? HTTPStatusError)?.rateLimited == true) }
+        let recovered = SourceHTTPClient(cooldownURL: file, now: { deadline.addingTimeInterval(1) }, transport: { _, _, _ in .init(data: Data("recovered".utf8), status: 200, headers: [:]) })
+        let value = try await recovered.data(from: url, limit: 100)
+        XCTAssertEqual(value, Data("recovered".utf8))
+    }
+    func testSuccessfulLastQuotaResponseIsReusableButStopsAdditionalAPIRequests() async throws {
+        let deadline = Date().addingTimeInterval(300)
+        let replies = MetadataReplies([.success(.init(data: Data("last".utf8), status: 200,
+            headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": String(Int(deadline.timeIntervalSince1970))]))])
+        let client = SourceHTTPClient(transport: { try await replies.next($0, $1, $2) })
+        _ = try await client.data(from: url, limit: 100)
+        let cached = try await client.data(from: url, limit: 100)
+        XCTAssertEqual(cached, Data("last".utf8))
+        do { _ = try await client.data(from: URL(string: "https://api.github.com/repos/other/app/releases/latest")!, limit: 100); XCTFail("Quota is exhausted") }
+        catch { XCTAssertTrue((error as? HTTPStatusError)?.rateLimited == true) }
+        let count = await replies.requests.count; XCTAssertEqual(count, 1)
+    }
+}

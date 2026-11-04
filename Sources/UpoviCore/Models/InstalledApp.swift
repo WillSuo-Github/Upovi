@@ -39,6 +39,8 @@ public struct UpdateCandidate: Identifiable, Hashable, Codable, Sendable {
     public var appStoreID: UInt64? = nil
     public var storeReceiptRecovery: StoreReceiptRecovery? = nil
     public var releaseChannel: ReleaseChannel? = nil
+    public var requiresRevalidation: Bool? = nil
+    public var sourceIssue: DiagnosticIssue? = nil
 
     public init(version: String, build: String = "", source: String, isCommunity: Bool, url: URL?, usesBuildVersion: Bool = false,
                 observedAt: Date = Date(), peerID: String? = nil, expiresAt: Date? = nil, download: DownloadDescriptor? = nil, releaseNotes: String? = nil, appStoreID: UInt64? = nil,

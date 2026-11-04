@@ -1,7 +1,7 @@
 // Isolated fresh-start acceptance using the production scanner, sources and views.
 import AppKit
 import SwiftUI
-import UpoviCore
+@testable import UpoviCore
 
 final class StartupDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -34,6 +34,7 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
         preferences.set(false, forKey: "automaticChecksV1")
         preferences.set(false, forKey: "notificationsV1")
         let coordinator = DownloadCoordinator(storageURL: root.appending(path: "downloads.json"))
+        let sourcePreview = CommandLine.arguments.contains("--source-check-preview")
         let preview = CommandLine.arguments.contains("--quit-preview")
         let toolsPreview = CommandLine.arguments.contains("--tools-preview")
         let completionPreview = CommandLine.arguments.contains("--completion-preview")
@@ -51,12 +52,21 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
         let store = AppStore(preferences: preferences,
             installer: UpdateInstaller(journalDirectory: root.appending(path: "Journal"), downloads: coordinator),
             scanApplications: { roots in
+                if sourcePreview {
+                    return ["/Applications/Steam.app", "/Applications/Audiout.app", "/Applications/WowUp-CF.app"].compactMap { AppScanner.read(URL(fileURLWithPath: $0)) }
+                }
                 if completionPreview { return completionApps }
                 if toolsPreview { return [] }
                 if preview { return fixtures }
                 if let selected { return AppScanner.read(URL(fileURLWithPath: selected)).map { [$0] } ?? [] }
                 return await Task.detached { AppScanner.scan(roots: roots) }.value
             }, checkApplication: { app, _ in
+                if sourcePreview {
+                    return await UpdateChecker.check(app, fetch: { url, limit in
+                        if url.host == "api.github.com" { throw HTTPStatusError(statusCode: 403, retryAt: Date().addingTimeInterval(1800), rateLimited: true) }
+                        return try await UpdateChecker.fetch(url, limit: limit)
+                    }, catalog: { _ in nil })
+                }
                 if completionPreview {
                     return .init(appID: app.id, candidates: [.init(version: "2", source: "Offline fixture", isCommunity: false, url: nil, appStoreID: app.isAppStore ? 12345 : nil)], note: "Offline completion fixture", status: .updates)
                 }
@@ -75,7 +85,7 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
                 if app.name == "zoom.us" && !allSucceeded { throw InstallationSpaceError(required: 6_000_000_000, available: 5_000_000_000) }
             }
             store.makeInstallationAuthorizationBatch = {
-                InstallationAuthorizationBatch { _, _ in throw PeerError.invalid("Offline fixture must never authorize") }
+                InstallationAuthorizationBatch(start: { _ in throw PeerError.invalid("Offline fixture must never authorize") })
             }
         } else if toolsPreview {
             var environment = ProcessInfo.processInfo.environment
@@ -96,9 +106,9 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
             store.runningUpdateApplications = { $0 }
             store.quitUpdateApplication = { _ in }
             store.makeInstallationAuthorizationBatch = {
-                InstallationAuthorizationBatch { command, _ in try await ProcessCommand().run("/bin/sh", ["-c", command]) }
+                InstallationAuthorizationBatch(start: { _ in })
             }
-            store.installStoreUpdate = { _, _, authorization in _ = try await authorization.run("printf installed", nil) }
+            store.installStoreUpdate = { _, _, _ in }
         } else if selected != nil {
             store.installStoreUpdate = { candidate, app, authorization in
                 try await AppStoreInstallationService(directory: root.appending(path: "StoreAttempts")).perform(candidate, app: app, authorize: authorization)
@@ -127,6 +137,13 @@ final class StartupDelegate: NSObject, NSApplicationDelegate {
     private func record() {
         let result: [String: Any] = ["applications": store.apps.count, "sourceResults": store.sourceResults.count,
                                    "completedChecks": store.completedChecks, "checked": store.lastChecked != nil,
+                                   "incompleteChecks": store.incompleteCheckCount,
+                                   "sourceCheckResults": store.apps.map { app -> [String: Any] in
+                                       let result = store.sourceResults[app.id]
+                                       return ["app": app.name, "bootstrapVersion": app.version, "installedVersion": result?.installedVersion ?? app.version,
+                                               "status": result?.status.rawValue ?? "unchecked", "note": result?.note ?? "",
+                                               "candidates": result?.candidates.map { ["version": $0.version, "source": $0.source, "hasDownload": $0.download != nil, "requiresRevalidation": $0.requiresRevalidation == true] } ?? []]
+                                   },
                                    "periodicChecksEnabled": store.automaticChecks, "p2pEnabled": store.networkEnabled,
                                    "quitConfirmation": store.bulkQuitPresented, "succeeded": store.bulkCompletedCount, "failed": store.bulkFailedCount,
                                    "outcomes": store.bulkOutcomes.values.map { ["app": $0.item.application.name, "status": $0.status.rawValue, "detail": $0.detail] },

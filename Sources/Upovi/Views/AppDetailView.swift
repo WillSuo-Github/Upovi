@@ -76,7 +76,7 @@ struct AppDetailView: View {
                 }
             case .current:
                 statusCard(symbol: "checkmark.circle.fill", tone: .success, title: String(localized: "来源未报告新版本"),
-                           message: store.lastChecked.map { String(localized: "最近一次检查（\($0.relativeDescription)）没有发现更高版本。") } ?? "") { EmptyView() }
+                           message: app.bundleID == "com.valvesoftware.steam" ? result?.note ?? "" : store.lastChecked.map { String(localized: "最近一次检查（\($0.relativeDescription)）没有发现更高版本。") } ?? "") { EmptyView() }
             case .failed, .partial:
                 statusCard(symbol: "exclamationmark.triangle.fill", tone: .warning, title: String(localized: "检测未完成"),
                            message: String(localized: "部分或全部来源没有返回有效结果，原因见下方“检测来源”。可以稍后重新检查，或在帮助菜单导出诊断报告。")) {
@@ -196,11 +196,11 @@ private struct UpdateCandidateCard: View {
         let muted = skipped || deferred != nil
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text(muted ? "已跳过或推迟" : "可更新").font(.caption.weight(.semibold)).foregroundStyle(muted ? Color.secondary : Theme.accent)
+                Text(candidate.requiresRevalidation == true ? "待重新确认" : muted ? "已跳过或推迟" : "可更新").font(.caption.weight(.semibold)).foregroundStyle(muted ? Color.secondary : Theme.accent)
                 Spacer()
                 StatusBadge(text: candidate.displaySource)
             }
-            VersionTransition(from: app.version, to: candidate.version, tone: muted ? .neutral : .accent, font: Theme.display(17, weight: .medium))
+            VersionTransition(from: store.displayedInstalledVersion(for: app), to: candidate.version, tone: muted ? .neutral : .accent, font: Theme.display(17, weight: .medium))
             if let deferred { Text("稍后提醒至 \(deferred.display())").font(.caption).foregroundStyle(.secondary) }
             if let text = candidate.releaseNotes, !text.isEmpty {
                 DisclosureGroup("更新说明", isExpanded: $notes) {

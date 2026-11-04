@@ -38,7 +38,9 @@ public struct UpdateAssessment: Sendable {
         let sources = usableSource ? sourceResult?.candidates ?? [] : []
         sourceUpdates = sources.filter { candidate in
             guard !candidate.isCommunity else { return false }
-            return candidate.isNewer(than: app)
+            let comparison = InstalledApp(name: app.name, bundleID: app.bundleID, version: sourceResult?.installedVersion ?? app.version,
+                build: app.build, path: app.path, teamID: app.teamID, isAppStore: app.isAppStore)
+            return candidate.isNewer(than: comparison)
         }.sorted { VersionOrder.compare($0.version, $1.version) == .orderedDescending }
         let liveReports = reports.filter {
             $0.isCommunity && ($0.expiresAt ?? $0.observedAt.addingTimeInterval(86400)) > now &&
@@ -70,7 +72,7 @@ public struct UpdateAssessment: Sendable {
         apps.compactMap { app in
             guard !ignored.contains(app.bundleID) else { return nil }
             let eligible = UpdateAssessment(app: app, sourceResult: results[app.id]).sourceUpdates.filter {
-                !seen.contains(SourceUpdateNotice.key(app: app, candidate: $0))
+                $0.requiresRevalidation != true && !seen.contains(SourceUpdateNotice.key(app: app, candidate: $0))
             }
             return eligible.isEmpty ? nil : SourceUpdateNotice(app: app, candidates: eligible)
         }

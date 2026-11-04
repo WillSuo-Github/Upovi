@@ -62,6 +62,10 @@ extension AppStore {
         sourceResults[app.id] = nil
     }
     func prepareInstallation(_ candidate: UpdateCandidate, app: InstalledApp) {
+        guard candidate.requiresRevalidation != true, app.bundleID != "com.valvesoftware.steam" else {
+            errorMessage = String(localized: "此版本需要重新确认或使用应用自身更新器，未开始下载。")
+            return
+        }
         guard !installationBusy, !refreshing, !checking, !scanning else { return }
         guard releaseChannel(for: app).permits(candidate) else { errorMessage = String(localized: "更新渠道已变化，请重新检查后再安装。"); return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新，再安装其他应用。"); return }

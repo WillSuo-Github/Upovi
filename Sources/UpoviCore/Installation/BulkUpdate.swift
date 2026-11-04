@@ -30,6 +30,8 @@ public enum BulkUpdatePlan {
     }
 
     private static func manualReason(app: InstalledApp, candidate: UpdateCandidate) -> String? {
+        if candidate.requiresRevalidation == true { return String(localized: "这是上次确认的更新，当前来源未确认；请重新检查后安装。") }
+        if app.bundleID == "com.valvesoftware.steam" { return String(localized: "Steam 客户端更新须在 Steam 内完成，请使用 Steam 菜单检查客户端更新。") }
         if app.isAppStore {
             guard let id = candidate.appStoreID else { return String(localized: "商店更新尚未取得可核对的应用标识") }
             do { try AppStoreUpdatePlan(application: app, storeID: id, version: candidate.version, userID: 501).validate(); return nil }

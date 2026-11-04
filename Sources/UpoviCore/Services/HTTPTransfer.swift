@@ -1,7 +1,7 @@
 import Foundation
 import Darwin
 
-public struct HTTPStatusError: LocalizedError, Sendable {
+public struct HTTPStatusError: Codable, LocalizedError, Sendable {
     public let statusCode: Int
     public let retryAt: Date?
     public let rateLimited: Bool
@@ -199,7 +199,7 @@ private final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Senda
             guard let http = response as? HTTPURLResponse, response.url?.scheme == "https" else { throw URLError(.badServerResponse) }
             if http.statusCode == 416 && offset > 0 { throw DownloadRestart.required }
             responseStatus = http.statusCode
-            for key in ["ETag", "Last-Modified", "Cache-Control", "Vary"] {
+            for key in ["ETag", "Last-Modified", "Cache-Control", "Vary", "X-RateLimit-Remaining", "X-RateLimit-Reset"] {
                 if let value = http.value(forHTTPHeaderField: key) { responseHeaders[key.lowercased()] = value }
             }
             if metadataHeaders != nil, http.statusCode == 304 {

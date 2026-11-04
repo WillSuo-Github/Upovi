@@ -24,16 +24,19 @@ struct UpdatesView: View {
         // Installed batch rows leave the list; only running, queued and failed ones stay.
         let pending = batch.filter { store.matchesSearch($0.application) && store.transfers[$0.id]?.phase != .installed }
         let tools = store.visibleToolUpdates.filter { store.matchesSearch($0) }
+        let issues = store.incompleteCheckApplications.filter { store.matchesSearch($0) }
         let entries = UpdateQueueEntry.ordered(applications: pending + installable, tools: tools)
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 UpdatesOverview(store: store, total: plan.count + store.toolUpdateCount,
                                 installable: plan.filter(\.canInstall).count + store.toolUpdateCount)
                     .entrance(0)
+                if store.incompleteCheckCount > 0 { checkIssuesSummary }
                 if !entries.isEmpty { updateList(entries, batchIDs: batchIDs).entrance(1) }
                 if !manual.isEmpty {
                     group(String(localized: "需通过官方渠道更新"), items: manual).entrance(2)
                 }
+                if !issues.isEmpty { checkIssuesList(issues) }
                 ForEach(store.availableToolSources.filter { store.toolCheckErrors[$0] != nil }) { source in
                     Label(source.title + ": " + (store.toolCheckErrors[source] ?? ""), systemImage: "exclamationmark.triangle")
                         .font(.caption).foregroundStyle(.orange).textSelection(.enabled)
@@ -83,6 +86,43 @@ struct UpdatesView: View {
         }
     }
 
+    private var checkIssuesSummary: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            Text("\(store.incompleteCheckCount) 个应用未能完整检查，更新结果可能不全。")
+                .font(.callout).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button("查看检测异常") { store.section = .all; store.sourceFilter = .incomplete }
+                .buttonStyle(PillButtonStyle()).fixedSize()
+        }
+        .padding(16).modifier(UpdatesSurface())
+        .accessibilityIdentifier("updates-check-issues-summary")
+    }
+
+    private func checkIssuesList(_ apps: [InstalledApp]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            UpdatesSectionHeader(title: String(localized: "检测未完成"), count: apps.count)
+            VStack(spacing: 0) {
+                ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
+                    if index > 0 { UpdateRow.separator }
+                    Button { store.show(app) } label: {
+                        HStack(alignment: .top, spacing: 14) {
+                            AppIcon(path: app.path, size: 36)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(app.name).font(.callout.weight(.semibold)).foregroundStyle(.primary)
+                                Text(store.sourceResults[app.id]?.note ?? String(localized: "检测未完成"))
+                                    .font(.caption).foregroundStyle(.secondary).lineLimit(3)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            Spacer(minLength: 8)
+                            Image(systemName: "chevron.forward").font(.caption).foregroundStyle(.tertiary)
+                        }.padding(16).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityIdentifier("update-check-issue-" + app.bundleID)
+                }
+            }.modifier(UpdatesSurface())
+        }
+    }
+
     private func postponedSection(_ apps: [InstalledApp]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Button { withAnimation(.snappy) { showPostponed.toggle() } } label: {
@@ -103,7 +143,7 @@ struct UpdatesView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(app.name).font(.system(size: 13, weight: .medium))
                                     if let candidate = store.fullAssessment(for: app).sourceUpdates.first {
-                                        VersionTransition(from: app.version, to: candidate.version, tone: .neutral, font: .caption)
+                                        VersionTransition(from: store.displayedInstalledVersion(for: app), to: candidate.version, tone: .neutral, font: .caption)
                                     }
                                 }
                                 Spacer()
@@ -162,6 +202,9 @@ struct UpdateRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(app.name).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                        if candidate.requiresRevalidation == true {
+                            Text("待重新确认").font(.caption2).foregroundStyle(.orange)
+                        }
                         if lead != nil {
                             Image(systemName: "person.2.fill").font(.system(size: 10)).foregroundStyle(.tertiary)
                                 .help(String(localized: "相同版本也出现在 P2P 社区报告中"))
@@ -176,7 +219,7 @@ struct UpdateRow: View {
                         } else {
                             // Installed rows keep their version line so the result stays readable.
                             HStack(spacing: 6) {
-                                VersionTransition(from: app.version, to: candidate.version,
+                                VersionTransition(from: store.displayedInstalledVersion(for: app), to: candidate.version,
                                                   tone: transfer == nil ? .accent : .success, font: .system(size: 12))
                                 Text(verbatim: "·").foregroundStyle(.tertiary)
                                 if transfer != nil {

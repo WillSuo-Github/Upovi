@@ -1,7 +1,7 @@
 import Foundation
 
 /// Export only fixed classifications and numeric codes, never an error's message or userInfo.
-public struct DiagnosticIssue: Codable, Sendable, Equatable {
+public struct DiagnosticIssue: Codable, Sendable, Equatable, Hashable {
     public enum Kind: String, Codable, Sendable {
         case cancelled, offline, timeout, tls, connection, http, invalidMetadata, validationRejected, operationFailed, unknown
     }
@@ -38,7 +38,7 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable {
 
 public struct SourceCheckDetail: Codable, Sendable, Equatable {
     public enum Source: String, Codable, Sendable {
-        case appcast, homebrew, github, electron, manual, appStore
+        case appcast, homebrew, github, githubPage, electron, steam, manual, appStore
         // Preserve decoding of diagnostics exported by earlier builds. No new checks emit this source.
         case appStoreNative
     }
@@ -46,6 +46,9 @@ public struct SourceCheckDetail: Codable, Sendable, Equatable {
     public let source: Source
     public let outcome: Outcome
     public let issue: DiagnosticIssue?
+    public init(_ source: Source, _ outcome: Outcome, issue: DiagnosticIssue) {
+        self.source = source; self.outcome = outcome; self.issue = issue
+    }
     public init(_ source: Source, _ outcome: Outcome, error: (any Error)? = nil) {
         self.source = source; self.outcome = outcome; issue = error.map(DiagnosticIssue.init)
     }

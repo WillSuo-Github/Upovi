@@ -21,7 +21,7 @@ struct ApplicationTableRow: View {
                 }
                 .help("\(row.app.name)\n\(row.app.bundleID)")
                 .cellWidth(widths[0])
-                Text(row.app.version).font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+                Text(row.installedVersion ?? row.app.version).font(.callout.monospacedDigit()).foregroundStyle(.secondary)
                     .lineLimit(1).help("Build: \(row.app.build)").cellWidth(widths[1])
                 Group {
                     if let version = row.status.targetVersion {
@@ -49,7 +49,7 @@ struct ApplicationTableRow: View {
             Button("在 Finder 中显示", action: reveal)
             Button(row.status == .ignored ? "恢复更新提醒" : "忽略更新提醒", action: toggleIgnored)
         }
-        .accessibilityLabel("\(row.app.name), \(row.app.bundleID), 当前版本 \(row.app.version), \(row.status.label)")
+        .accessibilityLabel("\(row.app.name), \(row.app.bundleID), 当前版本 \(row.installedVersion ?? row.app.version), \(row.status.label)")
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier("application-row-\(row.app.id)")
     }

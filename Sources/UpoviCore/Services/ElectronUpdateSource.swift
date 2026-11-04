@@ -130,6 +130,11 @@ public enum ElectronUpdateSource: Sendable, Equatable {
         case .github(let repo):
             let release = try await GitHubRelease.latest(repository: repo, channel: channel, fetch: fetch)
             prerelease = release.isPrerelease
+            if let issue = release.rateLimitIssue {
+                var candidate = UpdateCandidate(version: release.version, source: "Electron · GitHub", isCommunity: false, url: release.page)
+                candidate.sourceIssue = issue
+                return candidate
+            }
             let manifests = release.assets.filter { $0.name.hasSuffix("-mac.yml") }
             let channelName: String = ["alpha", "beta", "preview", "rc"].first { release.version.lowercased().contains("-" + $0) } ?? "beta"
             let preferred = prerelease ? "\(channelName)-mac.yml" : "latest-mac.yml"

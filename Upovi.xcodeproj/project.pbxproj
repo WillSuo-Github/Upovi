@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A110AA11BB22CC33DD440005 /* SourceResultCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A110AA11BB22CC33DD440006; };
+		A110AA11BB22CC33DD440003 /* SteamUpdateSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A110AA11BB22CC33DD440004; };
 		A110AA11BB22CC33DD440001 /* AdministratorInstallSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A110AA11BB22CC33DD440002; };
 		01D4E068CB1F1CDDCBCBCCFB /* AppStore+BulkUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3566AAB106618C9412F4774D /* AppStore+BulkUpdates.swift */; };
 		0273607D380206FA93B47328 /* ApplicationRunningLocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F352C307B0CB0D4877BEBA /* ApplicationRunningLocationTests.swift */; };
@@ -310,6 +312,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A110AA11BB22CC33DD440006 /* SourceResultCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceResultCache.swift; sourceTree = "<group>"; };
+		A110AA11BB22CC33DD440004 /* SteamUpdateSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SteamUpdateSource.swift; sourceTree = "<group>"; };
 		A110AA11BB22CC33DD440002 /* AdministratorInstallSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorInstallSession.swift; sourceTree = "<group>"; };
 		012B5E07EBC2A310572AA9C3 /* ToolSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSource.swift; sourceTree = "<group>"; };
 		0242521892B617E903F91134 /* DownloadTasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTasksView.swift; sourceTree = "<group>"; };
@@ -878,6 +882,8 @@
 				FAA59832AE0D2A0C81ED8EFB /* ScanLocations.swift */,
 				FED7A35CFC832D8643A5BCEB /* SettingsFile.swift */,
 				D1D569E7071CCB46EAF130AC /* SourceHTTPClient.swift */,
+				A110AA11BB22CC33DD440006 /* SourceResultCache.swift */,
+				A110AA11BB22CC33DD440004 /* SteamUpdateSource.swift */,
 				3E49336380FDBE1D8D5BBD16 /* SourceVersion.swift */,
 				012B5E07EBC2A310572AA9C3 /* ToolSource.swift */,
 				C8D9A222DD2926CA11F04568 /* ToolSourceService.swift */,
@@ -1394,6 +1400,8 @@
 				ED85A92A0C09EA7C7A7C5949 /* ScanLocations.swift in Sources */,
 				5B272A3F2264A5CB0928A126 /* SettingsFile.swift in Sources */,
 				2118B6A5DEE200FE097DA072 /* SourceHTTPClient.swift in Sources */,
+				A110AA11BB22CC33DD440005 /* SourceResultCache.swift in Sources */,
+				A110AA11BB22CC33DD440003 /* SteamUpdateSource.swift in Sources */,
 				045FEC3F954643CF01A579D0 /* SourceVersion.swift in Sources */,
 				F632E89E74B5D8A52CEB7B14 /* StoreReceiptRecovery.swift in Sources */,
 				3AAA6CEDE82130366192CAC8 /* ToolSource.swift in Sources */,

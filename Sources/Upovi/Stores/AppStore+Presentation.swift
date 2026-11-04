@@ -70,7 +70,9 @@ extension AppStore {
     func status(for app: InstalledApp) -> AppStatus {
         if ignored.contains(app.bundleID) { return .ignored }
         let assessment = assessment(for: app)
-        if let candidate = assessment.sourceUpdates.first { return .update(candidate.version) }
+        if let candidate = assessment.sourceUpdates.first {
+            return candidate.requiresRevalidation == true ? .partial : .update(candidate.version)
+        }
         if fullAssessment(for: app).hasUpdate { return .postponed }
         if let lead = assessment.communityLeads.first { return .community(lead.report.version) }
         guard let result = sourceResults[app.id] else { return .unchecked }
@@ -84,6 +86,7 @@ extension AppStore {
     }
 
     func action(for candidate: UpdateCandidate, app: InstalledApp) -> UpdateAction {
+        if candidate.requiresRevalidation == true || app.bundleID == "com.valvesoftware.steam" { return .official }
         if app.isAppStore, candidate.appStoreID != nil { return .store }
         if candidate.download?.canVerify(for: app) == true, ApplicationSourceCatalog.replacementTeam(for: app) != nil, app.bundleID != "app.upovi.Upovi" { return .verifiedDownload }
         return .official
@@ -107,8 +110,15 @@ extension AppStore {
             !assessment(for: $0).hasUpdate && fullAssessment(for: $0).hasUpdate }
     }
 
-    var incompleteCheckCount: Int {
-        sourceResults.values.filter { $0.status == .failed || $0.status == .partial }.count
+    var incompleteCheckApplications: [InstalledApp] {
+        apps.filter { app in
+            guard let result = sourceResults[app.id] else { return false }
+            return result.status == .failed || result.status == .partial
+        }
+    }
+    var incompleteCheckCount: Int { incompleteCheckApplications.count }
+    func displayedInstalledVersion(for app: InstalledApp) -> String {
+        sourceResults[app.id]?.installedVersion ?? app.version
     }
 
     func matchesSearch(_ app: InstalledApp) -> Bool {

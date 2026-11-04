@@ -47,7 +47,7 @@ struct UpdatesOverview: View {
 }
 
 /// Everything the header shows, derived from store state in one place.
-private struct UpdatesStatus {
+struct UpdatesStatus {
     enum Glyph: Equatable {
         case spinner
         case progress(Double, Tone)
@@ -104,10 +104,11 @@ private struct UpdatesStatus {
             title = String(localized: "正在检查更新…")
             detail = String(localized: "正在核对已启用的更新来源")
         } else if total > 0 {
-            glyph = .symbol("arrow.down.circle.fill", .accent)
+            glyph = store.incompleteCheckCount > 0 ? .symbol("exclamationmark.triangle.fill", .warning) : .symbol("arrow.down.circle.fill", .accent)
             title = String(localized: "\(total) 项可用更新")
             var parts = [String(localized: "\(installable) 项可在 Upovi 中更新")]
             if total > installable { parts.append(String(localized: "\(total - installable) 个需官方渠道")) }
+            if store.incompleteCheckCount > 0 { parts.append(String(localized: "\(store.incompleteCheckCount) 个应用未能完整检查")) }
             if let date = store.lastChecked { parts.append(String(localized: "上次检查 \(date.relativeDescription)")) }
             detail = parts.joined(separator: " · ")
         } else if let date = store.lastChecked {
@@ -199,6 +200,9 @@ private struct UpdatesOverviewActions: View {
             } else if store.scanning {
                 EmptyView()
             } else if total > 0 {
+                if store.incompleteCheckCount > 0 {
+                    Button("查看检测异常") { store.section = .all; store.sourceFilter = .incomplete }
+                }
                 Button("全部更新…") { store.reviewAllUpdates() }
                     .buttonStyle(PillButtonStyle(prominent: true)).disabled(store.operationBusy)
                     .help("下载并安装所有可验证的来源更新；需官方更新的应用将单独列出")

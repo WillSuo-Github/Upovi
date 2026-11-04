@@ -4,7 +4,7 @@ public enum SourceStatus: String, Codable, Sendable {
     case updates, current, unsupported, partial, failed, appStore
 }
 
-public struct SourceOverride: Codable, Sendable {
+public struct SourceOverride: Codable, Sendable, Equatable {
     public var appcast: URL?
     public var githubRepository: String?
     public var releaseChannel: ReleaseChannel?

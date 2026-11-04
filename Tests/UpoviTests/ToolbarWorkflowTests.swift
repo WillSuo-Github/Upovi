@@ -292,3 +292,29 @@ extension ToolbarWorkflowTests {
         XCTAssertNil(store.installationTask); XCTAssertNil(store.bulkTask)
     }
 }
+
+extension ToolbarWorkflowTests {
+    func testSourceFailuresStayVisibleAlongsideAvailableUpdatesAndSurviveRestart() async throws {
+        let prefs = try preferences(), installed = app(1)
+        let fresh = SourceResult(appID: installed.id, candidates: [.init(version: "2.0", source: "GitHub Release", isCommunity: false,
+            url: URL(string: "https://github.com/a/b/releases/tag/v2.0"), download: .init(url: URL(string: "https://github.com/a/b/releases/download/v2/App.zip")!, sha256: String(repeating: "a", count: 64)))], note: "Confirmed", status: .updates, checks: [.init(.github, .checked)])
+        let store = AppStore(preferences: prefs, scanApplications: { _ in [installed] }, revalidateSources: {}, checkApplication: { _, _ in fresh })
+        store.refreshAll(); await store.checkTask?.value
+        XCTAssertEqual(store.updateCount, 1)
+        let failed = SourceResult(appID: installed.id, candidates: [], note: "GitHub API rate limited", status: .failed,
+            checks: [.init(.github, .failed, error: HTTPStatusError(statusCode: 403, rateLimited: true))])
+        let restarted = AppStore(preferences: prefs, scanApplications: { _ in [installed] }, revalidateSources: {}, checkApplication: { _, _ in failed })
+        restarted.refreshAll(); await restarted.checkTask?.value
+        XCTAssertEqual(restarted.updateCount, 1)
+        XCTAssertEqual(restarted.incompleteCheckCount, 1)
+        XCTAssertEqual(restarted.incompleteCheckApplications.map(\.id), [installed.id])
+        let candidate = try XCTUnwrap(restarted.sourceResults[installed.id]?.candidates.first)
+        XCTAssertEqual(candidate.requiresRevalidation, true)
+        XCTAssertEqual(restarted.action(for: candidate, app: installed), .official)
+        let status = UpdatesStatus(store: restarted, total: 1, installable: 0)
+        XCTAssertEqual(status.glyph, .symbol("exclamationmark.triangle.fill", .warning))
+        XCTAssertTrue(status.detail.contains("1"))
+        restarted.prepareInstallation(candidate, app: installed)
+        XCTAssertNil(restarted.installationTask); XCTAssertFalse(restarted.installing)
+    }
+}

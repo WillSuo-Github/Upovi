@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SourceResult: Sendable {
+public struct SourceResult: Codable, Sendable {
     public let appID: String
     public let candidates: [UpdateCandidate]
     public let note: String
@@ -8,8 +8,12 @@ public struct SourceResult: Sendable {
     public let manualURL: URL?
     public let checks: [SourceCheckDetail]
     public let appStoreID: UInt64?
-    public init(appID: String, candidates: [UpdateCandidate], note: String, status: SourceStatus = .current, manualURL: URL? = nil, checks: [SourceCheckDetail] = [], appStoreID: UInt64? = nil) {
+    public let installedVersion: String?
+    public let checkedAt: Date
+    public let retainedFrom: Date?
+    public init(appID: String, candidates: [UpdateCandidate], note: String, status: SourceStatus = .current, manualURL: URL? = nil, checks: [SourceCheckDetail] = [], appStoreID: UInt64? = nil, installedVersion: String? = nil, checkedAt: Date = Date(), retainedFrom: Date? = nil) {
         self.appID = appID; self.candidates = candidates; self.note = note; self.status = status; self.manualURL = manualURL; self.checks = checks; self.appStoreID = appStoreID
+        self.installedVersion = installedVersion; self.checkedAt = checkedAt; self.retainedFrom = retainedFrom
     }
 }
 
@@ -25,7 +29,10 @@ public enum UpdateChecker {
 
     static func check(_ app: InstalledApp, override: SourceOverride? = nil,
                       fetch: @Sendable (URL, Int) async throws -> Data,
-                      catalog: @Sendable (InstalledApp) async throws -> CaskMetadata?) async -> SourceResult {
+                      catalog: @Sendable (InstalledApp) async throws -> CaskMetadata?, steamRoot: URL? = nil) async -> SourceResult {
+        if app.bundleID == "com.valvesoftware.steam", !app.isAppStore {
+            return await SteamUpdateSource.check(app, root: steamRoot ?? SteamUpdateSource.defaultRoot, channel: override?.releaseChannel ?? .stable, fetch: fetch)
+        }
         if app.isAppStore { return .init(appID: app.id, candidates: [], note: String(localized: "由 App Store 管理更新"), status: .appStore, checks: [.init(.appStore, .manual)]) }
         let browserVersion = app.bundleID == "com.electron.lark" && (Int(app.version.split(separator: ".").first.map(String.init) ?? "") ?? 0) >= 100
         if let hint = ManualUpdateSource.forBundle(app.bundleID), browserVersion || (override?.appcast == nil && override?.githubRepository == nil) {
@@ -56,7 +63,13 @@ public enum UpdateChecker {
                     let offer = try await electron.check(app, channel: channel, fetch: fetch)
                     officialOffers = [offer]
                     if offer.isNewer(than: app) { candidates.append(offer) }
-                    checked += 1; notes.append(String(localized: "已检查 Electron 更新源")); checks.append(.init(.electron, .checked))
+                    if let issue = offer.sourceIssue {
+                        failed += 1; checked += 1
+                        notes.append(String(localized: "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。") + retryDescription(issue.retryAt))
+                        checks.append(.init(.electron, .failed, issue: issue)); checks.append(.init(.githubPage, .checked))
+                    } else {
+                        checked += 1; notes.append(String(localized: "已检查 Electron 更新源")); checks.append(.init(.electron, .checked))
+                    }
                 }
             } catch is CancellationError {
                 return .init(appID: app.id, candidates: [], note: String(localized: "检测已取消"), status: .failed, checks: [.init(.electron, .cancelled, error: CancellationError())])
@@ -104,7 +117,9 @@ public enum UpdateChecker {
                 else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append(String(localized: "Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新")) }
             }
         } catch { failed += 1; notes.append("Homebrew：\(failureDescription(error))"); checks.append(.init(.homebrew, .failed, error: error)) }
-        if let repository = override?.githubRepository ?? githubRepositories[app.bundleID], repository != electronRepository, !Task.isCancelled {
+        let needsSupplement = supplementDownloads(candidates, for: app).contains { $0.download?.canVerify(for: app) != true }
+        if let repository = override?.githubRepository ?? githubRepositories[app.bundleID], repository != electronRepository,
+           officialOffers == nil || needsSupplement, !Task.isCancelled {
             do {
                 let release = try await GitHubRelease.latest(repository: repository, channel: channel, fetch: fetch)
                 if VersionOrder.isNewer(version: release.version, than: app, allowPrerelease: channel == .beta) {
@@ -112,7 +127,13 @@ public enum UpdateChecker {
                                             url: release.page, download: release.download, releaseNotes: release.releaseNotes,
                                             releaseChannel: release.isPrerelease ? .beta : nil))
                 }
-                checked += 1; notes.append(String(localized: "已检查 GitHub Release")); checks.append(.init(.github, .checked))
+                if let issue = release.rateLimitIssue {
+                    failed += 1; checked += 1
+                    notes.append(String(localized: "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。") + retryDescription(issue.retryAt))
+                    checks.append(.init(.github, .failed, issue: issue)); checks.append(.init(.githubPage, .checked))
+                } else {
+                    checked += 1; notes.append(String(localized: "已检查 GitHub Release")); checks.append(.init(.github, .checked))
+                }
             } catch { failed += 1; notes.append("GitHub：\(failureDescription(error))"); checks.append(.init(.github, .failed, error: error)) }
         }
         if electronNeedsOwnUpdater {
@@ -178,10 +199,15 @@ public enum UpdateChecker {
 
     private static func failureDescription(_ error: any Error) -> String {
         guard let http = error as? HTTPStatusError else { return error.localizedDescription }
-        if http.rateLimited { return String(localized: "服务器限制了请求频率，请稍后重试（HTTP \(http.statusCode)）") }
+        if http.rateLimited { return String(localized: "服务器限制了请求频率，请稍后重试（HTTP \(http.statusCode)）") + retryDescription(http.retryAt) }
         if http.statusCode == 403 { return String(localized: "服务器拒绝了请求，未确认是否有更新（HTTP 403）") }
         if http.statusCode == 404 { return String(localized: "公开更新来源暂不可用，未确认是否有更新（HTTP 404）") }
         return String(localized: "来源请求失败（HTTP \(http.statusCode)）")
+    }
+
+    static func retryDescription(_ date: Date?) -> String {
+        guard let date else { return "" }
+        return String(localized: " 可在 \(date.formatted(date: .omitted, time: .standard)) 后重试。")
     }
 
     public static func fetch(_ url: URL, limit: Int) async throws -> Data {

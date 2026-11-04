@@ -116,3 +116,61 @@ extension SourceTests {
         XCTAssertNil(try JSONDecoder().decode(UpdateCandidate.self, from: JSONSerialization.data(withJSONObject: legacy)).buildIsAuthoritative)
     }
 }
+
+extension SourceTests {
+    func testGitHubRateLimitFallsBackToCanonicalLatestStablePageWithoutDownloadProof() async throws {
+        let deadline = Date().addingTimeInterval(300)
+        let release = try await GitHubRelease.latest(repository: "a/b", fetch: { url, _ in
+            if url.host == "api.github.com" { throw HTTPStatusError(statusCode: 403, retryAt: deadline, rateLimited: true) }
+            XCTAssertEqual(url.absoluteString, "https://github.com/a/b/releases/latest")
+            return Data(#"<html><head><meta property="og:url" content="https://github.com/a/b/releases/tag/v2.0"></head><body></body></html>"#.utf8)
+        })
+        XCTAssertEqual(release.version, "2.0"); XCTAssertNil(release.download)
+        XCTAssertTrue(release.assets.isEmpty); XCTAssertEqual(release.rateLimitIssue?.rateLimited, true)
+        XCTAssertEqual(release.rateLimitIssue?.retryAt, deadline)
+        let app = InstalledApp(name: "Audiout", bundleID: "com.audiout.Audiout", version: "1", path: "/synthetic/Audiout.app")
+        let result = await UpdateChecker.check(app, fetch: { url, _ in
+            if url.host == "api.github.com" { throw HTTPStatusError(statusCode: 403, retryAt: deadline, rateLimited: true) }
+            return Data(#"<html><head><meta content="https://github.com/aa-hh/Audiout/releases/tag/v2.0" property="og:url"></head></html>"#.utf8)
+        }, catalog: { _ in nil })
+        XCTAssertEqual(result.status, .partial); XCTAssertEqual(result.candidates.first?.version, "2.0")
+        XCTAssertEqual(result.checks.first(where: { $0.source == .github })?.outcome, .failed)
+        XCTAssertEqual(result.checks.first(where: { $0.source == .githubPage })?.outcome, .checked)
+        XCTAssertEqual(BulkUpdatePlan.make(apps: [app], results: [app.id: result], ignored: []).first?.canInstall, false)
+    }
+    func testGitHubFallbackRejectsAmbiguousForeignPrereleaseAndBodyInjectedMetadata() throws {
+        func page(_ urls: [String], body: String = "") -> Data {
+            Data(("<html><head>" + urls.map { "<meta property=\"og:url\" content=\"\($0)\">" }.joined() + "</head><body>" + body + "</body></html>").utf8)
+        }
+        let valid = "https://github.com/a/b/releases/tag/v2.0"
+        XCTAssertNoThrow(try GitHubRelease.publicStable(page([valid]), repository: "a/b"))
+        XCTAssertEqual(try GitHubRelease.publicStable(page(["/a/b/releases/tag/v2.0"]), repository: "a/b").page.absoluteString, valid)
+        for urls in [[valid, valid], ["https://github.com/other/repo/releases/tag/v2.0"], ["https://github.com/a/b/releases/tag/v2.0-beta.1"],
+                     ["http://github.com/a/b/releases/tag/v2.0"], ["//other.example/a/b/releases/tag/v2.0"], ["https://github.com/a/b/releases/tag/v2.0?token=private"]] {
+            XCTAssertThrowsError(try GitHubRelease.publicStable(page(urls), repository: "a/b"))
+        }
+        XCTAssertThrowsError(try GitHubRelease.publicStable(page([], body: "<meta property=\"og:url\" content=\"\(valid)\">"), repository: "a/b"))
+    }
+    func testPlainGitHubDenialAndBetaDoNotUseAnUnconfirmedFallback() async {
+        for (channel, limited) in [(ReleaseChannel.stable, false), (.beta, true)] {
+            do {
+                _ = try await GitHubRelease.latest(repository: "a/b", channel: channel, fetch: { url, _ in
+                    XCTAssertEqual(url.host, "api.github.com")
+                    throw HTTPStatusError(statusCode: 403, rateLimited: limited)
+                })
+                XCTFail("An inaccessible or unconfirmed channel cannot be guessed")
+            } catch { XCTAssertEqual((error as? HTTPStatusError)?.statusCode, 403) }
+        }
+    }
+    func testAuthoritativeCurrentAppcastAvoidsRedundantGitHubAPIRequests() async throws {
+        let app = InstalledApp(name: "Rectangle", bundleID: "com.knollsoft.Rectangle", version: "2.0", build: "2",
+            path: "/synthetic/Rectangle.app", teamID: "SYNTHETIC1", feedURL: URL(string: "https://vendor.invalid/appcast.xml"))
+        let feed = Data(#"<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><item><enclosure url="https://vendor.invalid/App.zip" sparkle:version="2" sparkle:shortVersionString="2.0" /></item></channel></rss>"#.utf8)
+        let result = await UpdateChecker.check(app, fetch: { url, _ in
+            XCTAssertEqual(url.host, "vendor.invalid", "The authoritative feed already confirmed the installed version")
+            return feed
+        }, catalog: { _ in nil })
+        XCTAssertEqual(result.status, .current)
+        XCTAssertFalse(result.checks.contains { $0.source == .github })
+    }
+}

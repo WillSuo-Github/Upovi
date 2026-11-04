@@ -30,7 +30,7 @@ public actor UpdateInstaller {
     public func prepare(app: InstalledApp, candidate: UpdateCandidate,
                         progress: @escaping @Sendable (Int64, Int64) -> Void) async throws -> PreparedUpdate {
         guard !exclusive, !activePaths.contains(app.path) else { throw PeerError.unavailable("An installation operation is already running") }
-        guard !candidate.isCommunity, !app.isAppStore, let descriptor = candidate.download, descriptor.canVerify(for: app),
+        guard !candidate.isCommunity, candidate.requiresRevalidation != true, app.bundleID != "com.valvesoftware.steam", !app.isAppStore, let descriptor = candidate.download, descriptor.canVerify(for: app),
               ApplicationSourceCatalog.replacementTeam(for: app) != nil, app.bundleID != "app.upovi.Upovi" else {
             throw PeerError.invalid("Use the official source or in-app updater for this application")
         }

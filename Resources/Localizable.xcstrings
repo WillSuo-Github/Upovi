@@ -101820,6 +101820,230 @@
           }
         }
       }
+    },
+    "此版本需要重新确认或使用应用自身更新器，未开始下载。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This version needs revalidation or the app’s own updater. No download was started."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此版本需要重新確認或使用應用程式自身更新器，未開始下載。"
+          }
+        }
+      }
+    },
+    "检测已取消，未确认是否有更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The check was cancelled. Updates have not been confirmed."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檢測已取消，未確認是否有更新。"
+          }
+        }
+      }
+    },
+    "%lld 个应用未能完整检查，更新结果可能不全。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld apps could not be fully checked. Update results may be incomplete."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 個應用程式未能完整檢查，更新結果可能不全。"
+          }
+        }
+      }
+    },
+    "待重新确认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs revalidation"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待重新確認"
+          }
+        }
+      }
+    },
+    "这是上次确认的更新，当前来源未确认；请重新检查后安装。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This update was confirmed previously. Recheck the source before installing."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這是上次確認的更新，目前來源未確認；請重新檢查後安裝。"
+          }
+        }
+      }
+    },
+    "Steam 客户端更新须在 Steam 内完成，请使用 Steam 菜单检查客户端更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steam client updates must be installed through Steam. Check for client updates in the Steam menu."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steam 用戶端更新須在 Steam 內完成，請使用 Steam 選單檢查用戶端更新。"
+          }
+        }
+      }
+    },
+    "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub API requests are temporarily rate limited. The official latest stable release page confirmed the version; download information still needs verification."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub API 暫時限流；已由官方最新穩定版頁面確認版本，下載資訊仍待核對。"
+          }
+        }
+      }
+    },
+    " 可在 %@ 后重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " Retry after %@."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " 可在 %@ 後重試。"
+          }
+        }
+      }
+    },
+    "无法可靠读取 Steam 的实际客户端版本或当前渠道。应用包的 6.1 是引导器版本，不能据此判断是否最新；请在 Steam 内检查客户端更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The installed Steam client version or channel could not be verified. The app bundle’s 6.1 identifies its bootstrapper, not the current client. Check for client updates in Steam."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法可靠讀取 Steam 的實際用戶端版本或目前渠道。應用程式套件的 6.1 是引導器版本，不能據此判斷是否最新；請在 Steam 內檢查用戶端更新。"
+          }
+        }
+      }
+    },
+    "本机 Steam 客户端构建为 %@，官方清单构建为 %@。应用包版本属于引导器；请在 Steam 内检查并安装客户端更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed Steam client build: %@. Official manifest build: %@. The app bundle version identifies the bootstrapper. Check for and install client updates in Steam."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本機 Steam 用戶端建置為 %@，官方清單建置為 %@。應用程式套件版本屬於引導器；請在 Steam 內檢查並安裝用戶端更新。"
+          }
+        }
+      }
+    },
+    "已核对 Steam 官方客户端清单；本机客户端构建 %@，官方构建 %@。更新须在 Steam 内完成。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checked Steam’s official client manifest. Installed client build: %@. Official build: %@. Install updates in Steam."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已核對 Steam 官方用戶端清單；本機用戶端建置 %@，官方建置 %@。更新須在 Steam 內完成。"
+          }
+        }
+      }
+    },
+    "Steam 官方客户端清单检查失败，未确认是否有更新：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The official Steam client manifest check failed. Updates have not been confirmed: %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steam 官方用戶端清單檢查失敗，未確認是否有更新：%@"
+          }
+        }
+      }
+    },
+    "这是上次成功检查确认的版本；本次来源检查失败，不能据此下载安装。请等待来源恢复后重新检查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This version was confirmed by an earlier successful check. The current source check failed, so this result cannot authorize downloading or installing. Recheck when the source is available."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這是上次成功檢查確認的版本；本次來源檢查失敗，不能據此下載安裝。請等待來源恢復後重新檢查。"
+          }
+        }
+      }
+    },
+    "已保留 %@ 确认的更新，当前结果待重新核对。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retained the update confirmed on %@. The current result needs revalidation."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已保留 %@ 確認的更新，目前結果待重新核對。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

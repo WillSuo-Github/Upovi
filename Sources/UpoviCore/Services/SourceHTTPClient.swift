@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 /// Bounded metadata cache only. Downloads and installation proofs have separate lifetimes.
 public actor SourceHTTPClient {
@@ -8,7 +9,7 @@ public actor SourceHTTPClient {
         let validatedAt: Date
         let generation: UInt64
     }
-    private struct Cooldown { let error: HTTPStatusError; let until: Date }
+    private struct Cooldown: Codable { let error: HTTPStatusError; let until: Date }
     private var entries: [URL: Entry] = [:]
     private var originsInUse: Set<String> = []
     private var cooldowns: [String: Cooldown] = [:]
@@ -18,18 +19,22 @@ public actor SourceHTTPClient {
     private let sleep: @Sendable (Duration) async throws -> Void
     private let byteLimit: Int
     private let entryLimit: Int
+    private let cooldownURL: URL?
 
     public init() {
         transport = { try await HTTPTransfer.metadata(from: $0, limit: $1, headers: $2) }
         now = { @Sendable in Date() }; sleep = { @Sendable duration in try await Task.sleep(for: duration) }
         byteLimit = 64_000_000; entryLimit = 128
+        cooldownURL = URL.cachesDirectory.appending(path: "Upovi/SourceMetadata/github-cooldown.json")
+        cooldowns = Self.restoreCooldown(cooldownURL, now: Date())
     }
-    init(byteLimit: Int = 64_000_000, entryLimit: Int = 128,
+    init(byteLimit: Int = 64_000_000, entryLimit: Int = 128, cooldownURL: URL? = nil,
          now: @escaping @Sendable () -> Date = { @Sendable in Date() },
          sleep: @escaping @Sendable (Duration) async throws -> Void = { @Sendable duration in try await Task.sleep(for: duration) },
          transport: @escaping @Sendable (URL, Int, [String: String]) async throws -> HTTPMetadataResponse) {
         self.transport = transport; self.now = now; self.sleep = sleep
-        self.byteLimit = byteLimit; self.entryLimit = entryLimit
+        self.byteLimit = byteLimit; self.entryLimit = entryLimit; self.cooldownURL = cooldownURL
+        cooldowns = Self.restoreCooldown(cooldownURL, now: now())
     }
 
     /// Manual refresh bypasses freshness, but retains validators and server-directed cooldowns.
@@ -48,13 +53,13 @@ public actor SourceHTTPClient {
         originsInUse.insert(origin); defer { originsInUse.remove(origin) }
         let clock = now()
         cooldowns = cooldowns.filter { $0.value.until > clock }
-        if let value = cooldowns[origin] ?? cooldowns[url.absoluteString] { throw value.error }
         if let entry = entries[url], entry.generation == generation,
            clock >= entry.validatedAt,
            clock.timeIntervalSince(entry.validatedAt) < Self.freshness(entry.response.headers) {
             guard entry.response.data.count <= limit else { throw URLError(.dataLengthExceedsMaximum) }
             return entry.response.data
         }
+        if let value = cooldowns[origin] ?? cooldowns[url.absoluteString] { throw value.error }
         let requestGeneration = generation
         let previous = entries[url]
         var headers: [String: String] = ["Cache-Control": "no-cache"]
@@ -83,6 +88,11 @@ public actor SourceHTTPClient {
                     entries[url] = .init(response: effective, validatedAt: now(), generation: requestGeneration)
                     prune()
                 } else { entries[url] = nil }
+                if host.lowercased() == "api.github.com", effective.headers["x-ratelimit-remaining"] == "0" {
+                    let reset = effective.headers["x-ratelimit-reset"].flatMap(Double.init).flatMap { $0.isFinite ? Date(timeIntervalSince1970: $0) : nil }
+                    let until = min(max(reset ?? now().addingTimeInterval(60), now().addingTimeInterval(1)), now().addingTimeInterval(86400))
+                    setCooldown(origin, error: .init(statusCode: 403, retryAt: until, rateLimited: true), until: until)
+                }
                 return effective.data
             } catch {
                 try Task.checkCancellation()
@@ -125,7 +135,32 @@ public actor SourceHTTPClient {
         if cooldowns[key] == nil, cooldowns.count >= 128,
            let oldest = cooldowns.min(by: { $0.value.until < $1.value.until })?.key { cooldowns[oldest] = nil }
         cooldowns[key] = .init(error: error, until: until)
+        if key == "api.github.com:443" { persistCooldown() }
     }
+    private static func restoreCooldown(_ file: URL?, now: Date) -> [String: Cooldown] {
+        guard let file, let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
+              attrs[.type] as? FileAttributeType == .typeRegular,
+              (attrs[.ownerAccountID] as? NSNumber)?.uint32Value == getuid(),
+              (attrs[.size] as? NSNumber)?.intValue ?? Int.max <= 4096,
+              let data = try? Data(contentsOf: file), let stored = try? JSONDecoder().decode(Cooldown.self, from: data),
+              stored.error.rateLimited, stored.until > now, stored.until <= now.addingTimeInterval(86400) else { return [:] }
+        return ["api.github.com:443": stored]
+    }
+    private func persistCooldown() {
+        guard let file = cooldownURL, let value = cooldowns["api.github.com:443"],
+              let data = try? JSONEncoder().encode(value) else { return }
+        let parent = file.deletingLastPathComponent()
+        guard parent.resolvingSymlinksInPath().path == parent.path else { return }
+        do {
+            try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+            let attrs = try FileManager.default.attributesOfItem(atPath: parent.path)
+            guard attrs[.type] as? FileAttributeType == .typeDirectory,
+                  (attrs[.ownerAccountID] as? NSNumber)?.uint32Value == getuid() else { return }
+            try data.write(to: file, options: .atomic)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
+        } catch { /* A missing cache never relaxes the in-memory cooldown. */ }
+    }
+
     private static func transient(_ error: any Error) -> Bool {
         if let http = error as? HTTPStatusError { return [408, 500, 502, 503, 504].contains(http.statusCode) }
         let value = error as NSError

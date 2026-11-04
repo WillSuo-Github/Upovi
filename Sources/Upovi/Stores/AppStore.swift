@@ -100,6 +100,7 @@ final class AppStore {
     var backupSizes: [String: Int64] = [:]
     var sourceFilter: SourceFilter = .all
     var checkHistory: [CheckHistoryEntry] = []
+    @ObservationIgnored var sourceResultCache = SourceResultCache()
     var sourceOverrides: [String: SourceOverride] = [:]
     var apps: [InstalledApp] = []
     var section: AppSection? {
@@ -174,6 +175,7 @@ final class AppStore {
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
         self.downloadCenter = DownloadCenterService(coordinator: installer.downloads)
         self.preferences = preferences
+        sourceResultCache = SourceResultCache(data: preferences.data(forKey: "sourceResultCacheV1"))
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
         self.revalidateSources = revalidateSources
@@ -318,11 +320,24 @@ final class AppStore {
             for _ in 0..<5 { if let app = iterator.next() { group.addTask { await checkApplication(app, overrides[app.bundleID]) } } }
             for await result in group {
                 if Task.isCancelled { group.cancelAll(); break }
-                sourceResults[result.appID] = result; completedChecks += 1
+                if let app = snapshot.first(where: { $0.id == result.appID }) {
+                    sourceResults[result.appID] = sourceResultCache.resolving(result, app: app, sourceOverride: overrides[app.bundleID])
+                    sourceResultCache.record(result, app: app, sourceOverride: overrides[app.bundleID])
+                }
+                completedChecks += 1
                 if let app = iterator.next() { group.addTask { await checkApplication(app, overrides[app.bundleID]) } }
             }
         }
-        guard !Task.isCancelled else { logger.info("source check cancelled"); return }
+        if let data = sourceResultCache.encoded() { preferences.set(data, forKey: "sourceResultCacheV1") }
+        if Task.isCancelled {
+            for app in snapshot where sourceResults[app.id] == nil {
+                let cancelled = SourceResult(appID: app.id, candidates: [], note: String(localized: "检测已取消，未确认是否有更新。"), status: .failed,
+                    checks: [.init(.appcast, .cancelled, error: CancellationError()), .init(.github, .cancelled, error: CancellationError()),
+                             .init(.electron, .cancelled, error: CancellationError()), .init(.homebrew, .cancelled, error: CancellationError()), .init(.steam, .cancelled, error: CancellationError())])
+                sourceResults[app.id] = sourceResultCache.resolving(cancelled, app: app, sourceOverride: overrides[app.bundleID])
+            }
+            logger.info("source check cancelled"); return
+        }
         lastChecked = Date()
         let failures = sourceResults.values.filter { [.failed, .partial].contains($0.status) }.count
         let updates = snapshot.filter { assessment(for: $0).hasUpdate }.count

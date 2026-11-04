@@ -6,6 +6,7 @@ struct ApplicationTable: View {
     struct Row: Equatable {
         let app: InstalledApp
         let status: AppStatus
+        var installedVersion: String? = nil
     }
 
     static let rowHeight: CGFloat = 46
