@@ -1,0 +1,138 @@
+{
+  "marketingVersion": "0.4.10",
+  "build": "202611040006",
+  "installedSourceRevision": "be81be4758a98a754c095f9a652da0f3acf18c99",
+  "distribution": {
+    "localDeveloperIDSignedAppInstalled": true,
+    "strictNestedSignatureVerification": "passed",
+    "localAppLaunch": "passed",
+    "notarizationPerformed": false,
+    "published": false,
+    "pushed": false
+  },
+  "validation": {
+    "coreTests": 260,
+    "coreFailures": 0,
+    "hostedWorkflowTestsPerLanguage": 57,
+    "hostedLanguages": [
+      "zh-Hans/CN",
+      "en/US"
+    ],
+    "hostedFailures": 0,
+    "releaseMetadataTests": 8,
+    "releaseMetadataFailures": 0,
+    "reviewedCatalogIdentitiesLiveChecked": 6
+  },
+  "isolatedRuntimeAcceptance": [
+    {
+      "application": "LocalSend",
+      "originalFixtureVersion": "1.17.0",
+      "installedVersion": "1.18.2",
+      "archiveIntegrity": "valid",
+      "developerSignature": "valid",
+      "gatekeeper": "accepted",
+      "unattendedPolicy": "eligible",
+      "requiredClosedApplication": true,
+      "administratorAuthorizationInvoked": false,
+      "forceQuitInvoked": false,
+      "installed": true,
+      "backupRetained": true,
+      "restored": true,
+      "productionApplicationPathUsedAsTarget": false
+    },
+    {
+      "application": "Hoppscotch",
+      "originalFixtureVersion": "25.12.1",
+      "installedVersion": "26.10.0",
+      "archiveIntegrity": "valid",
+      "developerSignature": "valid",
+      "gatekeeper": "accepted",
+      "unattendedPolicy": "eligible",
+      "requiredClosedApplication": true,
+      "administratorAuthorizationInvoked": false,
+      "forceQuitInvoked": false,
+      "installed": true,
+      "backupRetained": true,
+      "restored": true,
+      "productionApplicationPathUsedAsTarget": false
+    },
+    {
+      "application": "IINA",
+      "originalFixtureVersion": "1.4.4",
+      "installedVersion": "1.5.0-beta2",
+      "archiveIntegrity": "valid",
+      "developerSignature": "valid",
+      "gatekeeper": "accepted",
+      "unattendedPolicy": "eligible",
+      "requiredClosedApplication": true,
+      "administratorAuthorizationInvoked": false,
+      "forceQuitInvoked": false,
+      "installed": true,
+      "backupRetained": true,
+      "restored": true,
+      "productionApplicationPathUsedAsTarget": false
+    }
+  ],
+  "hoppscotchPayloadReview": {
+    "publicReleaseTag": "v26.10.0-0",
+    "publisherPrereleaseFlag": false,
+    "payloadVersion": "26.10.0",
+    "payloadBuild": "26.10.0",
+    "developerTeam": "XBK86CMQGZ",
+    "architecture": "arm64",
+    "initialMismatchRejected": true,
+    "exactVersionURLAndTeamAliasUsed": true,
+    "futureSourceVersionTriggersCatalogReview": true
+  },
+  "betaAcceptanceScope": "IINA used an isolated signed 1.4.4 fixture and an official historical 1.5.0-beta2 archive. This is installer/channel acceptance, not a recommendation to replace the newer stable production IINA installation.",
+  "productionBoundaries": {
+    "localSendAndHoppscotchExecutableHashesUnchanged": true,
+    "allThreeUpgradeReceiptsTargetIsolatedCopies": true,
+    "unattendedMasterDefaultOff": true,
+    "observedAuthorizedAppCount": 0,
+    "productionBetaChannelOptInChanged": false
+  },
+  "nativeStoreRefresh": {
+    "hostMacOS": "27.2",
+    "signedProbe": "rejected",
+    "finalSignedHelperResult": "notEntitled",
+    "systemDomain": "ASDErrorDomain",
+    "systemCode": 505,
+    "successfulFreshOfferQueryOnHost": false,
+    "privateEntitlementAdded": false,
+    "appleProcessImpersonated": false,
+    "downloadAndCancelProbeUsed": false,
+    "publicCatalogChecksIndependent": true
+  },
+  "localReadOnlyScan": {
+    "applications": 97,
+    "appStore": 5,
+    "current": 71,
+    "nativeStoreRefreshConfirmedApps": 0,
+    "nativeStoreRefreshDeniedApps": 33,
+    "unsupported": 11,
+    "updateCandidates": 10,
+    "updates": 10,
+    "updatesWithVerifiableInstallation": 9,
+    "versionConfirmedApps": 81
+  },
+  "nativeUI": {
+    "masterOffAndZeroPermissionsObserved": true,
+    "nativeRejectionMessageObserved": true,
+    "hoppscotchStablePayloadVersionObserved": true,
+    "authorizationAccessibilityLabelFixCompiled": true,
+    "finalAccessibilityAndBetaPickerInspection": "pending Mac unlock",
+    "appStoreEntryPointInspection": "pending Mac unlock"
+  },
+  "selfUpdateSourceRegression": {
+    "buildTagNotTreatedAsSemanticVersion": true,
+    "signedAppcastUsed": true,
+    "verifiedCurrentWithoutPartialFailure": true
+  },
+  "limitations": [
+    "Native read-only refresh is implemented but rejected by the system on this host. No successful native-offer response is claimed.",
+    "Unattended updates require per-app consent and a running Upovi process. Store apps, packages, running apps, authorization-required destinations, global tools and Upovi itself remain manual.",
+    "Dedicated Nightly/Canary/TestFlight or unknown version formats are not inferred; source staging and signature requirements remain enforced.",
+    "No remote release, feed publication or scheduled workflow activation was performed."
+  ]
+}
