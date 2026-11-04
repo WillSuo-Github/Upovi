@@ -121,8 +121,21 @@
     "nativeRejectionMessageObserved": true,
     "hoppscotchStablePayloadVersionObserved": true,
     "authorizationAccessibilityLabelFixCompiled": true,
-    "finalAccessibilityAndBetaPickerInspection": "pending Mac unlock",
-    "appStoreEntryPointInspection": "pending Mac unlock"
+    "finalAccessibilityAndBetaPickerInspection": "passed after manual Mac unlock",
+    "appStoreEntryPointInspection": "passed; opened the native Updates page",
+    "authorizationAccessibilityLabelsObserved": true,
+    "exampleAuthorizationLabel": "IINA · Stable",
+    "betaPickerOptionsObserved": [
+      "Stable",
+      "Beta and prereleases"
+    ],
+    "betaSelectionChanged": false,
+    "unattendedMasterStillOffAfterInspection": true,
+    "authorizedAppCountAfterInspection": 0,
+    "nativeAppStoreReloadPageInvoked": true,
+    "nativeAppStorePageReportedNoAvailableUpdates": true,
+    "nativeAppStoreUIObservationDoesNotEstablishUpoviNativeAPIAccess": true,
+    "windowConnectionRecoveredThroughWindowMenu": true
   },
   "selfUpdateSourceRegression": {
     "buildTagNotTreatedAsSemanticVersion": true,
