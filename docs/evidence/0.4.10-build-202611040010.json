@@ -1,0 +1,122 @@
+{
+  "version": "0.4.10",
+  "build": "202611040010",
+  "productRevision": "b8988e73ff6b1522c55ef8f2949f89baf3556a14",
+  "releaseTargetRevision": "b8988e73ff6b1522c55ef8f2949f89baf3556a14",
+  "features": [
+    "Mac App Store inventory/detection/download/installation use bundled mas",
+    "No unattended installation; checks only discover and notify",
+    "Ignored sidebar combines permanent exclusions and skipped versions with independent restore actions",
+    "Stable/Beta channels and expanded Electron adapters retained"
+  ],
+  "localValidation": {
+    "coreTests": 258,
+    "applicationWorkflowTests": 55,
+    "testFailures": 0,
+    "releaseMetadataTests": 8,
+    "nativeUI": "Isolated production-view fixtures validated ignored sidebar and manual-installation settings; see linked evidence."
+  },
+  "nativeAcceptanceEvidence": [
+    "adblock-store-upgrade-202611040007.json",
+    "user-initiated-updates-202611040008.json",
+    "ignored-sidebar-202611040009.json"
+  ],
+  "realStoreUpgradeScope": "Earlier current-source signed acceptance harness upgraded AdBlock Pro 13.0.0 (349) to 13.1.0 (350); not the final universal release artifact.",
+  "manualInstallationPolicy": {
+    "SUAllowsAutomaticUpdates": false,
+    "SUAutomaticallyUpdate": false,
+    "legacyAutomaticPermissionsDiscarded": true
+  },
+  "appleNotarization": {
+    "status": "Accepted",
+    "submissionID": "d6f5ebcf-9e3d-478a-a661-4c82a9cfa194"
+  },
+  "artifactValidation": {
+    "version": "0.4.10",
+    "build": "202611040010",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "6012fb77fcb5e73b8fc369720be6f34df035f2b4ff85cc50938f2f778a4a220b",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-04T12:46:50Z",
+      "tagName": "build-202611040010",
+      "targetCommitish": "b8988e73ff6b1522c55ef8f2949f89baf3556a14",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611040010"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202611040010.zip",
+        "size": 20389559,
+        "sha256": "6012fb77fcb5e73b8fc369720be6f34df035f2b4ff85cc50938f2f778a4a220b",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611040010.zip.sha256",
+        "size": 96,
+        "sha256": "c999ab10d2d42335e34878772d2fe4e83323a5f7c3768cdb747c529751143c84",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "c603d4a62ca9c120a63c8802a5a4a2e9e2cd12c65388131a5ff1013823708597",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "0f8b7386c616311f6519918f3acfb8b766f2a5d0c4e8368de77b72cdfe9e4bbd",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "919bed8572a8a305683bf7801f2e35798aab284123e2ea567309822d69d08580",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611040010",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "6012fb77fcb5e73b8fc369720be6f34df035f2b4ff85cc50938f2f778a4a220b",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerification": [
+    {
+      "name": "appcast.xml",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+      "sha256": "c603d4a62ca9c120a63c8802a5a4a2e9e2cd12c65388131a5ff1013823708597",
+      "matchesLocal": true
+    },
+    {
+      "name": "Upovi-0.4.10-202611040010.zip",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/download/build-202611040010/Upovi-0.4.10-202611040010.zip",
+      "sha256": "6012fb77fcb5e73b8fc369720be6f34df035f2b4ff85cc50938f2f778a4a220b",
+      "matchesLocal": true
+    }
+  ],
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "physicalIntelRuntimeTestedForThisRelease": false,
+  "duplicateVerificationAppCopiesRemoved": true
+}

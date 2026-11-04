@@ -4,7 +4,7 @@ This build routes Mac App Store detection and installation through the bundled m
 
 Local validation passed 258 core tests, 55 application workflow tests and eight release metadata tests. Native isolated UI acceptance covered the Ignored sidebar and the removal of automatic installation settings. The owner-authorized AdBlock Pro upgrade from 13.0.0 (349) to 13.1.0 (350) passed on the current source before release preparation; it is not a test of the final universal release artifact. See [Store upgrade evidence](evidence/adblock-store-upgrade-202611040007.json), [manual installation policy](evidence/user-initiated-updates-202611040008.json) and [sidebar acceptance](evidence/ignored-sidebar-202611040009.json).
 
-Signed universal packaging, notarization, feed verification and publication are in progress. This section will be updated with final release evidence after verification. The installed Upovi is not replaced by preparing or publishing this release.
+Revision `b8988e73ff6b1522c55ef8f2949f89baf3556a14` is published as the [Latest signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611040010). Apple notarization, ticket stapling, Gatekeeper, nested signatures and Sparkle feed/archive signatures passed. All five anonymously downloaded assets match the verified local bytes; a fresh public extraction passed the same release checks. The canonical latest feed and direct archive also match. See [release evidence](evidence/0.4.10-build-202611040010.json). The installed Upovi was not replaced; genuine Sparkle self-replacement and physical Intel runtime remain unverified.
 
 ---
 
