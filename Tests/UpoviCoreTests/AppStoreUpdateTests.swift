@@ -38,6 +38,124 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(result.status,.current); XCTAssertTrue(result.candidates.isEmpty)
         XCTAssertEqual(result.checks.first?.outcome,.checked)
     }
+    func testPartialBridgeExitPreservesValidProductsAndIsolatesMissingMalformedAndAmbiguousRows() async throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "Upovi-StoreLookup-\(UUID())")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let bridge = folder.appending(path: "bridge")
+        let installed = (12345...12348).map { id in
+            "{\"adamID\":\(id),\"bundleID\":\"app.synthetic.\(id)\",\"path\":\"/synthetic/\(id).app\",\"version\":\"1\"}"
+        } + [#"{"adamID":0,"bundleID":"app.synthetic.manual","path":"/synthetic/manual.app","version":"1"}"#]
+        let products = [
+            #"{"adamID":12345,"bundleID":"app.synthetic.12345","version":"2","minimumOSVersion":"14","kind":"mac-software"}"#,
+            #"{"adamID":12347,"bundleID":"app.synthetic.12347","version":2}"#,
+            #"{"adamID":12348,"bundleID":"app.synthetic.12348","version":"2","minimumOSVersion":"14","kind":"mac-software"}"#,
+            #"{"adamID":12348,"version":2}"#,
+            "not-json"
+        ]
+        let script = """
+        #!/bin/sh
+        if [ "$1" = list ] && [ "$#" = 1 ]; then
+          printf '%s\\n' '\(installed.joined(separator: "\n"))'
+          exit 0
+        fi
+        printf '%s\\n' '\(products.joined(separator: "\n"))'
+        exit 2
+        """
+        try Data(script.utf8).write(to: bridge)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: bridge.path)
+        let catalog = AppStoreCatalog(execute: { try await AppStoreCatalog.command(bridge, arguments: $0) })
+        for id in 12345...12348 {
+            let fixture = InstalledApp(name: "Fixture", bundleID: "app.synthetic.\(id)", version: "1", path: "/synthetic/\(id).app", isAppStore: true)
+            let result = await catalog.check(fixture)
+            XCTAssertEqual(result.status, id == 12345 ? .updates : .failed, "ID \(id)")
+            XCTAssertEqual(result.candidates.count, id == 12345 ? 1 : 0)
+        }
+        let manual = await catalog.check(.init(name: "Manual", bundleID: "app.synthetic.manual", version: "1", path: "/synthetic/manual.app", isAppStore: true))
+        XCTAssertEqual(manual.status, .appStore)
+        // The exception is never used for install/update commands or a failing inventory scan.
+        for arguments in [["update", "12345", "12346"], ["list", "unused"], ["lookup", "12345"], ["lookup", "--bundle", "app.synthetic.store"]] {
+            do { _ = try await AppStoreCatalog.command(bridge, arguments: arguments); XCTFail("Unexpected exit code must fail: \(arguments)") }
+            catch { }
+        }
+    }
+    func testStoreLookupOutageDoesNotTurnKnownManualInstallationsIntoFailures() async {
+        let catalog = AppStoreCatalog(execute: { arguments in
+            if arguments == ["list"] {
+                return Data(#"""
+                {"adamID":0,"bundleID":"app.synthetic.manual","path":"/synthetic/manual.app","version":"1"}
+                {"adamID":12345,"bundleID":"app.synthetic.store","path":"/Applications/Upovi Synthetic Store.app","version":"1"}
+                """#.utf8)
+            }
+            throw URLError(.notConnectedToInternet)
+        })
+        let failed = await catalog.check(app)
+        XCTAssertEqual(failed.status, .failed)
+        XCTAssertEqual(failed.checks.first?.issue?.kind, .offline)
+        let manual = await catalog.check(.init(name: "Manual", bundleID: "app.synthetic.manual", version: "1", path: "/synthetic/manual.app", isAppStore: true))
+        XCTAssertEqual(manual.status, .appStore)
+        XCTAssertEqual(manual.checks.first?.outcome, .manual)
+    }
+    func testRegionalMacLookupRecoversSodaWithoutOfferingAnUpdateThroughTheWrongStorefront() async throws {
+        let fixture = InstalledApp(name: "Soda", bundleID: "com.soda.music", version: "2.9.1", path: "/synthetic/Soda.app", isAppStore: true)
+        for version in ["2.9.1", "2.9.2"] {
+            let source = RegionalStoreReplies(version: version)
+            let catalog = AppStoreCatalog(execute: { try await source.execute($0) }, regionalLookup: { try await source.lookup($0, region: $1) })
+            let result = await catalog.check(fixture)
+            XCTAssertEqual(result.status, version == fixture.version ? .current : .updates)
+            XCTAssertEqual(result.checks.first?.outcome, .checked)
+            XCTAssertNil(result.appStoreID)
+            if version != fixture.version {
+                XCTAssertEqual(result.candidates.first?.url?.absoluteString, "https://apps.apple.com/cn/app/id1605585211")
+                XCTAssertNil(result.candidates.first?.appStoreID)
+                XCTAssertNil(result.candidates.first?.download)
+            }
+            let regions = await source.regions
+            XCTAssertEqual(regions, ["CN"])
+        }
+    }
+    func testRegionalLookupErrorsMissingAndInvalidProductsRemainFailures() async throws {
+        let fixture = InstalledApp(name: "Soda", bundleID: "com.soda.music", version: "2.9.1", path: "/synthetic/Soda.app", isAppStore: true)
+        for mode in ["absent", "offline", "malformed", "wrong-bundle", "ios", "duplicate"] {
+            let source = RegionalStoreReplies(version: "2.9.2")
+            let catalog = AppStoreCatalog(execute: { try await source.execute($0) }, regionalLookup: { _, _ in
+                if mode == "absent" { return [] }
+                if mode == "offline" { throw URLError(.notConnectedToInternet) }
+                if mode == "malformed" { return try AppStoreCatalog.decodeLookup(Data("not-json".utf8)) }
+                let bundle = mode == "wrong-bundle" ? "app.synthetic.unrelated" : "com.soda.music"
+                let kind = mode == "ios" ? "software" : "mac-software"
+                let product = try JSONDecoder().decode(StoreProduct.self, from: Data("{\"adamID\":1605585211,\"bundleID\":\"\(bundle)\",\"version\":\"2.9.2\",\"minimumOSVersion\":\"14\",\"kind\":\"\(kind)\"}".utf8))
+                return mode == "duplicate" ? [product, product] : [product]
+            })
+            let result = await catalog.check(fixture)
+            XCTAssertEqual(result.status, .failed, mode)
+            XCTAssertEqual(result.checks.first?.outcome, .failed, mode)
+            if mode == "offline" { XCTAssertEqual(result.checks.first?.issue?.kind, .offline) }
+            XCTAssertTrue(result.candidates.isEmpty, mode)
+        }
+    }
+    func testConfirmedNotionStoreMigrationPointsToDeveloperInsteadOfRepeatingFailedLookups() async {
+        let catalog = AppStoreCatalog(execute: { args in
+            args == ["list"] ? Data(#"{"adamID":1559269364,"bundleID":"notion.id.NotionSafariExtension","path":"/synthetic/Notion.app","version":"1.0.3"}"#.utf8) : Data()
+        }, regionalLookup: { _, _ in XCTFail("The vendor has documented the Store migration"); return [] })
+        let result = await catalog.check(.init(name: "Notion", bundleID: "notion.id.NotionSafariExtension", version: "1.0.3", path: "/synthetic/Notion.app", isAppStore: true))
+        XCTAssertEqual(result.status, .unsupported)
+        XCTAssertEqual(result.manualURL?.absoluteString, "https://www.notion.com/web-clipper")
+        XCTAssertEqual(result.checks.first?.outcome, .manual)
+        XCTAssertTrue(result.candidates.isEmpty)
+        XCTAssertNil(ManualUpdateSource.forStoreBundle("notion.id.NotionSafariExtension", storeID: 12345))
+        XCTAssertNil(ManualUpdateSource.forStoreBundle("app.synthetic.unrelated", storeID: 1559269364))
+    }
+    func testDesktopLookupCannotConfuseTheMobileSodaVersionWithItsNativeMacVersion() throws {
+        let fixture = InstalledApp(name: "Soda", bundleID: "com.soda.music", version: "2.9.1", path: "/synthetic/Soda.app", isAppStore: true)
+        for (version, devices) in [("2.9.1", #"["MacDesktop-MacDesktop"]"#), ("21.4.0", #"["MacDesktop-MacDesktop","iPhone18,1"]"#)] {
+            let data = Data("{\"resultCount\":1,\"results\":[{\"trackId\":1605585211,\"bundleId\":\"com.soda.music\",\"version\":\"\(version)\",\"minimumOsVersion\":\"10.13\",\"kind\":\"software\",\"supportedDevices\":\(devices)}]}".utf8)
+            let product = try XCTUnwrap(AppStoreCatalog.decodeLookup(data).first)
+            if version == "2.9.1" { XCTAssertNoThrow(try product.validate(for: fixture, storeID: 1605585211)) }
+            else { XCTAssertThrowsError(try product.validate(for: fixture, storeID: 1605585211)) }
+        }
+        XCTAssertThrowsError(try AppStoreCatalog.decodeLookup(Data(#"{"resultCount":1,"results":[]}"#.utf8)))
+    }
     func testStorePlanRejectsUnrelatedChannelsPathsAccountsAndStaleApps() throws {
         let plan = AppStoreUpdatePlan(application:app,storeID:12345,version:"2",userID:501)
         XCTAssertNoThrow(try plan.validate())
@@ -97,6 +215,7 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
     }
     func testProcessCommandsRespectOutputBoundsAndReportCancellation() async throws {
         do { _ = try await ProcessCommand().run("/usr/bin/printf",["1234567890"],maximumOutputBytes:4); XCTFail("Oversized output must fail") } catch { }
+        do { _ = try await ProcessCommand().run("/bin/sh", ["-c", "kill -TERM $$"], successCodes: [15]); XCTFail("A signal is never a partial lookup exit code") } catch { }
         let command = ProcessCommand(); command.cancel()
         do { _ = try await command.run("/usr/bin/true",[]); XCTFail("Cancelled command cannot launch") } catch { XCTAssertTrue(error is CancellationError) }
     }
@@ -121,6 +240,20 @@ private actor StoreReplies {
         let devices = mode == "ios" ? "iPhone14,1" : "MacDesktop-MacDesktop"
         let minimum = mode == "future-os" ? "999" : "14"
         return Data("{\"adamID\":12345,\"bundleID\":\"\(bundle)\",\"version\":\"\(version)\",\"minimumOSVersion\":\"\(minimum)\",\"kind\":\"software\",\"supportedDevices\":[\"\(devices)\"]}".utf8)
+    }
+}
+
+private actor RegionalStoreReplies {
+    let version: String
+    var regions: [String] = []
+    init(version: String) { self.version = version }
+    func execute(_ args: [String]) throws -> Data {
+        args == ["list"] ? Data(#"{"adamID":1605585211,"bundleID":"com.soda.music","path":"/synthetic/Soda.app","version":"2.9.1"}"#.utf8) : Data()
+    }
+    func lookup(_ ids: [UInt64], region: String) throws -> [StoreProduct] {
+        XCTAssertEqual(ids, [1605585211]); regions.append(region)
+        guard region == "CN" else { return [] }
+        return try AppStoreCatalog.decodeLookup(Data("{\"resultCount\":1,\"results\":[{\"trackId\":1605585211,\"bundleId\":\"com.soda.music\",\"version\":\"\(version)\",\"minimumOsVersion\":\"10.13\",\"kind\":\"software\",\"supportedDevices\":[\"MacDesktop-MacDesktop\"]}]}".utf8))
     }
 }
 

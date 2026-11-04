@@ -1,6 +1,70 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "Notion 已停止通过 App Store 分发 Safari Web Clipper。请按照官网说明迁移到新版扩展；无法通过旧商店条目确认更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion no longer distributes Safari Web Clipper through the App Store. Follow the migration steps on its website; updates cannot be confirmed through the old Store listing."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion 已停止透過 App Store 分發 Safari Web Clipper。請按照官網說明遷移到新版擴充功能；無法透過舊商店項目確認更新。"
+          }
+        }
+      }
+    },
+    "已核对 %@ 地区的 Mac App Store 公开版本。如需更新，请使用原下载账户所在地区的 App Store；公开信息可能存在同步延迟。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The public Mac App Store version was checked in %@. For updates, use the App Store region of the original download account; public information may be delayed."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已核對 %@ 地區的 Mac App Store 公開版本。如需更新，請使用原下載帳號所在地區的 App Store；公開資訊可能存在同步延遲。"
+          }
+        }
+      }
+    },
+    "未查到与此安装完全匹配且兼容的商店版本，可能受商店地区、下架或系统要求影响。请在 App Store 中确认；其他应用的检测结果不受影响。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No exact compatible Store release was found for this installation. Store region, availability or system requirements may be involved. Check in the App Store; other apps’ check results are unaffected."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未查到與此安裝完全相符且相容的商店版本，可能受商店地區、下架或系統需求影響。請在 App Store 中確認；其他應用程式的檢查結果不受影響。"
+          }
+        }
+      }
+    },
+    "商店检测未完成，无法读取本机商店清单或查询服务暂不可用。请稍后重试；不会将检测失败视为已经最新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Store check did not finish: the local Store inventory could not be read or the lookup service is temporarily unavailable. Try again later; a failed check is never treated as up to date."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店檢查未完成，無法讀取本機商店清單或查詢服務暫時無法使用。請稍後重試；不會將檢查失敗視為已是最新版本。"
+          }
+        }
+      }
+    },
     "此早期 OpenClaw 的应用标识已更换，请通过官方安装器完成迁移。": {
       "localizations": {
         "en": {

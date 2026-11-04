@@ -31,7 +31,7 @@ public final class ProcessCommand: @unchecked Sendable {
                 try lock.withLock {
                     if cancelled { throw CancellationError() }
                     guard !overflow else { throw PeerError.unavailable("System tool output exceeded its size limit") }
-                    guard successCodes.contains(process.terminationStatus) else { throw PeerError.unavailable("System tool failed: \(URL(fileURLWithPath: executable).lastPathComponent) (\(process.terminationStatus))") }
+                    guard process.terminationReason == .exit, successCodes.contains(process.terminationStatus) else { throw PeerError.unavailable("System tool failed: \(URL(fileURLWithPath: executable).lastPathComponent) (\(process.terminationStatus))") }
                 }
                 return data
             }.value

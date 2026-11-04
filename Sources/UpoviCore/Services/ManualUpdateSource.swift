@@ -3,6 +3,13 @@ import Foundation
 public struct ManualUpdateSource: Sendable {
     public let url: URL
     public let note: String
+    /// Confirmed channel migration, only for the old Store identity when no Store release is available.
+    /// https://www.notion.com/help/web-clipper documents the separate Safari installer.
+    static func forStoreBundle(_ bundle: String, storeID: UInt64) -> Self? {
+        guard bundle == "notion.id.NotionSafariExtension", storeID == 1559269364 else { return nil }
+        return .init(url: URL(string: "https://www.notion.com/web-clipper")!,
+                     note: String(localized: "Notion 已停止通过 App Store 分发 Safari Web Clipper。请按照官网说明迁移到新版扩展；无法通过旧商店条目确认更新。"))
+    }
     public static func forBundle(_ bundle: String) -> Self? {
         switch bundle {
         case "dev.appbinnacle.AppBinnacle":
