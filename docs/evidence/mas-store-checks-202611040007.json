@@ -1,0 +1,68 @@
+{
+  "build": "202611040007",
+  "version": "0.4.10",
+  "baseCommit": "3c5d05e424d03f125022a07fa5cf6d38497d594c",
+  "sourceState": "Local uncommitted changes on top of baseCommit; no release published.",
+  "detectionCommands": [
+    "mas list",
+    "mas lookup <installed Store IDs>",
+    "mas outdated --inaccurate --check-min-os <installed Store IDs>"
+  ],
+  "installationCommand": "mas update --force <selected Store ID>, after existing identity and product validation",
+  "removed": [
+    "Upovi AppStoreDaemon refresh and CommerceKit native-cache probes",
+    "Native status helper modes and 505 detection gating",
+    "Separate regional HTTP catalog fallback"
+  ],
+  "tests": {
+    "command": "swift test",
+    "suites": {
+      "UpoviTests.xctest": 57,
+      "UpoviCoreTests.xctest": 259
+    },
+    "total": 316,
+    "failures": 0
+  },
+  "buildValidation": {
+    "configuration": "Debug",
+    "xcodeBuild": "passed",
+    "signature": "ad hoc",
+    "deepStrictSignatureVerification": "passed",
+    "notarized": false
+  },
+  "readOnlyChecks": {
+    "bridge": "The mas 7.0.0 executable embedded by the fresh Xcode build",
+    "observations": [
+      {
+        "bundleID": "com.samuellaska.AdBuster",
+        "status": "updates",
+        "checkedSources": [
+          "appStore"
+        ],
+        "targetVersions": [
+          "13.1.0"
+        ]
+      },
+      {
+        "bundleID": "com.shazam.mac.Shazam",
+        "status": "current",
+        "checkedSources": [
+          "appStore"
+        ],
+        "targetVersions": []
+      }
+    ]
+  },
+  "boundaries": {
+    "realStoreDownloadOrUpgradePerformed": false,
+    "nativeGUIAcceptancePerformed": false,
+    "installedUpoviReplaced": false,
+    "storeUnattendedInstallationEnabled": false
+  },
+  "limitations": [
+    "Ordinary mas checks use public metadata and can lag or miss build-only releases.",
+    "Store/account eligibility is confirmed during installation, which may require authentication.",
+    "Products unavailable through mas stay unconfirmed; no independent regional lookup is performed."
+  ],
+  "followUpUpgradeEvidence": "adblock-store-upgrade-202611040007.json"
+}

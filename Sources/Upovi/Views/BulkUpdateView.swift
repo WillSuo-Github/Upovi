@@ -60,9 +60,9 @@ struct BulkUpdateView: View {
                         Text("已完成 \(store.bulkCompletedCount) 个 · 失败 \(store.bulkFailedCount) 个 · 共 \(store.bulkItems.count + store.toolBatchItems.count) 个")
                     } else {
                         if store.toolBatchItems.isEmpty {
-                            Text("可自动更新 \(store.bulkInstallableCount) 个 · 需官方处理 \(store.bulkItems.count - store.bulkAppInstallableCount) 个")
+                            Text("可在 Upovi 中更新 \(store.bulkInstallableCount) 个 · 需官方处理 \(store.bulkItems.count - store.bulkAppInstallableCount) 个")
                         } else {
-                            Text("可自动更新 \(store.bulkInstallableCount) 项 · 需官方处理 \(store.bulkItems.count - store.bulkAppInstallableCount) 项")
+                            Text("可在 Upovi 中更新 \(store.bulkInstallableCount) 项 · 需官方处理 \(store.bulkItems.count - store.bulkAppInstallableCount) 项")
                         }
                     }
                 }

@@ -2,9 +2,6 @@ import Foundation
 
 /// Live sources supply release metadata; only reviewed identity, trust and packaging exceptions live here.
 public enum ApplicationSourceCatalog {
-    /// Reviewed storefront hints for products not listed in the Mac's current region.
-    /// Regional versions are informational: installation still belongs to the original Store account.
-    public static let appStoreRegionHints: [String: [String]] = ["com.soda.music": ["CN"]]
     public static let casks: [String: String] = [
         "com.google.Chrome": "google-chrome", "org.mozilla.firefox": "firefox",
         "com.microsoft.VSCode": "visual-studio-code", "com.microsoft.VSCodeInsiders": "visual-studio-code@insiders",

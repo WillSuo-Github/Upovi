@@ -2,6 +2,21 @@ import XCTest
 @testable import UpoviCore
 
 final class UpdateControlsTests: XCTestCase, @unchecked Sendable {
+    func testSkippedVersionDiscoveryAndRestoreUseTheExactInstalledIdentity() {
+        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.scope", version: "1", path: "/synthetic/F.app", teamID: "SYNTHETIC")
+        let other = InstalledApp(name: "Other", bundleID: "app.synthetic.scope.other", version: "1", path: "/synthetic/O.app", teamID: "SYNTHETIC")
+        let changedTeam = InstalledApp(name: app.name, bundleID: app.bundleID, version: app.version, path: app.path, teamID: "OTHERTEAM")
+        let store = InstalledApp(name: app.name, bundleID: app.bundleID, version: app.version, path: app.path, teamID: app.teamID, isAppStore: true)
+        let target = UpdateCandidate(version: "2", source: "Fixture", isCommunity: false, url: nil)
+        var policy = UpdatePolicy()
+        for installed in [app, other, changedTeam, store] { policy.skipped.insert(UpdatePolicy.key(target, app: installed)) }
+        XCTAssertTrue(policy.hasSkippedVersions(for: app))
+        policy.restoreSkippedVersions(for: app)
+        XCTAssertFalse(policy.hasSkippedVersions(for: app))
+        for installed in [other, changedTeam, store] { XCTAssertTrue(policy.hasSkippedVersions(for: installed)) }
+        XCTAssertTrue(policy.allows(target, app: app))
+        XCTAssertEqual(policy.skipped.count, 3)
+    }
     private let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.controls", version: "1.0", path: "/synthetic/F.app", teamID: "SYNTHETIC")
     private var candidate: UpdateCandidate { .init(version: "2.0", build: "200", source: "Fixture", isCommunity: false, url: nil,
         download: .init(url: URL(string: "https://example.invalid/fixture.zip")!, sha256: String(repeating: "a", count: 64)), releaseNotes: "Notes") }

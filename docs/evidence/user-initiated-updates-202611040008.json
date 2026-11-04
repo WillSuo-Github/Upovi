@@ -1,0 +1,67 @@
+{
+  "version": "0.4.10",
+  "build": {
+    "configuration": "Debug",
+    "xcode": "passed",
+    "deepStrictSignatureVerification": "passed",
+    "signature": "ad hoc"
+  },
+  "baseCommit": "3c5d05e424d03f125022a07fa5cf6d38497d594c",
+  "sourceState": "Uncommitted local changes; no new release published or installed Upovi replaced.",
+  "policy": "Update downloads and installation require explicit user action. Startup and scheduled checks only discover updates and notify.",
+  "removed": [
+    "Sources/Upovi/Stores/AppStore+Unattended.swift",
+    "Sources/Upovi/Views/UnattendedSettingsView.swift",
+    "Sources/UpoviCore/Installation/UnattendedUpdates.swift",
+    "Automatic installation from startup and scheduled checks",
+    "Per-app automatic installation grants and settings/history UI",
+    "unattended-check diagnostic command"
+  ],
+  "legacyMigration": "unattendedUpdatesV1 is removed and saved on preferences load; no legacy jobs are restored.",
+  "sparkle": {
+    "SUAllowsAutomaticUpdates": false,
+    "SUAutomaticallyUpdate": false,
+    "savedAutomaticDownloadPreferenceClearedBeforeUpdaterStarts": true
+  },
+  "tests": {
+    "swiftCommand": "swift test",
+    "suites": {
+      "UpoviTests.xctest": 51,
+      "UpoviCoreTests.xctest": 257
+    },
+    "totalSwiftTests": 308,
+    "swiftFailures": 0,
+    "pythonCommand": "python3 -m unittest discover -s script/tests",
+    "pythonTests": 8,
+    "pythonFailures": 0
+  },
+  "regressionsVerified": [
+    "Previously enabled legacy permissions are discarded across restart",
+    "Startup check returns an update without download tasks or installation",
+    "Scheduled source check returns an update without download tasks or installation",
+    "Release channels persist without automatic installation permissions",
+    "Existing single-app and batch workflow tests remain green"
+  ],
+  "nativeUI": {
+    "scope": "Offline native fixture compiled from current production views and services",
+    "fixtureSHA256": "0023e4d2c0c2910b2de0d5ade68234028f9d01b083f76e786f40839396f6915d",
+    "settingsToolbar": [
+      "General",
+      "Scan and Installation",
+      "Global Tools",
+      "P2P",
+      "About"
+    ],
+    "automaticInstallationSettingsAbsent": true,
+    "manualInstallationExplanationObserved": true
+  },
+  "cleanup": {
+    "testProcessesStopped": true,
+    "temporaryTestBundlesRemoved": true
+  },
+  "boundaries": {
+    "realAppUpgradeDuringThisRemovalAcceptance": false,
+    "installedUpoviReplaced": false,
+    "releasePublished": false
+  }
+}

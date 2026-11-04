@@ -37,7 +37,8 @@ It also explores a different way to discover versions: Macs can share app versio
 
 - **Check your app library at once.** Scan `/Applications`, `~/Applications` and extra folders you choose. Filter by update status, source coverage or App Store distribution, and inspect each app’s version and source.
 - **Update individually or in a batch.** Review the proposed changes before installation. Supported app updates can run concurrently, with per-app progress and results; administrator and App Store installation steps are serialized. Failed items can be retried.
-- **Opt into unattended updates and Beta channels.** Authorize individual closed, writable apps for verified automatic replacements while Upovi runs. Select Stable or supported Beta releases per app; changing channels revokes automatic permission. Both features keep existing source, signature and recovery checks. See [automatic updates and channels](docs/AUTOMATIC-UPDATES-AND-CHANNELS.md).
+- **Manage ignored updates in the sidebar.** The Ignored section brings together apps with all updates ignored and apps with skipped versions. Restore either rule independently; restoring reminders never starts installation.
+- **Choose Stable or Beta, then update when you decide.** Select supported release channels per app. Startup and scheduled checks only discover updates and notify you; downloading and installation always require an explicit Update or Update All action. See [checks and release channels](docs/AUTOMATIC-UPDATES-AND-CHANNELS.md).
 - **Keep control of reminders.** Skip a specific version, postpone a reminder, or ignore an app. Optional scheduled checks, notifications and a menu bar entry help you keep up between manual checks.
 - **Manage downloads and recovery.** Follow transfers in the download center, pause or resume supported downloads, and inspect installation history. Eligible application replacements retain the previous main app for recovery.
 - **Include your global developer tools.** Opt into checks for Homebrew formulae, global npm/pnpm packages, uv tools, pipx, Cargo and Rust toolchains. Outdated packages appear alongside apps; project dependencies and lock files stay unchanged.
@@ -66,7 +67,7 @@ Actual application screenshots. The apps and available updates will vary on your
 
 Detection and installation are separate: an app may have a known newer version but still need its official installer or built-in updater. Upovi shows unsupported sources and failed checks separately; an empty update list does not guarantee every app is current.
 
-Source maintenance and current coverage limits are described in [source coverage](docs/SOURCE-COVERAGE.md). A public App Store version is counted as an available update only when native Store evidence confirms that exact offer; otherwise it stays available for explicit checking. Native refresh is attempted but can be denied by macOS; Upovi shows this separately.
+Source maintenance and current coverage limits are described in [source coverage](docs/SOURCE-COVERAGE.md). App Store checks use the bundled mas tool’s ordinary read-only detection. Upovi validates matching installed identities and compatible Mac products before offering updates. Public metadata can be delayed; Apple confirms availability and account eligibility during installation.
 
 ## Install
 

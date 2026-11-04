@@ -147,7 +147,7 @@ public actor UpdateInstaller {
     private static func requireClosed(_ app: InstalledApp) throws {
         guard !NSRunningApplication.runningApplications(withBundleIdentifier: app.bundleID).contains(where: {
             $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: app.path) } ?? false
-        }) else { throw PeerError.unavailable("Application is running; unattended installation deferred") }
+        }) else { throw PeerError.unavailable("Application is running; close it before installation") }
     }
 
     public func receipts() throws -> [InstallationReceipt] {

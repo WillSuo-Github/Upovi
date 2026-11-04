@@ -1,7 +1,7 @@
 import XCTest
 @testable import UpoviCore
 
-final class ReleaseChannelsAndAutomationTests: XCTestCase, @unchecked Sendable {
+final class ReleaseChannelTests: XCTestCase, @unchecked Sendable {
     private let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.auto", version: "1.0", build: "100", path: "/Applications/Fixture.app", teamID: "SYNTHETIC1")
     private var candidate: UpdateCandidate { .init(version: "2.0", source: "Fixture", isCommunity: false, url: nil,
         download: .init(url: URL(string: "https://example.com/app.dmg")!, sha256: String(repeating: "a", count: 64))) }
@@ -79,69 +79,5 @@ final class ReleaseChannelsAndAutomationTests: XCTestCase, @unchecked Sendable {
         let path = "/Applications/Fixture-update.app"
         XCTAssertThrowsError(try AdministratorInstallPlan(operation: .application, application: app, version: incoming.version, build: "200", artifactPath: path).validate())
         XCTAssertNoThrow(try AdministratorInstallPlan(operation: .application, application: app, version: incoming.version, build: "200", artifactPath: path, permitsPrerelease: true).validate())
-    }
-    func testUnattendedPolicyRequiresConsentClosedApplicationCompleteSourceAndArchiveProof() throws {
-        var state = UnattendedUpdateState()
-        let target = candidate
-        func reason(_ value: UpdateCandidate = target, state: UnattendedUpdateState, channel: ReleaseChannel = .stable,
-                    ignored: Set<String> = [], policy: UpdatePolicy = .init(), running: Bool = false, writable: Bool = true,
-                    status: SourceStatus = .updates) -> UnattendedUpdatePolicy.Deferral? {
-            UnattendedUpdatePolicy.deferral(app: app, candidate: value, result: .init(appID: app.id, candidates: [value], note: "", status: status),
-                state: state, channel: channel, ignored: ignored, updatePolicy: policy, running: running, writable: writable)
-        }
-        XCTAssertEqual(reason(state: state), .disabled)
-        state.enabled = true; XCTAssertEqual(reason(state: state), .notGranted)
-        state.grants = [try .init(application: app, channel: .stable)]
-        XCTAssertNil(reason(state: state))
-        XCTAssertEqual(reason(state: state, running: true), .running)
-        XCTAssertEqual(reason(state: state, writable: false), .authorization)
-        XCTAssertEqual(reason(state: state, status: .partial), .incompleteSource)
-        XCTAssertEqual(reason(state: state, ignored: [app.bundleID]), .ignored)
-        var policy = UpdatePolicy(); policy.skipped.insert(UpdatePolicy.key(target, app: app))
-        XCTAssertEqual(reason(state: state, policy: policy), .policy)
-        var pkg = target; pkg.download = .init(url: URL(string: "https://example.com/app.pkg")!, sha256: String(repeating: "a", count: 64))
-        XCTAssertEqual(reason(pkg, state: state), .unverified)
-        var noProof = target; noProof.download = .init(url: URL(string: "https://example.com/app.dmg")!)
-        XCTAssertEqual(reason(noProof, state: state), .unverified)
-        var beta = target; beta.releaseChannel = .beta
-        XCTAssertEqual(reason(beta, state: state), .channel)
-        state.grants = [try .init(application: app, channel: .beta)]
-        XCTAssertNil(reason(beta, state: state, channel: .beta))
-        XCTAssertEqual(reason(beta, state: state), .notGranted)
-        let store = InstalledApp(name: app.name, bundleID: app.bundleID, version: app.version, path: app.path, teamID: app.teamID, isAppStore: true)
-        XCTAssertThrowsError(try UnattendedGrant(application: store, channel: .stable))
-    }
-    func testInterruptedAttemptsRetainCooldownAndOnlyTheirOwnCommitCanPass() throws {
-        var state = UnattendedUpdateState(); state.enabled = true
-        state.grants = [try .init(application: app, channel: .stable)]
-        let target = candidate, record = UnattendedUpdateRecord(app: app, candidate: candidate, channel: .stable)
-        state.record(record); state.recoverInterrupted()
-        XCTAssertEqual(state.history[0].phase, .interrupted)
-        let result = SourceResult(appID: app.id, candidates: [target], note: "", status: .updates)
-        XCTAssertEqual(UnattendedUpdatePolicy.deferral(app: app, candidate: target, result: result, state: state, channel: .stable,
-            ignored: [], updatePolicy: .init(), running: false, writable: true), .cooldown)
-        XCTAssertNil(UnattendedUpdatePolicy.deferral(app: app, candidate: target, result: result, state: state, channel: .stable,
-            ignored: [], updatePolicy: .init(), running: false, writable: true, currentAttempt: record.id))
-        let renamed = InstalledApp(name: app.name, bundleID: app.bundleID, version: app.version, path: "/Applications/Renamed.app", teamID: app.teamID)
-        XCTAssertNil(state.grant(for: renamed, channel: .stable))
-    }
-    func testNativeRefreshHelperUsesReadOnlyModeAndRejectsDeniedOrStaleReplies() async throws {
-        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let file = root.appending(path: "helper")
-        func helper(_ json: Data) throws {
-            let text = String(decoding: json, as: UTF8.self).replacingOccurrences(of: "'", with: "'\\''")
-            try Data("#!/bin/sh\n[ \"$1\" = --refresh-updates ] || exit 4\nprintf '%s' '\(text)'\n".utf8).write(to: file)
-            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: file.path)
-        }
-        try helper(JSONEncoder().encode(StoreUpdateAvailability.FailureMessage(.notEntitled)))
-        do { _ = try await StoreUpdateAvailability.query(using: file); XCTFail("Denied refresh was accepted") }
-        catch { XCTAssertEqual(error as? StoreUpdateAvailability.RefreshFailure, .notEntitled); XCTAssertEqual(DiagnosticIssue(error).code, 505) }
-        try helper(JSONEncoder().encode(StoreUpdateAvailability(offers: [], refreshedAt: Date().addingTimeInterval(-300))))
-        do { _ = try await StoreUpdateAvailability.query(using: file); XCTFail("Stale refresh was accepted") } catch { }
-        try helper(JSONEncoder().encode(StoreUpdateAvailability(offers: [], refreshedAt: Date())))
-        let result = try await StoreUpdateAvailability.query(using: file)
-        XCTAssertTrue(result.offers.isEmpty); XCTAssertNotNil(result.refreshedAt)
     }
 }

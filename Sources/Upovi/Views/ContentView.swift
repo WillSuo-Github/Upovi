@@ -25,7 +25,7 @@ struct ContentView: View {
         }
         .task { store.startInitialCheck() }
         .onChange(of: store.visibleApps.map(\.id)) { _, ids in
-            if store.section == .all, !ids.contains(store.selection ?? "") { store.selection = ids.first }
+            if store.section == .all || store.section == .ignored, !ids.contains(store.selection ?? "") { store.selection = ids.first }
         }
         .task { store.downloadCenter.start(); store.startMonitoring() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in store.recoverNetwork(reason: "wake") }
@@ -72,6 +72,7 @@ struct ContentView: View {
         switch store.section ?? .all {
         case .updates: UpdatesView(store: store)
         case .all: LibraryView(store: store)
+        case .ignored: IgnoredAppsView(store: store)
         case .downloads: DownloadTasksView(store: store)
         case .history: InstallationHistoryView(store: store)
         case .community: CommunityView(store: store)
@@ -86,7 +87,7 @@ private struct Sidebar: View {
         // Keep row identity and selection the same type; detail rendering uses this selection too.
         List<AppSection, _>(selection: $store.section) {
             Section {
-                ForEach([AppSection.updates, .all, .downloads, .history], id: \.self) { section in
+                ForEach([AppSection.updates, .all, .ignored, .downloads, .history], id: \.self) { section in
                     item(section, badge: badge(for: section))
                         .tag(section)
                 }
@@ -110,6 +111,7 @@ private struct Sidebar: View {
     private func badge(for section: AppSection) -> Int {
         switch section {
         case .updates: store.updateCount
+        case .ignored: store.ignoredApps.count
         case .downloads: store.downloadCenter.records.filter { $0.state.active }.count
         default: 0
         }

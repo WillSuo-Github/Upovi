@@ -166,6 +166,9 @@ actor DesignPreviewTransfer {
         store.sourceResults = results
         store.communityResults = Fixture.community(for: apps)
         store.ignored = [apps[19].bundleID]
+        if CommandLine.arguments.contains("--ignored-preview"), let candidate = results[apps[0].id]?.candidates.first {
+            store.setSkipped(candidate, app: apps[0], skipped: true)
+        }
         store.lastChecked = Date().addingTimeInterval(-18 * 60)
         store.lastSynced = Date().addingTimeInterval(-6 * 60)
         store.networkStatus = p2p ? "已同步 1–20/20 个应用 · 验签节点 4 个 · 更高版本线索 3 条\nDHT 响应 212 次 · 端点 64 个 · 索引候选 9 个" : "P2P 已关闭"

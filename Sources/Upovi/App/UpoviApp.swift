@@ -40,6 +40,7 @@ struct UpoviApp: App {
             CommandMenu("导航") {
                 Button("可用更新") { store.section = .updates }.keyboardShortcut("1", modifiers: .command)
                 Button("全部应用") { store.section = .all }.keyboardShortcut("2", modifiers: .command)
+                Button("已忽略") { store.section = .ignored }
                 Button("下载") { store.section = .downloads }.keyboardShortcut("3", modifiers: .command)
                 Button("历史与恢复") { store.section = .history }.keyboardShortcut("4", modifiers: .command)
                 Button("P2P 网络") { store.section = .community }.keyboardShortcut("5", modifiers: .command)

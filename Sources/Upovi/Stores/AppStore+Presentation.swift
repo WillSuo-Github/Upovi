@@ -100,9 +100,11 @@ extension AppStore {
 
     var operationBusy: Bool { installationBusy || refreshing || checking || scanning || toolChecking }
 
-    /// Applications whose source update is hidden only by a skip or reminder policy.
+    /// Snoozed updates remain here; ignored applications and skipped versions have their own sidebar section.
     var postponedApps: [InstalledApp] {
-        apps.filter { !ignored.contains($0.bundleID) && !assessment(for: $0).hasUpdate && fullAssessment(for: $0).hasUpdate }
+        apps.filter { !hasIgnoredUpdateRules(for: $0) &&
+            (updatePolicy.deferredUntil[UpdatePolicy.scope($0)] ?? .distantPast) > policyClock &&
+            !assessment(for: $0).hasUpdate && fullAssessment(for: $0).hasUpdate }
     }
 
     var incompleteCheckCount: Int {
@@ -114,7 +116,7 @@ extension AppStore {
     }
 
     func show(_ app: InstalledApp) {
-        section = .all; sourceFilter = ignored.contains(app.bundleID) ? .ignored : .all; selection = app.id
+        section = hasIgnoredUpdateRules(for: app) ? .ignored : .all; sourceFilter = .all; selection = app.id
         libraryInspectorPresented = true
     }
 }

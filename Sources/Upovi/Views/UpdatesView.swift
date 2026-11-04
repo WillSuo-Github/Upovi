@@ -87,7 +87,7 @@ struct UpdatesView: View {
         VStack(alignment: .leading, spacing: 8) {
             Button { withAnimation(.snappy) { showPostponed.toggle() } } label: {
                 HStack(spacing: 6) {
-                    UpdatesSectionHeader(title: String(localized: "已跳过或稍后提醒"), count: apps.count)
+                    UpdatesSectionHeader(title: String(localized: "稍后提醒"), count: apps.count)
                     Image(systemName: "chevron.forward").font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
                         .rotationEffect(.degrees(showPostponed ? (layoutDirection == .rightToLeft ? -90 : 90) : 0))
                     Spacer()
@@ -107,7 +107,7 @@ struct UpdatesView: View {
                                     }
                                 }
                                 Spacer()
-                                Button("恢复提醒") { restore(app) }.buttonStyle(PillButtonStyle())
+                                Button("恢复提醒") { store.deferUpdates(for: app, until: nil) }.buttonStyle(PillButtonStyle())
                             }.padding(.horizontal, 16).padding(.vertical, 10)
                         }
                         .transition(.listRow)
@@ -117,12 +117,6 @@ struct UpdatesView: View {
         }
     }
 
-    private func restore(_ app: InstalledApp) {
-        for candidate in store.fullAssessment(for: app).sourceUpdates where store.updatePolicy.skipped.contains(UpdatePolicy.key(candidate, app: app)) {
-            store.setSkipped(candidate, app: app, skipped: false)
-        }
-        store.deferUpdates(for: app, until: nil)
-    }
 }
 
 /// Grouped-list section header in the System Settings style.

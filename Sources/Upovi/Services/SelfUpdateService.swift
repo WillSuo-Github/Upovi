@@ -20,8 +20,10 @@ final class SelfUpdateService: NSObject, ObservableObject, SPUUpdaterDelegate {
         super.init()
         guard ProcessInfo.processInfo.environment["UPOVI_TEST_HOST"] != "1" else { return }
         guard isConfigured else { return }
-        let controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
+        let controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: self, userDriverDelegate: nil)
+        controller.updater.automaticallyDownloadsUpdates = false
         self.controller = controller
+        controller.startUpdater()
         controller.updater.publisher(for: \.canCheckForUpdates).assign(to: &$canCheck)
         controller.updater.publisher(for: \.automaticallyChecksForUpdates).assign(to: &$automaticChecks)
         controller.updater.publisher(for: \.sessionInProgress).assign(to: &$sessionInProgress)

@@ -45,7 +45,6 @@ struct LibraryView: View {
     private func count(_ filter: SourceFilter) -> Int? {
         switch filter {
         case .all: return nil
-        case .ignored: return store.ignored.isEmpty ? nil : store.apps.filter { store.ignored.contains($0.bundleID) }.count
         default:
             let value = store.apps.filter { filter.includes(store.sourceResults[$0.id]?.status, isAppStore: $0.isAppStore) }.count
             return value == 0 ? nil : value
@@ -66,7 +65,6 @@ struct AppTable: View {
         .overlay {
             if store.visibleApps.isEmpty && !store.scanning {
                 if !store.search.isEmpty { ContentUnavailableView.search(text: store.search) }
-                else if store.sourceFilter == .ignored { ContentUnavailableView("没有已忽略的应用", systemImage: "eye.slash", description: Text("在应用的右键菜单或详情中可以忽略更新提醒。")) }
                 else if store.sourceFilter != .all { ContentUnavailableView("没有符合条件的应用", systemImage: "line.3.horizontal.decrease.circle") }
                 else { ContentUnavailableView("还没有扫描到应用", systemImage: "square.grid.2x2", description: Text("点击工具栏中的“刷新并检查”开始扫描。")) }
             }

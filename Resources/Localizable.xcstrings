@@ -1,34 +1,210 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "系统拒绝了 Upovi 的原生商店刷新请求（505）；请打开 App Store 刷新后再确认。": {
+    "集中管理已忽略的应用和已跳过的版本。恢复提醒不会开始安装。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS denied Upovi’s native Store refresh request (505). Open the App Store to refresh and confirm."
+            "value": "Manage ignored apps and skipped versions here. Restoring reminders never starts installation."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "系統拒絕了 Upovi 的原生商店重新整理請求（505）；請開啟 App Store 重新整理後再確認。"
+            "value": "集中管理已忽略的 App 和已略過的版本。恢復提醒不會開始安裝。"
           }
         }
       }
     },
-    "系统拒绝原生商店刷新（505）。": {
+    "忽略应用更新或跳过某个版本后，可在这里查看和恢复提醒。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS denied native Store refresh (505)."
+            "value": "Apps whose updates you ignore or whose versions you skip appear here. You can restore their reminders at any time."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "系統拒絕原生商店重新整理（505）。"
+            "value": "忽略 App 更新或略過某個版本後，可在這裡查看和恢復提醒。"
+          }
+        }
+      }
+    },
+    "显示应用详情": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show app details"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示 App 詳細資訊"
+          }
+        }
+      }
+    },
+    "已忽略所有更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All updates ignored"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已忽略所有更新"
+          }
+        }
+      }
+    },
+    "已跳过版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versions skipped"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已略過版本"
+          }
+        }
+      }
+    },
+    "只跳过选定版本，后续新版本仍会提醒。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the selected versions are skipped. Newer versions can still notify you."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只略過選定版本，後續新版本仍會提醒。"
+          }
+        }
+      }
+    },
+    "恢复版本提醒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore version reminders"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢復版本提醒"
+          }
+        }
+      }
+    },
+    "每次启动会扫描并检查一次；定时检查仅发现更新和提醒，不会下载或安装。安装始终需要你点击更新按钮。休眠或退出应用会暂停定时检查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upovi scans and checks once at startup. Scheduled checks only discover updates and notify you; they never download or install. Installation always requires you to click an update button. Sleep or quitting pauses scheduled checks."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每次啟動會掃描並檢查一次；定時檢查僅發現更新和提醒，不會下載或安裝。安裝一律需要你點擊更新按鈕。休眠或結束 App 會暫停定時檢查。"
+          }
+        }
+      }
+    },
+    "切换渠道后请重新检查；不会降级。安装始终需要你点击更新按钮。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check again after changing channels. Upovi never downgrades, and installation always requires you to click an update button."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切換管道後請重新檢查；不會降級。安裝一律需要你點擊更新按鈕。"
+          }
+        }
+      }
+    },
+    "可在 Upovi 中更新 %lld 个 · 需官方处理 %lld 个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld can be updated in Upovi · %2$lld need official updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可在 Upovi 中更新 %1$lld 個 · 需官方處理 %2$lld 個"
+          }
+        }
+      }
+    },
+    "可在 Upovi 中更新 %lld 项 · 需官方处理 %lld 项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld can be updated in Upovi · %2$lld need official updates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可在 Upovi 中更新 %1$lld 項 · 需官方處理 %2$lld 項"
+          }
+        }
+      }
+    },
+    "商店目录与更新检测结果尚未一致，请在 App Store 中确认后重新检查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Store catalog and update check do not yet agree. Confirm in the App Store, then check again."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店目錄與更新偵測結果尚未一致，請在 App Store 中確認後重新檢查。"
+          }
+        }
+      }
+    },
+    "已通过商店更新工具检查公开版本，信息可能存在同步延迟。安装时由 Apple 确认可用更新，可能要求账户或管理员认证。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Store update tool checked the public version, which may be delayed. Apple confirms update availability during installation and may require account or administrator authentication."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已透過商店更新工具檢查公開版本，資訊可能存在同步延遲。安裝時由 Apple 確認可用更新，可能要求帳號或管理員認證。"
           }
         }
       }
@@ -65,150 +241,6 @@
         }
       }
     },
-    "Upovi 会尝试原生只读刷新。若系统拒绝第三方访问，将保持未确认状态；不会通过启动再取消下载来探测更新。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi attempts a native read-only refresh. If macOS denies third-party access, offers stay unconfirmed. Checks never start and cancel downloads."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi 會嘗試原生唯讀重新整理。若系統拒絕第三方存取，將保持未確認狀態；不會透過啟動再取消下載來探測更新。"
-          }
-        }
-      }
-    },
-    "上次无人值守任务中断；不会自动恢复该次安装。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The previous unattended task was interrupted; that installation will not resume automatically."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "上次無人值守工作中斷；不會自動恢復該次安裝。"
-          }
-        }
-      }
-    },
-    "停止自动更新": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop Automatic Updates"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "停止自動更新"
-          }
-        }
-      }
-    },
-    "允许无人值守更新": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allow unattended updates"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "允許無人值守更新"
-          }
-        }
-      }
-    },
-    "切换渠道后请重新检查；不会降级，且会撤销此应用的自动更新授权。无人值守更新还需在设置中开启总开关。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check again after changing channels. Upovi never downgrades, and changing channels revokes this app’s automatic-update permission. Also enable the master switch in Settings."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切換管道後請重新檢查；不會降級，且會撤銷此應用程式的自動更新授權。無人值守更新還需在設定中開啟總開關。"
-          }
-        }
-      }
-    },
-    "原生商店刷新未完成，公开目录结果不能证明本机可更新。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Native Store refresh did not complete. Public catalog results do not establish an update offer on this Mac."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "原生商店重新整理未完成，公開目錄結果不能證明本機可更新。"
-          }
-        }
-      }
-    },
-    "启用后，Upovi 运行期间会按通用设置中的检查间隔执行；休眠或退出后暂停。旧主应用保留在历史与恢复中。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "While Upovi is running, updates follow the check interval in General settings. Sleep or quitting pauses the schedule. Previous app bundles remain in History & Recovery."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "啟用後，Upovi 執行期間會按一般設定中的檢查間隔執行；睡眠或結束後暫停。舊主應用程式保留在歷史與復原中。"
-          }
-        }
-      }
-    },
-    "启用并逐个授权应用后，自动更新结果会出现在这里。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enable unattended updates and authorize individual apps to see their results here."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "啟用並逐個授權應用程式後，自動更新結果會出現在這裡。"
-          }
-        }
-      }
-    },
-    "启用无人值守更新": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enable unattended updates"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "啟用無人值守更新"
-          }
-        }
-      }
-    },
     "商店更新": {
       "localizations": {
         "en": {
@@ -221,22 +253,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "商店更新"
-          }
-        }
-      }
-    },
-    "尚无自动更新记录": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No Automatic Update History"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "尚無自動更新記錄"
           }
         }
       }
@@ -289,22 +305,6 @@
         }
       }
     },
-    "应用状态或自动更新权限已变化，安装已推迟。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "App state or automatic-update permission changed; installation was deferred."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "應用程式狀態或自動更新權限已變更，安裝已推遲。"
-          }
-        }
-      }
-    },
     "打开 App Store 刷新": {
       "localizations": {
         "en": {
@@ -317,38 +317,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "開啟 App Store 重新整理"
-          }
-        }
-      }
-    },
-    "授权绑定应用路径、开发者和渠道。切换渠道会撤销自动更新授权；忽略、跳过和稍后提醒规则仍然生效。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permission is bound to the app path, developer and channel. Changing channels revokes permission. Ignore, skip and snooze rules still apply."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "授權綁定應用程式路徑、開發者和管道。切換管道會撤銷自動更新授權；忽略、跳過和稍後提醒規則仍然生效。"
-          }
-        }
-      }
-    },
-    "无人值守更新": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unattended Updates"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "無人值守更新"
           }
         }
       }
@@ -401,54 +369,6 @@
         }
       }
     },
-    "本机商店报告了更新，但目标版本未能与公开目录精确匹配。请主动检查并更新此应用。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The native Store reported an update, but its target version could not be matched to the public catalog. Check and update this app explicitly."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本機商店回報了更新，但目標版本未能與公開目錄精確匹配。請主動檢查並更新此應用程式。"
-          }
-        }
-      }
-    },
-    "本机系统不允许第三方主动刷新商店（505）；请打开 App Store 刷新后再确认。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "macOS denied third-party Store refresh (505). Open the App Store to refresh and confirm."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本機系統不允許第三方主動重新整理商店（505）；請開啟 App Store 重新整理後再確認。"
-          }
-        }
-      }
-    },
-    "查看自动更新记录": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "View Automatic Update History"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "檢視自動更新記錄"
-          }
-        }
-      }
-    },
     "检查并执行已授权更新": {
       "localizations": {
         "en": {
@@ -481,22 +401,6 @@
         }
       }
     },
-    "正在处理已授权应用；已开始的文件替换会安全完成。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Processing authorized apps. File replacements already in progress will finish safely."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在處理已授權應用程式；已開始的檔案替換會安全完成。"
-          }
-        }
-      }
-    },
     "正式版": {
       "localizations": {
         "en": {
@@ -509,22 +413,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "正式版"
-          }
-        }
-      }
-    },
-    "此应用的身份不支持无人值守更新。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This app’s identity does not support unattended updates."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此應用程式的身分不支援無人值守更新。"
           }
         }
       }
@@ -545,38 +433,6 @@
         }
       }
     },
-    "自动更新": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatic Updates"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "自動更新"
-          }
-        }
-      }
-    },
-    "自动更新完成，主应用备份已保留。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatic update completed; the previous app bundle was retained."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "自動更新完成，主應用程式備份已保留。"
-          }
-        }
-      }
-    },
     "运行与记录": {
       "localizations": {
         "en": {
@@ -589,38 +445,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "執行與記錄"
-          }
-        }
-      }
-    },
-    "逐个授权应用": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Authorize Individual Apps"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "逐個授權應用程式"
-          }
-        }
-      }
-    },
-    "默认关闭。仅更新逐个授权、未运行、具有可验证下载且无需管理员权限的应用。不会自动处理 App Store、PKG、全局工具或 Upovi 自身；失败的同一版本会等待 24 小时再自动尝试。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Off by default. Only individually authorized, closed apps with verifiable downloads and no administrator requirement are updated. App Store apps, PKGs, global tools and Upovi itself stay manual. Failed versions wait 24 hours before another automatic attempt."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "預設關閉。僅更新逐個授權、未執行、具有可驗證下載且無需管理員權限的應用程式。不會自動處理 App Store、PKG、全域工具或 Upovi 本身；失敗的同一版本會等待 24 小時再自動嘗試。"
           }
         }
       }
@@ -657,22 +481,6 @@
       }
     }
   },
-  "公开商店版本为 %@，但本机商店尚未确认向此安装提供该更新。请使用原下载账户在 App Store 中确认；此版本暂不计入可用更新。": {
-    "localizations": {
-      "en": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "The public Store version is %@, but this Mac has not confirmed an update offer for this installation. Check in the App Store using the original Apple Account; this version is not counted as an available update yet."
-        }
-      },
-      "zh-Hant": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "公開商店版本為 %@，但本機商店尚未確認向此安裝提供該更新。請使用原下載帳號在 App Store 中確認；此版本暫不計入可用更新。"
-        }
-      }
-    }
-  },
     "Notion 已停止通过 App Store 分发 Safari Web Clipper。请按照官网说明迁移到新版扩展；无法通过旧商店条目确认更新。": {
       "localizations": {
         "en": {
@@ -685,22 +493,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notion 已停止透過 App Store 分發 Safari Web Clipper。請按照官網說明遷移到新版擴充功能；無法透過舊商店項目確認更新。"
-          }
-        }
-      }
-    },
-    "已核对 %@ 地区的 Mac App Store 公开版本。如需更新，请使用原下载账户所在地区的 App Store；公开信息可能存在同步延迟。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The public Mac App Store version was checked in %@. For updates, use the App Store region of the original download account; public information may be delayed."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已核對 %@ 地區的 Mac App Store 公開版本。如需更新，請使用原下載帳號所在地區的 App Store；公開資訊可能存在同步延遲。"
           }
         }
       }
@@ -989,22 +781,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld 項可在 Upovi 中更新"
-          }
-        }
-      }
-    },
-    "可自动更新 %lld 项 · 需官方处理 %lld 项": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld automatic updates · %2$lld require the official updater"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可自動更新 %1$lld 項 · 需官方處理 %2$lld 項"
           }
         }
       }
@@ -28625,208 +28401,6 @@
         }
       }
     },
-    "可自动更新 %lld 个 · 需官方处理 %lld 个": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "قابلة للتحديث تلقائيًا: %lld · تحتاج إلى القناة الرسمية: %lld"
-          }
-        },
-        "ca": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld es poden actualitzar automàticament · %lld requereixen el canal oficial"
-          }
-        },
-        "cs": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automaticky: %lld · Oficiálním kanálem: %lld"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld kan opdateres automatisk · %lld kræver den officielle kanal"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld automatisch aktualisierbar · %lld benötigen den offiziellen Weg"
-          }
-        },
-        "el": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Αυτόματα: %lld · Μέσω επίσημου καναλιού: %lld"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld can update automatically · %lld need the official channel"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld pueden actualizarse automáticamente · %lld requieren el canal oficial"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automaattisesti: %lld · Virallisen kanavan kautta: %lld"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld peuvent se mettre à jour automatiquement · %lld nécessitent le canal officiel"
-          }
-        },
-        "he": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ניתנים לעדכון אוטומטי: %lld · דורשים ערוץ רשמי: %lld"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld अपने-आप अपडेट हो सकते हैं · %lld के लिए आधिकारिक चैनल आवश्यक"
-          }
-        },
-        "hr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatski: %lld · Službenim kanalom: %lld"
-          }
-        },
-        "hu": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld automatikusan frissíthető · %lld a hivatalos csatornát igényli"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld dapat diperbarui otomatis · %lld memerlukan saluran resmi"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld aggiornabili automaticamente · %lld richiedono il canale ufficiale"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "自動アップデート可能 %lld 件 · 公式対応が必要 %lld 件"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "자동 업데이트 가능 %lld개 · 공식 처리 필요 %lld개"
-          }
-        },
-        "ms": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld boleh dikemas kini secara automatik · %lld memerlukan saluran rasmi"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld kan oppdateres automatisk · %lld krever den offisielle kanalen"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld automatisch bij te werken · %lld via officieel kanaal"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatycznie: %lld · Oficjalnym kanałem: %lld"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld atualizam automaticamente · %lld exigem o canal oficial"
-          }
-        },
-        "pt-PT": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld atualizam automaticamente · %lld requerem o canal oficial"
-          }
-        },
-        "ro": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automat: %lld · Prin canalul oficial: %lld"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Автоматически: %lld · Через официальный канал: %lld"
-          }
-        },
-        "sk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automaticky: %lld · Oficiálnym kanálom: %lld"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld kan uppdateras automatiskt · %lld kräver den officiella kanalen"
-          }
-        },
-        "th": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "อัปเดตอัตโนมัติได้ %lld · ต้องใช้ช่องทางทางการ %lld"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld otomatik güncellenebilir · %lld resmi kanal gerektiriyor"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Автоматично: %lld · Через офіційний канал: %lld"
-          }
-        },
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld có thể tự động cập nhật · %lld cần kênh chính thức"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可自動更新 %lld 個 · 需官方處理 %lld 個"
-          }
-        }
-      }
-    },
     "同时下载和安装": {
       "localizations": {
         "ar": {
@@ -45395,209 +44969,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "已檢查 Homebrew"
-          }
-        }
-      }
-    },
-    "已检查公开商店版本，信息可能存在同步延迟。可在 Upovi 中发起更新，可能要求 Apple 账户或管理员认证。": {
-      "extractionState": "manual",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تم فحص إصدار App Store العام، وقد تتأخر المعلومات. يمكنك بدء التحديث في Upovi؛ وقد تلزم مصادقة حساب Apple أو المسؤول."
-          }
-        },
-        "ca": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "S’ha comprovat la versió pública de l’App Store, que pot tenir retard. Pots iniciar l’actualització a Upovi; pot caldre autenticació del compte d’Apple o de l’administrador."
-          }
-        },
-        "cs": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Veřejná verze v App Storu zkontrolována; informace mohou být zpožděné. Aktualizaci můžete spustit v Upovi; může být nutné přihlášení účtem Apple nebo správcem."
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Den offentlige App Store-version er kontrolleret; oplysningerne kan være forsinkede. Du kan starte opdateringen i Upovi; login med Apple-konto eller administrator kan være påkrævet."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Öffentliche App Store-Version geprüft; die Angaben können verzögert sein. Du kannst das Update in Upovi starten; eine Anmeldung mit Apple Account oder Administrator kann nötig sein."
-          }
-        },
-        "el": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ελέγχθηκε η δημόσια έκδοση στο App Store· οι πληροφορίες ίσως καθυστερούν. Μπορείτε να ξεκινήσετε την ενημέρωση στο Upovi· ίσως απαιτείται σύνδεση με λογαριασμό Apple ή διαχειριστή."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Checked the public App Store version, which may be delayed. You can start the update in Upovi; Apple Account or administrator authentication may be required."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se comprobó la versión pública del App Store; la información puede llegar con retraso. Puedes iniciar la actualización en Upovi; puede requerirse autenticación de Apple o de administrador."
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Julkinen App Store -versio tarkistettu; tiedot voivat viivästyä. Voit käynnistää päivityksen Upovissa; Apple-tilin tai pääkäyttäjän kirjautuminen voi olla tarpeen."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version publique de l’App Store vérifiée ; l’information peut être retardée. Vous pouvez lancer la mise à jour dans Upovi ; une authentification Apple ou administrateur peut être requise."
-          }
-        },
-        "he": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "גרסת App Store הציבורית נבדקה, והמידע עשוי להתעכב. ניתן להתחיל את העדכון ב-Upovi; ייתכן שיידרש אימות חשבון Apple או מנהל."
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "सार्वजनिक App Store संस्करण जाँचा गया; जानकारी में देरी हो सकती है। आप Upovi में अपडेट शुरू कर सकते हैं; Apple खाता या व्यवस्थापक प्रमाणीकरण आवश्यक हो सकता है।"
-          }
-        },
-        "hr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Javna verzija u App Storeu provjerena; podaci mogu kasniti. Ažuriranje možete pokrenuti u aplikaciji Upovi; možda će biti potrebna prijava Apple računom ili administratorom."
-          }
-        },
-        "hu": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A nyilvános App Store-verzió ellenőrizve; az adatok késhetnek. A frissítést elindíthatja az Upoviban; Apple-fiókos vagy rendszergazdai hitelesítés lehet szükséges."
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versi App Store publik telah diperiksa; informasinya mungkin tertunda. Anda dapat memulai pembaruan di Upovi; autentikasi Akun Apple atau administrator mungkin diperlukan."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versione pubblica dell’App Store controllata; le informazioni potrebbero essere in ritardo. Puoi avviare l’aggiornamento in Upovi; potrebbe essere richiesta l’autenticazione Apple o dell’amministratore."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "公開されている App Store のバージョンを確認しました。情報の反映に遅れがある場合があります。Upovi でアップデートを開始でき、Apple アカウントまたは管理者の認証が必要な場合があります。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "공개 App Store 버전을 확인했습니다. 정보가 늦게 반영될 수 있습니다. Upovi에서 업데이트를 시작할 수 있으며 Apple 계정 또는 관리자 인증이 필요할 수 있습니다."
-          }
-        },
-        "ms": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versi App Store awam telah disemak; maklumat mungkin tertangguh. Anda boleh memulakan kemas kini dalam Upovi; pengesahan Akaun Apple atau pentadbir mungkin diperlukan."
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Den offentlige App Store-versjonen er kontrollert; informasjonen kan være forsinket. Du kan starte oppdateringen i Upovi; pålogging med Apple-konto eller administrator kan være påkrevd."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Openbare App Store-versie gecontroleerd; de informatie kan vertraagd zijn. Je kunt de update in Upovi starten; inloggen met Apple Account of als beheerder kan nodig zijn."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sprawdzono publiczną wersję w App Store; informacje mogą być opóźnione. Uaktualnienie można uruchomić w Upovi; może być wymagane uwierzytelnienie kontem Apple lub administratora."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versão pública da App Store verificada; a informação pode estar atrasada. Você pode iniciar a atualização no Upovi; pode ser necessária autenticação da Apple ou de administrador."
-          }
-        },
-        "pt-PT": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versão pública da App Store verificada; a informação pode estar atrasada. Pode iniciar a atualização no Upovi; poderá ser necessária autenticação da Apple ou de administrador."
-          }
-        },
-        "ro": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versiunea publică din App Store a fost verificată; informațiile pot avea întârziere. Puteți porni actualizarea în Upovi; poate fi necesară autentificarea cu contul Apple sau a administratorului."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Проверена публичная версия в App Store; данные могут обновляться с задержкой. Обновление можно запустить в Upovi; может потребоваться вход в Аккаунт Apple или авторизация администратора."
-          }
-        },
-        "sk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verejná verzia v App Store skontrolovaná; informácie môžu byť oneskorené. Aktualizáciu môžete spustiť v Upovi; môže byť potrebné prihlásenie účtom Apple alebo správcom."
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Den offentliga App Store-versionen kontrollerades; informationen kan vara fördröjd. Du kan starta uppdateringen i Upovi; inloggning med Apple-konto eller administratör kan krävas."
-          }
-        },
-        "th": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ตรวจสอบเวอร์ชันสาธารณะใน App Store แล้ว ข้อมูลอาจล่าช้า คุณสามารถเริ่มอัปเดตใน Upovi ได้ อาจต้องยืนยันตัวตนด้วยบัญชี Apple หรือผู้ดูแลระบบ"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Genel App Store sürümü denetlendi; bilgiler gecikmeli olabilir. Güncellemeyi Upovi’de başlatabilirsiniz; Apple Hesabı veya yönetici kimlik doğrulaması gerekebilir."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Перевірено публічну версію в App Store; дані можуть оновлюватися із затримкою. Оновлення можна запустити в Upovi; може знадобитися вхід в обліковий запис Apple або авторизація адміністратора."
-          }
-        },
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Đã kiểm tra phiên bản App Store công khai, thông tin có thể bị trễ. Bạn có thể bắt đầu cập nhật trong Upovi; có thể cần xác thực Tài khoản Apple hoặc quản trị viên."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已檢查公開商店版本，資訊可能有同步延遲。可在 Upovi 中發起更新，可能需要 Apple 帳號或管理者驗證。"
           }
         }
       }
@@ -77157,208 +76528,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "每小時"
-          }
-        }
-      }
-    },
-    "每次启动会自动扫描并检查一次；开启定时检查后，应用运行期间还会按间隔重复检查。休眠或退出应用会暂停定时检查。": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "يفحص Upovi ويتحقق مرة واحدة عند كل تشغيل. وعند تفعيل الفحص الدوري، يتحقق أيضًا على الفاصل المختار أثناء التشغيل. يؤدي السكون أو الإنهاء إلى إيقاف الفحص الدوري مؤقتًا."
-          }
-        },
-        "ca": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi escaneja i comprova un cop a cada inici. Amb les comprovacions periòdiques activades, també comprova a l’interval triat mentre s’executa. La suspensió o la sortida posen en pausa les comprovacions periòdiques."
-          }
-        },
-        "cs": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi při každém spuštění jednou prohledá a zkontroluje aplikace. Je-li zapnutá pravidelná kontrola, kontroluje za běhu také ve zvoleném intervalu. Režim spánku nebo ukončení pravidelnou kontrolu pozastaví."
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi scanner og kontrollerer én gang ved hver start. Med jævnlig kontrol slået til kontrolleres der også med det valgte interval, mens appen kører. Dvale eller afslutning sætter den jævnlige kontrol på pause."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi scannt und prüft bei jedem Start einmal. Bei aktivierter regelmäßiger Prüfung wird während der Laufzeit im gewählten Intervall erneut geprüft. Ruhezustand oder Beenden pausieren die Prüfung."
-          }
-        },
-        "el": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Το Upovi σαρώνει και ελέγχει μία φορά σε κάθε εκκίνηση. Με τον τακτικό έλεγχο ενεργό, ελέγχει επίσης στο επιλεγμένο διάστημα όσο εκτελείται. Η αναστολή λειτουργίας ή ο τερματισμός θέτουν σε παύση τον τακτικό έλεγχο."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi scans and checks once at every launch. With periodic checks on, it also checks at the chosen interval while running. Sleeping or quitting pauses periodic checks."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi analiza y comprueba una vez en cada inicio. Con la comprobación periódica activada, también comprueba con el intervalo elegido mientras se ejecuta. El reposo o la salida pausan la comprobación periódica."
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi skannaa ja tarkistaa kerran jokaisella käynnistyskerralla. Kun säännöllinen tarkistus on päällä, se tarkistaa myös valitulla välillä apin ollessa käynnissä. Lepotila tai lopettaminen keskeyttää säännöllisen tarkistuksen."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi analyse et vérifie une fois à chaque lancement. Avec la vérification périodique, il vérifie aussi à l’intervalle choisi pendant son exécution. La suspension d’activité ou la fermeture met en pause les vérifications."
-          }
-        },
-        "he": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi סורק ובודק פעם אחת בכל הפעלה. כשבדיקות תקופתיות פועלות, הוא בודק גם במרווח שנבחר בזמן שהוא פועל. שינה או יציאה משהות בדיקות תקופתיות."
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi हर लॉन्च पर एक बार स्कैन और जाँच करता है। आवधिक जाँच चालू होने पर, चलते समय चुने गए अंतराल पर भी जाँच करता है। स्लीप या बाहर निकलने से आवधिक जाँच रुक जाती है।"
-          }
-        },
-        "hr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi pri svakom pokretanju jednom skenira i provjerava. Uz uključenu redovitu provjeru provjerava i u odabranom intervalu dok je pokrenut. Mirovanje ili zatvaranje pauzira redovitu provjeru."
-          }
-        },
-        "hu": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Az Upovi minden indításkor egyszer beolvas és ellenőriz. Rendszeres ellenőrzéssel futás közben a választott időközönként is ellenőriz. Alvó állapot vagy kilépés szünetelteti a rendszeres ellenőrzést."
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi memindai dan memeriksa sekali setiap kali diluncurkan. Dengan pemeriksaan berkala aktif, Upovi juga memeriksa pada interval yang dipilih saat berjalan. Tidur atau keluar akan menjeda pemeriksaan berkala."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi analizza e controlla una volta a ogni avvio. Con il controllo periodico attivo, controlla anche all’intervallo scelto durante l’esecuzione. Stop o uscita mettono in pausa il controllo periodico."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "起動のたびに自動でスキャンと確認を 1 回行います。定期確認をオンにすると、App の実行中も間隔ごとに確認します。スリープまたは App の終了中は定期確認が一時停止します。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "실행할 때마다 자동으로 한 번 스캔하고 확인합니다. 주기적 확인을 켜면 앱 실행 중 간격에 따라 반복 확인합니다. 잠자기 또는 앱 종료 시 주기적 확인이 일시 정지됩니다."
-          }
-        },
-        "ms": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi mengimbas dan menyemak sekali pada setiap pelancaran. Dengan semakan berkala dihidupkan, ia juga menyemak pada selang yang dipilih semasa berjalan. Tidur atau keluar menjeda semakan berkala."
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi skanner og kontrollerer én gang ved hver oppstart. Med jevnlig kontroll slått på kontrolleres det også med valgt intervall mens appen kjører. Dvale eller avslutning setter den jevnlige kontrollen på pause."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi scant en controleert één keer bij elke start. Met periodieke controle ingeschakeld wordt tijdens het gebruik ook op het gekozen interval gecontroleerd. Sluimer of stoppen pauzeert de periodieke controle."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi skanuje i sprawdza raz przy każdym uruchomieniu. Gdy okresowe sprawdzanie jest włączone, sprawdza też w wybranym odstępie podczas działania. Uśpienie lub zakończenie wstrzymuje okresowe sprawdzanie."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Upovi analisa e verifica uma vez a cada abertura. Com a verificação periódica ativada, também verifica no intervalo escolhido enquanto estiver aberto. Repouso ou encerramento pausam a verificação periódica."
-          }
-        },
-        "pt-PT": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Upovi analisa e verifica uma vez em cada arranque. Com a verificação periódica ativa, também verifica no intervalo escolhido enquanto está aberto. A pausa ou o encerramento suspendem a verificação periódica."
-          }
-        },
-        "ro": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi scanează și verifică o dată la fiecare pornire. Cu verificarea periodică activată, verifică și la intervalul ales cât timp rulează. Repausul sau ieșirea pun pe pauză verificarea periodică."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi сканирует и проверяет один раз при каждом запуске. Если включена периодическая проверка, она также выполняется с выбранным интервалом во время работы. Сон или выход приостанавливают периодическую проверку."
-          }
-        },
-        "sk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi pri každom spustení raz prehľadá a skontroluje aplikácie. Ak je zapnutá pravidelná kontrola, kontroluje počas behu aj vo zvolenom intervale. Režim spánku alebo ukončenie pravidelnú kontrolu pozastaví."
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi skannar och kontrollerar en gång vid varje start. Med regelbunden kontroll aktiverad kontrolleras även med valt intervall medan appen körs. Vila eller avslut pausar den regelbundna kontrollen."
-          }
-        },
-        "th": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi สแกนและตรวจสอบหนึ่งครั้งทุกครั้งที่เปิด เมื่อเปิดการตรวจสอบเป็นระยะ จะตรวจสอบตามช่วงเวลาที่เลือกขณะทำงานด้วย การพักเครื่องหรือการออกจากแอปจะหยุดการตรวจสอบเป็นระยะชั่วคราว"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi her açılışta bir kez tarar ve denetler. Düzenli denetimler açıkken çalışırken seçilen aralıkta da denetler. Uyku veya çıkış düzenli denetimleri duraklatır."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi сканує й перевіряє один раз під час кожного запуску. Якщо увімкнено періодичну перевірку, вона також виконується з вибраним інтервалом під час роботи. Режим сну або вихід призупиняють періодичну перевірку."
-          }
-        },
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Upovi quét và kiểm tra một lần mỗi khi khởi chạy. Khi bật kiểm tra định kỳ, ứng dụng cũng kiểm tra theo khoảng thời gian đã chọn trong lúc chạy. Ngủ hoặc thoát sẽ tạm dừng kiểm tra định kỳ."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每次啟動會自動掃描並檢查一次；開啟定期檢查後，App 執行期間還會按間隔重複檢查。睡眠或結束 App 會暫停定期檢查。"
           }
         }
       }

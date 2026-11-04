@@ -4,6 +4,14 @@ public struct UpdatePolicy: Codable, Sendable {
     public var skipped: Set<String> = []
     public var deferredUntil: [String: Date] = [:]
     public init() { }
+    public func hasSkippedVersions(for app: InstalledApp) -> Bool {
+        let prefix = Self.scope(app) + "|"
+        return skipped.contains { $0.hasPrefix(prefix) }
+    }
+    public mutating func restoreSkippedVersions(for app: InstalledApp) {
+        let prefix = Self.scope(app) + "|"
+        skipped = skipped.filter { !$0.hasPrefix(prefix) }
+    }
     public static func scope(_ app: InstalledApp) -> String { app.bundleID + "|" + app.channel + "|" + (app.teamID ?? "") }
     public static func key(_ candidate: UpdateCandidate, app: InstalledApp) -> String {
         scope(app) + "|" + canonicalVersion(candidate.version) + "|" + candidate.build + "|" + String(candidate.usesBuildVersion)

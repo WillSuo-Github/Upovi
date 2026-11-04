@@ -1,0 +1,73 @@
+{
+  "sourceVersion": "0.4.10",
+  "sourceBuild": "202611040007",
+  "baseCommit": "3c5d05e424d03f125022a07fa5cf6d38497d594c",
+  "sourceState": "Current uncommitted local changes; this acceptance does not publish a release.",
+  "scope": "Developer ID signed native acceptance harness compiled from current production views and services, restricted to the existing AdBlock Pro installation. Signed helpers and mas copied from the current Xcode build.",
+  "fixtureBundleID": "app.upovi.TrustAcceptance",
+  "fixtureSHA256": {
+    "fixture": "568f8f54a434c9d2a8b1cd1eb7fccec2e5bf8341faf8b814110600a24e97d361",
+    "installer": "114dfc30a2f218d79eee8ea6fc0d445503b604b87aebd9d34f7ff8e07ad01297",
+    "mas": "928d8070b8d496546e42a6dd452b0e33f9e846b079f5a8b8912d429a529368fa"
+  },
+  "sourceSHA256": {
+    "Sources/UpoviCore/Services/AppStoreCatalog.swift": "a209393d44cd9571cf0f84f7187cdfb91136d6b9189ff880c51fe15318099a97",
+    "Sources/UpoviStoreInstaller/UpoviStoreInstaller.swift": "e79d7e99171b704b28c1ebd98cba25fdfdb9dd864d772803a96bb8060b69d426",
+    "Sources/Upovi/Services/AppStoreInstallationService.swift": "9974b77622f63ee3a4844644b13434ba2c793ebd4de93639e29b83e667e89d88"
+  },
+  "application": {
+    "name": "AdBlock Pro",
+    "bundleID": "com.samuellaska.AdBuster",
+    "storeID": 1018301773,
+    "path": "/Applications/AdBlock Pro.app"
+  },
+  "before": {
+    "bundleID": "com.samuellaska.AdBuster",
+    "version": "13.0.0",
+    "build": "349",
+    "executableSHA256": "a481335828727c448674e81ea5c0f56236d7ffebec6ad1aed5d3ab3475e360a6",
+    "receiptPresent": true
+  },
+  "after": {
+    "bundleID": "com.samuellaska.AdBuster",
+    "version": "13.1.0",
+    "build": "350",
+    "teamID": "YLZ99ZSP6G",
+    "executableSHA256": "21f529dfb6be710866c27d65790585d429ce293f1a55f18268af34154eabbd06",
+    "receiptPresent": true,
+    "receiptBytes": 4878
+  },
+  "transaction": {
+    "id": "F7F8798D-EC6B-4ED3-8ED5-3C5969F038FE",
+    "state": "installed",
+    "selectedVersion": "13.1.0",
+    "failure": null
+  },
+  "nativeUI": {
+    "singleApplicationReviewObserved": true,
+    "selectedOldVersion": "13.0.0",
+    "selectedNewVersion": "13.1.0",
+    "startInvoked": true,
+    "completionObserved": true,
+    "completedItems": 1
+  },
+  "validation": {
+    "deepStrictAllArchitecturesSignature": "passed",
+    "gatekeeper": "accepted; source=Mac App Store; origin=Apple Mac OS Application Signing",
+    "receiptPresent": true,
+    "postUpdateSourceStatus": "current",
+    "postUpdateCandidateCount": 0
+  },
+  "boundaries": {
+    "onlyAdBlockSelected": true,
+    "installedUpoviReplaced": false,
+    "otherApplicationsSelectedForUpdate": false,
+    "newReleasePublished": false,
+    "SafariExtensionBehaviorTested": false,
+    "newEntitlementsOrSystemSecuritySettingsAdded": false
+  },
+  "cleanup": {
+    "testProcessesStopped": true,
+    "temporaryTestBundlesRemoved": true
+  }
+}

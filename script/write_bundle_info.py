@@ -24,6 +24,6 @@ info = dict(CFBundleDevelopmentRegion='en', CFBundleExecutable='Upovi', CFBundle
             NSLocalNetworkUsageDescription='用于发现已开启 P2P 的节点并交换已扫描应用的版本报告。',
             NSHumanReadableCopyright='Copyright © 2026 Upovi contributors. PolyForm Noncommercial License 1.0.0.',
             SUFeedURL=release['feedURL'], SUPublicEDKey=release['publicEDKey'],
-            SUEnableAutomaticChecks=False, SUAutomaticallyUpdate=False, SUEnableSystemProfiling=False,
+            SUEnableAutomaticChecks=False, SUAutomaticallyUpdate=False, SUAllowsAutomaticUpdates=False, SUEnableSystemProfiling=False,
             SUVerifyUpdateBeforeExtraction=True, SURequireSignedFeed=True)
 pathlib.Path(sys.argv[1]).write_bytes(plistlib.dumps(info))

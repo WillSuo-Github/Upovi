@@ -11,9 +11,9 @@ extension AppStore {
             await refreshInstallations()
             while !Task.isCancelled {
                 policyClock = Date()
-                if CheckSchedule.isDue(enabled: (automaticChecks || unattendedState.enabled) && !apps.isEmpty, online: networkAvailable,
+                if CheckSchedule.isDue(enabled: automaticChecks && !apps.isEmpty, online: networkAvailable,
                     busy: refreshing || scanning || checking || installationBusy, lastAttempt: lastCheckAttempt,
-                    intervalMinutes: checkIntervalMinutes) { beginChecking(allowUnattended: true) }
+                    intervalMinutes: checkIntervalMinutes) { beginChecking() }
                 if networkEnabled && !syncing && !scanning && !refreshing && !installationBusy &&
                     (lastSyncAttempt.map { Date().timeIntervalSince($0) >= 600 } ?? true) { beginSync() }
                 try? await Task.sleep(for: .seconds(30))
@@ -158,7 +158,6 @@ extension AppStore {
     }
     func restoreAdministratorInstallation(_ attempt: AdministratorInstallAttempt) {
         guard !installationBusy, !refreshing, !checking, !scanning, !SelfUpdateService.shared.sessionInProgress else { return }
-        guard revokeAutomaticUpdatesBeforeRestore(attempt.plan.application) else { return }
         installing = true; canCancelInstallation = false; installationProgress = String(localized: "正在请求管理员授权以恢复主应用…")
         installationTask = Task { [self] in
             defer { installing = false }
@@ -209,7 +208,6 @@ extension AppStore {
     func restoreInstallation(_ receipt: InstallationReceipt) {
         guard !installationBusy, !refreshing, !checking, !scanning else { return }
         guard !SelfUpdateService.shared.sessionInProgress else { errorMessage = String(localized: "请先完成或关闭 Upovi 自身更新，再恢复其他应用。"); return }
-        guard revokeAutomaticUpdatesBeforeRestore(receipt.application) else { return }
         installing = true
         Task {
             defer { installing = false }

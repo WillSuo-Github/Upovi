@@ -27,6 +27,65 @@ final class UpdateControlsWorkflowTests: XCTestCase {
         value.setSkipped(candidate, app: app, skipped: false)
         XCTAssertEqual(value.updateCount, 1)
     }
+    func testIgnoredSidebarIncludesPermanentAndSkippedRulesWithoutFreshSourceResults() throws {
+        let prefs = try preferences(), value = AppStore(preferences: prefs)
+        let permanent = InstalledApp(name: "Permanent", bundleID: "app.synthetic.permanent", version: "1", path: "/synthetic/P.app", teamID: "SYNTHETIC")
+        let other = InstalledApp(name: "Other", bundleID: "app.synthetic.other", version: "1", path: "/synthetic/O.app", teamID: "SYNTHETIC")
+        value.apps = [app, permanent, other]
+        value.toggleIgnored(permanent)
+        value.setSkipped(candidate, app: app, skipped: true)
+        value.section = .ignored; value.sourceFilter = .unsupported
+        XCTAssertEqual(Set(value.ignoredApps.map(\.id)), [app.id, permanent.id])
+        XCTAssertEqual(Set(value.visibleApps.map(\.id)), [app.id, permanent.id], "Library filters must not leak into the sidebar section")
+        value.search = "Permanent"
+        XCTAssertEqual(value.visibleApps.map(\.id), [permanent.id])
+        XCTAssertEqual(value.ignoredApps.count, 2, "The sidebar count is independent from search")
+        let restarted = AppStore(preferences: prefs)
+        XCTAssertEqual(restarted.section, .ignored)
+        XCTAssertTrue(restarted.updatePolicy.hasSkippedVersions(for: app))
+    }
+    func testRestoringOneIgnoreRuleKeepsTheOtherAndNeverStartsInstallation() throws {
+        let value = AppStore(preferences: try preferences()); value.apps = [app]
+        value.sourceResults = [app.id: .init(appID: app.id, candidates: [candidate], note: "Fixture", status: .updates)]
+        value.toggleIgnored(app); value.setSkipped(candidate, app: app, skipped: true)
+        value.section = .ignored
+        XCTAssertEqual(value.ignoredApps.count, 1)
+        value.toggleIgnored(app)
+        XCTAssertEqual(value.ignoredApps.count, 1)
+        XCTAssertEqual(value.updateCount, 0)
+        value.restoreSkippedVersions(for: app)
+        XCTAssertTrue(value.visibleApps.isEmpty)
+        XCTAssertEqual(value.updateCount, 1)
+        XCTAssertNil(value.installationTask); XCTAssertNil(value.bulkTask)
+        XCTAssertFalse(value.bulkUpdatePresented)
+    }
+    func testIgnoredSidebarDoesNotDependOnTheSkippedVersionRemainingInLatestResults() throws {
+        let value = AppStore(preferences: try preferences()); value.apps = [app]
+        value.setSkipped(candidate, app: app, skipped: true)
+        let newer = UpdateCandidate(version: "3.0", source: "Fixture", isCommunity: false, url: nil)
+        value.sourceResults = [app.id: .init(appID: app.id, candidates: [newer], note: "Fixture", status: .updates)]
+        XCTAssertEqual(value.ignoredApps.map(\.id), [app.id])
+        XCTAssertEqual(value.updateCount, 1, "Skipping one version must not suppress future releases")
+        value.show(app)
+        XCTAssertEqual(value.section, .ignored); XCTAssertEqual(value.selection, app.id)
+        XCTAssertTrue(value.libraryInspectorPresented)
+        value.restoreSkippedVersions(for: app)
+        XCTAssertFalse(value.updatePolicy.hasSkippedVersions(for: app))
+        XCTAssertEqual(value.updateCount, 1)
+    }
+    func testSnoozedUpdatesRemainSeparateFromIgnoredSidebar() throws {
+        let value = AppStore(preferences: try preferences()); value.apps = [app]
+        value.sourceResults = [app.id: .init(appID: app.id, candidates: [candidate], note: "Fixture", status: .updates)]
+        value.deferUpdates(for: app, until: Date().addingTimeInterval(3600))
+        XCTAssertTrue(value.ignoredApps.isEmpty)
+        XCTAssertEqual(value.postponedApps.map(\.id), [app.id])
+        value.setSkipped(candidate, app: app, skipped: true)
+        XCTAssertEqual(value.ignoredApps.map(\.id), [app.id])
+        XCTAssertTrue(value.postponedApps.isEmpty)
+        value.restoreSkippedVersions(for: app)
+        XCTAssertEqual(value.updateCount, 0, "Restoring skipped versions must preserve the snooze")
+        XCTAssertEqual(value.postponedApps.map(\.id), [app.id])
+    }
     func testCompletedFailureBatchIsPersistedAndLoadedForExplicitRetry() async throws {
         let prefs = try preferences(), apps = [app]
         let value = AppStore(preferences: prefs, scanApplications: { _ in apps })

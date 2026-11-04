@@ -177,10 +177,7 @@ struct AppDetailView: View {
                 Text("正式版").tag(ReleaseChannel.stable)
                 Text("Beta 与预发布").tag(ReleaseChannel.beta)
             }.disabled(store.operationBusy).accessibilityIdentifier("application-release-channel")
-            Toggle("允许无人值守更新", isOn: Binding(get: { store.unattendedState.grant(for: app, channel: store.releaseChannel(for: app)) != nil }, set: { store.setUnattendedAllowed($0, for: app) }))
-                .disabled((try? UnattendedGrant(application: app, channel: store.releaseChannel(for: app))) == nil)
-                .accessibilityIdentifier("application-unattended-allowed")
-            Text("切换渠道后请重新检查；不会降级，且会撤销此应用的自动更新授权。无人值守更新还需在设置中开启总开关。")
+            Text("切换渠道后请重新检查；不会降级。安装始终需要你点击更新按钮。")
                 .font(.caption).foregroundStyle(.secondary)
         }.card(padding: 14)
     }

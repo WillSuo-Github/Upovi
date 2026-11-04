@@ -25,11 +25,9 @@
 		105EAE48F969B5095E07D70E /* libUpoviCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D00051D55B6C5AEDD8FF9883 /* libUpoviCore.a */; };
 		10A41D6D5EB93F928097732C /* AppStoreCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0E57326DC102CD55D63803 /* AppStoreCatalog.swift */; };
 		11118E70EFEE2207DC16B749 /* AppDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF3159B46330E61FDA54665 /* AppDetailView.swift */; };
-		13D13BD82FCEB2CA0095DD19 /* StoreUpdateAvailability.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE847F45E41E5E03EE07150A /* StoreUpdateAvailability.swift */; };
 		169125EA8A67F9E2214D83E2 /* SourceRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777DCABAB86273A5460FE09F /* SourceRefreshTests.swift */; };
 		19807E6ECF8A45DF490B5BB8 /* AppcastReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FB16EAA4DCCED6343CFC73 /* AppcastReader.swift */; };
 		1C2B14E51236B7F2AD628295 /* ReviewedSourceCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C4F9ACBBACED9C01AA3B7DD /* ReviewedSourceCatalog.swift */; };
-		1D06DE7729859CA08DF1F87C /* UnattendedSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B363C668E1152CFBF3B89F /* UnattendedSettingsView.swift */; };
 		1E55165BFC35F9B44A100199 /* ToolSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8805F07EB5C721BF0AD13A4F /* ToolSourceTests.swift */; };
 		1EA57B447159DEABDF7B9262 /* PeerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D54348A624F4C6167D6B407 /* PeerIdentity.swift */; };
 		1ECF2E3FEFFCC952BB7718B8 /* ArchiveExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8B7398E052985DA7B6DFAC /* ArchiveExtractor.swift */; };
@@ -49,7 +47,7 @@
 		3514667F88CDC9DEDC0A6EE7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A975C10358CBA7959D1A8E2A /* SettingsView.swift */; };
 		354E6DF5FDAB4C1FA4281261 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447E72C54E21A55EF349008E /* AppStore.swift */; };
 		384D94E19663EB260E821B5D /* InstallationConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8F442FFB9DF0C8916ECEA1 /* InstallationConfirmationView.swift */; };
-		38D4E974A36DC17AA8AE811B /* AppStore+Unattended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE639DB3FCB3F3EECC42D28 /* AppStore+Unattended.swift */; };
+		38D4E974A36DC17AA8AE811B /* AppStore+ReleaseChannels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE639DB3FCB3F3EECC42D28 /* AppStore+ReleaseChannels.swift */; };
 		3AAA6CEDE82130366192CAC8 /* ToolSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012B5E07EBC2A310572AA9C3 /* ToolSource.swift */; };
 		3C481EEA00D47A98957D8EF1 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DB52866408F20A1D741415E3 /* InfoPlist.xcstrings */; };
 		3DFE668D75FC742EBC6019FB /* DownloadCenterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 028A076FB28AE34E156298C6 /* DownloadCenterService.swift */; };
@@ -108,6 +106,7 @@
 		869F797431FCAC630407A73E /* DownloadCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 851092CF94312D5895936180 /* DownloadCoordinator.swift */; };
 		876D1007E2D44E81C1A02F47 /* DiagnosticTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0600F25FA5F74872B94E099 /* DiagnosticTests.swift */; };
 		896325DE7F341E4EBA9CB35C /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B39E00B3A49880BEF03153 /* LibraryView.swift */; };
+		FA79C65847F925F82E86D522 /* IgnoredAppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703588B9DBDFA09F5F144EF5 /* IgnoredAppsView.swift */; };
 		8B831E1B9A77E2CC78F8E381 /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
 		8B9A5F9A28044DE5AA47EB42 /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00F6463BC2B71CC4CC10C88 /* CommunityView.swift */; };
 		8C8F31CC09AD900058DC4B0A /* ToolSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8D9A222DD2926CA11F04568 /* ToolSourceService.swift */; };
@@ -132,7 +131,6 @@
 		AFE824BB1739DA4910CC935E /* AdministratorInstallationSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18980EAF6AEA1E1FC9D676FD /* AdministratorInstallationSpace.swift */; };
 		B257C4AD3E8D478BE3D7C263 /* CommunityNetwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDFC6CDD56517C3AD12ECD90 /* CommunityNetwork.swift */; };
 		B2E6911773CC013998C4CF30 /* DiagnosticSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD965277FA32E3F0DC331CF /* DiagnosticSnapshot.swift */; };
-		B2F5B35A8847842D5CA7FC09 /* UnattendedUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F9674F31368C6631114ECE /* UnattendedUpdates.swift */; };
 		B4B0E7F9BEB37BD1A5683F4B /* module.modulemap in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3A544D6A3A49A6B50B16D732 /* module.modulemap */; };
 		B95BFAC11ACD5DBD34B5CA66 /* AppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BCD00BD5A601B4D086273B /* AppScanner.swift */; };
 		BC42C83404CA6D47A5A2E14A /* AppStore+Presentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F7B9B289219F5806229241 /* AppStore+Presentation.swift */; };
@@ -170,7 +168,7 @@
 		ED85A92A0C09EA7C7A7C5949 /* ScanLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA59832AE0D2A0C81ED8EFB /* ScanLocations.swift */; };
 		F0337327E0AF90CE51AF6DB5 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41BFE56F2919B0AD47B9E93 /* main.swift */; };
 		F167CB3ED34D1B3E6B93F39D /* AdministratorInstallationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02C7E5B62F6594028563603 /* AdministratorInstallationService.swift */; };
-		F3C355867F3D83B92B334EF0 /* ReleaseChannelsAndAutomationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC513C9C22F8DACB2F9CDF15 /* ReleaseChannelsAndAutomationTests.swift */; };
+		F3C355867F3D83B92B334EF0 /* ReleaseChannelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC513C9C22F8DACB2F9CDF15 /* ReleaseChannelTests.swift */; };
 		F5041B11F683DC74B661E59F /* libarchive.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F32DC716F408DDEB506126ED /* libarchive.tbd */; };
 		F5193104D324E7972AAC58AC /* AppStoreUpdateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6196FD40E923119FB208259F /* AppStoreUpdateTests.swift */; };
 		F632E89E74B5D8A52CEB7B14 /* StoreReceiptRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0266D077A496F87433981A50 /* StoreReceiptRecovery.swift */; };
@@ -179,7 +177,7 @@
 		FBCBCB751B7B732D0367E64F /* ReleaseChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5EA518472ED8DDBF1179894 /* ReleaseChannel.swift */; };
 		FD05733E3DABADC9604DA194 /* UpoviInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E981CB479F930398425BBF18 /* UpoviInstaller.swift */; };
 		FD3EF86548C1B29FDB950809 /* UpoviInstaller in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = 5595BC76CC1B3AB15E739208 /* UpoviInstaller */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		FF11098475A8225D1E778997 /* UnattendedWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB6732F6EC041E67BE89A21 /* UnattendedWorkflowTests.swift */; };
+		FF11098475A8225D1E778997 /* UserInitiatedUpdatesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB6732F6EC041E67BE89A21 /* UserInitiatedUpdatesTests.swift */; };
 		FFBCADF70809B1EC2A46242F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D4E8A814C943EAA3827B581D /* Sparkle */; };
 /* End PBXBuildFile section */
 
@@ -333,7 +331,7 @@
 		16AE9CAACE678CAF25D8C364 /* ApplicationTableRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationTableRow.swift; sourceTree = "<group>"; };
 		18980EAF6AEA1E1FC9D676FD /* AdministratorInstallationSpace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorInstallationSpace.swift; sourceTree = "<group>"; };
 		1A5C52D77C97EAE4F9CCFF4D /* diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = diagnostics.swift; sourceTree = "<group>"; };
-		1AB6732F6EC041E67BE89A21 /* UnattendedWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnattendedWorkflowTests.swift; sourceTree = "<group>"; };
+		1AB6732F6EC041E67BE89A21 /* UserInitiatedUpdatesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInitiatedUpdatesTests.swift; sourceTree = "<group>"; };
 		1B0E57326DC102CD55D63803 /* AppStoreCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreCatalog.swift; sourceTree = "<group>"; };
 		1BE233866CE636FE680C6146 /* BulkUpdate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkUpdate.swift; sourceTree = "<group>"; };
 		1C700336FA1883F8B70C3B9B /* DHTEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DHTEndpoint.swift; sourceTree = "<group>"; };
@@ -376,7 +374,7 @@
 		465C60399857C49E4C336847 /* UpoviStoreInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpoviStoreInstaller.swift; sourceTree = "<group>"; };
 		4697B9ED7302F22CA8A52F0A /* ApplicationInstallation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationInstallation.swift; sourceTree = "<group>"; };
 		4B1ADE0B8107A0477CB48251 /* CanonicalFilePath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalFilePath.swift; sourceTree = "<group>"; };
-		4BE639DB3FCB3F3EECC42D28 /* AppStore+Unattended.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+Unattended.swift"; sourceTree = "<group>"; };
+		4BE639DB3FCB3F3EECC42D28 /* AppStore+ReleaseChannels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+ReleaseChannels.swift"; sourceTree = "<group>"; };
 		50FDC46E7D9377536DA006AB /* startup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = startup.swift; sourceTree = "<group>"; };
 		52825B7E03F33E932EF5AA49 /* PublisherDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublisherDirectory.swift; sourceTree = "<group>"; };
 		54A14FB0D24F65CDFCC968E1 /* AppStore+AdministratorBackups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+AdministratorBackups.swift"; sourceTree = "<group>"; };
@@ -462,12 +460,11 @@
 		BBD965277FA32E3F0DC331CF /* DiagnosticSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticSnapshot.swift; sourceTree = "<group>"; };
 		BD0F5062F6A88189F1B52141 /* UpdateInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstaller.swift; sourceTree = "<group>"; };
 		BDC4A738CB83E81317EEB73A /* AppStore+Community.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+Community.swift"; sourceTree = "<group>"; };
-		BE847F45E41E5E03EE07150A /* StoreUpdateAvailability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreUpdateAvailability.swift; sourceTree = "<group>"; };
 		C00F6463BC2B71CC4CC10C88 /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
 		C0D5152DBF8F8A34A2C91586 /* CommunityHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityHistory.swift; sourceTree = "<group>"; };
 		C1468606762ADB7D3DAFB1AE /* ElectronSourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElectronSourceTests.swift; sourceTree = "<group>"; };
 		C3B39E00B3A49880BEF03153 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
-		C5F9674F31368C6631114ECE /* UnattendedUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnattendedUpdates.swift; sourceTree = "<group>"; };
+		703588B9DBDFA09F5F144EF5 /* IgnoredAppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoredAppsView.swift; sourceTree = "<group>"; };
 		C7F7B76DAE08D879AC10CD47 /* ElectronUpdateSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElectronUpdateSource.swift; sourceTree = "<group>"; };
 		C8D9A222DD2926CA11F04568 /* ToolSourceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSourceService.swift; sourceTree = "<group>"; };
 		CD07344B27D2421EE6A76282 /* UpoviTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpoviTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -477,7 +474,6 @@
 		D0EC6911ED80B9285EE8DCEF /* SourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceTests.swift; sourceTree = "<group>"; };
 		D126983E39B3F7F4B4E16BF8 /* ApplicationTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationTable.swift; sourceTree = "<group>"; };
 		D1D569E7071CCB46EAF130AC /* SourceHTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHTTPClient.swift; sourceTree = "<group>"; };
-		D3B363C668E1152CFBF3B89F /* UnattendedSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnattendedSettingsView.swift; sourceTree = "<group>"; };
 		D675D630F5266112A52E9DE5 /* BundleVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleVerifier.swift; sourceTree = "<group>"; };
 		D8595E8ED2B0246333DBC0C9 /* UpoviApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpoviApp.swift; sourceTree = "<group>"; };
 		D9DBBF382FB7882DFEA9A4E2 /* UpoviStoreInstaller */ = {isa = PBXFileReference; includeInIndex = 0; path = UpoviStoreInstaller; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -511,7 +507,7 @@
 		FA1D001925A9B0AE1A1A8E99 /* UpdateControlsWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateControlsWorkflowTests.swift; sourceTree = "<group>"; };
 		FAA59832AE0D2A0C81ED8EFB /* ScanLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanLocations.swift; sourceTree = "<group>"; };
 		FBB7E068500529864D88FAD2 /* UpoviPeer */ = {isa = PBXFileReference; includeInIndex = 0; path = UpoviPeer; sourceTree = BUILT_PRODUCTS_DIR; };
-		FC513C9C22F8DACB2F9CDF15 /* ReleaseChannelsAndAutomationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseChannelsAndAutomationTests.swift; sourceTree = "<group>"; };
+		FC513C9C22F8DACB2F9CDF15 /* ReleaseChannelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseChannelTests.swift; sourceTree = "<group>"; };
 		FDFC6CDD56517C3AD12ECD90 /* CommunityNetwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityNetwork.swift; sourceTree = "<group>"; };
 		FE9A617CDB2CD27CB4E4FD9D /* ArchiveSupport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ArchiveSupport.h; sourceTree = "<group>"; };
 		FED7A35CFC832D8643A5BCEB /* SettingsFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsFile.swift; sourceTree = "<group>"; };
@@ -615,7 +611,7 @@
 				B3453C7074ED60A9804CA828 /* ToolbarWorkflowTests.swift */,
 				A8EFA85943558392508C403D /* ToolSourceWorkflowTests.swift */,
 				592184E69E573346D40B7653 /* TransferProgressTests.swift */,
-				1AB6732F6EC041E67BE89A21 /* UnattendedWorkflowTests.swift */,
+				1AB6732F6EC041E67BE89A21 /* UserInitiatedUpdatesTests.swift */,
 				FA1D001925A9B0AE1A1A8E99 /* UpdateControlsWorkflowTests.swift */,
 			);
 			path = UpoviTests;
@@ -651,12 +647,12 @@
 				1D8F442FFB9DF0C8916ECEA1 /* InstallationConfirmationView.swift */,
 				163A9C75A378A30FD669A78A /* InstallationHistoryView.swift */,
 				C3B39E00B3A49880BEF03153 /* LibraryView.swift */,
+				703588B9DBDFA09F5F144EF5 /* IgnoredAppsView.swift */,
 				A975C10358CBA7959D1A8E2A /* SettingsView.swift */,
 				F3B323BDE71CE1C122683B76 /* SourceEditorView.swift */,
 				6F180E81B400185753172D73 /* ToolSourcesView.swift */,
 				127636109BD00A63582520BB /* ToolUpdateRow.swift */,
 				9ABD141C086C1CA02015C7ED /* TransferViews.swift */,
-				D3B363C668E1152CFBF3B89F /* UnattendedSettingsView.swift */,
 				93F69221DF91BCA0111F29FA /* UpdatesOverview.swift */,
 				E16F11787601C86A1217B362 /* UpdatesView.swift */,
 			);
@@ -731,7 +727,7 @@
 				94F5DDC26AB7FF14352E5B0B /* AppStore+Operations.swift */,
 				39F7B9B289219F5806229241 /* AppStore+Presentation.swift */,
 				A5A31B9CA98316CFF15DDCA4 /* AppStore+ToolSources.swift */,
-				4BE639DB3FCB3F3EECC42D28 /* AppStore+Unattended.swift */,
+				4BE639DB3FCB3F3EECC42D28 /* AppStore+ReleaseChannels.swift */,
 				126D63E5E3B898343D14A823 /* AppStore+UpdateControls.swift */,
 				711527FF6982CB9347F4B701 /* CheckHistory.swift */,
 				5E6179EA13E95F294582D151 /* SourceFilter.swift */,
@@ -854,7 +850,6 @@
 				829D0AE486C6C39C79B895D4 /* MachOCompatibility.swift */,
 				211706499C567E1A7027E386 /* ProcessCommand.swift */,
 				0266D077A496F87433981A50 /* StoreReceiptRecovery.swift */,
-				C5F9674F31368C6631114ECE /* UnattendedUpdates.swift */,
 				BD0F5062F6A88189F1B52141 /* UpdateInstaller.swift */,
 			);
 			path = Installation;
@@ -881,7 +876,6 @@
 				FED7A35CFC832D8643A5BCEB /* SettingsFile.swift */,
 				D1D569E7071CCB46EAF130AC /* SourceHTTPClient.swift */,
 				3E49336380FDBE1D8D5BBD16 /* SourceVersion.swift */,
-				BE847F45E41E5E03EE07150A /* StoreUpdateAvailability.swift */,
 				012B5E07EBC2A310572AA9C3 /* ToolSource.swift */,
 				C8D9A222DD2926CA11F04568 /* ToolSourceService.swift */,
 				F61C90ECA840CB2B2C5BDC7E /* UpdateChecker.swift */,
@@ -1016,7 +1010,7 @@
 				43667E5DF78D7C5FBCE26B18 /* InstallationTests.swift */,
 				6EC1F3DFEFBE31A7AF5BE5F2 /* LegacyMigrationTests.swift */,
 				328E42000B2CAE75FB022503 /* MachOTests.swift */,
-				FC513C9C22F8DACB2F9CDF15 /* ReleaseChannelsAndAutomationTests.swift */,
+				FC513C9C22F8DACB2F9CDF15 /* ReleaseChannelTests.swift */,
 				650B76C3BA64A17025749BA1 /* ResumableDownloadTests.swift */,
 				B5BF79BD17050A7E7BE56016 /* SettingsFileTests.swift */,
 				E621AD43BD03896968BEDCC7 /* SourceDiagnosticsTests.swift */,
@@ -1398,10 +1392,8 @@
 				2118B6A5DEE200FE097DA072 /* SourceHTTPClient.swift in Sources */,
 				045FEC3F954643CF01A579D0 /* SourceVersion.swift in Sources */,
 				F632E89E74B5D8A52CEB7B14 /* StoreReceiptRecovery.swift in Sources */,
-				13D13BD82FCEB2CA0095DD19 /* StoreUpdateAvailability.swift in Sources */,
 				3AAA6CEDE82130366192CAC8 /* ToolSource.swift in Sources */,
 				8C8F31CC09AD900058DC4B0A /* ToolSourceService.swift in Sources */,
-				B2F5B35A8847842D5CA7FC09 /* UnattendedUpdates.swift in Sources */,
 				61074AA73F8C84CBF6000017 /* UpdateAssessment.swift in Sources */,
 				77B3646ED052408D228DAD8E /* UpdateChecker.swift in Sources */,
 				26301ECC6E9EDD3AD41DD2E3 /* UpdateInstaller.swift in Sources */,
@@ -1450,7 +1442,7 @@
 				A2A240FBC8ED4F9DB9A7A98C /* InstallationTests.swift in Sources */,
 				76C75CE3DFCFD08E2C09A7A5 /* LegacyMigrationTests.swift in Sources */,
 				040AB2F9E6B4515BE8B45D48 /* MachOTests.swift in Sources */,
-				F3C355867F3D83B92B334EF0 /* ReleaseChannelsAndAutomationTests.swift in Sources */,
+				F3C355867F3D83B92B334EF0 /* ReleaseChannelTests.swift in Sources */,
 				34221DA49AF837A512C246E2 /* ResumableDownloadTests.swift in Sources */,
 				5D8FD2496ACB08675BE6F9EB /* SettingsFileTests.swift in Sources */,
 				76DE94F2BB7CA381094438B9 /* SourceDiagnosticsTests.swift in Sources */,
@@ -1474,7 +1466,7 @@
 				829378A1D520E340A47FA215 /* ToolSourceWorkflowTests.swift in Sources */,
 				5CF3ACD5EEAC3490D7468014 /* ToolbarWorkflowTests.swift in Sources */,
 				9C9DE9DDE15984A0D4552B6B /* TransferProgressTests.swift in Sources */,
-				FF11098475A8225D1E778997 /* UnattendedWorkflowTests.swift in Sources */,
+				FF11098475A8225D1E778997 /* UserInitiatedUpdatesTests.swift in Sources */,
 				A8B8785BB8DD42DD2068541C /* UpdateControlsWorkflowTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1504,7 +1496,7 @@
 				70B3A454984F6C1F6523B99E /* AppStore+Operations.swift in Sources */,
 				BC42C83404CA6D47A5A2E14A /* AppStore+Presentation.swift in Sources */,
 				604E9105CC0F3CE5E1D07A2C /* AppStore+ToolSources.swift in Sources */,
-				38D4E974A36DC17AA8AE811B /* AppStore+Unattended.swift in Sources */,
+				38D4E974A36DC17AA8AE811B /* AppStore+ReleaseChannels.swift in Sources */,
 				9D7536A7BD31F08E3B35506A /* AppStore+UpdateControls.swift in Sources */,
 				354E6DF5FDAB4C1FA4281261 /* AppStore.swift in Sources */,
 				DB779A5470F386CAA87A27B2 /* AppStoreInstallationService.swift in Sources */,
@@ -1523,6 +1515,7 @@
 				384D94E19663EB260E821B5D /* InstallationConfirmationView.swift in Sources */,
 				451F2E8948ECF621A45E93B2 /* InstallationHistoryView.swift in Sources */,
 				896325DE7F341E4EBA9CB35C /* LibraryView.swift in Sources */,
+				FA79C65847F925F82E86D522 /* IgnoredAppsView.swift in Sources */,
 				842D0AB8B62C63199A710A94 /* LoginItemService.swift in Sources */,
 				70D4981A6964BCCAA50D72FD /* NotificationService.swift in Sources */,
 				82E9F2AC8481D311C5D0E999 /* SelfUpdateService.swift in Sources */,
@@ -1533,7 +1526,6 @@
 				0615624D18D5C19771D3527B /* ToolUpdateRow.swift in Sources */,
 				CEE8F8C6D13C6EBD2B706356 /* TransferProgress.swift in Sources */,
 				2E54C16B5CB94546B7F356E2 /* TransferViews.swift in Sources */,
-				1D06DE7729859CA08DF1F87C /* UnattendedSettingsView.swift in Sources */,
 				96B517174DF32592096EB4B5 /* UpdatesOverview.swift in Sources */,
 				C4A592F4054543585EE96E21 /* UpdatesView.swift in Sources */,
 				55D3C1F4B3DDC1C978DCF51F /* UpoviApp.swift in Sources */,

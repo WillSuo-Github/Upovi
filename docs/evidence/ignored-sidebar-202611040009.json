@@ -1,0 +1,55 @@
+{
+  "version": "0.4.10",
+  "build": {
+    "xcode": "passed",
+    "configuration": "Debug",
+    "signature": "ad hoc",
+    "deepStrictSignatureVerification": "passed"
+  },
+  "baseCommit": "3c5d05e424d03f125022a07fa5cf6d38497d594c",
+  "sourceState": "Current uncommitted local changes; no release published or installed Upovi replaced.",
+  "sourceSHA256": {
+    "Sources/Upovi/Views/IgnoredAppsView.swift": "43fc1595d46a75e28fe0db1eea252fb4409ea1d21415d45ac7c48bb73609a93c",
+    "Sources/Upovi/Views/ContentView.swift": "fe72b64cda757d3b35fac07b37a73f532f6822fc88a37d63ecb1d372c648a12c",
+    "Sources/Upovi/Stores/AppStore+UpdateControls.swift": "76beb1bf68e5d8401229ae012c705e54617ebd407d1750aae5577862ca419041",
+    "Sources/UpoviCore/Models/UpdatePolicy.swift": "680e3b5c44d02e01470a5c675e961621625ba7f66e07f56035a5795a4165e8c5"
+  },
+  "behavior": [
+    "Dedicated Ignored sidebar section with an application count",
+    "Permanent reminder exclusions and persisted skipped versions are listed together",
+    "Library source filters do not affect ignored rows; search does not change sidebar count",
+    "Restoring permanent or skipped rules is independent and never starts installation",
+    "Newer releases are not hidden by skipped older versions",
+    "Snoozed-only updates remain separate on the Updates page"
+  ],
+  "tests": {
+    "command": "swift test",
+    "suites": {
+      "UpoviTests.xctest": 55,
+      "UpoviCoreTests.xctest": 258
+    },
+    "total": 313,
+    "failures": 0
+  },
+  "nativeUI": {
+    "scope": "Offline native fixture compiled from current production views and services",
+    "fixtureSHA256": "b8147200ae2f020dad5655691e0f1237b09e19a24a8056ffd522ef85a9b74d4a",
+    "sidebarIgnoredCount": 2,
+    "skippedVersionRow": "Google Chrome",
+    "permanentlyIgnoredRow": "GitHub Desktop",
+    "restoreVersionReminderButtonObserved": true,
+    "restoreAppReminderButtonObserved": true,
+    "restoreActionsExercisedInUnitTests": true,
+    "restoreActionsInvokedInNativeUI": false
+  },
+  "cleanup": {
+    "testProcessesStopped": true,
+    "temporaryTestBundlesRemoved": true
+  },
+  "boundaries": {
+    "realAppInstallationPerformed": false,
+    "productionIgnorePreferencesModified": false,
+    "installedUpoviReplaced": false,
+    "releasePublished": false
+  }
+}

@@ -11,11 +11,11 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(first.status,.updates); XCTAssertEqual(first.candidates.first?.appStoreID,12345)
         XCTAssertNil(first.candidates.first?.download)
         _ = await catalog.check(app)
-        let cachedCalls = await replies.calls; XCTAssertEqual(cachedCalls,2)
+        let cachedCalls = await replies.calls; XCTAssertEqual(cachedCalls,3)
         await replies.changeVersion("3"); await catalog.invalidate()
         let refreshed = await catalog.check(app)
         XCTAssertEqual(refreshed.candidates.first?.version,"3")
-        let newCalls = await replies.calls; XCTAssertEqual(newCalls,4)
+        let newCalls = await replies.calls; XCTAssertEqual(newCalls,6)
     }
     func testMissingProductWrongIdentityUnsupportedPlatformAndFailureNeverBecomeCurrent() async {
         for mode in ["missing","wrong-bundle","ios","future-os","failure","duplicate"] {
@@ -38,49 +38,44 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(result.status,.current); XCTAssertTrue(result.candidates.isEmpty)
         XCTAssertEqual(result.checks.first?.outcome,.checked)
     }
-    func testPublishedStoreUpdateRequiresExactNativeOfferWhenAvailabilityCheckingIsEnabled() async {
-        let exact = StoreUpdateAvailability.Offer(storeID: 12345, bundleID: app.bundleID, version: "2")
-        let cases: [[StoreUpdateAvailability.Offer]] = [
-            [exact], [], [exact, exact], [.init(storeID: 99999, bundleID: app.bundleID, version: "2")],
-            [.init(storeID: 12345, bundleID: "app.synthetic.other", version: "2")], [.init(storeID: 12345, bundleID: app.bundleID, version: "3")]
-        ]
-        for (index, offers) in cases.enumerated() {
-            let replies = StoreReplies()
-            let catalog = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: { .init(offers: offers) })
-            let result = await catalog.check(app)
-            XCTAssertEqual(result.status, index == 0 ? .updates : .appStore)
-            XCTAssertEqual(result.candidates.count, index == 0 ? 1 : 0)
-            XCTAssertEqual(result.appStoreID, 12345) // Explicit check-and-update is still available.
-            if index != 0 { XCTAssertEqual(result.checks.first?.outcome, .manual) }
-        }
+    func testMasDetectionUsesOnlyReadOnlyCommandsAndSharesConcurrentSnapshot() async {
         let replies = StoreReplies()
-        let unavailable = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: { throw PeerError.unavailable("No native Store cache") })
-        let result = await unavailable.check(app)
-        XCTAssertEqual(result.status, .appStore)
-        XCTAssertTrue(result.candidates.isEmpty)
-        XCTAssertNotNil(result.manualURL)
+        let catalog = AppStoreCatalog(execute: { try await replies.run($0) })
+        async let first = catalog.check(app)
+        async let second = catalog.check(app)
+        let results = await [first, second]
+        XCTAssertTrue(results.allSatisfy { $0.status == .updates && $0.checks.map(\.source) == [.appStore] })
+        let arguments = await replies.arguments
+        XCTAssertEqual(arguments, [["list"], ["lookup", "12345"], ["outdated", "--inaccurate", "--check-min-os", "12345"]])
     }
-    func testFreshNativeOfferWithUnknownVersionIsNotMistakenForCurrent() async {
-        let replies = StoreReplies()
-        let current = InstalledApp(name: app.name, bundleID: app.bundleID, version: "2", path: app.path, teamID: app.teamID, isAppStore: true)
-        let bundle = app.bundleID
-        let catalog = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: {
-            .init(offers: [.init(storeID: 12345, bundleID: bundle, version: "")], refreshedAt: Date())
-        })
-        let result = await catalog.check(current)
-        XCTAssertEqual(result.status, .appStore); XCTAssertTrue(result.candidates.isEmpty)
-        XCTAssertEqual(result.appStoreID, 12345)
-        XCTAssertTrue(result.checks.contains { $0.source == .appStoreNative && $0.outcome == .checked })
-    }
-    func testNativeRefreshDenialKeepsPublicVersionAndExplicitUpdateIndependent() async {
-        let replies = StoreReplies()
-        let catalog = AppStoreCatalog(execute: { try await replies.run($0) }, nativeAvailability: { throw StoreUpdateAvailability.RefreshFailure.notEntitled })
+    func testCatalogVersionWithoutMasUpdateStaysManual() async {
+        let replies = StoreReplies(outdatedMode: "missing")
+        let catalog = AppStoreCatalog(execute: { try await replies.run($0) })
         let result = await catalog.check(app)
         XCTAssertEqual(result.status, .appStore); XCTAssertTrue(result.candidates.isEmpty)
         XCTAssertEqual(result.appStoreID, 12345)
-        XCTAssertTrue(result.note.contains("505"))
-        XCTAssertEqual(result.checks.last?.source, .appStoreNative)
-        XCTAssertEqual(result.checks.last?.issue?.code, 505)
+        XCTAssertNotNil(result.manualURL)
+    }
+    func testMasDetectionFailureAndInvalidOffersNeverBecomeCurrentOrInstallable() async {
+        for mode in ["failure", "malformed", "wrong-bundle", "wrong-path", "stale", "wrong-target", "duplicate"] {
+            let replies = StoreReplies(outdatedMode: mode)
+            let catalog = AppStoreCatalog(execute: { try await replies.run($0) })
+            let result = await catalog.check(app)
+            XCTAssertEqual(result.status, .failed, mode)
+            XCTAssertTrue(result.candidates.isEmpty, mode)
+            if mode == "failure" { XCTAssertEqual(result.checks.first?.issue?.kind, .offline) }
+        }
+        let replies = StoreReplies(outdatedMode: "failure"); await replies.changeVersion("1")
+        let catalog = AppStoreCatalog(execute: { try await replies.run($0) })
+        let result = await catalog.check(app)
+        XCTAssertEqual(result.status, .failed)
+    }
+    func testChangedInstalledVersionRequiresFreshInventory() async {
+        let replies = StoreReplies()
+        let catalog = AppStoreCatalog(execute: { try await replies.run($0) })
+        let changed = InstalledApp(name: app.name, bundleID: app.bundleID, version: "2", path: app.path, isAppStore: true)
+        let result = await catalog.check(changed)
+        XCTAssertEqual(result.status, .failed); XCTAssertTrue(result.candidates.isEmpty)
     }
     func testPartialBridgeExitPreservesValidProductsAndIsolatesMissingMalformedAndAmbiguousRows() async throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "Upovi-StoreLookup-\(UUID())")
@@ -103,6 +98,10 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
           printf '%s\\n' '\(installed.joined(separator: "\n"))'
           exit 0
         fi
+        if [ "$1" = outdated ] && [ "$2" = --inaccurate ]; then
+          printf '%s\\n' '{"adamID":12345,"bundleID":"app.synthetic.12345","path":"/synthetic/12345.app","version":"1","newVersion":"2"}'
+          exit 0
+        fi
         printf '%s\\n' '\(products.joined(separator: "\n"))'
         exit 2
         """
@@ -118,7 +117,7 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         let manual = await catalog.check(.init(name: "Manual", bundleID: "app.synthetic.manual", version: "1", path: "/synthetic/manual.app", isAppStore: true))
         XCTAssertEqual(manual.status, .appStore)
         // The exception is never used for install/update commands or a failing inventory scan.
-        for arguments in [["update", "12345", "12346"], ["list", "unused"], ["lookup", "12345"], ["lookup", "--bundle", "app.synthetic.store"]] {
+        for arguments in [["update", "12345", "12346"], ["list", "unused"], ["outdated", "unused"], ["lookup", "12345"], ["lookup", "--bundle", "app.synthetic.store"]] {
             do { _ = try await AppStoreCatalog.command(bridge, arguments: arguments); XCTFail("Unexpected exit code must fail: \(arguments)") }
             catch { }
         }
@@ -140,48 +139,19 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(manual.status, .appStore)
         XCTAssertEqual(manual.checks.first?.outcome, .manual)
     }
-    func testRegionalMacLookupRecoversSodaWithoutOfferingAnUpdateThroughTheWrongStorefront() async throws {
+    func testProductUnavailableThroughMasStaysUnconfirmed() async {
         let fixture = InstalledApp(name: "Soda", bundleID: "com.soda.music", version: "2.9.1", path: "/synthetic/Soda.app", isAppStore: true)
-        for version in ["2.9.1", "2.9.2"] {
-            let source = RegionalStoreReplies(version: version)
-            let catalog = AppStoreCatalog(execute: { try await source.execute($0) }, regionalLookup: { try await source.lookup($0, region: $1) })
-            let result = await catalog.check(fixture)
-            XCTAssertEqual(result.status, version == fixture.version ? .current : .updates)
-            XCTAssertEqual(result.checks.first?.outcome, .checked)
-            XCTAssertNil(result.appStoreID)
-            if version != fixture.version {
-                XCTAssertEqual(result.candidates.first?.url?.absoluteString, "https://apps.apple.com/cn/app/id1605585211")
-                XCTAssertNil(result.candidates.first?.appStoreID)
-                XCTAssertNil(result.candidates.first?.download)
-            }
-            let regions = await source.regions
-            XCTAssertEqual(regions, ["CN"])
-        }
-    }
-    func testRegionalLookupErrorsMissingAndInvalidProductsRemainFailures() async throws {
-        let fixture = InstalledApp(name: "Soda", bundleID: "com.soda.music", version: "2.9.1", path: "/synthetic/Soda.app", isAppStore: true)
-        for mode in ["absent", "offline", "malformed", "wrong-bundle", "ios", "duplicate"] {
-            let source = RegionalStoreReplies(version: "2.9.2")
-            let catalog = AppStoreCatalog(execute: { try await source.execute($0) }, regionalLookup: { _, _ in
-                if mode == "absent" { return [] }
-                if mode == "offline" { throw URLError(.notConnectedToInternet) }
-                if mode == "malformed" { return try AppStoreCatalog.decodeLookup(Data("not-json".utf8)) }
-                let bundle = mode == "wrong-bundle" ? "app.synthetic.unrelated" : "com.soda.music"
-                let kind = mode == "ios" ? "software" : "mac-software"
-                let product = try JSONDecoder().decode(StoreProduct.self, from: Data("{\"adamID\":1605585211,\"bundleID\":\"\(bundle)\",\"version\":\"2.9.2\",\"minimumOSVersion\":\"14\",\"kind\":\"\(kind)\"}".utf8))
-                return mode == "duplicate" ? [product, product] : [product]
-            })
-            let result = await catalog.check(fixture)
-            XCTAssertEqual(result.status, .failed, mode)
-            XCTAssertEqual(result.checks.first?.outcome, .failed, mode)
-            if mode == "offline" { XCTAssertEqual(result.checks.first?.issue?.kind, .offline) }
-            XCTAssertTrue(result.candidates.isEmpty, mode)
-        }
+        let catalog = AppStoreCatalog(execute: { args in
+            args == ["list"] ? Data(#"{"adamID":1605585211,"bundleID":"com.soda.music","path":"/synthetic/Soda.app","version":"2.9.1"}"#.utf8) : Data()
+        })
+        let result = await catalog.check(fixture)
+        XCTAssertEqual(result.status, .failed)
+        XCTAssertTrue(result.candidates.isEmpty)
     }
     func testConfirmedNotionStoreMigrationPointsToDeveloperInsteadOfRepeatingFailedLookups() async {
         let catalog = AppStoreCatalog(execute: { args in
             args == ["list"] ? Data(#"{"adamID":1559269364,"bundleID":"notion.id.NotionSafariExtension","path":"/synthetic/Notion.app","version":"1.0.3"}"#.utf8) : Data()
-        }, regionalLookup: { _, _ in XCTFail("The vendor has documented the Store migration"); return [] })
+        })
         let result = await catalog.check(.init(name: "Notion", bundleID: "notion.id.NotionSafariExtension", version: "1.0.3", path: "/synthetic/Notion.app", isAppStore: true))
         XCTAssertEqual(result.status, .unsupported)
         XCTAssertEqual(result.manualURL?.absoluteString, "https://www.notion.com/web-clipper")
@@ -190,15 +160,14 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertNil(ManualUpdateSource.forStoreBundle("notion.id.NotionSafariExtension", storeID: 12345))
         XCTAssertNil(ManualUpdateSource.forStoreBundle("app.synthetic.unrelated", storeID: 1559269364))
     }
-    func testDesktopLookupCannotConfuseTheMobileSodaVersionWithItsNativeMacVersion() throws {
+    func testMasProductValidationCannotConfuseMobileAndNativeMacVersions() throws {
         let fixture = InstalledApp(name: "Soda", bundleID: "com.soda.music", version: "2.9.1", path: "/synthetic/Soda.app", isAppStore: true)
         for (version, devices) in [("2.9.1", #"["MacDesktop-MacDesktop"]"#), ("21.4.0", #"["MacDesktop-MacDesktop","iPhone18,1"]"#)] {
-            let data = Data("{\"resultCount\":1,\"results\":[{\"trackId\":1605585211,\"bundleId\":\"com.soda.music\",\"version\":\"\(version)\",\"minimumOsVersion\":\"10.13\",\"kind\":\"software\",\"supportedDevices\":\(devices)}]}".utf8)
-            let product = try XCTUnwrap(AppStoreCatalog.decodeLookup(data).first)
+            let data = Data("{\"adamID\":1605585211,\"bundleID\":\"com.soda.music\",\"version\":\"\(version)\",\"minimumOSVersion\":\"10.13\",\"kind\":\"software\",\"supportedDevices\":\(devices)}".utf8)
+            let product = try JSONDecoder().decode(StoreProduct.self, from: data)
             if version == "2.9.1" { XCTAssertNoThrow(try product.validate(for: fixture, storeID: 1605585211)) }
             else { XCTAssertThrowsError(try product.validate(for: fixture, storeID: 1605585211)) }
         }
-        XCTAssertThrowsError(try AppStoreCatalog.decodeLookup(Data(#"{"resultCount":1,"results":[]}"#.utf8)))
     }
     func testStorePlanRejectsUnrelatedChannelsPathsAccountsAndStaleApps() throws {
         let plan = AppStoreUpdatePlan(application:app,storeID:12345,version:"2",userID:501)
@@ -267,17 +236,33 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
 
 private actor StoreReplies {
     var calls = 0
+    var arguments: [[String]] = []
     var version = "2"
     let mode: String
-    init(mode:String="normal") { self.mode = mode }
+    let outdatedMode: String
+    init(mode:String="normal", outdatedMode: String = "normal") { self.mode = mode; self.outdatedMode = outdatedMode }
     func changeVersion(_ value:String) { version = value }
     func run(_ args:[String]) throws -> Data {
         calls += 1
+        arguments.append(args)
         if args[0] == "list" {
             let id = mode == "zero" ? 0 : 12345
             let row = "{\"adamID\":\(id),\"bundleID\":\"app.synthetic.store\",\"path\":\"/Applications/Upovi Synthetic Store.app\",\"version\":\"1\"}"
             return Data((mode == "duplicate" ? row+"\n"+row : row).utf8)
         }
+        if args[0] == "outdated" {
+            XCTAssertEqual(args, ["outdated", "--inaccurate", "--check-min-os", "12345"])
+            if outdatedMode == "failure" { throw URLError(.notConnectedToInternet) }
+            if outdatedMode == "malformed" { return Data("not-json".utf8) }
+            if outdatedMode == "missing" || version == "1" { return Data() }
+            let bundle = outdatedMode == "wrong-bundle" ? "app.synthetic.unrelated" : "app.synthetic.store"
+            let path = outdatedMode == "wrong-path" ? "/synthetic/Other.app" : "/Applications/Upovi Synthetic Store.app"
+            let installed = outdatedMode == "stale" ? "0" : "1"
+            let target = outdatedMode == "wrong-target" ? "999" : version
+            let row = "{\"adamID\":12345,\"bundleID\":\"\(bundle)\",\"path\":\"\(path)\",\"version\":\"\(installed)\",\"newVersion\":\"\(target)\"}"
+            return Data((outdatedMode == "duplicate" ? row + "\n" + row : row).utf8)
+        }
+        guard args[0] == "lookup" else { throw PeerError.invalid("Unexpected Store command") }
         if mode == "failure" { throw URLError(.notConnectedToInternet) }
         if mode == "missing" { return Data() }
         let bundle = mode == "wrong-bundle" ? "app.synthetic.unrelated" : "app.synthetic.store"
@@ -287,19 +272,6 @@ private actor StoreReplies {
     }
 }
 
-private actor RegionalStoreReplies {
-    let version: String
-    var regions: [String] = []
-    init(version: String) { self.version = version }
-    func execute(_ args: [String]) throws -> Data {
-        args == ["list"] ? Data(#"{"adamID":1605585211,"bundleID":"com.soda.music","path":"/synthetic/Soda.app","version":"2.9.1"}"#.utf8) : Data()
-    }
-    func lookup(_ ids: [UInt64], region: String) throws -> [StoreProduct] {
-        XCTAssertEqual(ids, [1605585211]); regions.append(region)
-        guard region == "CN" else { return [] }
-        return try AppStoreCatalog.decodeLookup(Data("{\"resultCount\":1,\"results\":[{\"trackId\":1605585211,\"bundleId\":\"com.soda.music\",\"version\":\"\(version)\",\"minimumOsVersion\":\"10.13\",\"kind\":\"software\",\"supportedDevices\":[\"MacDesktop-MacDesktop\"]}]}".utf8))
-    }
-}
 
 extension AppStoreUpdateTests {
     func testVerifiedStoreUpdateDoesNotProbeAndCancelTheDownloadQueue() throws {

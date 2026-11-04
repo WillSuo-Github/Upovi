@@ -29,10 +29,10 @@ The signed arm64 Hoppscotch `v26.10.0-0` payload was reviewed separately: its sh
 
 ## Store availability
 
-See [App Store support](APP-STORE-UPDATES.md). Public version lookup and the native offer are separate evidence. Only exact matching positive offers enter update counts; missing evidence stays manual. Explicit check-and-update remains available for supported identities. A native read-only refresh is now attempted, but this Mac's system rejects it with 505; native-only/build-only offers without a reliable target remain manual.
+See [App Store support](APP-STORE-UPDATES.md). Inventory, ordinary update detection and product metadata come from the bundled mas tool. Exact installed identity and compatible Mac metadata are validated before a mas-reported candidate enters update counts. Account-specific availability is decided by Apple during installation. Missing, failed or conflicting results stay unconfirmed. Upovi no longer queries native update caches or performs separate regional catalog recovery; mas-unavailable regional products require App Store confirmation.
 
 ## Local measurement
 
-`UpoviPeer check-sources --summary-file <path> --details-file <private-path>` reports status counts, applications with a successfully checked version source, candidate counts and candidates eligible for the existing verification path. `--store-bridge <signed UpoviStoreBridge>` enables the complete Store checks using its sibling status helper. Without a bundled Store bridge, Store coverage is unavailable.
+`UpoviPeer check-sources --summary-file <path> --details-file <private-path>` reports status counts, applications with a successfully checked version source, candidate counts and candidates eligible for the existing verification path. `--store-bridge <signed UpoviStoreBridge>` enables Store checks through that mas executable; no sibling native status helper is queried. Without a bundled Store bridge, Store coverage is unavailable.
 
 Detailed results contain local paths and app names and are written with mode `0600`; keep them private. Compare identical path/bundle identities and report inventory changes separately. An eligible candidate is not proof that downloading, installation or first launch succeeded. A same-Mac Floodtide comparison has not been performed.

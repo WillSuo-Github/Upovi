@@ -3,6 +3,17 @@ import Foundation
 import UpoviCore
 
 extension AppStore {
+    func hasIgnoredUpdateRules(for app: InstalledApp) -> Bool {
+        ignored.contains(app.bundleID) || updatePolicy.hasSkippedVersions(for: app)
+    }
+    var ignoredApps: [InstalledApp] { apps.filter { hasIgnoredUpdateRules(for: $0) } }
+
+    func restoreSkippedVersions(for app: InstalledApp) {
+        var next = updatePolicy
+        next.restoreSkippedVersions(for: app)
+        saveUpdatePolicy(next)
+    }
+
     func fullAssessment(for app: InstalledApp) -> UpdateAssessment {
         UpdateAssessment(app: app, sourceResult: sourceResults[app.id], reports: networkEnabled ? communityResults[app.id] ?? [] : [])
     }
@@ -27,7 +38,6 @@ extension AppStore {
     private func saveUpdatePolicy(_ value: UpdatePolicy) -> Bool {
         guard let data = try? JSONEncoder().encode(value), preferences.set(data, forKey: "updatePolicyV1") else { return false }
         updatePolicy = value; policyClock = Date()
-        unattendedTask?.cancel()
         return true
     }
     func scanInventory() async -> [InstalledApp] {

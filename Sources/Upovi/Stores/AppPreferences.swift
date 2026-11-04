@@ -22,7 +22,9 @@ final class AppPreferences {
             }
             let needsMigration = GlobalP2PSettings.storedEnabled(in: values) == nil
                 || GlobalP2PSettings.legacyKeys.contains(where: { values[$0] != nil })
-            if needsMigration {
+            // Retired permissions must not survive an upgrade or reappear in an older build.
+            let hadUnattendedSettings = values.removeValue(forKey: "unattendedUpdatesV1") != nil
+            if needsMigration || hadUnattendedSettings {
                 values = GlobalP2PSettings.migrated(values, existingInstallation: saved != nil || !values.isEmpty)
                 try storage.write(values)
             }

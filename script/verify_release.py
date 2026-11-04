@@ -24,6 +24,10 @@ assert info['CFBundleVersion'] == release['build']
 assert info['SUPublicEDKey'] == release['publicEDKey']
 assert info['SUFeedURL'] == release['feedURL']
 assert info['SURequireSignedFeed'] and info['SUVerifyUpdateBeforeExtraction']
+assert info['SUAllowsAutomaticUpdates'] is False and info['SUAutomaticallyUpdate'] is False
+source_revision = (folder / 'source-revision.txt').read_text().strip()
+assert len(source_revision) == 40 and all(c in '0123456789abcdef' for c in source_revision)
+assert info['UpoviSourceRevision'] == source_revision, 'Bundle revision does not match the release source identity'
 subprocess.run(['codesign', '--verify', '--deep', '--strict', '--all-architectures', str(bundle)], check=True)
 archs = subprocess.check_output(['lipo', '-archs', str(bundle / 'Contents/MacOS/Upovi')], text=True).split()
 assert set(archs) == {'arm64', 'x86_64'}, archs

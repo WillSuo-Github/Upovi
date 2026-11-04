@@ -1,20 +1,24 @@
-# Unattended updates and release channels
+# Checks, manual installation and release channels
 
-Prepared for local build `202611040006`; this work does not publish a release.
+Prepared for local build `202611040009`; this work does not publish a release.
 
-## Unattended app updates
+## User-initiated installation only
 
-The master switch and every app permission start off. In Settings → Automatic Updates, authorize individual applications and enable the master switch. Permission is bound to the exact installed path, bundle ID, developer Team ID and selected release channel. Changing channels revokes automatic permission. Restoring a retained app through Upovi also revokes its automatic permission, so a rollback is not immediately undone.
+Upovi never starts a new application update installation from startup, a timer, a notification or a saved per-app permission. The unattended installation implementation, settings, per-app grants, automatic history view and diagnostic CLI command have been removed. Previously saved `unattendedUpdatesV1` data is discarded when preferences are loaded, without restoring or running those jobs.
 
-While Upovi is running, the normal check interval controls scheduled work; startup can also run previously authorized updates after a fresh inventory/source check. Sleep and quitting pause the schedule. A normal manual refresh does not start installation; Check and Run Authorized Updates explicitly runs the authorized policy.
+Startup and optional scheduled checks may discover newer releases and send reminders. They never download application payloads or start installation. Users choose Update or Update All and confirm the selected plan before installation. A manually started operation can complete or recover its existing transaction; it does not authorize a later update. These rules apply to Store apps, direct-distribution apps and global tools.
 
-Admission requires a complete successful source result, the latest eligible candidate, a source archive proof and a ZIP/DMG app replacement. Ignored apps, skipped versions and snoozed reminders stay excluded. Running apps, unwritable destinations, packages, Store apps, global tools, Upovi itself and reviewed identity/developer migrations stay manual. No unattended path invokes administrator authorization, Store installation, package scripts, app relaunch or forced quit.
+Upovi's Sparkle self-updater sets `SUAllowsAutomaticUpdates` and `SUAutomaticallyUpdate` to false and clears automatic download preferences before starting the updater. Optional automatic self-update checks can offer a release, but installation requires user action.
 
-Sources are revalidated before processing the automatic queue and again when its metadata generation is five minutes old. Permission, channel, source candidate, running state and write access are checked again before commit. The installer checks running state again around final verification and at the original-bundle validation boundary, and checks cancellation before the rename transaction. Once that transaction starts, it finishes or recovers atomically even if Stop is pressed.
+The single-app and batch installation paths retain their existing source, signature, identity, administrator-authorization and recovery checks. Beta remains a version-selection preference, never installation consent.
 
-Each attempt is saved before preparation and again before commit. If history cannot be saved, installation does not start. Ordinary success/failure records are saved without opening a review sheet or an authorization flow. Failures, cancellations and unfinished attempts suppress automatic retry of the same target/channel for 24 hours; a running-state deferral can be reconsidered next cycle. Unfinished work is shown as interrupted after relaunch and is never resumed blindly. One app's failure does not prevent later eligible apps from being processed. The private settings file retains up to 500 app permissions/last attempts and 100 recent history records.
+## Ignored updates in the sidebar
 
-Previous main app bundles use the existing installation journal and recovery UI. These backups do not restore application data or other system changes. Automatic updates do not enable login launch or install a background daemon. System filesystem/privacy restrictions can still reject an operation; Upovi does not bypass them.
+The Ignored sidebar section replaces the library's old Ignored filter. It includes installed apps with permanent update-reminder exclusions and apps with saved skipped-version rules, counting each installation once even when both rules apply. Saved skips remain visible before a fresh source check and after a newer release supersedes a skipped one; skipping one version does not suppress later releases.
+
+Permanent exclusions and skipped versions have separate restore actions. Restoring one preserves the other and any snooze; it never starts downloading or installation. Version restoration is scoped to the exact bundle ID, distribution channel and developer identity. Search filters the visible rows without changing the sidebar total. Snoozed-only updates remain in the Updates page's reminder section.
+
+See [local sidebar acceptance](evidence/ignored-sidebar-202611040009.json).
 
 ## Stable and Beta selection
 
@@ -29,10 +33,10 @@ Supported adapters:
 
 Supported version comparisons include common alpha/beta/preview/RC and numeric prerelease revisions. Dedicated Nightly/Canary installations, unknown version formats, TestFlight, provider-specific channels and cross-bundle migrations are not inferred. A source which does not publish a supported Beta channel may continue to offer a stable release. Package payload identity, developer signature, architecture, target version/build and Gatekeeper requirements are unchanged. Opting into Beta does not bypass a source rollout restriction or permit an arbitrary package version.
 
-## Native Store refresh
+## Store checks through mas
 
-The coalesced Store snapshot now asks an unprivileged helper for a native read-only refresh. It validates runtime selectors and the system protocol's callback encoding before invoking AppStoreDaemon's background reload API. Calls are bounded; stale replies, access rejection, unknown version metadata, helper failures and timeouts remain unconfirmed. The helper does not invoke install, purchase, cancellation, automatic-update configuration or authorization APIs. No download-and-cancel probe is used.
+Local build `202611040007` removes Upovi's separate native refresh/cache APIs. Inventory and detection now use the bundled mas executable (`list`, `lookup`, and ordinary `outdated`); downloads and installation continue through that same executable. Upovi retains identity, compatibility, authorization and post-installation validation. Store installation starts only after user confirmation.
 
-On this Mac running macOS 27.2, the Developer ID signed native probe and final helper are rejected with `ASDErrorDomain` code `505` ("Not entitled for this service."). The legacy CommerceKit probe also returned no valid result. This is **not a successful native refresh**, and it does not prove native-refresh behavior on other macOS versions or in other products. Upovi keeps independent public catalog checks, shows the rejection, and provides Open App Store Updates. Native-only/build-only offers without an exact compatible target remain manual.
+Background checks do not use mas's accurate download-and-cancel probe. Public catalog metadata can be delayed and does not prove ownership or an account-specific offer. Installation may require native account or administrator authentication.
 
-No Apple process identity was impersonated, private entitlement added or security setting changed. A fresh successful native-offer response on an allowed system still needs real-device acceptance. See [local evidence](evidence/automatic-updates-202611040006.json) for the signed rejection, isolated upgrade/restore tests and production-app boundaries.
+The earlier Developer ID signed native probe on macOS 27.2 was rejected with `ASDErrorDomain` code `505` ("Not entitled for this service."). No successful native query was observed. That removed implementation's results remain in [historical local evidence](evidence/automatic-updates-202611040006.json); they do not describe the current mas detection path.

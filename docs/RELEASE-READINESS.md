@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611040010
+
+This build routes Mac App Store detection and installation through the bundled mas executable, removes unattended installation, and adds a dedicated Ignored sidebar for permanent exclusions and skipped versions. Startup and scheduled checks only discover updates and notify; installation always requires an explicit user action. Stable/Beta selection and expanded Electron coverage remain available.
+
+Local validation passed 258 core tests, 55 application workflow tests and eight release metadata tests. Native isolated UI acceptance covered the Ignored sidebar and the removal of automatic installation settings. The owner-authorized AdBlock Pro upgrade from 13.0.0 (349) to 13.1.0 (350) passed on the current source before release preparation; it is not a test of the final universal release artifact. See [Store upgrade evidence](evidence/adblock-store-upgrade-202611040007.json), [manual installation policy](evidence/user-initiated-updates-202611040008.json) and [sidebar acceptance](evidence/ignored-sidebar-202611040009.json).
+
+Signed universal packaging, notarization, feed verification and publication are in progress. This section will be updated with final release evidence after verification. The installed Upovi is not replaced by preparing or publishing this release.
+
+---
+
 # Upovi 0.4.10 build 202611030002
 
 The official iStat Menus 7.50.2 ZIP contains a notarized Bjango app that reports 7.50 (2394). Upovi now accepts this exact reviewed package by build, alongside the earlier 7.50.1 entry, without loosening version checks for other releases. A downloaded app whose version doesn't match the selected update now produces a localized message naming the app and both versions, without empty build parentheses.
