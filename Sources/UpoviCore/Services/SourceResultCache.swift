@@ -21,7 +21,7 @@ public struct SourceResultCache: Codable, Sendable {
     public mutating func record(_ result: SourceResult, app: InstalledApp, sourceOverride: SourceOverride?, now: Date = Date()) {
         entries = entries.filter { now.timeIntervalSince($0.value.result.checkedAt) >= 0 && now.timeIntervalSince($0.value.result.checkedAt) <= 86400 }
         guard result.appID == app.id, result.retainedFrom == nil,
-              result.status == .current || result.status == .updates || (result.status == .partial && !result.candidates.isEmpty),
+              result.status == .current || result.status == .updates || (result.status == .partial && (!result.candidates.isEmpty || Self.confirmedGitHubVersion(result))),
               result.candidates.allSatisfy({ !$0.isCommunity && $0.requiresRevalidation != true }) else { return }
         let candidates = result.candidates.prefix(20).map { candidate in
             var candidate = candidate; candidate.releaseNotes = nil
@@ -39,6 +39,7 @@ public struct SourceResultCache: Codable, Sendable {
         let failed = Set(current.checks.filter { [.failed, .cancelled].contains($0.outcome) }.map(\.source))
         let retained = old.result.candidates.filter { candidate in
             guard let source = Self.source(candidate), failed.contains(source),
+                  !(Self.confirmedGitHubVersion(current) && [.github, .electron].contains(source)),
                   !current.candidates.contains(where: { Self.source($0) == Self.source(candidate) && VersionOrder.compare($0.version, candidate.version).map { $0 != .orderedAscending } == true }) else { return false }
             return true
         }.map { candidate in
@@ -52,6 +53,9 @@ public struct SourceResultCache: Codable, Sendable {
             note: current.note + " · " + String(localized: "已保留 \(old.result.checkedAt.formatted(date: .abbreviated, time: .shortened)) 确认的更新，当前结果待重新核对。"), status: .partial,
             manualURL: current.manualURL ?? old.result.manualURL, checks: current.checks, appStoreID: current.appStoreID,
             installedVersion: current.installedVersion ?? old.result.installedVersion, checkedAt: current.checkedAt, retainedFrom: old.result.checkedAt)
+    }
+    private static func confirmedGitHubVersion(_ result: SourceResult) -> Bool {
+        result.checks.contains { $0.source == .githubPage && $0.outcome == .checked }
     }
     private static func source(_ candidate: UpdateCandidate) -> SourceCheckDetail.Source? {
         if candidate.source.hasPrefix("Electron") { return .electron }

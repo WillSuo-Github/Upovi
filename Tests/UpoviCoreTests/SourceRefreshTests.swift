@@ -185,4 +185,22 @@ extension SourceRefreshTests {
         cache.record(current, app: app, sourceOverride: nil, now: now)
         XCTAssertTrue(cache.resolving(failure, app: app, sourceOverride: nil, now: now).candidates.isEmpty)
     }
+    func testConfirmedPublicStableVersionSupersedesCachedUpdateDespiteAPIFailure() {
+        let app = InstalledApp(name: "Fixture", bundleID: "app.fixture.cache", version: "1", path: "/synthetic/Fixture.app")
+        let now = Date()
+        let old = UpdateCandidate(version: "3", source: "GitHub Release", isCommunity: false, url: nil)
+        var cache = SourceResultCache()
+        cache.record(.init(appID: app.id, candidates: [old], note: "Earlier release", status: .updates, checks: [.init(.github, .checked)], checkedAt: now), app: app, sourceOverride: nil, now: now)
+        let checks: [SourceCheckDetail] = [.init(.github, .failed, error: HTTPStatusError(statusCode: 403, rateLimited: true)), .init(.githubPage, .checked)]
+        let current = SourceResult(appID: app.id, candidates: [], note: "Public stable page confirms installed version", status: .partial, checks: checks, checkedAt: now)
+        XCTAssertTrue(cache.resolving(current, app: app, sourceOverride: nil, now: now).candidates.isEmpty)
+        let newer = UpdateCandidate(version: "2", source: "GitHub Release", isCommunity: false, url: nil)
+        let changedRelease = SourceResult(appID: app.id, candidates: [newer], note: "Current public stable version", status: .partial, checks: checks)
+        XCTAssertEqual(cache.resolving(changedRelease, app: app, sourceOverride: nil, now: now).candidates.map(\.version), ["2"])
+        cache.record(current, app: app, sourceOverride: nil, now: now)
+        cache = SourceResultCache(data: cache.encoded())
+        let failed = SourceResult(appID: app.id, candidates: [], note: "Both sources now fail", status: .failed, checks: [.init(.github, .failed)])
+        XCTAssertTrue(cache.resolving(failed, app: app, sourceOverride: nil, now: now).candidates.isEmpty, "A confirmed current page clears the obsolete update across restart")
+    }
+
 }
