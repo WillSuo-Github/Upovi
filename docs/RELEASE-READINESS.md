@@ -306,3 +306,12 @@ Active sharing previously became impossible to stop while synchronization was bu
 - Checksum and strict signature verification passed for the original bundle and a fresh ZIP extraction. No notarization/stapling submitted.
 
 See [native acceptance evidence](evidence/0.3.1-native-acceptance.json), [two-physical-Mac evidence](evidence/0.3.1-two-physical-macs.json), and [validation history](VALIDATION.md). This is an advisory public network; missing records never prove an app current. Sustained public-index poisoning and forged installation claims remain possible.
+
+
+## Build 202611060001 — source and architecture compatibility
+
+This routine 0.4.10 build adds explicit architecture-specific Electron manifest selection (including Joplin and Eigent), reviewed Mac Catalyst deployment compatibility (FlowDown), a narrowly reviewed stable GnuCash packaging revision, and signed build-version fallback when an app has an empty display version. Exact Homebrew identity paths plus the main bundle filename improve source discovery. GitHub rate limiting can recover real SHA256 proofs from official public release assets or SHA512 proofs from a matching Electron manifest; throttling diagnostics remain visible.
+
+Actual isolated upgrades and restoration support these changes; the compatibility campaign is paused at 747 unique main bundle IDs, not the 5,000 target. Research catalogs, payload-only checks, budget/network failures and demo templates are not verified upgrades. SQLite basename-sensitive staging, WezTerm constant versions and other unverified packages remain open. Developer identity, archive proofs, selected version/build, Gatekeeper checks, manual vendor channels and user-initiated installation requirements remain enforced.
+
+Fresh release checks passed: 319 core tests, 59 hosted app tests and 41 Python tooling tests. A fresh official Homebrew catalog matched all 87 bundle/filename references; 86 also matched version-scoped review requirements. The pre-existing Hoppscotch packaging alias remains scoped to 26.10.0-0 while upstream now publishes 26.10.1-0; the new version has not been accepted or added to that exception. This hold does not authorize bypassing payload version checks.

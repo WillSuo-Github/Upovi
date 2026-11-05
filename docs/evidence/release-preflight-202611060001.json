@@ -1,0 +1,25 @@
+{
+  "build": "202611060001",
+  "capturedAt": "2026-11-05T16:14:03.354881+00:00",
+  "source": "https://formulae.brew.sh/api/cask.json",
+  "transport": "Foundation URLSession with default TLS verification",
+  "catalogSHA256": "687ffcb88971f3af4aa44157ddb94596e8297d17fe600f983bcc93742085fda1",
+  "exactBundleAndFilenameReferences": 87,
+  "versionScopedReviewsPassed": 86,
+  "deferredVersionReview": [
+    {
+      "cask": "hoppscotch",
+      "previouslyReviewedSourceVersion": "26.10.0-0",
+      "currentSourceVersion": "26.10.1-0",
+      "existingExceptionExtended": false
+    }
+  ],
+  "tests": {
+    "core": 319,
+    "hosted": 59,
+    "python": 41,
+    "failures": 0
+  },
+  "compatibilityGoalPaused": true,
+  "uniqueVerifiedUpgradeAndRestoreBundleIDs": 747
+}
