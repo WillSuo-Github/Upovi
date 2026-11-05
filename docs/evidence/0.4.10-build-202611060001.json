@@ -1,0 +1,113 @@
+{
+  "build": "202611060001",
+  "productRevision": "f8711222870723adfe19b75444be3e2d1d4d1286",
+  "marketingVersion": "0.4.10",
+  "universalBuild": "passed",
+  "hardenedRuntime": true,
+  "getTaskAllow": false,
+  "tests": {
+    "core": 319,
+    "hosted": 59,
+    "python": 41
+  },
+  "manualInstallationPolicy": "explicit user action required; no unattended installation",
+  "pausedCompatibilityCampaign": {
+    "uniqueFullUpgradeRestoreBundleIDs": 747,
+    "goal": 5000,
+    "complete": false
+  },
+  "physicalIntelRuntimeTestedForThisRelease": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "appleNotarization": {
+    "id": "0dadc250-83f0-4fec-b2f1-dd2ab30e44b4",
+    "status": "Accepted",
+    "name": "Upovi-0.4.10-202611060001.zip",
+    "createdDate": "2026-11-05T16:15:42.916Z"
+  },
+  "artifactValidation": {
+    "version": "0.4.10",
+    "build": "202611060001",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "6f7194de912f2fb4fd20e84dcc4c3d88804daff6ebf84b67f6dacb5d2d3a39cd",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-05T16:19:02Z",
+      "tagName": "build-202611060001",
+      "targetCommitish": "f8711222870723adfe19b75444be3e2d1d4d1286",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611060001"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "a0483a9650fc65cc8142865a5693a5627c3d4272c1ab1c8f0d086c3fe49a264d",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "9a4b7e888aba396c2a614ad65bdae815a3493c3efa837c977a6abdb8f1aec675",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "ff136039695beef72b36c472e27392a96141ec61f783fb278a99af3bb2fda27a",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611060001.zip",
+        "size": 22596692,
+        "sha256": "6f7194de912f2fb4fd20e84dcc4c3d88804daff6ebf84b67f6dacb5d2d3a39cd",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611060001.zip.sha256",
+        "size": 96,
+        "sha256": "b175839b315e46971257112495985883c4a353f9dbf913e36ed9a10a8a0814d7",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611060001",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "6f7194de912f2fb4fd20e84dcc4c3d88804daff6ebf84b67f6dacb5d2d3a39cd",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerification": [
+    {
+      "name": "appcast.xml",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+      "sha256": "a0483a9650fc65cc8142865a5693a5627c3d4272c1ab1c8f0d086c3fe49a264d",
+      "matchesLocal": true
+    },
+    {
+      "name": "Upovi-0.4.10-202611060001.zip",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/download/build-202611060001/Upovi-0.4.10-202611060001.zip",
+      "sha256": "6f7194de912f2fb4fd20e84dcc4c3d88804daff6ebf84b67f6dacb5d2d3a39cd",
+      "matchesLocal": true
+    }
+  ],
+  "temporaryVerificationAppCopiesRemoved": true
+}
