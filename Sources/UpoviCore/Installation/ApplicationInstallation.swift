@@ -17,10 +17,32 @@ public enum ApplicationInstallation {
     }
 
     static func assess(_ bundle: URL) async throws {
+        let operation = UpoviLogOperation("gatekeeper.assess", category: .installation,
+            details: "payload=\(UpoviDiagnosticContext.fingerprint(bundle.path))")
+        let workspace = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appending(path: "Upovi-assessment-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let output = workspace.appending(path: "assessment.txt")
         do {
-            _ = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", bundle.path])
-        } catch is CancellationError { throw CancellationError() }
-        catch { throw PeerError.invalid(String(localized: "macOS 安全检查未批准此更新。请使用官方更新器；若当前离线，请联网后重试。")) }
+            let data = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", "--verbose=2", bundle.path],
+                outputFile: output, maximumOutputBytes: 16384)
+            operation.finish("approved", details: "verdict=\(assessmentClassification(data))")
+        } catch is CancellationError { operation.finish("cancelled"); throw CancellationError() }
+        catch {
+            let size = (try? output.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? Int.max
+            let data = size <= 16384 ? ((try? Data(contentsOf: output)) ?? Data()) : Data()
+            operation.finish("rejected", details: "verdict=\(assessmentClassification(data)) \(UpoviDiagnosticContext.errorSummary(error))", level: .error)
+            throw PeerError.invalid(String(localized: "macOS 安全检查未批准此更新。请使用官方更新器；若当前离线，请联网后重试。"))
+        }
+    }
+    /// Project fixed classifications only; never export raw assessment output or paths.
+    static func assessmentClassification(_ data: Data) -> String {
+        let lines = String(decoding: data.prefix(16384), as: UTF8.self).split(separator: "\n")
+        if lines.contains("source=Unnotarized Developer ID") { return "unnotarizedDeveloperID" }
+        if lines.contains("source=Notarized Developer ID") { return "notarizedDeveloperID" }
+        if lines.contains("source=no usable signature") { return "noUsableSignature" }
+        if lines.contains("source=Mac App Store") { return "macAppStore" }
+        return "unclassified"
     }
 
     static func finalize(_ bundle: URL, validate: @Sendable (URL) throws -> Void,

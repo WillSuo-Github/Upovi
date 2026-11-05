@@ -109,6 +109,14 @@ public enum ApplicationSourceCatalog {
         return release
     }
 
+    /// The stable GnuCash 5.17 release labels its signed macOS repack as 5.17-1.
+    /// Keep this exact reviewed package instead of reclassifying numeric suffixes globally.
+    public static func isReviewedStablePackaging(for app: InstalledApp, sourceVersion: String, download: URL?) -> Bool {
+        app.bundleID == "org.gnucash.Gnucash" && app.teamID == "Y9EHT5WMK7" && sourceVersion == "5.17-1" &&
+            app.version.range(of: #"^\d+(?:\.\d+)+-\d+$"#, options: .regularExpression) != nil &&
+            download?.absoluteString == "https://github.com/Gnucash/gnucash/releases/download/5.17/Gnucash-Arm-5.17-1.dmg"
+    }
+
     /// Apps whose own updater reads a feed set at runtime, not `SUFeedURL`. These endpoints stage rollouts
     /// server-side, so they, not Homebrew, decide which version the developer currently offers.
     public static func officialFeed(for app: InstalledApp, installationID: String = anonymousInstallationID) -> URL? {

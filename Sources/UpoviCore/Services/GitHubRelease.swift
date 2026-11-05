@@ -8,6 +8,8 @@ public struct GitHubRelease: Decodable, Sendable {
     let assets: [Asset]
     let body: String?
     var rateLimitIssue: DiagnosticIssue? = nil
+    var publicAssetsIssue: DiagnosticIssue? = nil
+    var publicAssetsChecked = false
     private enum CodingKeys: String, CodingKey { case tag_name, html_url, draft, prerelease, assets, body }
     struct Asset: Decodable, Sendable {
         let name: String
@@ -50,15 +52,29 @@ public struct GitHubRelease: Decodable, Sendable {
         let data: Data
         do { data = try await fetch(URL(string: "https://api.github.com/repos/\(repository)/releases\(suffix)")!, 3_000_000) }
         catch let limited as HTTPStatusError where limited.rateLimited && channel == .stable {
-            // The public latest-stable page is a separate official version source. Do not retry the
-            // throttled API, guess prerelease status from Atom tags, or invent asset hashes.
+            // The public latest-stable page is a separate official version source. Expanded assets
+            // may supply GitHub's actual digest, but an absent or ambiguous proof stays manual.
             do {
                 UpoviLog.sources.warning("event=github.publicFallbackRequested \(UpoviDiagnosticContext.errorSummary(limited))")
                 var fallback = try publicStable(await fetch(URL(string: "https://github.com/\(repository)/releases/latest")!, 2_000_000), repository: repository)
-                UpoviLog.sources.info("event=github.publicFallbackConfirmed version=\(fallback.version) downloadProof=false")
                 fallback.rateLimitIssue = DiagnosticIssue(limited)
+                do {
+                    try Task.checkCancellation()
+                    let assetURL = URL(string: "https://github.com/\(repository)/releases/expanded_assets")!.appendingPathComponent(fallback.tag_name)
+                    let assets = try publicAssets(await fetch(assetURL, 2_000_000), repository: repository, tag: fallback.tag_name)
+                    fallback = .init(tag_name: fallback.tag_name, html_url: fallback.html_url, draft: false, prerelease: false,
+                                     assets: assets, body: nil, rateLimitIssue: DiagnosticIssue(limited), publicAssetsChecked: true)
+                } catch {
+                    if DiagnosticIssue(error).kind == .cancelled { throw error }
+                    fallback.publicAssetsIssue = DiagnosticIssue(error)
+                    UpoviLog.sources.warning("event=github.publicAssetsRejected \(UpoviDiagnosticContext.errorSummary(error))")
+                }
+                UpoviLog.sources.info("event=github.publicFallbackConfirmed version=\(fallback.version) downloadProof=\(fallback.download != nil)")
                 return fallback
-            } catch { UpoviLog.sources.warning("event=github.publicFallbackRejected \(UpoviDiagnosticContext.errorSummary(error))"); throw limited }
+            } catch {
+                if DiagnosticIssue(error).kind == .cancelled { throw error }
+                UpoviLog.sources.warning("event=github.publicFallbackRejected \(UpoviDiagnosticContext.errorSummary(error))"); throw limited
+            }
         }
         let releases = channel == .stable ? [try JSONDecoder().decode(Self.self, from: data)] : try JSONDecoder().decode([Self].self, from: data)
         guard releases.count <= 50 else { throw PeerError.invalid("Oversized GitHub release list") }
@@ -84,7 +100,7 @@ public struct GitHubRelease: Decodable, Sendable {
         guard matches.count == 1, let match = matches.first, let range = Range(match.range(at: 1), in: head),
               let url = URL(string: String(head[range]), relativeTo: URL(string: "https://github.com")!)?.absoluteURL,
               url.scheme == "https", url.host == "github.com",
-              url.user == nil, url.password == nil, url.query == nil, url.fragment == nil else {
+              url.port == nil, url.user == nil, url.password == nil, url.query == nil, url.fragment == nil else {
             throw PeerError.invalid("Missing GitHub release identity")
         }
         let prefix = "/\(repository)/releases/tag/"

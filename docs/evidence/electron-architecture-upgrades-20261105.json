@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "scope": "Official architecture-specific manifests fix Intel payload selection on arm64. Actual production bundle upgrade, post-install check, restore and cleanup; no first launch or runtime acceptance.",
+  "cases": [
+    {
+      "bundleID": "net.cozic.joplin-desktop",
+      "fromVersion": "3.7.21",
+      "selectedVersion": "3.7.22",
+      "selectedSource": "Electron",
+      "sourceSHA512": "eMrmz6TD57la9r7TkGalrGHrzEMx1YbbbNvrQ17827C6xVNpGP7BWkEYq/xp6qLVso0WmzH1GMuz4/zdjzXoGQ==",
+      "downloadURL": "https://github.com/laurent22/joplin/releases/download/v3.7.22/Joplin-3.7.22-arm64.DMG",
+      "sourceChecks": [
+        {
+          "outcome": "checked",
+          "source": "electronManifest"
+        },
+        {
+          "outcome": "failed",
+          "source": "electron"
+        },
+        {
+          "outcome": "checked",
+          "source": "githubPage"
+        }
+      ],
+      "testedAt": "2026-11-05T06:42:44Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "payloadVerified": true,
+      "installationPassed": true,
+      "postInstallCurrent": true,
+      "restorePassed": true,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": true,
+      "probeSHA256": "8ee8286f4774d52506bf3eb49a7e0d950ba5d2d82b746b1f125e6a86ae9d44b6"
+    },
+    {
+      "bundleID": "com.eigent.app",
+      "fromVersion": "1.0.6",
+      "selectedVersion": "1.0.7",
+      "selectedSource": "Electron",
+      "sourceSHA512": "NK/rV8anXpWRUfBg33rw3d+AhCX4NAEZrNmnSN2ptWqxPyAH5+mhXlx5oec+zYwt3FmFOvpQk/Q7feMETYqO7Q==",
+      "downloadURL": "https://github.com/eigent-ai/eigent/releases/download/v1.0.7/Eigent-1.0.7-arm64.dmg",
+      "sourceChecks": [
+        {
+          "outcome": "checked",
+          "source": "electron"
+        },
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "testedAt": "2026-11-05T06:46:42Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "payloadVerified": true,
+      "installationPassed": true,
+      "postInstallCurrent": true,
+      "restorePassed": true,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": true,
+      "probeSHA256": "8ee8286f4774d52506bf3eb49a7e0d950ba5d2d82b746b1f125e6a86ae9d44b6"
+    }
+  ]
+}

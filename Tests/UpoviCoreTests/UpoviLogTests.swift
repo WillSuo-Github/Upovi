@@ -187,6 +187,13 @@ final class UpoviLogTests: XCTestCase, @unchecked Sendable {
         XCTAssertTrue(text.contains("event=alreadyCurrent")); XCTAssertTrue(text.contains("event=cancelled"))
         XCTAssertFalse(text.contains("[ERROR]")); XCTAssertFalse(text.contains("event=failed"))
     }
+    func testGatekeeperClassificationNeverExportsItsRawOutputOrInventsApproval() {
+        let rejected = Data("/Users/PRIVATE/Secret.app: rejected\nsource=Unnotarized Developer ID\norigin=PRIVATE_DEVELOPER".utf8)
+        XCTAssertEqual(ApplicationInstallation.assessmentClassification(rejected), "unnotarizedDeveloperID")
+        XCTAssertEqual(ApplicationInstallation.assessmentClassification(Data("source=Notarized Developer ID".utf8)), "notarizedDeveloperID")
+        XCTAssertEqual(ApplicationInstallation.assessmentClassification(Data("source=no usable signature".utf8)), "noUsableSignature")
+        XCTAssertEqual(ApplicationInstallation.assessmentClassification(Data("Unnotarized Developer ID source=Notarized Developer ID".utf8)), "unclassified")
+    }
     func testLogExclusionDoesNotReadBrokenLogDirectory() async throws {
         let root = try root(); try Data().write(to: root.appending(path: "Logs"))
         let archive = try await DiagnosticArchive.prepare(report: Data("{}".utf8), includeLogs: false,

@@ -102301,6 +102301,39 @@
         }
       }
     }
+  ,
+    "GitHub API 暂时限流；已由官方页面确认稳定版及附件 SHA256。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub API requests are temporarily rate limited. The official pages confirmed the stable release and asset SHA256."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub API 暫時限流；已由官方頁面確認穩定版及附件 SHA256。"
+          }
+        }
+      }
+    },
+    "GitHub API 暂时限流；已通过官方稳定版页面及 Electron 更新清单核对版本和下载校验信息。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub API requests are temporarily rate limited. The official stable release page and Electron manifest confirmed the version and download integrity information."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub API 暫時限流；已透過官方穩定版頁面及 Electron 更新清單核對版本和下載校驗資訊。"
+          }
+        }
+      }
+    }
   },
   "version": "1.0"
 }

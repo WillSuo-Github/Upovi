@@ -39,12 +39,14 @@ public struct UpdateCandidate: Identifiable, Hashable, Codable, Sendable {
     public var appStoreID: UInt64? = nil
     public var storeReceiptRecovery: StoreReceiptRecovery? = nil
     public var releaseChannel: ReleaseChannel? = nil
+    /// A compiled source exception reviewed against a stable vendor package with a numeric revision suffix.
+    public var isReviewedStablePackaging: Bool? = nil
     public var requiresRevalidation: Bool? = nil
     public var sourceIssue: DiagnosticIssue? = nil
 
     public init(version: String, build: String = "", source: String, isCommunity: Bool, url: URL?, usesBuildVersion: Bool = false,
                 observedAt: Date = Date(), peerID: String? = nil, expiresAt: Date? = nil, download: DownloadDescriptor? = nil, releaseNotes: String? = nil, appStoreID: UInt64? = nil,
-                buildIsAuthoritative: Bool? = nil, releaseChannel: ReleaseChannel? = nil) {
+                buildIsAuthoritative: Bool? = nil, releaseChannel: ReleaseChannel? = nil, isReviewedStablePackaging: Bool? = nil) {
         self.version = version; self.build = build; self.source = source; self.isCommunity = isCommunity; self.url = url
         self.usesBuildVersion = usesBuildVersion; self.observedAt = observedAt; self.peerID = peerID
         self.expiresAt = expiresAt; self.download = isCommunity ? nil : download
@@ -52,10 +54,14 @@ public struct UpdateCandidate: Identifiable, Hashable, Codable, Sendable {
         self.appStoreID = isCommunity ? nil : appStoreID
         self.buildIsAuthoritative = isCommunity ? nil : buildIsAuthoritative
         self.releaseChannel = isCommunity ? nil : releaseChannel
+        self.isReviewedStablePackaging = isCommunity ? nil : isReviewedStablePackaging
     }
 
     public var comparesUsingBuild: Bool { usesBuildVersion || buildIsAuthoritative == true }
-    public var isPrerelease: Bool { releaseChannel == .beta || VersionOrder.isPrerelease(version) }
+    public var isPrerelease: Bool {
+        if isReviewedStablePackaging == true, releaseChannel != .beta { return false }
+        return releaseChannel == .beta || VersionOrder.isPrerelease(version)
+    }
     public func isNewer(than app: InstalledApp) -> Bool {
         comparesUsingBuild
             ? !app.build.isEmpty && VersionOrder.compare(build, app.build) == .orderedDescending

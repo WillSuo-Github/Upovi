@@ -1,5 +1,7 @@
 # Source coverage and maintenance
 
+Large-scale validation has a separate [compatibility lab](COMPATIBILITY-LAB.md). Its popularity-ranked inventory, production-parser metadata audit, signed-payload inspection, and real isolated upgrade/restore passes are counted separately. Catalog rows and unit tests must never be presented as thousands of verified upgrades. The first real cohort produced reviewed NetNewsWire, CC Switch and kitty mappings; DB Browser for SQLite's proposal was withheld after a staging filename incompatibility reproduced on its official package.
+
 This describes the source changes prepared after build `202611040002`. They do not establish parity with another product, and no new release is published by preparing them.
 
 ## Electron sources
@@ -23,6 +25,14 @@ The Updates page shows incomplete-check counts and individual source failures ev
 GitHub API metadata requests are serialized per origin. A successful authoritative appcast avoids a redundant GitHub release request unless a newer offer needs independent download proof. Metadata uses conditional validators; this does not make unauthenticated requests exempt from GitHub's quota. Explicit throttling honors the server's retry/reset time, including across app restarts through a private bounded cooldown record. Manual refresh does not bypass that cooldown. No developer account token or embedded credential is used.
 
 When the stable GitHub release API is explicitly rate limited, Upovi can read the same repository's official `/releases/latest` page as a separate version-only source. Its bounded document head must identify one canonical stable release in that repository. Beta channels and ordinary HTTP 403 denials do not use this fallback. The API failure and retry time remain visible; the page supplies no invented archive, checksum or installation permission. If that page also fails, previously confirmed evidence may remain marked for revalidation. Shared-IP quotas and upstream availability cannot be eliminated by the app.
+
+## Electron recovery under GitHub throttling
+
+For an installed Electron GitHub provider, an explicitly rate-limited stable API can first confirm the exact stable tag from the official latest-release page, then read that tag's standard `latest-mac.yml`. Only the actual manifest can supply SHA-512 integrity data. Its version must match the confirmed release; duplicate/ambiguous/missing proofs remain manual. Explicit staging, required signatures, unsupported system requirements and cancellation still stop the route. Beta and ordinary API denials do not acquire this fallback.
+
+Artifact selection prefers an explicit native architecture before choosing DMG versus ZIP, so a manifest containing both an unlabelled package and a distinct arm64 package does not become spuriously ambiguous on Apple Silicon. Multiple equally suitable packages still remain manual. The API failure and retry deadline remain visible even when a separately verified manifest supplies a usable download. Developer identity, payload version/architecture, sealed signatures and Gatekeeper must still pass after download; metadata eligibility is not installation acceptance.
+
+A live read-only inspection of WowUp-CF 2.25.4 on 2026-11-05 found valid official SHA-512 proofs and matching Developer ID `L8KCUHBSU7` for both arm64 formats. However, both contain code directory hash `006ea879a127e9dafcccd8638fe3cadafe35585d`, which Gatekeeper rejected as `Unnotarized Developer ID`; Apple ticket lookup returned `Record not found`. The production installer correctly stopped before installing the isolated copy. The source/selection fixes therefore do **not** establish working automatic installation of that specific upstream release. No Gatekeeper, quarantine or signature requirement was bypassed. Normal installed applications were unchanged.
 
 ## Reviewed identities
 

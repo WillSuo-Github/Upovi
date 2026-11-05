@@ -1,0 +1,41 @@
+{
+  "application": "WowUp-CF",
+  "automaticInstallationPassed": false,
+  "errorKind": "validationRejected",
+  "gatekeeperRequirementBypassed": false,
+  "metadataAndIntegrityRecoveryPassed": true,
+  "normalExecutableSHA256After": "a2375db6b9a46f39413e78e3279d2bf410fe46510ea22c21c37af7c91a351d68",
+  "normalInstalledApplicationUnchanged": true,
+  "normalVersionAfter": "2.23.1",
+  "productionPreparationReachedGatekeeper": true,
+  "result": "blockedByGatekeeper",
+  "testAppLaunched": false,
+  "version": "2.25.4",
+  "checkedOn": "2026-11-05 Asia/Shanghai",
+  "releaseURL": "https://github.com/WowUp/WowUp.CF/releases/tag/v2.25.4",
+  "arm64DMG": {
+    "sha256": "2cd374616d6edd3f0ed38fbe73ad6f480801aa8718732dc6a23d57bfd8dc28cd",
+    "codeSignature": "valid Developer ID L8KCUHBSU7",
+    "gatekeeper": "rejected: Unnotarized Developer ID"
+  },
+  "arm64ZIP": {
+    "sha256": "c849ff619d095117d66430056cad59d1962f478454ef94c5ea54533563ebe3f9",
+    "codeSignature": "valid Developer ID L8KCUHBSU7",
+    "gatekeeper": "rejected: Unnotarized Developer ID"
+  },
+  "bothPayloadCDHash": "006ea879a127e9dafcccd8638fe3cadafe35585d",
+  "appleTicketLookup": "Record not found; stapler exit 65",
+  "sourceFixes": [
+    "Recover exact-tag Electron SHA-512 manifest after explicitly rate-limited stable API",
+    "Prefer explicit native architecture before artifact format; preserve remaining ambiguity"
+  ],
+  "validation": {
+    "coreTests": 299,
+    "applicationWorkflowTests": 59,
+    "releaseMetadataTests": 8,
+    "failures": 0
+  },
+  "noInstallationOrSecurityBypass": true,
+  "published": false,
+  "temporaryAppsRemoved": true
+}

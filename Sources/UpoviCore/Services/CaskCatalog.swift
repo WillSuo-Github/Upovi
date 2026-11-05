@@ -17,7 +17,8 @@ public struct CaskMetadata: Decodable, Sendable {
     public struct Artifact: Decodable, Sendable {
         let app: [String]?
         let uninstall: [Uninstall]?
-        enum CodingKeys: String, CodingKey { case app, uninstall, target }
+        let zap: [Zap]?
+        enum CodingKeys: String, CodingKey { case app, uninstall, target, zap }
         public init(from decoder: any Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             if let values = try? c.decode([AppValue].self, forKey: .app) {
@@ -26,6 +27,7 @@ public struct CaskMetadata: Decodable, Sendable {
                 app = Array(Set(names.compactMap(Self.applicationName))).sorted()
             } else { app = nil }
             uninstall = try c.decodeIfPresent([Uninstall].self, forKey: .uninstall)
+            zap = try? c.decode([Zap].self, forKey: .zap)
         }
         private struct AppValue: Decodable {
             let name: String?
@@ -50,6 +52,18 @@ public struct CaskMetadata: Decodable, Sendable {
                 else { quit = (try? c.decode([String].self, forKey: .quit)) ?? [] }
             }
         }
+        struct Zap: Decodable, Sendable {
+            let trash: [String]
+            enum CodingKeys: String, CodingKey { case trash }
+            init(from decoder: any Decoder) throws {
+                let c = try decoder.container(keyedBy: CodingKeys.self)
+                if let value = try? c.decode(String.self, forKey: .trash) { trash = value.count <= 1024 ? [value] : [] }
+                else {
+                    let values = (try? c.decode([String].self, forKey: .trash)) ?? []
+                    trash = values.count <= 256 ? values.filter { $0.count <= 1024 } : []
+                }
+            }
+        }
     }
     public var applicationNames: [String] { (artifacts ?? []).flatMap { $0.app ?? [] } }
     public func platformVersion(intel: Bool, osMajor: Int) -> String {
@@ -70,6 +84,26 @@ public struct CaskMetadata: Decodable, Sendable {
     public var bundleIDs: [String] {
         (artifacts ?? []).flatMap { ($0.uninstall ?? []).flatMap(\.quit) }
             .filter { !$0.isEmpty && !$0.contains(where: { "*?[]/ ".contains($0) }) }
+    }
+    /// Exact identifiers in declared per-user identity paths are additional source references,
+    /// not trusted publisher identities. Resolution also requires the exact main app filename;
+    /// installation still verifies the real incoming bundle ID, Apple Developer ID and payload.
+    public var bundleIdentityReferences: [String] {
+        let rules = [("~/Library/Preferences/", ".plist"), ("~/Library/Caches/", ""),
+                     ("~/Library/Saved Application State/", ".savedState"), ("~/Library/Containers/", ""),
+                     ("~/Library/Application Scripts/", "")]
+        let paths = (artifacts ?? []).flatMap { ($0.zap ?? []).flatMap(\.trash) }
+        return Array(Set(paths.compactMap { path -> String? in
+            for (prefix, suffix) in rules where path.hasPrefix(prefix) && path.hasSuffix(suffix) {
+                let identifier = String(path.dropFirst(prefix.count).dropLast(suffix.count))
+                guard !identifier.isEmpty, identifier.count <= 255,
+                      identifier.first.map({ $0.isLetter || $0.isNumber }) == true,
+                      identifier.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || ".-".contains($0)) }),
+                      !identifier.contains("..") else { return nil }
+                return identifier
+            }
+            return nil
+        })).sorted()
     }
     public var download: DownloadDescriptor? {
         #if arch(x86_64)
@@ -107,7 +141,8 @@ public struct CaskMetadata: Decodable, Sendable {
     }
 }
 
-/// Match only exact bundle IDs explicitly declared in official cask metadata.
+/// Match exact identifiers explicitly declared in official cask metadata. Identity-path references
+/// require an exact application filename and never become installer trust anchors.
 public actor CaskCatalog {
     public static let shared = CaskCatalog()
     private var pending: (id: UUID, task: Task<[CaskMetadata], any Error>)?
@@ -139,7 +174,11 @@ public actor CaskCatalog {
         // Some vendors reuse an identifier across product names; require an exact declared bundle filename.
         let filename = URL(fileURLWithPath: app.path).lastPathComponent
         let named = matches.filter { $0.applicationNames.contains(filename) }
-        return named.count == 1 ? named[0] : nil
+        if !matches.isEmpty { return named.count == 1 ? named[0] : nil }
+        let referenced = eligible.filter { $0.applicationNames.contains(filename) && $0.bundleIdentityReferences.contains(app.bundleID) }
+        guard referenced.count == 1 else { return nil }
+        UpoviLog.sources.info("event=source.catalogIdentityPathMatched \(UpoviDiagnosticContext.application(app)) match=exactIdentityPathAndFilename")
+        return referenced[0]
     }
 
     public static func index(_ casks: [CaskMetadata]) -> [String: CaskMetadata] {

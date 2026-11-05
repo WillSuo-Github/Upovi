@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "entry": {
+        "bundleID": "io.balena.etcher",
+        "application": "balenaEtcher.app",
+        "cask": "balenaetcher",
+        "homepage": "https://balena.io/etcher",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "2.1.8",
+      "oldTeamID": "66H43P8FRG",
+      "currentSignedVersion": "2.1.9",
+      "currentTeamID": "66H43P8FRG",
+      "currentArchiveSHA256": "44baa43cc425e6e236a7e6fc405fe9562e4955ddedc6e6f27e22d6e5905759fe",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "2.1.9",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    },
+    {
+      "entry": {
+        "bundleID": "io.agentsview.desktop",
+        "application": "AgentsView.app",
+        "cask": "agentsview",
+        "homepage": "https://www.agentsview.io/",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "0.46.0",
+      "oldTeamID": "2YMZH84KR8",
+      "currentSignedVersion": "0.46.1",
+      "currentTeamID": "2YMZH84KR8",
+      "currentArchiveSHA256": "bb127ecad6849332f6f4c6a5925bcd26a439257f648a608a36eb510c1843a85c",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "0.46.1",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    },
+    {
+      "entry": {
+        "bundleID": "app.freelens.Freelens",
+        "application": "Freelens.app",
+        "cask": "freelens",
+        "homepage": "https://freelens.app/",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "1.10.3",
+      "oldTeamID": "TFR6NT55MB",
+      "currentSignedVersion": "2.0.0",
+      "currentTeamID": "TFR6NT55MB",
+      "currentArchiveSHA256": "58412b6db367c4e7f081b1ee14b84cecf0d9ed00cb5853fe7abcf40ea06203b5",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "2.0.0",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    },
+    {
+      "entry": {
+        "bundleID": "com.pais.handy",
+        "application": "Handy.app",
+        "cask": "handy",
+        "homepage": "https://handy.computer/",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "0.9.8",
+      "oldTeamID": "UWFLB4GC25",
+      "currentSignedVersion": "0.10.0",
+      "currentTeamID": "UWFLB4GC25",
+      "currentArchiveSHA256": "bdc41359af0b8b3014f14c44ea3fe85b1e45387bdad261bd4a2cfc92f7f35496",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "0.10.0",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    },
+    {
+      "entry": {
+        "bundleID": "net.imput.helium",
+        "application": "Helium.app",
+        "cask": "helium-browser",
+        "homepage": "https://helium.computer/",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "0.20.2.1",
+      "oldTeamID": "S4Q33XPHB4",
+      "currentSignedVersion": "0.20.3.1",
+      "currentTeamID": "S4Q33XPHB4",
+      "currentArchiveSHA256": "f9b2f312ebbaa9be09fc59a5de9191404dc008f1502434a6f319af2a4dccbac5",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "0.20.3.1",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    },
+    {
+      "entry": {
+        "bundleID": "app.cyan.markedit",
+        "application": "MarkEdit.app",
+        "cask": "markedit",
+        "homepage": "https://github.com/MarkEdit-app/MarkEdit",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "1.37.0",
+      "oldTeamID": "TCKG8FBVG6",
+      "currentSignedVersion": "1.37.1",
+      "currentTeamID": "TCKG8FBVG6",
+      "currentArchiveSHA256": "49549d9c074cf3a85b3fd281e76df0dfe65d4b575596cb4379fbba27c920d0a3",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "1.37.1",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    },
+    {
+      "entry": {
+        "bundleID": "com.moonlight-stream.Moonlight",
+        "application": "Moonlight.app",
+        "cask": "moonlight",
+        "homepage": "https://moonlight-stream.org/",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "6.1.0",
+      "oldTeamID": "45U78722YL",
+      "currentSignedVersion": "6.2.0",
+      "currentTeamID": "45U78722YL",
+      "currentArchiveSHA256": "43617e5210d53968fcfb4a46526d1625a9056c6fe97e731673c31193dae776fc",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "6.2.0",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    },
+    {
+      "entry": {
+        "bundleID": "digital.twisted.noTunes",
+        "application": "noTunes.app",
+        "cask": "notunes",
+        "homepage": "https://github.com/tombonez/noTunes",
+        "reviewedAt": "2026-11-05"
+      },
+      "oldVersion": "3.4",
+      "oldTeamID": "JP6WW46Y42",
+      "currentSignedVersion": "3.5",
+      "currentTeamID": "JP6WW46Y42",
+      "currentArchiveSHA256": "07835cf9f3bf314d11f2ebe528072a200ffa2d55f38de59085979c2d476ea3d5",
+      "oldSignatureVerified": true,
+      "currentSignatureGatekeeperNativeAndSHA256Verified": true,
+      "upgradeVerifiedBeforePromotion": false,
+      "postPromotionUpgradeVerified": true,
+      "installedVersion": "3.5",
+      "restorePassed": true,
+      "probeSHA256": "35724b20a0dcf8294510acf077f7b8f5032f811e3063956832a44b034e71fa2d",
+      "includedInReleaseCatalog": true
+    }
+  ],
+  "scope": "Compiled identity routes only; each application still requires real upgrade and restore acceptance after this proposal."
+}

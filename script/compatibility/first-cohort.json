@@ -1,0 +1,109 @@
+[
+  {
+    "token": "maccy",
+    "bundleID": "org.p0deje.Maccy",
+    "oldVersion": "2.7.1",
+    "oldURL": "https://github.com/p0deje/Maccy/releases/download/2.7.1/Maccy.app.zip",
+    "oldSHA256": "f388aee34de09a0c7531631303785d9938bef9a92130e21ce1049c8f56aad077",
+    "oldReleaseURL": "https://github.com/p0deje/Maccy/releases/tag/2.7.1",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "stats",
+    "bundleID": "eu.exelban.Stats",
+    "oldVersion": "3.0.24",
+    "oldURL": "https://github.com/exelban/stats/releases/download/v3.0.24/Stats.dmg",
+    "oldSHA256": "a5b7cf7e18c1bd7d8f7e948f7ddfc5b90be6263bddad2eaf817140e18dc6007f",
+    "oldReleaseURL": "https://github.com/exelban/stats/releases/tag/v3.0.24",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "alt-tab",
+    "bundleID": "com.lwouis.alt-tab-macos",
+    "oldVersion": "11.10.0",
+    "oldURL": "https://github.com/lwouis/alt-tab-macos/releases/download/v11.10.0/AltTab-11.10.0.zip",
+    "oldSHA256": "579a68222ab181bf56c64d1154aa47c9d623a921e5b13da9398b24e209892e23",
+    "oldReleaseURL": "https://github.com/lwouis/alt-tab-macos/releases/tag/v11.10.0",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "coteditor",
+    "bundleID": "com.coteditor.CotEditor",
+    "oldVersion": "7.1.2",
+    "oldURL": "https://github.com/coteditor/CotEditor/releases/download/7.1.2/CotEditor_7.1.2.dmg",
+    "oldSHA256": "ee9bd48a0c923f046509798cf87422207e47d30077ecb6cdf2737a8f2d88a626",
+    "oldReleaseURL": "https://github.com/coteditor/CotEditor/releases/tag/7.1.2",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "rectangle",
+    "bundleID": "com.knollsoft.Rectangle",
+    "oldVersion": "2.0.3",
+    "oldURL": "https://github.com/rxhanson/Rectangle/releases/download/v2.0.3/Rectangle2.0.3.dmg",
+    "oldSHA256": "a48883b56fbe3fbbd699a05bc8ddbfce65c0c73c66f71eaebbe9f1fdc5a3dcb5",
+    "oldReleaseURL": "https://github.com/rxhanson/Rectangle/releases/tag/v2.0.3",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "transmission",
+    "bundleID": "org.m0k.transmission",
+    "oldVersion": "4.0.6",
+    "oldURL": "https://github.com/transmission/transmission/releases/download/4.0.6/Transmission-4.0.6.dmg",
+    "oldReleaseURL": "https://github.com/transmission/transmission/releases/tag/4.0.6",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "keka",
+    "bundleID": "com.aone.keka",
+    "oldVersion": "1.6.7",
+    "oldURL": "https://github.com/aonez/Keka/releases/download/v1.6.7/Keka-1.6.7.dmg",
+    "oldSHA256": "0fa0995fc3e58ba3e438ba53aba03636eb226c64002757d21250934116e19f7e",
+    "oldReleaseURL": "https://github.com/aonez/Keka/releases/tag/v1.6.7",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "localsend",
+    "bundleID": "org.localsend.localsendApp",
+    "oldVersion": "1.18.0",
+    "oldURL": "https://github.com/localsend/localsend/releases/download/v1.18.0/LocalSend-1.18.0.dmg",
+    "oldSHA256": "93ab884c2703a0fabd72611097b2616c0def86c4256cea2add7a0ff36dd76b3a",
+    "oldReleaseURL": "https://github.com/localsend/localsend/releases/tag/v1.18.0",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "iina",
+    "bundleID": "com.colliderli.iina",
+    "oldVersion": "1.4.4",
+    "oldURL": "https://github.com/iina/iina/releases/download/v1.4.4/IINA.v1.4.4.dmg",
+    "oldSHA256": "dd0fc0bd4b37fb57a1c8d30d6e3201b3a64bafd29959fe56953964613237beb1",
+    "oldReleaseURL": "https://github.com/iina/iina/releases/tag/v1.4.4",
+    "provenance": "Official upstream GitHub release; digest where published; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "netnewswire",
+    "bundleID": "com.ranchero.NetNewsWire-Evergreen",
+    "oldVersion": "7.2",
+    "oldURL": "https://github.com/Ranchero-Software/NetNewsWire/releases/download/mac-7.2/NetNewsWire7.2.zip",
+    "oldSHA256": "4de651c0f1fefe5d5ff1e5f6731f011ce0fb84e3850b5ea25710b514ec87def6",
+    "oldReleaseURL": "https://github.com/Ranchero-Software/NetNewsWire/releases/tag/mac-7.2",
+    "provenance": "Official upstream GitHub release; published digest; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "cc-switch",
+    "bundleID": "com.ccswitch.desktop",
+    "oldVersion": "4.0.24",
+    "oldURL": "https://github.com/farion1231/cc-switch/releases/download/v4.0.24/CC-Switch-v4.0.24-macOS.dmg",
+    "oldSHA256": "60160c8946424e803e55ad1165d873e4e1a9f34aa68e7bcc0112c8f6f366c550",
+    "oldReleaseURL": "https://github.com/farion1231/cc-switch/releases/tag/v4.0.24",
+    "provenance": "Official upstream release and published digest; actual old Developer ID checked by probe"
+  },
+  {
+    "token": "kitty",
+    "bundleID": "net.kovidgoyal.kitty",
+    "oldVersion": "0.49.0",
+    "oldURL": "https://github.com/kovidgoyal/kitty/releases/download/v0.49.0/kitty-0.49.0.dmg",
+    "oldSHA256": "8cc20fb30e95a5141ad5434516fca33177233a7f49236d431baf9ce90583e98c",
+    "oldReleaseURL": "https://github.com/kovidgoyal/kitty/releases/tag/v0.49.0",
+    "provenance": "Official upstream release and published digest; actual old Developer ID checked by probe"
+  }
+]

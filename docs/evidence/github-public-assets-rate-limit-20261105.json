@@ -1,0 +1,41 @@
+{
+  "bundleID": "com.knollsoft.Rectangle",
+  "fromVersion": "2.0.3",
+  "selectedVersion": "2.0.4",
+  "sourceSHA256": "9f820a2e56bd2c27cdda4fb4556de3cbcfcbac052d9eeb2179d49e2dae277abc",
+  "selectedSource": "GitHub Release",
+  "sourceChecks": [
+    {
+      "outcome": "failed",
+      "source": "appcast"
+    },
+    {
+      "outcome": "failed",
+      "source": "github"
+    },
+    {
+      "outcome": "checked",
+      "source": "githubPage"
+    },
+    {
+      "outcome": "checked",
+      "source": "githubAssets"
+    }
+  ],
+  "sourceStatus": "partial",
+  "testedAt": "2026-11-05T06:23:58Z",
+  "hostOS": "Version 27.2 (Build 26B123)",
+  "architecture": "arm64",
+  "oldSignatureVerified": true,
+  "payloadVerified": true,
+  "installationPassed": true,
+  "postInstallCurrent": true,
+  "restorePassed": true,
+  "temporaryCopiesRemoved": true,
+  "upgradeVerified": true,
+  "faultScopeConfirmed": true,
+  "injectedMetadataFault": "githubAPI429-otherSourcesOffline",
+  "probeSHA256": "ced6fe243d6de56cfcaa3bb78442d9c1bd5d6c24da300c727c1d1d8bd20692ad",
+  "countingPolicy": "Network fault acceptance for an already counted app; adds no additional verified application.",
+  "primaryPublicAssetPage": "https://github.com/rxhanson/Rectangle/releases/expanded_assets/v2.0.4"
+}

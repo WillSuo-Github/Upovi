@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "scope": "Source resolution uses an exact declared per-user identity path plus exact main app filename. References do not become publisher trust anchors. Real production install/recheck/restore gates remain unchanged; manual Electron restrictions still apply. No first launch acceptance.",
+  "cases": [
+    {
+      "bundleID": "me.qii404.another-redis-desktop-manager",
+      "caseToken": "another-redis-desktop-manager",
+      "fromVersion": "1.7.1",
+      "selectedVersion": null,
+      "selectedSource": null,
+      "sourceSHA256": null,
+      "sourceChecks": [
+        {
+          "outcome": "manual",
+          "source": "electron"
+        },
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "unsupported",
+      "testedAt": "2026-11-05T07:11:24Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": false,
+      "payloadVerified": false,
+      "installationPassed": false,
+      "postInstallCurrent": false,
+      "restorePassed": false,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": false,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "io.rancherdesktop.app",
+      "caseToken": "rancher",
+      "fromVersion": "1.23.1",
+      "selectedVersion": null,
+      "selectedSource": null,
+      "sourceSHA256": null,
+      "sourceChecks": [
+        {
+          "outcome": "manual",
+          "source": "electron"
+        },
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "unsupported",
+      "testedAt": "2026-11-05T07:10:45Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": false,
+      "payloadVerified": false,
+      "installationPassed": false,
+      "postInstallCurrent": false,
+      "restorePassed": false,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": false,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "com.claudecode.context",
+      "caseToken": "claude-devtools",
+      "fromVersion": "0.4.16",
+      "selectedVersion": null,
+      "selectedSource": null,
+      "sourceSHA256": null,
+      "sourceChecks": [
+        {
+          "outcome": "manual",
+          "source": "electron"
+        },
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "unsupported",
+      "testedAt": "2026-11-05T07:13:04Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": false,
+      "payloadVerified": false,
+      "installationPassed": false,
+      "postInstallCurrent": false,
+      "restorePassed": false,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": false,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "com.github.wez.wezterm",
+      "caseToken": "wezterm",
+      "fromVersion": "0.1.0",
+      "selectedVersion": null,
+      "selectedSource": null,
+      "sourceSHA256": null,
+      "sourceChecks": [
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "current",
+      "testedAt": "2026-11-05T07:09:22Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": false,
+      "payloadVerified": false,
+      "installationPassed": false,
+      "postInstallCurrent": false,
+      "restorePassed": false,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": false,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "io.open-design.desktop",
+      "caseToken": "open-design",
+      "fromVersion": "0.24.1",
+      "selectedVersion": null,
+      "selectedSource": null,
+      "sourceSHA256": null,
+      "sourceChecks": [
+        {
+          "outcome": "manual",
+          "source": "electron"
+        },
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "unsupported",
+      "testedAt": "2026-11-05T07:14:56Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": false,
+      "payloadVerified": false,
+      "installationPassed": false,
+      "postInstallCurrent": false,
+      "restorePassed": false,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": false,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "com.dbx.app",
+      "caseToken": "dbx",
+      "fromVersion": "0.6.64-beta.20261102.1",
+      "selectedVersion": null,
+      "selectedSource": null,
+      "sourceSHA256": null,
+      "sourceChecks": [
+        {
+          "outcome": "uncomparable",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "unsupported",
+      "testedAt": "2026-11-05T07:11:40Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": false,
+      "payloadVerified": false,
+      "installationPassed": false,
+      "postInstallCurrent": false,
+      "restorePassed": false,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": false,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "leits.MeetingBar",
+      "caseToken": "meetingbar",
+      "fromVersion": "4.11.5",
+      "selectedVersion": "4.11.6",
+      "selectedSource": "Homebrew",
+      "sourceSHA256": "4f19af496d4ff44b9b0ee02be02bc76207f3e365a7f9e77c7219a08c607838d7",
+      "sourceChecks": [
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "updates",
+      "testedAt": "2026-11-05T07:11:55Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": true,
+      "payloadVerified": true,
+      "installationPassed": true,
+      "postInstallCurrent": true,
+      "restorePassed": true,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": true,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "net.oldj.switchhosts",
+      "caseToken": "switchhosts",
+      "fromVersion": "5.0.1",
+      "selectedVersion": "5.0.3",
+      "selectedSource": "Homebrew",
+      "sourceSHA256": "dcc3feabcea1906941532150f13fd6d8a30e52d21d7dcccd6df65704ffc0792c",
+      "sourceChecks": [
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "updates",
+      "testedAt": "2026-11-05T07:13:22Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": true,
+      "payloadVerified": true,
+      "installationPassed": true,
+      "postInstallCurrent": true,
+      "restorePassed": true,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": true,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    },
+    {
+      "bundleID": "co.gitup.mac",
+      "caseToken": "gitup-app",
+      "fromVersion": "1.4.3",
+      "selectedVersion": "1.5.0",
+      "selectedSource": "Homebrew",
+      "sourceSHA256": "5e1d915ed533334e1691f9c01eb3cb9d2e5f459fb7aa2631b71120ff59ad585b",
+      "sourceChecks": [
+        {
+          "outcome": "checked",
+          "source": "homebrew"
+        }
+      ],
+      "sourceStatus": "updates",
+      "testedAt": "2026-11-05T07:11:06Z",
+      "hostOS": "Version 27.2 (Build 26B123)",
+      "architecture": "arm64",
+      "oldSignatureVerified": true,
+      "sourceVerified": true,
+      "payloadVerified": true,
+      "installationPassed": true,
+      "postInstallCurrent": true,
+      "restorePassed": true,
+      "temporaryCopiesRemoved": true,
+      "upgradeVerified": true,
+      "probeSHA256": "9794c0010c440fe34bbec23c150298d915083ef98657ea6f5187c31d2d7ca73f"
+    }
+  ]
+}

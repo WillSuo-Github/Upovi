@@ -24,7 +24,7 @@ def entries():
         assert re.fullmatch(r'[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)+', bundle)
         assert bundle not in seen, f'Duplicate identity: {bundle}'
         seen.add(bundle)
-        assert re.fullmatch(r'[a-z0-9][a-z0-9-]*', token)
+        assert re.fullmatch(r'[a-z0-9][a-z0-9+_-]*', token)
         assert app.endswith('.app') and '/' not in app and '..' not in app
         url = urllib.parse.urlsplit(item['homepage'])
         assert url.scheme == 'https' and url.hostname and not url.username and not url.password and not url.query

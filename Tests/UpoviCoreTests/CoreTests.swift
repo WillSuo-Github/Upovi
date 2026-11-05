@@ -3,6 +3,20 @@ import CryptoKit
 @testable import UpoviCore
 
 final class CoreTests: XCTestCase {
+    func testScannerUsesNonemptyBuildWhenDisplayVersionIsEmptyWithoutInventingAVersion() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-version-fallback-\(UUID().uuidString)")
+        let contents = root.appending(path: "Fixture.app/Contents")
+        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        for (short, build, expected) in [("", "2.1.0", "2.1.0"), (" \n", "2.1.0", "2.1.0"),
+                                          ("1.5", "20", "1.5"), ("", "", "Unknown")] {
+            let info = ["CFBundleIdentifier": "app.upovi.synthetic.version", "CFBundleShortVersionString": short, "CFBundleVersion": build]
+            try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0).write(to: contents.appending(path: "Info.plist"))
+            let app = try XCTUnwrap(AppScanner.read(contents.deletingLastPathComponent()))
+            XCTAssertEqual(app.version, expected)
+            XCTAssertEqual(app.build, build)
+        }
+    }
     func testVersionsRespectNumericComponentsAndPrereleases() {
         XCTAssertEqual(VersionOrder.compare("1.10", "1.9"), .orderedDescending)
         XCTAssertEqual(VersionOrder.compare("v1.2", "1.2.0"), .orderedSame)

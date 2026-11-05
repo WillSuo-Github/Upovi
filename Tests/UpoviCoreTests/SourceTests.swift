@@ -2,6 +2,51 @@ import XCTest
 @testable import UpoviCore
 
 final class SourceTests: XCTestCase {
+    func testGnuCashReviewedStableMacRepackDoesNotRequireBetaOptIn() async throws {
+        let url = "https://github.com/Gnucash/gnucash/releases/download/5.17/Gnucash-Arm-5.17-1.dmg"
+        let cask = Data("{\"token\":\"gnucash\",\"version\":\"5.17-1\",\"url\":\"\(url)\",\"sha256\":\"\(String(repeating: "a", count: 64))\",\"artifacts\":[{\"app\":[\"Gnucash.app\"]}]}".utf8)
+        let app = InstalledApp(name: "GnuCash fixture", bundleID: "org.gnucash.Gnucash", version: "5.15-1", build: "5.15-1",
+                               path: "/synthetic/Gnucash.app", teamID: "Y9EHT5WMK7")
+        let result = await UpdateChecker.check(app, fetch: { _, _ in cask }, catalog: { _ in nil })
+        let item = try XCTUnwrap(BulkUpdatePlan.make(apps: [app], results: [app.id: result], ignored: []).first)
+        XCTAssertEqual(item.candidate.version, "5.17-1")
+        XCTAssertEqual(item.candidate.releaseChannel, .stable)
+        XCTAssertFalse(item.candidate.isPrerelease)
+        XCTAssertTrue(item.candidate.isReviewedStablePackaging == true)
+        XCTAssertTrue(item.canInstall)
+        XCTAssertTrue(VersionOrder.isPrerelease("5.17-1"), "Global numeric prerelease rules stay conservative")
+        let unrelated = UpdateCandidate(version: "2.0-beta.1", source: "Unreviewed fixture", isCommunity: false, url: nil, releaseChannel: .stable)
+        XCTAssertTrue(unrelated.isPrerelease, "A channel label alone cannot hide a prerelease marker")
+        for other in ["https://github.com/Gnucash/gnucash/releases/download/5.17-1/Gnucash-Arm-5.17-1.dmg",
+                      "https://github.com/unrelated/gnucash/releases/download/5.17/Gnucash-Arm-5.17-1.dmg"] {
+            XCTAssertFalse(ApplicationSourceCatalog.isReviewedStablePackaging(for: app, sourceVersion: "5.17-1", download: URL(string: other)))
+        }
+        XCTAssertFalse(ApplicationSourceCatalog.isReviewedStablePackaging(for: app, sourceVersion: "5.18-1", download: URL(string: url)))
+    }
+    func testReviewedNetNewsWireRouteDoesNotMatchLookalikes() throws {
+        let json = #"[{"token":"netnewswire","version":"7.2.1","artifacts":[{"app":["NetNewsWire.app"]}]}]"#
+        let casks = try JSONDecoder().decode([CaskMetadata].self, from: Data(json.utf8))
+        let app = InstalledApp(name: "Renamed", bundleID: "com.ranchero.NetNewsWire-Evergreen", version: "7.2", path: "/synthetic/Renamed.app")
+        XCTAssertEqual(CaskCatalog.resolve(app, in: casks)?.token, "netnewswire")
+        let lookalike = InstalledApp(name: "NetNewsWire", bundleID: "com.unrelated.NetNewsWire", version: "7.2", path: "/synthetic/NetNewsWire.app")
+        XCTAssertNil(CaskCatalog.resolve(lookalike, in: casks))
+    }
+    func testNetNewsWireUsesReviewedChecksumSourceWhenPrefixedGitHubTagCannotBeCompared() async throws {
+        let cask = Data(#"{"token":"netnewswire","version":"7.2.1","url":"https://github.com/Ranchero-Software/NetNewsWire/releases/download/mac-7.2.1/NetNewsWire7.2.1.zip","sha256":"9459896e516ac6c34685b38111dc456a3d1a4e49c964e40bc8f8af8fdc3b17db","artifacts":[{"app":["NetNewsWire.app"]}]}"#.utf8)
+        let github = Data(#"{"tag_name":"mac-7.2.1","html_url":"https://github.com/Ranchero-Software/NetNewsWire/releases/tag/mac-7.2.1","draft":false,"prerelease":false,"assets":[]}"#.utf8)
+        for version in ["7.2", "7.2.1"] {
+            let app = InstalledApp(name: "NetNewsWire fixture", bundleID: "com.ranchero.NetNewsWire-Evergreen", version: version,
+                                   build: "7220", path: "/synthetic/NetNewsWire.app", teamID: "M8L2WTLA8W")
+            let result = await UpdateChecker.check(app, fetch: { url, _ in url.host == "formulae.brew.sh" ? cask : github }, catalog: { _ in nil })
+            XCTAssertTrue(result.checks.contains { $0.source == .homebrew && $0.outcome == .checked })
+            let plan = BulkUpdatePlan.make(apps: [app], results: [app.id: result], ignored: [])
+            if version == "7.2" {
+                XCTAssertEqual(plan.first?.candidate.version, "7.2.1")
+                XCTAssertTrue(plan.first?.canInstall == true)
+                XCTAssertEqual(plan.first?.candidate.download?.sha256, "9459896e516ac6c34685b38111dc456a3d1a4e49c964e40bc8f8af8fdc3b17db")
+            } else { XCTAssertTrue(plan.isEmpty) }
+        }
+    }
     func testCuratedCatalogDoesNotConfuseSameNamedProducts() throws {
         let json = #"[{"token":"orca","version":"1.3.1","artifacts":[{"app":["orca.app"]}]},{"token":"cursor","version":"3.0","artifacts":[{"app":["Cursor.app"]}]}]"#
         let casks = try JSONDecoder().decode([CaskMetadata].self, from: Data(json.utf8))
@@ -20,6 +65,54 @@ final class SourceTests: XCTestCase {
         let renamed = InstalledApp(name: "First", bundleID: "app.shared", version: "1", path: "/Applications/Renamed.app")
         XCTAssertNil(CaskCatalog.resolve(renamed, in: casks))
         XCTAssertNil(CaskCatalog.index(casks)["app.shared"])
+    }
+    private func identityPathCask(_ path: Any, token: String = "synthetic-editor", filename: String = "Editor.app", disabled: Bool = false) throws -> CaskMetadata {
+        try JSONDecoder().decode(CaskMetadata.self, from: JSONSerialization.data(withJSONObject: [
+            "token": token, "version": "2.0", "disabled": disabled,
+            "artifacts": [["app": [filename]], ["zap": [["trash": path]]]]
+        ]))
+    }
+    func testExactCaskIdentityPathAlsoRequiresExactMainFilenameAndDoesNotEnterIDOnlyIndex() throws {
+        let cask = try identityPathCask("~/Library/Preferences/org.synthetic.Editor.plist")
+        let app = InstalledApp(name: "Editor", bundleID: "org.synthetic.Editor", version: "1", path: "/synthetic/Editor.app")
+        XCTAssertEqual(CaskCatalog.resolve(app, in: [cask])?.token, cask.token)
+        XCTAssertTrue(cask.bundleIDs.isEmpty, "Path references are not declared quit identifiers")
+        XCTAssertNil(CaskCatalog.index([cask])[app.bundleID], "An ID-only caller cannot verify the main filename")
+        let renamed = InstalledApp(name: "Editor", bundleID: app.bundleID, version: "1", path: "/synthetic/Renamed.app")
+        XCTAssertNil(CaskCatalog.resolve(renamed, in: [cask]))
+        let lookalike = InstalledApp(name: "Editor", bundleID: "org.unrelated.Editor", version: "1", path: app.path)
+        XCTAssertNil(CaskCatalog.resolve(lookalike, in: [cask]))
+    }
+    func testCaskIdentityPathsRejectGlobsNestedPathsTemplatesAndOtherLibraryLocations() throws {
+        let app = InstalledApp(name: "Editor", bundleID: "org.synthetic.Editor", version: "1", path: "/synthetic/Editor.app")
+        for path in ["~/Library/Preferences/org.synthetic.*.plist", "~/Library/Preferences/ByHost/org.synthetic.Editor.plist",
+                     "~/Library/Preferences/org.synthetic.Editor.plist.lockfile", "~/Library/Containers/org.synthetic.Editor/Data",
+                     "/Users/synthetic/Library/Preferences/org.synthetic.Editor.plist", "~/Library/LaunchAgents/org.synthetic.Editor.plist",
+                     "~/Library/Application Support/org.synthetic.Editor", "~/Library/Caches/org.synthetic.Editor\n",
+                     "~/Library/Caches/org.synthetic.Editor/../org.synthetic.Editor", "$HOME/Library/Caches/org.synthetic.Editor"] {
+            XCTAssertNil(CaskCatalog.resolve(app, in: [try identityPathCask(path)]), path)
+        }
+        for path in ["~/Library/Caches/org.synthetic.Editor", "~/Library/Containers/org.synthetic.Editor",
+                     "~/Library/Saved Application State/org.synthetic.Editor.savedState", "~/Library/Application Scripts/org.synthetic.Editor"] {
+            XCTAssertEqual(CaskCatalog.resolve(app, in: [try identityPathCask([path])])?.token, "synthetic-editor")
+        }
+    }
+    func testAmbiguousIdentityPathsAndInactiveChannelsStayUnresolved() throws {
+        let path = "~/Library/Caches/org.synthetic.Editor"
+        let first = try identityPathCask(path, token: "first"), second = try identityPathCask(path, token: "second")
+        let app = InstalledApp(name: "Editor", bundleID: "org.synthetic.Editor", version: "1", path: "/synthetic/Editor.app")
+        XCTAssertNil(CaskCatalog.resolve(app, in: [first, second]))
+        XCTAssertEqual(CaskCatalog.resolve(app, in: [first, try identityPathCask(path, token: "second@beta")])?.token, "first")
+        XCTAssertEqual(CaskCatalog.resolve(app, in: [first, try identityPathCask(path, token: "second", disabled: true)])?.token, "first")
+        XCTAssertEqual(CaskCatalog.resolve(app, in: [first, try identityPathCask(path, token: "second", filename: "Other.app")])?.token, "first")
+    }
+    func testOversizedOrUnsupportedIdentityPathMetadataDoesNotBreakTheCaskCatalog() throws {
+        let app = InstalledApp(name: "Editor", bundleID: "org.synthetic.Editor", version: "1", path: "/synthetic/Editor.app")
+        let huge = try identityPathCask(Array(repeating: "~/Library/Caches/org.synthetic.Editor", count: 257))
+        XCTAssertNil(CaskCatalog.resolve(app, in: [huge]))
+        let odd = try JSONDecoder().decode(CaskMetadata.self, from: Data(#"{"token":"odd","version":"2","artifacts":[{"app":["Editor.app"]},{"zap":{"unrecognized":"format"}}]}"#.utf8))
+        XCTAssertEqual(odd.applicationNames, ["Editor.app"])
+        XCTAssertTrue(odd.bundleIdentityReferences.isEmpty)
     }
     func testCaskPlatformVersionAndHeterogeneousAppArtifacts() throws {
         let json = #"{"token":"app","version":"5.0","artifacts":[{"app":["App.app",{"target":"Renamed.app"}]}],"variations":{"sonoma":{"version":"4.5"},"arm64_sonoma":{"version":"4.9"}}}"#
@@ -122,6 +215,7 @@ extension SourceTests {
         let deadline = Date().addingTimeInterval(300)
         let release = try await GitHubRelease.latest(repository: "a/b", fetch: { url, _ in
             if url.host == "api.github.com" { throw HTTPStatusError(statusCode: 403, retryAt: deadline, rateLimited: true) }
+            if url.path.contains("/expanded_assets/") { throw HTTPStatusError(statusCode: 404) }
             XCTAssertEqual(url.absoluteString, "https://github.com/a/b/releases/latest")
             return Data(#"<html><head><meta property="og:url" content="https://github.com/a/b/releases/tag/v2.0"></head><body></body></html>"#.utf8)
         })

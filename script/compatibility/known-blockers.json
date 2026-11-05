@@ -1,0 +1,12 @@
+[
+  {
+    "token": "db-browser-for-sqlite",
+    "bundleID": "net.sourceforge.sqlitebrowser",
+    "oldVersion": "3.12.2",
+    "oldURL": "https://github.com/sqlitebrowser/sqlitebrowser/releases/download/v3.12.2/DB.Browser.for.SQLite-arm64-3.12.2.dmg",
+    "oldReleaseURL": "https://github.com/sqlitebrowser/sqlitebrowser/releases/tag/v3.12.2",
+    "provenance": "Official upstream Apple silicon archive; no independent old digest published; actual old Apple-anchored Developer ID checked by probe",
+    "expectedOutcome": "blocked",
+    "knownBlocker": "Empty incoming CFBundleExecutable requires original basename throughout the transaction; source mapping withheld."
+  }
+]

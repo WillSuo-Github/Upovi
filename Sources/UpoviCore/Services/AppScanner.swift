@@ -28,7 +28,10 @@ public enum AppScanner {
         guard let data = try? Data(contentsOf: url.appendingPathComponent("Contents/Info.plist")), data.count <= 2_000_000,
               let info = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
               let bundleID = info["CFBundleIdentifier"] as? String, !bundleID.isEmpty else { return nil }
-        let version = info["CFBundleShortVersionString"] as? String ?? info["CFBundleVersion"] as? String ?? "Unknown"
+        let shortVersion = info["CFBundleShortVersionString"] as? String
+        let build = info["CFBundleVersion"] as? String ?? ""
+        let hasShortVersion = shortVersion?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        let version = hasShortVersion ? shortVersion! : (build.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unknown" : build)
         let feed = (info["SUFeedURL"] as? String).flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil }
         var code: SecStaticCode?
         var signing: CFDictionary?
@@ -36,9 +39,13 @@ public enum AppScanner {
             SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &signing)
         }
         let team = (signing as? [String: Any])?[kSecCodeInfoTeamIdentifier as String] as? String
-        return InstalledApp(name: info["CFBundleDisplayName"] as? String ?? info["CFBundleName"] as? String ?? url.deletingPathExtension().lastPathComponent,
-                            bundleID: bundleID, version: version, build: info["CFBundleVersion"] as? String ?? "",
+        let app = InstalledApp(name: info["CFBundleDisplayName"] as? String ?? info["CFBundleName"] as? String ?? url.deletingPathExtension().lastPathComponent,
+                            bundleID: bundleID, version: version, build: build,
                             path: url.path, teamID: team,
                             isAppStore: FileManager.default.fileExists(atPath: url.appendingPathComponent("Contents/_MASReceipt/receipt").path), feedURL: feed)
+        if !hasShortVersion, version != "Unknown" {
+            UpoviLog.scan.info("event=application.versionFallback field=CFBundleVersion \(UpoviDiagnosticContext.application(app))")
+        }
+        return app
     }
 }

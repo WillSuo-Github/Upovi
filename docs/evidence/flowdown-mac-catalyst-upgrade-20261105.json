@@ -1,0 +1,42 @@
+{
+  "bundleID": "wiki.qaq.flow",
+  "fromVersion": "5.2.3",
+  "selectedVersion": "5.2.4",
+  "sourceSHA256": "c1f1873d21239afa504ba8396075dbc3e34c1ffa89e1c6677ebb0232a9df3500",
+  "selectedSource": "Homebrew",
+  "testedAt": "2026-11-05T06:37:13Z",
+  "hostOS": "Version 27.2 (Build 26B123)",
+  "architecture": "arm64",
+  "oldSignatureVerified": true,
+  "payloadVerified": true,
+  "installationPassed": true,
+  "postInstallCurrent": true,
+  "restorePassed": true,
+  "temporaryCopiesRemoved": true,
+  "upgradeVerified": true,
+  "probeSHA256": "67aac2b2376995bf5578b4c6ab858a5452cd3ca918fdaf6035b9603fd3f84fdd",
+  "platformInspection": {
+    "LSMinimumSystemVersion": "14.0",
+    "MinimumOSVersion": null,
+    "bundleID": "wiki.qaq.flow",
+    "loadCommands": [
+      {
+        "minimum": [
+          17,
+          0,
+          0
+        ],
+        "platform": 6,
+        "sdk": [
+          26,
+          5,
+          0
+        ]
+      }
+    ],
+    "sourceSHA256": "c1f1873d21239afa504ba8396075dbc3e34c1ffa89e1c6677ebb0232a9df3500",
+    "sourceURL": "https://github.com/Lakr233/FlowDown/releases/download/5.2.4/FlowDown-5.2.4.zip",
+    "version": "5.2.4"
+  },
+  "scope": "Production isolated Mac Catalyst bundle upgrade and restore. No first launch or runtime acceptance."
+}

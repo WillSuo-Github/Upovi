@@ -77,7 +77,12 @@ public enum UpdateChecker {
                     if offer.isNewer(than: app) { candidates.append(offer) }
                     if let issue = offer.sourceIssue {
                         failed += 1; checked += 1
-                        notes.append(String(localized: "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。") + retryDescription(issue.retryAt))
+                        if offer.download?.hasIntegrityProof == true {
+                            notes.append(String(localized: "GitHub API 暂时限流；已通过官方稳定版页面及 Electron 更新清单核对版本和下载校验信息。") + retryDescription(issue.retryAt))
+                            checks.append(.init(.electronManifest, .checked))
+                        } else {
+                            notes.append(String(localized: "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。") + retryDescription(issue.retryAt))
+                        }
                         checks.append(.init(.electron, .failed, issue: issue)); checks.append(.init(.githubPage, .checked))
                     } else {
                         checked += 1; notes.append(String(localized: "已检查 Electron 更新源")); checks.append(.init(.electron, .checked))
@@ -113,17 +118,20 @@ public enum UpdateChecker {
                 // Some casks declare "short,full" while the signed app uses full for both version keys.
                 let fullVersion = app.version == app.build && numericBuild && declaredBuild.hasPrefix(sourceVersion + ".") ? declaredBuild : nil
                 let version = identity?.version ?? fullVersion ?? sourceVersion
+                let stablePackaging = ApplicationSourceCatalog.isReviewedStablePackaging(for: app, sourceVersion: sourceVersion, download: download?.url)
+                if stablePackaging { UpoviLog.sources.info("event=source.reviewedStablePackaging \(UpoviDiagnosticContext.application(app)) sourceVersion=\(sourceVersion)") }
                 let sourceBuild = (app.build != app.version || fullVersion != nil) && numericBuild ? declaredBuild : ""
                 let build = identity?.build ?? sourceBuild
                 let comparable = SourceVersion.comparable(version, installed: app.version)
                 let installed = InstalledApp(name: app.name, bundleID: app.bundleID, version: SourceVersion.normalize(app.version),
                                              build: app.build, path: app.path, teamID: app.teamID)
-                if comparable && (channel == .beta || !VersionOrder.isPrerelease(version)) &&
+                if comparable && (channel == .beta || !VersionOrder.isPrerelease(version) || stablePackaging) &&
                     VersionOrder.isNewer(version: version, build: build, than: installed, allowPrerelease: channel == .beta) {
                     candidates.append(.init(version: version, build: build, source: "Homebrew", isCommunity: false,
                         url: URL(string: "https://formulae.brew.sh/cask/\(metadata.token)"), download: download,
                         releaseNotes: identity == nil ? nil : String(localized: "来源发布版本：\(sourceVersion)；主应用版本：\(version)（\(build)）。"),
-                        releaseChannel: VersionOrder.isPrerelease(version) ? .beta : nil))
+                        releaseChannel: stablePackaging ? .stable : (VersionOrder.isPrerelease(version) ? .beta : nil),
+                        isReviewedStablePackaging: stablePackaging ? true : nil))
                 }
                 if comparable { checked += 1; notes.append(String(localized: "已检查 Homebrew")); checks.append(.init(.homebrew, .checked)) }
                 else { uncomparable += 1; checks.append(.init(.homebrew, .uncomparable)); notes.append(String(localized: "Homebrew 已找到来源，但版本格式无法可靠比较，请使用官方更新")) }
@@ -141,8 +149,12 @@ public enum UpdateChecker {
                 }
                 if let issue = release.rateLimitIssue {
                     failed += 1; checked += 1
-                    notes.append(String(localized: "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。") + retryDescription(issue.retryAt))
+                    notes.append((release.download != nil
+                        ? String(localized: "GitHub API 暂时限流；已由官方页面确认稳定版及附件 SHA256。")
+                        : String(localized: "GitHub API 暂时限流；已由官方最新稳定版页面确认版本，下载信息仍待核对。")) + retryDescription(issue.retryAt))
                     checks.append(.init(.github, .failed, issue: issue)); checks.append(.init(.githubPage, .checked))
+                    if let assetIssue = release.publicAssetsIssue { checks.append(.init(.githubAssets, .failed, issue: assetIssue)) }
+                    else if release.publicAssetsChecked { checks.append(.init(.githubAssets, release.download != nil ? .checked : .manual)) }
                 } else {
                     checked += 1; notes.append(String(localized: "已检查 GitHub Release")); checks.append(.init(.github, .checked))
                 }

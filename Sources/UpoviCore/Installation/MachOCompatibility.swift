@@ -1,6 +1,72 @@
 import Foundation
 
 public enum MachOCompatibility {
+    // Exact Catalyst-to-macOS deployment mappings from Apple MacOSX27.2.sdk SDKSettings.json.
+    // Catalyst LC_BUILD_VERSION encodes its iOS-family target, not a macOS version.
+    // Unknown targets stay unsupported until reviewed; never subtract a guessed major version.
+    private static let catalystMinimumMacOS: [String: String] = [
+        "13.1": "10.15",
+        "13.2": "10.15.1",
+        "13.3": "10.15.2",
+        "13.3.1": "10.15.3",
+        "13.4": "10.15.4",
+        "13.5": "10.15.5",
+        "14.0": "11.0",
+        "14.1": "11.0",
+        "14.2": "11.0",
+        "14.3": "11.1",
+        "14.4": "11.2",
+        "14.5": "11.3",
+        "14.6": "11.4",
+        "14.7": "11.5",
+        "15.0": "12.0",
+        "15.2": "12.1",
+        "15.3": "12.2",
+        "15.4": "12.3",
+        "15.5": "12.4",
+        "15.6": "12.5",
+        "16.0": "13.0",
+        "16.1": "13.0",
+        "16.2": "13.1",
+        "16.3": "13.2",
+        "16.4": "13.3",
+        "16.5": "13.4",
+        "16.6": "13.5",
+        "17.0": "14.0",
+        "17.1": "14.1",
+        "17.2": "14.2",
+        "17.3": "14.3",
+        "17.4": "14.4",
+        "17.5": "14.5",
+        "17.6": "14.6",
+        "18.0": "15.0",
+        "18.1": "15.1",
+        "18.2": "15.2",
+        "18.3": "15.3",
+        "18.4": "15.4",
+        "18.5": "15.5",
+        "18.6": "15.6",
+        "26.0": "26.0",
+        "26.1": "26.1",
+        "26.2": "26.2",
+        "26.3": "26.3",
+        "26.4": "26.4",
+        "26.5": "26.5",
+        "26.6": "26.6",
+        "26.6.1": "26.6.1",
+        "27.0": "27.0",
+        "27.1": "27.2",
+        "27.2": "27.2",
+    ]
+    private static func catalystMacOSMinimum(_ version: UInt64) throws -> UInt64 {
+        let major = version >> 16, minor = (version >> 8) & 255, patch = version & 255
+        let key = "\(major).\(minor)" + (patch == 0 ? "" : ".\(patch)")
+        guard let mapped = catalystMinimumMacOS[key] else {
+            throw PeerError.invalid("Cannot determine Mac Catalyst deployment compatibility")
+        }
+        let parts = mapped.split(separator: ".").compactMap { UInt64($0) }
+        return (parts[0] << 16) | ((parts.count > 1 ? parts[1] : 0) << 8) | (parts.count > 2 ? parts[2] : 0)
+    }
     public static func validate(_ executable: URL) throws {
         let data = try Data(contentsOf: executable, options: .mappedIfSafe)
         #if arch(arm64)
@@ -48,8 +114,12 @@ public enum MachOCompatibility {
             guard length >= 8, length <= UInt64(end - cursor) else { throw PeerError.invalid("Invalid Mach-O command size") }
             var minimum: UInt64?
             if command == 0x32 {
-                guard length >= 24, try uint(cursor + 8) == 1 else { throw PeerError.invalid("Unsupported executable platform") }
-                minimum = try uint(cursor + 12)
+                guard length >= 24 else { throw PeerError.invalid("Invalid executable platform command") }
+                switch try uint(cursor + 8) {
+                case 1: minimum = try uint(cursor + 12)
+                case 6: minimum = try catalystMacOSMinimum(uint(cursor + 12))
+                default: throw PeerError.invalid("Unsupported executable platform")
+                }
             } else if command == 0x24 {
                 guard length >= 16 else { throw PeerError.invalid("Invalid minimum system command") }
                 minimum = try uint(cursor + 8)

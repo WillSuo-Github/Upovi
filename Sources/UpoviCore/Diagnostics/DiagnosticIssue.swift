@@ -42,7 +42,7 @@ public struct DiagnosticIssue: Codable, Sendable, Equatable, Hashable {
 
 public struct SourceCheckDetail: Codable, Sendable, Equatable {
     public enum Source: String, Codable, Sendable {
-        case appcast, homebrew, github, githubPage, electron, steam, manual, appStore
+        case appcast, homebrew, github, githubPage, githubAssets, electron, electronManifest, steam, manual, appStore
         // Preserve decoding of diagnostics exported by earlier builds. No new checks emit this source.
         case appStoreNative
     }

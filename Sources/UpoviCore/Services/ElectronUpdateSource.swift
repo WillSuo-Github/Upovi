@@ -130,28 +130,67 @@ public enum ElectronUpdateSource: Sendable, Equatable {
         case .github(let repo):
             let release = try await GitHubRelease.latest(repository: repo, channel: channel, fetch: fetch)
             prerelease = release.isPrerelease
+            let publishedManifest = try Self.githubManifest(in: release, repository: repo, architecture: Self.hostArchitecture)
             if let issue = release.rateLimitIssue {
                 var candidate = UpdateCandidate(version: release.version, source: "Electron · GitHub", isCommunity: false, url: release.page)
                 candidate.sourceIssue = issue
-                return candidate
+                // The official stable page confirms this exact tag. The standard manifest is
+                // a separate source of actual SHA-512 proofs, not a guessed archive or checksum.
+                let fallbackFeed = publishedManifest?.browser_download_url ?? URL(string: "https://github.com/\(repo)/releases/download/")!
+                    .appendingPathComponent(release.tag_name).appendingPathComponent("latest-mac.yml")
+                do {
+                    UpoviLog.sources.info("event=electron.manifestFallbackRequested \(UpoviDiagnosticContext.source(fallbackFeed)) version=\(release.version)")
+                    var confirmed = try Self.read(await fetch(fallbackFeed, 3_000_000), feed: fallbackFeed, page: release.page,
+                        expectedVersion: release.version, channel: .stable)
+                    confirmed.sourceIssue = issue
+                    UpoviLog.sources.info("event=electron.manifestFallbackConfirmed version=\(confirmed.version) downloadProof=\(confirmed.download?.hasIntegrityProof == true)")
+                    return confirmed
+                } catch {
+                    if UpoviDiagnosticContext.isCancellation(error) || Task.isCancelled { throw error }
+                    if case PeerError.unavailable = error { throw error }
+                    UpoviLog.sources.warning("event=electron.manifestFallbackRejected \(UpoviDiagnosticContext.errorSummary(error))")
+                    return candidate
+                }
             }
-            let manifests = release.assets.filter { $0.name.hasSuffix("-mac.yml") }
-            let channelName: String = ["alpha", "beta", "preview", "rc"].first { release.version.lowercased().contains("-" + $0) } ?? "beta"
-            let preferred = prerelease ? "\(channelName)-mac.yml" : "latest-mac.yml"
-            let feeds = manifests.contains(where: { $0.name == preferred }) ? manifests.filter { $0.name == preferred } : manifests.filter { $0.name == "latest-mac.yml" }
-            if feeds.isEmpty {
-                guard manifests.isEmpty else { throw PeerError.unavailable("Use the application's own Electron channel") }
+            guard let asset = publishedManifest else {
                 // Some Electron releases omit their manifest: the official GitHub release may
                 // still provide an independently hashed, unambiguous native archive.
                 return .init(version: release.version, source: "Electron · GitHub", isCommunity: false, url: release.page, download: release.download, releaseNotes: release.releaseNotes, releaseChannel: prerelease ? .beta : nil)
             }
-            guard feeds.count == 1, let asset = feeds.first, Self.secure(asset.browser_download_url),
-                  asset.browser_download_url.host == "github.com", asset.browser_download_url.path.lowercased().hasPrefix("/\(repo.lowercased())/releases/download/") else {
-                throw PeerError.invalid("Ambiguous Electron release manifest")
-            }
             feed = asset.browser_download_url; page = release.page; expectedVersion = release.version
         }
         return try Self.read(await fetch(feed, 3_000_000), feed: feed, page: page, expectedVersion: expectedVersion, channel: prerelease ? .beta : .stable)
+    }
+    /// Use an explicitly published architecture manifest before the common manifest. Some vendors
+    /// publish Intel-only latest-mac.yml alongside latest-mac-arm64.yml or latest-arm64-mac.yml.
+    /// A manifest name is never invented here; unknown channels and equal-priority alternatives stay manual.
+    static func githubManifest(in release: GitHubRelease, repository: String, architecture: String) throws -> GitHubRelease.Asset? {
+        guard ["arm64", "x86_64"].contains(architecture) else { throw PeerError.invalid("Unknown Electron host architecture") }
+        let manifests = release.assets.filter { asset in
+            asset.name.hasSuffix("-mac.yml") || asset.name.range(of: #"-mac-(?:arm64|aarch64|x64|x86_64|intel)\.yml$"#, options: .regularExpression) != nil
+        }
+        guard !manifests.isEmpty else { return nil }
+        let channelName = ["alpha", "beta", "preview", "rc"].first { release.version.lowercased().contains("-" + $0) } ?? "beta"
+        let channels = release.isPrerelease ? [channelName, "latest"] : ["latest"]
+        let architectures = architecture == "arm64" ? ["arm64", "aarch64"] : ["x64", "x86_64", "intel"]
+        for channel in channels {
+            let names = Set(architectures.flatMap { ["\(channel)-mac-\($0).yml", "\(channel)-\($0)-mac.yml"] })
+            let native = manifests.filter { names.contains($0.name) }
+            let common = manifests.filter { $0.name == "\(channel)-mac.yml" }
+            let choices = native.isEmpty ? common : native
+            if choices.isEmpty { continue }
+            guard choices.count == 1, let asset = choices.first, secure(asset.browser_download_url),
+                  asset.browser_download_url.host == "github.com", asset.browser_download_url.port == nil else {
+                throw PeerError.invalid("Ambiguous Electron release manifest")
+            }
+            let path = asset.browser_download_url.pathComponents, repo = repository.split(separator: "/").map(String.init)
+            guard repo.count == 2, path.count == 7, path[1].lowercased() == repo[0].lowercased(), path[2].lowercased() == repo[1].lowercased(),
+                  path[3] == "releases", path[4] == "download", path[5] == release.tag_name, path[6] == asset.name else {
+                throw PeerError.invalid("Mismatched Electron release manifest identity")
+            }
+            return asset
+        }
+        throw PeerError.unavailable("Use the application's own Electron channel")
     }
     static func read(_ data: Data, feed: URL, page: URL? = nil, expectedVersion: String? = nil,
                      architecture: String = hostArchitecture, kernelVersion: String = hostKernelVersion, channel: ReleaseChannel = .stable) throws -> UpdateCandidate {
@@ -183,8 +222,17 @@ public enum ElectronUpdateSource: Sendable, Equatable {
                   let sha = row["sha512"], Data(base64Encoded: sha)?.count == 64 else { return nil }
             return .init(url: url, sha512: sha)
         }
-        let images = compatible.filter { $0.url.pathExtension.lowercased() == "dmg" }
-        let choices = images.isEmpty ? compatible : images
+        // electron-builder commonly puts an unlabelled Intel artifact and an explicit
+        // arm64 artifact in the same manifest. Prefer an explicit host match before format.
+        // Multiple equally suitable artifacts still require the official updater.
+        let native = compatible.filter { descriptor in
+            let name = descriptor.url.lastPathComponent.lowercased()
+            return architecture == "arm64" ? ["arm64", "aarch64", "apple-silicon"].contains(where: name.contains)
+                : ["x64", "x86_64", "intel"].contains(where: name.contains)
+        }
+        let preferred = native.isEmpty ? compatible : native
+        let images = preferred.filter { $0.url.pathExtension.lowercased() == "dmg" }
+        let choices = images.isEmpty ? preferred : images
         let download = choices.count == 1 ? choices.first : nil
         return .init(version: version, source: "Electron", isCommunity: false, url: page ?? feed.deletingLastPathComponent(), download: download,
                      releaseNotes: info["releaseNotes"].flatMap { $0.isEmpty ? nil : $0 }, releaseChannel: channel == .beta ? .beta : nil)
