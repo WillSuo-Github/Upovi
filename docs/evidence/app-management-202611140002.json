@@ -1,7 +1,7 @@
 {
   "version": "0.4.10",
   "build": "202611140002",
-  "scope": "Local permission-onboarding and denied-installation guidance; no installation or publication of this build.",
+  "scope": "Pre-publication local permission-onboarding and denied-installation guidance acceptance; no normal installed app replacement during that acceptance.",
   "behavior": {
     "firstLaunchGuideSkippable": true,
     "settingsEntry": true,
@@ -58,6 +58,6 @@
   "limitations": [
     "Settings navigation was observed on macOS 27.2.1; older macOS settings navigation and real consent changes were not exercised.",
     "Native failures used injected Store errors; this validates the production UI and recovery routing, not a real privileged installation.",
-    "The installed and public Upovi remain build 202611140001. Build 202611140002 has not been installed or published."
+    "At the time of this native acceptance, installed and public Upovi remained build 202611140001; build 202611140002 had not yet been installed or published. Its subsequent universal publication is recorded separately in 0.4.10-build-202611140002.json."
   ]
 }

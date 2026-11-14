@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611140002
+
+First launch now offers a skippable App Management permission guide, also available in Settings. It explains the Upovi Installer / UpoviStoreInstaller names and opens System Settings or reveals the embedded installer in Finder. Permission-blocked batches present one guide after completion and retain a reminder. Rechecking selects only blocked applications and returns to update confirmation; visiting Settings or returning to Upovi never starts installation. The main app and Store installer include purpose descriptions, and permission failures preserve correlated, redacted diagnostics.
+
+Product revision `aa41c610ad2e211b9604df8333a1058835d81633` passed 323 core tests, 63 application workflow tests and 41 Python tests. Isolated native acceptance verified skipping, aggregated synthetic denials, persistent reminders, Settings/Finder navigation and recheck confirmation, along with diagnostic ZIP references and redaction. That acceptance used a local arm64 build before the clean-source universal rebuild, and did not modify permission switches or install real third-party applications. See [permission guidance](APP-MANAGEMENT-PERMISSIONS.md) and [local acceptance evidence](evidence/app-management-202611140002.json).
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611140002) is published as Latest with marketing version 0.4.10 unchanged. Apple notarization, ticket stapling, Gatekeeper, all ten signed components and Sparkle feed/archive signatures passed for the final archive and fresh extractions. All five anonymously downloaded assets match the local verified bytes; the canonical latest feed and direct archive also match. Temporary verification app copies were removed. Publication did not replace the normal installed Upovi, change real permission switches, install a blocked third-party app, exercise genuine Sparkle self-replacement or test physical Intel runtime. See [release evidence](evidence/0.4.10-build-202611140002.json).
+
+---
+
 # Upovi 0.4.10 build 202611140001
 
 App Store checks now isolate offer confirmations by Store ID. An individual network/TLS failure cannot invalidate unrelated applications, and an exact compatible catalog result without a newer public version does not depend on a redundant offer request. Mac desktop metadata may include an Apple Watch companion; mixed mobile products, incompatible system requirements and identity mismatches remain unconfirmed. Antigravity uses its reviewed architecture-specific Electron manifest instead of requesting the missing generic manifest. Store checks now retain correlated production diagnostics for completion, failure and cancellation.
