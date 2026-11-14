@@ -13,3 +13,7 @@ Permission failures retain blocked application references and correlated `permis
 Upovi does not query private TCC APIs or read/modify the TCC database to display permission status. The main application and Store installer contain Apple's [NSAppBundlesUsageDescription](https://developer.apple.com/documentation/bundleresources/information-property-list/nsappbundlesusagedescription) purpose text. The manual navigation path remains visible because settings links can vary by macOS version.
 
 The original build `202611140002` [publication](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611140002) and [pre-publication acceptance](evidence/app-management-202611140002.json) predate this revised flow. Build `202611140003` validation is recorded separately in [local evidence](evidence/backup-and-access-202611140003.json). Real privacy switches remain unchanged; Store applications were probed, not updated, during this acceptance.
+
+## Publication
+
+The [signed universal build 202611140003](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611140003) is published with marketing version 0.4.10 unchanged. Notarization, Gatekeeper, nested signatures, signed feed/archive and anonymously downloaded assets passed verification. The earlier local native acceptance remains distinct from this universal artifact verification. See [release evidence](evidence/0.4.10-build-202611140003.json).

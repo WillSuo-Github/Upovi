@@ -1,7 +1,7 @@
 {
   "version": "0.4.10",
   "build": "202611140003",
-  "scope": "Pre-publication Developer ID signed arm64 native acceptance and local cleanup; universal distribution acceptance is recorded separately.",
+  "scope": "Historical pre-publication Developer ID signed arm64 native acceptance and local cleanup; subsequent clean-source universal publication is recorded separately in 0.4.10-build-202611140003.json.",
   "sourceBaseRevision": "09c5e0ddc28e7b551d90926f7fc4ab66e1ab336d",
   "sourceWorkingTreeDiffSHA256": "c7ac816be10199b1b1ec5e9b95ca767056d42181d54990b050bf0a06d718c596",
   "tests": {
@@ -141,5 +141,10 @@
     "runnableBackupRemoved": true,
     "supersededBackupAutomaticallyExpired": true,
     "scope": "Observed local batch outside acceptance commands; not initiated by the acceptance tools."
+  },
+  "publication": {
+    "release": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611140003",
+    "productRevision": "ed048fcc5c2dfeccc8da5658ab4dae1b9e555e5a",
+    "evidence": "0.4.10-build-202611140003.json"
   }
 }
