@@ -1,6 +1,422 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "需要应用程序管理权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Management permission needed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要 App 管理權限"
+          }
+        }
+      }
+    },
+    "允许 Upovi 更新应用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Upovi to update apps"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許 Upovi 更新 App"
+          }
+        }
+      }
+    },
+    "授权由你决定，检查更新不需要这项权限。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You decide whether to grant access. Checking for updates does not need this permission."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由你決定是否授權。檢查更新不需要這項權限。"
+          }
+        }
+      }
+    },
+    "macOS 阻止了安装器修改应用。已完成的更新会保留，受阻项可在设置权限后重新检查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS blocked the installer from modifying apps. Completed updates are kept. Recheck blocked apps after setting up access."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 阻止安裝器修改 App。已完成的更新會保留，設定權限後可重新檢查受阻項目。"
+          }
+        }
+      }
+    },
+    "替换受保护的应用时，macOS 可能要求应用程序管理权限。现在设置可以减少更新中断，也可以稍后再设置。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS may require App Management permission to replace protected apps. Set it up now to reduce interruptions, or do it later."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取代受保護的 App 時，macOS 可能要求 App 管理權限。現在設定可減少更新中斷，也可以稍後設定。"
+          }
+        }
+      }
+    },
+    "打开应用程序管理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open App Management"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開 App 管理"
+          }
+        }
+      }
+    },
+    "系统设置 → 隐私与安全 → 应用程序管理。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Settings → Privacy & Security → App Management."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系統設定 → 隱私權與安全性 → App 管理。"
+          }
+        }
+      }
+    },
+    "允许 Upovi Installer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Upovi Installer"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許 Upovi Installer"
+          }
+        }
+      }
+    },
+    "商店安装器可能显示为 Upovi Installer 或 UpoviStoreInstaller。请允许对应的项目；更新其他应用时，系统也可能要求允许 Upovi。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The App Store installer may appear as Upovi Installer or UpoviStoreInstaller. Allow its entry; macOS may also ask you to allow Upovi when updating other apps."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店安裝器可能顯示為 Upovi Installer 或 UpoviStoreInstaller。請允許對應的項目；更新其他 App 時，系統也可能要求允許 Upovi。"
+          }
+        }
+      }
+    },
+    "没有看到安装器？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer not listed?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有看到安裝器？"
+          }
+        }
+      }
+    },
+    "点击下方按钮在 Finder 中找到安装器，再用权限列表的“+”添加它。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the button below to find the installer in Finder, then add it using “+” in the permission list."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下方按鈕在 Finder 中找到安裝器，再用權限列表的「+」加入它。"
+          }
+        }
+      }
+    },
+    "在 Finder 中显示安装器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Installer in Finder"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Finder 中顯示安裝器"
+          }
+        }
+      }
+    },
+    "未找到安装器，请使用完整的 Upovi 应用包。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer not found. Use the complete Upovi application bundle."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到安裝器，請使用完整的 Upovi App。"
+          }
+        }
+      }
+    },
+    "设置后返回 Upovi，点击“重新检查受阻项”。你确认更新后才会再次尝试安装。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return to Upovi after setting up access and choose “Recheck Blocked Apps”. Installation is attempted only after you confirm the update."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定後返回 Upovi，按「重新檢查受阻項目」。只有在你確認更新後才會再次嘗試安裝。"
+          }
+        }
+      }
+    },
+    "设置后返回 Upovi 即可继续。也可以稍后从“设置 → 扫描与安装”打开权限引导。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return to Upovi when you are done. You can reopen this guide from Settings → Scanning & Installation."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定後返回 Upovi 即可繼續。也可以稍後從「設定 → 掃描與安裝」打開權限引導。"
+          }
+        }
+      }
+    },
+    "继续使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繼續使用"
+          }
+        }
+      }
+    },
+    "稍后设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Up Later"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍後設定"
+          }
+        }
+      }
+    },
+    "重新检查受阻项…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recheck Blocked Apps…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新檢查受阻項目…"
+          }
+        }
+      }
+    },
+    "打开系统设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開系統設定"
+          }
+        }
+      }
+    },
+    "无法打开系统设置，请手动前往“隐私与安全 → 应用程序管理”。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not open System Settings. Go to Privacy & Security → App Management manually."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法打開系統設定，請手動前往「隱私權與安全性 → App 管理」。"
+          }
+        }
+      }
+    },
+    "部分应用需要应用程序管理权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some apps need App Management permission"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "部分 App 需要 App 管理權限"
+          }
+        }
+      }
+    },
+    "先允许 Upovi Installer，再重新检查受阻项。已完成的更新不受影响。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Upovi Installer, then recheck blocked apps. Completed updates are not affected."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先允許 Upovi Installer，再重新檢查受阻項目。已完成的更新不受影響。"
+          }
+        }
+      }
+    },
+    "设置权限…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Up Access…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定權限…"
+          }
+        }
+      }
+    },
+    "打开权限引导…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Permission Guide…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開權限引導…"
+          }
+        }
+      }
+    },
+    "应用程序管理权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Management Permission"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 管理權限"
+          }
+        }
+      }
+    },
+    "允许 Upovi Installer 修改商店应用；未设置权限仍可检查更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Upovi Installer to modify App Store apps. You can check for updates without granting access."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許 Upovi Installer 修改商店 App；未設定權限仍可檢查更新。"
+          }
+        }
+      }
+    },
     "集中管理已忽略的应用和已跳过的版本。恢复提醒不会开始安装。": {
       "localizations": {
         "en": {

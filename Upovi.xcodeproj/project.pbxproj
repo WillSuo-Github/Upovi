@@ -189,6 +189,11 @@
 		FD3EF86548C1B29FDB950809 /* UpoviInstaller in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = 5595BC76CC1B3AB15E739208 /* UpoviInstaller */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		FF11098475A8225D1E778997 /* UserInitiatedUpdatesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB6732F6EC041E67BE89A21 /* UserInitiatedUpdatesTests.swift */; };
 		FFBCADF70809B1EC2A46242F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D4E8A814C943EAA3827B581D /* Sparkle */; };
+		F70497E71344DE154632F93D /* AppManagementWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA860B9EB2D1EE40F6EC26F /* AppManagementWorkflowTests.swift */; };
+		8E6FF974A20F791FAF50BCD3 /* AppManagementAccessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A56D858646CD3AEB22A713B /* AppManagementAccessService.swift */; };
+		C907BE9B55D87FC37E9AE053 /* AppManagementGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A1F74829E04B58742FCEA9 /* AppManagementGuide.swift */; };
+		EE61A0E94B69EE8F6C78AFD1 /* AppStore+AppManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9819FBEEF99DB47C80DD7131 /* AppStore+AppManagement.swift */; };
+		B3C36D708C002007C4E1E61F /* AppManagementGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8556C51EC59A6B5E649C3729 /* AppManagementGuideView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -531,6 +536,11 @@
 		FDFC6CDD56517C3AD12ECD90 /* CommunityNetwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityNetwork.swift; sourceTree = "<group>"; };
 		FE9A617CDB2CD27CB4E4FD9D /* ArchiveSupport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ArchiveSupport.h; sourceTree = "<group>"; };
 		FED7A35CFC832D8643A5BCEB /* SettingsFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsFile.swift; sourceTree = "<group>"; };
+		02A1F74829E04B58742FCEA9 /* AppManagementGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppManagementGuide.swift; sourceTree = "<group>"; };
+		8556C51EC59A6B5E649C3729 /* AppManagementGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppManagementGuideView.swift; sourceTree = "<group>"; };
+		BAA860B9EB2D1EE40F6EC26F /* AppManagementWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppManagementWorkflowTests.swift; sourceTree = "<group>"; };
+		3A56D858646CD3AEB22A713B /* AppManagementAccessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppManagementAccessService.swift; sourceTree = "<group>"; };
+		9819FBEEF99DB47C80DD7131 /* AppStore+AppManagement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+AppManagement.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -624,6 +634,7 @@
 		0CD97325F0787DA1AEA8B37A /* UpoviTests */ = {
 			isa = PBXGroup;
 			children = (
+				BAA860B9EB2D1EE40F6EC26F /* AppManagementWorkflowTests.swift */,
 				97F27BB60A1ACB9A22805311 /* AppStoreWorkflowTests.swift */,
 				AC734DED28ABA73C21BAC18D /* AppTableLayoutTests.swift */,
 				0752EE762D9878EED96DAED8 /* DiagnosticsWorkflowTests.swift */,
@@ -653,6 +664,7 @@
 		11C4D29D591667984004139E /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				8556C51EC59A6B5E649C3729 /* AppManagementGuideView.swift */,
 				AFF3159B46330E61FDA54665 /* AppDetailView.swift */,
 				D126983E39B3F7F4B4E16BF8 /* ApplicationTable.swift */,
 				9F074CD4B1B204AF3F98EB63 /* ApplicationTableColumns.swift */,
@@ -682,6 +694,7 @@
 		13FAA6BB61EDA9AF34A44C80 /* Upovi */ = {
 			isa = PBXGroup;
 			children = (
+				E45EF1F7619D8C9699401CE6 /* Models */,
 				F90874E4F90D77B2D4A063AA /* App */,
 				6A6422E44E19584AD786AA11 /* Services */,
 				354D49445461A5B8E59C3373 /* Stores */,
@@ -736,6 +749,7 @@
 		354D49445461A5B8E59C3373 /* Stores */ = {
 			isa = PBXGroup;
 			children = (
+				9819FBEEF99DB47C80DD7131 /* AppStore+AppManagement.swift */,
 				5C639F0D895F5D903E35CC25 /* AppPreferences.swift */,
 				447E72C54E21A55EF349008E /* AppStore.swift */,
 				54A14FB0D24F65CDFCC968E1 /* AppStore+AdministratorBackups.swift */,
@@ -803,6 +817,7 @@
 		6A6422E44E19584AD786AA11 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				3A56D858646CD3AEB22A713B /* AppManagementAccessService.swift */,
 				F02C7E5B62F6594028563603 /* AdministratorInstallationService.swift */,
 				9AAA551604B781EEEBFD1297 /* AppMetadata.swift */,
 				2F10B58AE04671131099F978 /* AppStoreInstallationService.swift */,
@@ -1052,6 +1067,14 @@
 				EF6DE0926B15291CA0D14592 /* UpdateControlsTests.swift */,
 			);
 			path = UpoviCoreTests;
+			sourceTree = "<group>";
+		};
+		E45EF1F7619D8C9699401CE6 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				02A1F74829E04B58742FCEA9 /* AppManagementGuide.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1499,6 +1522,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F70497E71344DE154632F93D /* AppManagementWorkflowTests.swift in Sources */,
 				E894075DCA143CA2536ED1DE /* AppStoreWorkflowTests.swift in Sources */,
 				9F281F35B473759734B63AD6 /* AppTableLayoutTests.swift in Sources */,
 				DB06422D74838FD02B017862 /* DiagnosticsWorkflowTests.swift in Sources */,
@@ -1523,6 +1547,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3C36D708C002007C4E1E61F /* AppManagementGuideView.swift in Sources */,
+				EE61A0E94B69EE8F6C78AFD1 /* AppStore+AppManagement.swift in Sources */,
+				C907BE9B55D87FC37E9AE053 /* AppManagementGuide.swift in Sources */,
+				8E6FF974A20F791FAF50BCD3 /* AppManagementAccessService.swift in Sources */,
 				F167CB3ED34D1B3E6B93F39D /* AdministratorInstallationService.swift in Sources */,
 				11118E70EFEE2207DC16B749 /* AppDetailView.swift in Sources */,
 				570586CEAE217989959EBB4A /* AppMetadata.swift in Sources */,

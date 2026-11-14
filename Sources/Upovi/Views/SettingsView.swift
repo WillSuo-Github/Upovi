@@ -95,9 +95,17 @@ private struct GeneralSettings: View {
 
 private struct ScanSettings: View {
     @Bindable var store: AppStore
+    @State private var appManagementHelpPresented = false
 
     var body: some View {
         Form {
+            Section {
+                Button("打开权限引导…") { appManagementHelpPresented = true }
+                    .accessibilityIdentifier("settings-app-management-guide")
+            } header: { Text("应用程序管理权限") } footer: {
+                Text("允许 Upovi Installer 修改商店应用；未设置权限仍可检查更新。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section {
                 ForEach(["/Applications", "~/Applications"], id: \.self) { path in
                     Label(path, systemImage: "folder.fill").foregroundStyle(.secondary)
@@ -126,6 +134,9 @@ private struct ScanSettings: View {
                 capability("arrow.up.forward.app", String(localized: "其他安装包"), String(localized: "无法验证时，引导到官方来源更新。"))
             } header: { Text("支持的安装方式") }
         }.formStyle(.grouped)
+        .sheet(isPresented: $appManagementHelpPresented) {
+            AppManagementGuideView(store: store, context: .settings, dismiss: { appManagementHelpPresented = false })
+        }
         .listAnimation(store.additionalScanDirectories)
     }
 

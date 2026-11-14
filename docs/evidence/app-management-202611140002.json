@@ -1,0 +1,63 @@
+{
+  "version": "0.4.10",
+  "build": "202611140002",
+  "scope": "Local permission-onboarding and denied-installation guidance; no installation or publication of this build.",
+  "behavior": {
+    "firstLaunchGuideSkippable": true,
+    "settingsEntry": true,
+    "installerAliases": [
+      "Upovi Installer",
+      "UpoviStoreInstaller"
+    ],
+    "settingsAndFinderActions": true,
+    "settingsVisitClaimsConsent": false,
+    "automaticRetryOnReturn": false,
+    "oneGuideAfterFailedBatch": true,
+    "unrelatedBatchesRepeatDismissedGuide": false,
+    "blockedAppsOnlyRetryReview": true,
+    "installationStillNeedsExplicitConfirmation": true,
+    "blockedStateSurvivesRestart": true
+  },
+  "tests": {
+    "core": 323,
+    "applicationWorkflow": 63,
+    "python": 41,
+    "failures": 0,
+    "finalFocusedPermissionWorkflowTests": 4,
+    "finalFocusedCoreDiagnosticAndLogTests": 22
+  },
+  "releaseBuild": {
+    "result": "passed",
+    "architecture": "arm64",
+    "signature": "local ad hoc; deep strict verification passed",
+    "mainAndStoreHelperUsageDescriptionsPresent": true
+  },
+  "nativeAcceptance": {
+    "environment": "macOS 27.2.1; isolated synthetic application inventory and settings",
+    "firstLaunchGuideAndSkip": "passed",
+    "deniedBatchAggregatedGuide": "passed",
+    "persistentReminderAfterDismissal": "passed",
+    "recheckReturnsToConfirmationWithoutInstalling": "passed",
+    "settingsEntryReopensGuide": "passed",
+    "systemSettingsDeepLink": "App Management pane observed",
+    "finderInstallerSelection": "embedded UpoviStoreInstaller.app observed",
+    "finalLayoutAndInstallerAliasCopy": "passed",
+    "realPermissionTogglesChanged": false,
+    "realAppInstallations": 0,
+    "temporaryFixtureAppsStoppedAndRemoved": true
+  },
+  "diagnosticExport": {
+    "result": "passed",
+    "nativeSyntheticPermissionIssues": 2,
+    "classification": "permissionDenied",
+    "code": 513,
+    "snapshotAppReferencesMatchRuntimeLog": true,
+    "sentinelSecretsAndRawApplicationPathsExcluded": true,
+    "existingRetentionRotationAndExportTests": "passed"
+  },
+  "limitations": [
+    "Settings navigation was observed on macOS 27.2.1; older macOS settings navigation and real consent changes were not exercised.",
+    "Native failures used injected Store errors; this validates the production UI and recovery routing, not a real privileged installation.",
+    "The installed and public Upovi remain build 202611140001. Build 202611140002 has not been installed or published."
+  ]
+}

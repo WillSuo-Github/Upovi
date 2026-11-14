@@ -21,6 +21,7 @@ info = dict(CFBundleDevelopmentRegion='en', CFBundleExecutable='Upovi', CFBundle
             UpoviSourceRevision=sys.argv[2],
             CFBundleIconFile=os.environ.get('ASSETCATALOG_COMPILER_APPICON_NAME', 'Upovi'), LSMinimumSystemVersion='14.0',
             NSPrincipalClass='NSApplication',
+            NSAppBundlesUsageDescription='Upovi needs to replace applications only when you confirm an update. Checking for updates does not modify applications.',
             NSLocalNetworkUsageDescription='用于发现已开启 P2P 的节点并交换已扫描应用的版本报告。',
             NSHumanReadableCopyright='Copyright © 2026 Upovi contributors. PolyForm Noncommercial License 1.0.0.',
             SUFeedURL=release['feedURL'], SUPublicEDKey=release['publicEDKey'],

@@ -131,6 +131,7 @@ extension AppStore {
             bulkRecordID = record.id
         } else { bulkRecordID = nil }
         bulkPersistenceFailed = false
+        appManagementDeniedDuringBatch = false
         bulkHasRun = true; bulkUpdating = true; installing = true; bulkStopRequested = false
         for item in bulkItems where item.canInstall { transfers[item.id] = TransferProgress() }
         // Progress now lives on the Updates page rows instead of the confirmation sheet.
@@ -183,6 +184,7 @@ extension AppStore {
             }
             installationProgress = String(localized: "全部更新结束：\(bulkCompletedCount) 个完成，\(bulkFailedCount) 个失败")
             installing = false; bulkUpdating = false
+            presentAppManagementHelpAfterBatch()
             if bulkItems.isEmpty, toolBatchItems.count == 1, bulkFailedCount == 0, hasUnselectedUpdates { dismissBulkSummary() }
             if networkEnabled { p2pBatchOffset = 0; restartP2P() }
         }
@@ -285,6 +287,7 @@ extension AppStore {
             }
             saveBulkPhase(id, phase: .init(rawValue: outcome.status.rawValue) ?? .failed, detail: outcome.detail)
             if outcome.status == .installed { sourceResults[id] = nil }
+            if outcome.status == .installed || outcome.status == .current { resolveAppManagementBlock(id) }
             if outcome.status == .current {
                 sourceResults[id] = .init(appID: id, candidates: [], note: outcome.detail, status: .current,
                     checks: outcome.item.application.isAppStore ? [.init(.appStore, .checked)] : [], appStoreID: outcome.item.candidate.appStoreID)

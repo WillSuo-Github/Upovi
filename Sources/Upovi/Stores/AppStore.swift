@@ -118,6 +118,12 @@ final class AppStore {
     var sourceResults: [String: SourceResult] = [:]
     var communityResults: [String: [UpdateCandidate]] = [:]
     var errorMessage: String?
+    var appManagementGuide: AppManagementGuide?
+    var appManagementBlockedIDs: Set<String> = []
+    @ObservationIgnored var appManagementIntroductionOffered = false
+    @ObservationIgnored var appManagementDeniedDuringBatch = false
+    @ObservationIgnored var appManagementSettingsOpener: () -> Bool = { AppManagementAccessService.openSettings() }
+    @ObservationIgnored var appManagementInstallerRevealer: () -> Bool = { AppManagementAccessService.revealInstaller() }
     var networkStatus = String(localized: "尚未连接公网 DHT")
     var lastCheckAttempt: Date?
     var lastSyncAttempt: Date?
@@ -175,6 +181,7 @@ final class AppStore {
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
         self.downloadCenter = DownloadCenterService(coordinator: installer.downloads)
         self.preferences = preferences
+        appManagementBlockedIDs = Set(preferences.stringArray(forKey: Self.appManagementBlockedKey) ?? [])
         sourceResultCache = SourceResultCache(data: preferences.data(forKey: "sourceResultCacheV1"))
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication

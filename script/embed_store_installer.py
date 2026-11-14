@@ -16,7 +16,8 @@ executable.parent.mkdir(parents=True)
 shutil.copy2(bundle / 'Contents/MacOS/UpoviStoreInstaller', executable)
 info = dict(CFBundleIdentifier='app.upovi.StoreInstaller', CFBundleExecutable='UpoviStoreInstaller',
             CFBundleName='Upovi Installer', CFBundleDisplayName='Upovi Installer', CFBundlePackageType='APPL',
-            CFBundleShortVersionString='1.0', CFBundleVersion='1', LSMinimumSystemVersion='14.0', LSUIElement=True)
+            CFBundleShortVersionString='1.0', CFBundleVersion='1', LSMinimumSystemVersion='14.0', LSUIElement=True,
+            NSAppBundlesUsageDescription='Upovi Installer needs to modify an application and its App Store receipt only when you confirm an update.')
 (helper / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
 args = ['/usr/bin/codesign', '--force', '--identifier', 'app.upovi.StoreInstaller', '--sign', identity]
 if identity != '-':

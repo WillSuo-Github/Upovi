@@ -3,6 +3,7 @@ import UpoviCore
 
 extension AppStore {
     func recordDiagnostic(_ stage: DiagnosticEvent.Stage, appID: String? = nil, error: any Error) {
+        recordAppManagementBlock(appID: appID, error: error)
         UpoviLog.log("event=issue.recorded stage=\(stage.rawValue) app=\(appID.map(UpoviDiagnosticContext.applicationID) ?? "none") \(UpoviDiagnosticContext.errorSummary(error))", level: UpoviDiagnosticContext.isCancellation(error) ? .info : .error, category: .diagnostics)
         diagnosticEvents.insert(.init(applicationID: appID, stage: stage, error: error), at: 0)
         diagnosticEvents = Array(diagnosticEvents.prefix(50))

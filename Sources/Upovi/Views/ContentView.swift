@@ -23,7 +23,7 @@ struct ContentView: View {
                     .accessibilityIdentifier("refresh-all-apps")
             }
         }
-        .task { store.startInitialCheck() }
+        .task { store.offerAppManagementIntroduction(); store.startInitialCheck() }
         .onChange(of: store.visibleApps.map(\.id)) { _, ids in
             if store.section == .all || store.section == .ignored, !ids.contains(store.selection ?? "") { store.selection = ids.first }
         }
@@ -34,6 +34,9 @@ struct ContentView: View {
         }) { InstallationConfirmationView(store: store) }
         .sheet(isPresented: $store.bulkUpdatePresented) { BulkUpdateView(store: store) }
         .sheet(item: $store.diagnosticsPresentation) { DiagnosticsView(snapshot: $0) }
+        .sheet(item: $store.appManagementGuide) { context in
+            AppManagementGuideView(store: store, context: context, dismiss: { store.dismissAppManagementGuide() })
+        }
         .sheet(item: $store.restoreConfirmation) { receipt in
             ConfirmationSheet(symbol: "clock.arrow.circlepath", title: String(localized: "恢复 \(receipt.application.name)？"),
                 message: String(localized: "将关闭应用并恢复到 \(receipt.application.version)。当前版本会保留在同一目录，应用的文稿和设置不会被此操作主动修改。"),
