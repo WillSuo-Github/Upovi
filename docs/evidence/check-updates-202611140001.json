@@ -1,0 +1,146 @@
+{
+  "build": "202611140001",
+  "marketingVersion": "0.4.10",
+  "scope": "Local code repair, owner-authorized installation replacing /Applications/Upovi.app, and real native metadata checks. No third-party application installations or public release.",
+  "initial": {
+    "installedUpoviBuild": "202611040013",
+    "originalUI": {
+      "apps": 73,
+      "appStoreApps": 25,
+      "failedAppStoreApps": 21,
+      "manualAppStoreApps": 4,
+      "antigravityInstalled": "2.29.0",
+      "antigravityHomebrewTarget": "2.32.1",
+      "antigravityElectronHTTP": 404
+    },
+    "storeFailure": {
+      "stage": "outdated",
+      "observedAt": "2026-11-14 15:32:44\u201315:32:58 +0800",
+      "errorDomain": "NSURLErrorDomain",
+      "errorCode": -1202,
+      "tlsError": -9843,
+      "reason": "SSLHostname",
+      "failedRequests": 8,
+      "successfulRequests": 13
+    },
+    "metadataOnlyRecheck": {
+      "listExit": 0,
+      "listRows": 25,
+      "lookupExit": 0,
+      "lookupRows": 21,
+      "outdatedExit": 0,
+      "outdatedRows": 2
+    },
+    "antigravityManifests": {
+      "latest-mac.yml": 404,
+      "latest-arm64-mac.yml": 200,
+      "latest-x64-mac.yml": 200,
+      "target": "2.32.1"
+    }
+  },
+  "finalLiveCheck": {
+    "antigravityChecks": [
+      "electron:checked",
+      "homebrew:checked"
+    ],
+    "antigravityStatus": "updates",
+    "antigravityVersions": [
+      "2.32.1",
+      "2.32.1"
+    ],
+    "downloadsOrInstallations": 0,
+    "metadataOnly": true,
+    "storeApplications": 25,
+    "storeCounts": {
+      "appStore": 4,
+      "current": 19,
+      "updates": 2
+    }
+  },
+  "changes": [
+    "Confirm newer Store offers independently by Store ID, with at most four concurrent read-only requests. Exact compatible catalog results without a newer public version do not depend on redundant offer requests.",
+    "Accept explicit Mac desktop metadata with Watch companion devices; keep rejecting mixed mobile products, wrong identities and incompatible system requirements.",
+    "Use the reviewed Antigravity architecture manifest only for its exact bundle ID, signing team and installed feed.",
+    "Record Store check and per-application confirmation boundaries, errors and cancellation with pseudonymous references."
+  ],
+  "validation": {
+    "appWorkflowTests": 59,
+    "coreTests": 323,
+    "testFailures": 0,
+    "releaseMetadataTests": 8,
+    "diagnosticExport": {
+      "applications": 26,
+      "allSnapshotLogReferencesMatched": true,
+      "pathsAndURLsRedacted": true
+    },
+    "syntheticCoverage": [
+      "TLS failure isolated from current and other newer apps",
+      "current catalog does not require an offer request",
+      "invalid offers remain unconfirmed",
+      "Watch companion accepted, mixed mobile releases rejected",
+      "Antigravity arm64/x86_64 manifest paths",
+      "staging, signatures and minimum system requirements preserved",
+      "Store production failure/cancellation correlation and redaction",
+      "existing log retention/rotation/export tests"
+    ],
+    "releaseBuild": {
+      "result": "passed",
+      "architecture": "arm64",
+      "signature": "local ad hoc; deep strict verification passed",
+      "helperComponentsPresent": true,
+      "notarized": false
+    },
+    "pythonTests": 41
+  },
+  "limitations": [
+    "The certificate hostname failure was observed in the network path; certificate validation remains enabled. This change prevents a per-app confirmation failure from invalidating other apps.",
+    "Only metadata checks ran against installed applications; no real update installation was attempted.",
+    "Owner-authorized local installation replaced build 202611040013 with Developer ID signed build 202611140001. This local build is not notarized or publicly released."
+  ],
+  "localInstallation": {
+    "installedBundle": "/Applications/Upovi.app",
+    "build": "202611140001",
+    "version": "0.4.10",
+    "signature": "Developer ID Application, NT9VR9C9HY; hardened runtime and secure timestamps; deep strict verification passed",
+    "notarized": false,
+    "runningInstalledExecutableMatchesSignedCandidate": true,
+    "nativeScan": {
+      "applications": 73,
+      "completed": 73,
+      "incomplete": 0,
+      "sourceCounts": {
+        "appStore": 4,
+        "current": 41,
+        "unsupported": 8,
+        "updates": 20
+      },
+      "appStoreCounts": {
+        "updates": 2,
+        "current": 19,
+        "appStore": 4
+      },
+      "antigravity": {
+        "status": "updates",
+        "target": "2.32.1",
+        "checks": [
+          {
+            "outcome": "checked",
+            "source": "electron"
+          },
+          {
+            "outcome": "checked",
+            "source": "homebrew"
+          }
+        ]
+      },
+      "globalToolSourcesCompleted": 4,
+      "applicationInstallOrDownloadRequests": 0
+    },
+    "nativeDiagnosticExport": {
+      "result": "passed",
+      "file": "Upovi-Installed-Check-202611140001.zip",
+      "allApplicationReferencesMatchedLogs": true,
+      "zipSHA256": "93d02229c4d634462dd9817290d8ad54da1e2b01659da94641e01f53cf3fe832"
+    }
+  }
+}

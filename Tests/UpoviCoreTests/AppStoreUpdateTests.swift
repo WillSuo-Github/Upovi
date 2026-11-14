@@ -56,7 +56,7 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(result.appStoreID, 12345)
         XCTAssertNotNil(result.manualURL)
     }
-    func testMasDetectionFailureAndInvalidOffersNeverBecomeCurrentOrInstallable() async {
+    func testMasDetectionFailureAndInvalidOffersNeverBecomeInstallableButCurrentCatalogIsIndependent() async {
         for mode in ["failure", "malformed", "wrong-bundle", "wrong-path", "stale", "wrong-target", "duplicate"] {
             let replies = StoreReplies(outdatedMode: mode)
             let catalog = AppStoreCatalog(execute: { try await replies.run($0) })
@@ -68,7 +68,58 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         let replies = StoreReplies(outdatedMode: "failure"); await replies.changeVersion("1")
         let catalog = AppStoreCatalog(execute: { try await replies.run($0) })
         let result = await catalog.check(app)
-        XCTAssertEqual(result.status, .failed)
+        XCTAssertEqual(result.status, .current)
+        let arguments = await replies.arguments
+        XCTAssertEqual(arguments, [["list"], ["lookup", "12345"]])
+    }
+    func testReadOnlyOfferFailureIsIsolatedFromCurrentAndOtherNewerApplications() async {
+        let catalog = AppStoreCatalog(execute: { args in
+            if args == ["list"] {
+                return Data((1...3).map { id in
+                    "{\"adamID\":\(id),\"bundleID\":\"app.synthetic.\(id)\",\"path\":\"/synthetic/\(id).app\",\"version\":\"1\"}"
+                }.joined(separator: "\n").utf8)
+            }
+            if args.first == "lookup" {
+                return Data((1...3).map { id in
+                    "{\"adamID\":\(id),\"bundleID\":\"app.synthetic.\(id)\",\"version\":\"\(id == 1 ? "1" : "2")\",\"minimumOSVersion\":\"14\",\"kind\":\"mac-software\"}"
+                }.joined(separator: "\n").utf8)
+            }
+            XCTAssertEqual(Array(args.prefix(3)), ["outdated", "--inaccurate", "--check-min-os"])
+            XCTAssertEqual(args.count, 4, "Offer confirmations must isolate each Store ID")
+            if args.last == "2" { throw URLError(.serverCertificateUntrusted) }
+            XCTAssertEqual(args.last, "3", "Current applications must not need an offer request")
+            return Data(#"{"adamID":3,"bundleID":"app.synthetic.3","path":"/synthetic/3.app","version":"1","newVersion":"2"}"#.utf8)
+        })
+        for id in 1...3 {
+            let fixture = InstalledApp(name: "Fixture", bundleID: "app.synthetic.\(id)", version: "1", path: "/synthetic/\(id).app", isAppStore: true)
+            let result = await catalog.check(fixture)
+            XCTAssertEqual(result.status, id == 1 ? .current : id == 2 ? .failed : .updates)
+            XCTAssertEqual(result.candidates.count, id == 3 ? 1 : 0)
+        }
+    }
+    func testStoreProductionDiagnosticsCorrelateFailureAndCancellationWithoutRawInventory() async throws {
+        let parent = "store-diagnostics-" + UUID().uuidString
+        let fixture = InstalledApp(name: "PRIVATE_NAME_SENTINEL", bundleID: "app.synthetic.store.private", version: "1", path: "/Users/PRIVATE_PATH_SENTINEL/Private.app", isAppStore: true)
+        await UpoviDiagnosticContext.$operationID.withValue(parent) {
+            let failed = AppStoreCatalog(execute: { args in
+                if args == ["list"] { return Data(#"{"adamID":12345,"bundleID":"app.synthetic.store.private","path":"/Users/PRIVATE_PATH_SENTINEL/Private.app","version":"1"}"#.utf8) }
+                if args.first == "lookup" { return Data(#"{"adamID":12345,"bundleID":"app.synthetic.store.private","version":"2","minimumOSVersion":"14","kind":"mac-software"}"#.utf8) }
+                throw URLError(.serverCertificateUntrusted, userInfo: [NSLocalizedDescriptionKey: "token=PRIVATE_TOKEN_SENTINEL /Users/PRIVATE_PATH_SENTINEL/Secret"])
+            })
+            let result = await failed.check(fixture)
+            XCTAssertEqual(result.status, .failed)
+            let cancelled = AppStoreCatalog(execute: { _ in throw CancellationError() })
+            let cancelledResult = await cancelled.check(fixture)
+            XCTAssertEqual(cancelledResult.checks.first?.issue?.kind, .cancelled)
+        }
+        let text = try UpoviLogManager.shared.exportSnapshot()
+        XCTAssertTrue(text.contains("parent=\(parent)"))
+        XCTAssertTrue(text.contains("operation=store.confirmation"))
+        XCTAssertTrue(text.contains("operation=store.check"))
+        XCTAssertTrue(text.contains("event=cancelled"))
+        XCTAssertTrue(text.contains("code=-1202"))
+        XCTAssertTrue(text.contains("app=\(UpoviDiagnosticContext.applicationID(fixture.id))"))
+        for secret in ["PRIVATE_NAME_SENTINEL", "app.synthetic.store.private", "PRIVATE_PATH_SENTINEL", "PRIVATE_TOKEN_SENTINEL"] { XCTAssertFalse(text.contains(secret), secret) }
     }
     func testChangedInstalledVersionRequiresFreshInventory() async {
         let replies = StoreReplies()
@@ -167,6 +218,22 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
             let product = try JSONDecoder().decode(StoreProduct.self, from: data)
             if version == "2.9.1" { XCTAssertNoThrow(try product.validate(for: fixture, storeID: 1605585211)) }
             else { XCTAssertThrowsError(try product.validate(for: fixture, storeID: 1605585211)) }
+        }
+    }
+    func testMacDesktopMetadataMayIncludeWatchRemoteButNeverAMobileProductOrNewerOS() throws {
+        let fixture = InstalledApp(name: "Keynote", bundleID: "com.apple.Keynote", version: "15.4", path: "/synthetic/Keynote.app", isAppStore: true)
+        for (devices, minimum, allowed) in [
+            (["MacDesktop-MacDesktop", "Watch4-Watch4"], "26.0", true),
+            (["Watch4-Watch4"], "26.0", false),
+            (["MacDesktop-MacDesktop", "Watch4-Watch4", "iPhone18,1"], "26.0", false),
+            (["MacDesktop-MacDesktop", "Watch4-Watch4", "iPadAir-iPadAir"], "26.0", false),
+            (["MacDesktop-MacDesktop", "Watch4-Watch4", "unknown"], "26.0", false),
+            (["MacDesktop-MacDesktop", "Watch4-Watch4"], "999.0", false)
+        ] {
+            let data = try JSONSerialization.data(withJSONObject: ["adamID": 361285480, "bundleID": fixture.bundleID, "version": "15.4", "minimumOSVersion": minimum, "kind": "software", "supportedDevices": devices])
+            let product = try JSONDecoder().decode(StoreProduct.self, from: data)
+            if allowed && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 { XCTAssertNoThrow(try product.validate(for: fixture, storeID: 361285480)) }
+            else { XCTAssertThrowsError(try product.validate(for: fixture, storeID: 361285480)) }
         }
     }
     func testStorePlanRejectsUnrelatedChannelsPathsAccountsAndStaleApps() throws {

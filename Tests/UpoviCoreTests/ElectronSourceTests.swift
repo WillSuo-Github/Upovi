@@ -19,6 +19,37 @@ final class ElectronSourceTests: XCTestCase, @unchecked Sendable {
         \(extra)
         """.utf8)
     }
+    func testAntigravityUsesReviewedArchitectureManifestAndKeepsSourceFailuresVisible() async throws {
+        let base = URL(string: "https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest/")!
+        let app = InstalledApp(name: "Antigravity", bundleID: "com.google.antigravity", version: "2.29.0", path: "/synthetic/Antigravity.app", teamID: "EQHXZ8M8AV")
+        XCTAssertEqual(ElectronUpdateSource.manifestSuffix(for: app, base: base, architecture: "arm64"), "arm64-mac.yml")
+        XCTAssertEqual(ElectronUpdateSource.manifestSuffix(for: app, base: base, architecture: "x86_64"), "x64-mac.yml")
+        let body = Data("""
+        version: 2.32.1
+        files:
+          - url: https://storage.googleapis.com/antigravity-public/antigravity-hub/2.32.1-123/darwin-arm/Antigravity.zip
+            sha512: \(proof)
+        """.utf8)
+        let candidate = try await ElectronUpdateSource.generic(base).check(app, fetch: { url, _ in
+            XCTAssertEqual(url.lastPathComponent, "latest-" + ElectronUpdateSource.manifestSuffix(for: app, base: base))
+            return body
+        })
+        XCTAssertEqual(candidate.version, "2.32.1")
+        XCTAssertEqual(candidate.download?.sha512, proof)
+        for extra in ["stagingPercentage: 10", "signature: required", "minimumSystemVersion: 999.0"] {
+            do {
+                _ = try await ElectronUpdateSource.generic(base).check(app, fetch: { _, _ in Data((String(decoding: body, as: UTF8.self) + "\n" + extra).utf8) })
+                XCTFail("Architecture adaptation must preserve updater restrictions")
+            } catch { }
+        }
+        do {
+            _ = try await ElectronUpdateSource.generic(base).check(app, fetch: { _, _ in throw CancellationError() })
+            XCTFail("Cancellation must propagate")
+        } catch { XCTAssertTrue(error is CancellationError) }
+        let other = InstalledApp(name: app.name, bundleID: app.bundleID, version: app.version, path: app.path, teamID: "OTHER")
+        XCTAssertEqual(ElectronUpdateSource.manifestSuffix(for: other, base: base), "mac.yml")
+        XCTAssertEqual(ElectronUpdateSource.manifestSuffix(for: app, base: URL(string: "https://example.com/manifest/")!), "mac.yml")
+    }
     func testExplicitNativeArtifactWinsOverUnlabelledArtifactBeforeChoosingFormat() throws {
         let manifest = Data("""
         version: 2.25.4

@@ -29,8 +29,15 @@ public struct StoreProduct: Decodable, Sendable {
     public let supportedDevices: [String]?
     public func validate(for app: InstalledApp, storeID: UInt64) throws {
         let os = ProcessInfo.processInfo.operatingSystemVersion
+        // Apple's desktopSoftware metadata can include a Watch remote companion (Keynote).
+        // A Mac must still be explicit; mixed iPhone/iPad releases remain unconfirmed because
+        // their public version/system requirements can belong to the mobile product.
+        let devices = supportedDevices ?? []
+        let macWithWatchCompanion = devices.contains("MacDesktop-MacDesktop") && devices.allSatisfy {
+            $0 == "MacDesktop-MacDesktop" || $0.range(of: #"^Watch[0-9]+(?:,[0-9]+)?-Watch[0-9]+(?:,[0-9]+)?$"#, options: .regularExpression) != nil
+        }
         guard adamID == storeID, bundleID == app.bundleID, version.count <= 128,
-              kind == "mac-software" || supportedDevices == ["MacDesktop-MacDesktop"],
+              kind == "mac-software" || (kind == "software" && macWithWatchCompanion),
               SourceVersion.comparable(version, installed: app.version),
               minimumOSVersion.count <= 64, minimumOSVersion.range(of: #"^\d+(?:\.\d+)*$"#, options: .regularExpression) != nil,
               VersionOrder.compare(minimumOSVersion, "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)") != .orderedDescending else {
@@ -45,7 +52,12 @@ public actor AppStoreCatalog {
         let entries: [StoreApplication]
         var lookupError: (any Error)? = nil
         var outdated: [StoreApplication] = []
-        var outdatedError: (any Error)? = nil
+        var outdatedErrors: [UInt64: any Error] = [:]
+    }
+    private struct Detection: Sendable {
+        let id: UInt64
+        let entries: [StoreApplication]
+        let error: (any Error)?
     }
     private struct ProductIdentity: Decodable { let adamID: UInt64 }
     private let execute: @Sendable ([String]) async throws -> Data
@@ -92,6 +104,16 @@ public actor AppStoreCatalog {
     }
     public func invalidate() { loadedAt = nil; failedAt = nil; pending = nil }
     public func check(_ app: InstalledApp) async -> SourceResult {
+        let operation = UpoviLogOperation("store.check", category: .sources, details: UpoviDiagnosticContext.application(app))
+        return await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            let result = await evaluate(app)
+            let cancelled = result.checks.contains { $0.issue?.kind == .cancelled }
+            operation.finish(cancelled ? "cancelled" : result.status.rawValue, details: UpoviDiagnosticContext.sourceResult(result),
+                             level: result.status == .failed && !cancelled ? .warning : .info)
+            return result
+        }
+    }
+    private func evaluate(_ app: InstalledApp) async -> SourceResult {
         guard available else { return .init(appID: app.id, candidates: [], note: String(localized: "请使用包含商店更新组件的完整 Upovi 应用包。"), status: .appStore, checks: [.init(.appStore, .manual)]) }
         do {
             let loaded = try await load()
@@ -111,8 +133,8 @@ public actor AppStoreCatalog {
                 return .init(appID: app.id, candidates: [], note: String(localized: "未查到与此安装完全匹配且兼容的商店版本，可能受商店地区、下架或系统要求影响。请在 App Store 中确认；其他应用的检测结果不受影响。"), status: .failed,
                              checks: [.init(.appStore, .failed, error: PeerError.unavailable("No exact compatible Store release was confirmed"))])
             }
-            if let error = loaded.outdatedError { throw error }
             let newer = VersionOrder.isNewer(version: target, than: app)
+            if newer, let error = loaded.outdatedErrors[entry.adamID] { throw error }
             let offers = loaded.outdated.filter { $0.adamID == entry.adamID }
             guard offers.count <= 1 else { throw PeerError.invalid("Ambiguous mas update metadata") }
             if let offer = offers.first {
@@ -137,13 +159,14 @@ public actor AppStoreCatalog {
     private func load() async throws -> Snapshot {
         try Task.checkCancellation()
         if let failedAt, Date().timeIntervalSince(failedAt) < 60 { throw PeerError.unavailable("Store metadata is temporarily unavailable") }
-        if let loadedAt, Date().timeIntervalSince(loadedAt) < (snapshot.lookupError == nil && snapshot.outdatedError == nil ? 300 : 60) { return snapshot }
+        if let loadedAt, Date().timeIntervalSince(loadedAt) < (snapshot.lookupError == nil && snapshot.outdatedErrors.isEmpty ? 300 : 60) { return snapshot }
         let request: (UUID, Task<Snapshot, any Error>)
         if let pending { request = pending }
         else {
             let execute = execute
             request = (UUID(), Task {
                 let installed = try Self.decode(await execute(["list"]))
+                UpoviLog.sources.info("event=store.inventoryLoaded entries=\(installed.count)")
                 guard installed.contains(where: { $0.adamID > 0 }) else { return Snapshot(entries: installed) }
                 let products: Data
                 do {
@@ -151,6 +174,7 @@ public actor AppStoreCatalog {
                 } catch {
                     if error is CancellationError { throw error }
                     try Task.checkCancellation()
+                    UpoviLog.sources.warning("event=store.lookupFailed \(UpoviDiagnosticContext.errorSummary(error))")
                     // Keep known manual/TestFlight installations independent of catalog outages.
                     return Snapshot(entries: installed, lookupError: error)
                 }
@@ -170,14 +194,44 @@ public actor AppStoreCatalog {
                     return StoreApplication(adamID: item.adamID, bundleID: item.bundleID, path: item.path, version: item.version,
                                             newVersion: compatible ? match[0].version : nil)
                 }
-                // Use mas's ordinary read-only detection. Accurate mode starts/cancels downloads
-                // and may display account dialogs, so it must never run during a background scan.
-                var outdated: [StoreApplication] = [], outdatedError: (any Error)?
-                do { outdated = try Self.decode(await execute(["outdated", "--inaccurate", "--check-min-os"] +
-                    Array(Set(installed.filter { $0.adamID > 0 }.map { String($0.adamID) })).sorted())) }
-                catch is CancellationError { throw CancellationError() }
-                catch { outdatedError = error }
-                return Snapshot(entries: entries, outdated: outdated, outdatedError: outdatedError)
+                // Exact compatible catalog results already establish when no newer public version
+                // exists. Only newer versions need mas's independent, read-only offer confirmation.
+                // Isolate each ID: one failed TLS/request must not invalidate unrelated apps.
+                // Accurate mode starts/cancels downloads and must never run during a scan.
+                let ids = Array(Set(entries.filter { item in
+                    item.newVersion.map { VersionOrder.compare($0, item.version) == .orderedDescending } == true
+                }.map(\.adamID))).sorted()
+                UpoviLog.sources.info("event=store.catalogLoaded entries=\(entries.count) products=\(releases.count) confirmations=\(ids.count)")
+                var outdated: [StoreApplication] = [], errors: [UInt64: any Error] = [:]
+                await withTaskGroup(of: Detection.self) { group in
+                    func enqueue(_ id: UInt64) {
+                        group.addTask {
+                            let operation = UpoviLogOperation("store.confirmation", category: .sources,
+                                details: "app=\(UpoviDiagnosticContext.applicationID(entries.first { $0.adamID == id }?.path ?? "unknown"))")
+                            return await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+                                do {
+                                    let offers = try Self.decode(await execute(["outdated", "--inaccurate", "--check-min-os", String(id)]))
+                                    guard offers.allSatisfy({ $0.adamID == id }) else { throw PeerError.invalid("Unexpected Store offer identity") }
+                                    operation.finish(details: "offers=\(offers.count)")
+                                    return Detection(id: id, entries: offers, error: nil)
+                                } catch {
+                                    operation.fail(error)
+                                    return Detection(id: id, entries: [], error: error)
+                                }
+                            }
+                        }
+                    }
+                    var remaining = ids.makeIterator()
+                    for _ in 0..<4 { if let id = remaining.next() { enqueue(id) } }
+                    for await detection in group {
+                        if let error = detection.error { errors[detection.id] = error }
+                        else { outdated += detection.entries }
+                        if let id = remaining.next() { enqueue(id) }
+                    }
+                }
+                if errors.values.contains(where: { UpoviDiagnosticContext.isCancellation($0) }) { throw CancellationError() }
+                UpoviLog.sources.info("event=store.confirmationsCompleted requested=\(ids.count) offers=\(outdated.count) failures=\(errors.count)")
+                return Snapshot(entries: entries, outdated: outdated, outdatedErrors: errors)
             })
             pending = request
         }

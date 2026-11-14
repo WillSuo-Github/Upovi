@@ -112,14 +112,16 @@ public enum ElectronUpdateSource: Sendable, Equatable {
         var prerelease = false
         switch self {
         case .generic(let base):
-            let stableURL = base.appending(path: "latest-mac.yml")
+            let suffix = Self.manifestSuffix(for: app, base: base)
+            let stableURL = base.appending(path: "latest-" + suffix)
+            UpoviLog.sources.info("event=electron.manifestRequested \(UpoviDiagnosticContext.application(app)) architectureSpecific=\(suffix != "mac.yml") \(UpoviDiagnosticContext.source(stableURL))")
             let stable: UpdateCandidate?
             do { stable = try Self.read(await fetch(stableURL, 3_000_000), feed: stableURL, page: base) }
             catch let error as HTTPStatusError where error.statusCode == 404 && channel == .beta { stable = nil }
             guard channel == .beta else {
                 guard let stable else { throw PeerError.unavailable("No stable Electron manifest") }; return stable
             }
-            let betaURL = base.appending(path: "beta-mac.yml")
+            let betaURL = base.appending(path: "beta-" + suffix)
             do {
                 let beta = try Self.read(await fetch(betaURL, 3_000_000), feed: betaURL, page: base, channel: .beta)
                 guard let stable else { return beta }
@@ -160,6 +162,13 @@ public enum ElectronUpdateSource: Sendable, Equatable {
             feed = asset.browser_download_url; page = release.page; expectedVersion = release.version
         }
         return try Self.read(await fetch(feed, 3_000_000), feed: feed, page: page, expectedVersion: expectedVersion, channel: prerelease ? .beta : .stable)
+    }
+    /// Reviewed vendor layout: Antigravity publishes separate architecture manifests and no
+    /// latest-mac.yml. Keep the exception tied to the exact installed identity and feed.
+    static func manifestSuffix(for app: InstalledApp, base: URL, architecture: String = hostArchitecture) -> String {
+        guard app.bundleID == "com.google.antigravity", app.teamID == "EQHXZ8M8AV",
+              base.absoluteString == "https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest/" else { return "mac.yml" }
+        return architecture == "arm64" ? "arm64-mac.yml" : "x64-mac.yml"
     }
     /// Use an explicitly published architecture manifest before the common manifest. Some vendors
     /// publish Intel-only latest-mac.yml alongside latest-mac-arm64.yml or latest-arm64-mac.yml.
