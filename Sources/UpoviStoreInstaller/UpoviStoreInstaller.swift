@@ -71,7 +71,7 @@ import UpoviCore
             }
             guard let current = AppScanner.read(target) else { throw PeerError.invalid("Original store application is missing") }
             try plan.verifyCurrent(current); try BundleVerifier.checkSignature(target, like: plan.application)
-            guard !NSRunningApplication.runningApplications(withBundleIdentifier: current.bundleID).contains(where: {
+            guard plan.permissionProbe == true || !NSRunningApplication.runningApplications(withBundleIdentifier: current.bundleID).contains(where: {
                 $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: current.path) } ?? false
             }) else { throw PeerError.unavailable("Close the application before updating") }
             // Test the exact receipt directory before starting a potentially multi-gigabyte download.
@@ -79,6 +79,9 @@ import UpoviCore
             let probe = target.appending(path: "Contents/_MASReceipt/.Upovi-write-\(UUID().uuidString)")
             try Data().write(to: probe, options: .withoutOverwriting)
             try fm.removeItem(at: probe)
+            if plan.permissionProbe == true {
+                result.state = "accessVerified"; result.installedApplication = current; try save(); return result
+            }
             stage = "identityLookup"
             let list = try await ProcessCommand().run("/bin/launchctl", ["asuser",String(plan.userID),bridge.path,"list"], timeoutSeconds:60,
                 outputFile:job.appending(path:"identityLookup.log"), environment:environment, maximumOutputBytes:2_000_000)

@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611140003 (local)
+
+Completed ordinary application backups are inert, verified ZIP archives instead of hidden runnable apps in Applications. The latest completed copy per app is retained for up to seven days; incomplete recovery data is never expired. Administrator expiration runs only inside an already authorized operation. Missing or unverified live applications preserve their signed recovery archives. Exact old registrations and the stale user Applications acceptance directory were removed; local legacy bundle and registration counts are zero. History displays the archive sizes correctly.
+
+App Management guidance now shows component availability, actual per-application write verification, direct Settings navigation and a clear completion state. Registering the exact protected temporary helper fixes the reporting Mac's `failed to get bundle URL` denial despite enabled switches. LF/CR/CRLF handling preserves multi-application results returned by AppleScript. Developer and AdBlock Pro both passed the actual signed helper probe and showed green checks in the installed app, without a Store update or consent change. The success notice still requires recheck and explicit installation confirmation.
+
+The final candidate passed 341 core tests, 66 application workflow tests and 41 Python tests, along with the preceding focused backup/archive, access-framing and archive-size regressions. An isolated official signed Rectangle copy passed archive, restore and expiry verification. The real diagnostic ZIP preserved application references and bounded maintenance/access events without sentinel secrets or raw paths. All 18 retained archive checksums were verified. A concurrent local Spokenly batch also generated an inert new backup and expired its superseded copy. The signed arm64 local build was installed and launched; it has not been published or notarized as a new public release. See [local evidence](evidence/backup-and-access-202611140003.json), [backup policy](BACKUP-RETENTION.md) and [access guidance](APP-MANAGEMENT-PERMISSIONS.md).
+
+---
+
 # Upovi 0.4.10 build 202611140002
 
 First launch now offers a skippable App Management permission guide, also available in Settings. It explains the Upovi Installer / UpoviStoreInstaller names and opens System Settings or reveals the embedded installer in Finder. Permission-blocked batches present one guide after completion and retain a reminder. Rechecking selects only blocked applications and returns to update confirmation; visiting Settings or returning to Upovi never starts installation. The main app and Store installer include purpose descriptions, and permission failures preserve correlated, redacted diagnostics.

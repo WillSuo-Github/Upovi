@@ -184,6 +184,8 @@ extension AppStore {
             }
             installationProgress = String(localized: "全部更新结束：\(bulkCompletedCount) 个完成，\(bulkFailedCount) 个失败")
             installing = false; bulkUpdating = false
+            await maintainApplicationBackups(force: true)
+            await refreshInstallations()
             presentAppManagementHelpAfterBatch()
             if bulkItems.isEmpty, toolBatchItems.count == 1, bulkFailedCount == 0, hasUnselectedUpdates { dismissBulkSummary() }
             if networkEnabled { p2pBatchOffset = 0; restartP2P() }

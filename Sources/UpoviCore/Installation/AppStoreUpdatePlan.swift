@@ -8,11 +8,13 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
     public let version: String
     public let userID: UInt32
     public let receiptRecovery: StoreReceiptRecovery?
+    public var permissionProbe: Bool? = nil
     public init(id: UUID = UUID(), application: InstalledApp, storeID: UInt64, version: String, userID: UInt32, receiptRecovery: StoreReceiptRecovery? = nil) {
         self.id = id; self.application = application; self.storeID = storeID; self.version = version; self.userID = userID; self.receiptRecovery = receiptRecovery
     }
     public func validate() throws {
         try receiptRecovery?.validate()
+        guard permissionProbe != true || receiptRecovery == nil else { throw PeerError.invalid("Access verification cannot repair a receipt") }
         let app = application, target = URL(fileURLWithPath: app.path).standardizedFileURL
         guard app.isAppStore, storeID > 0, storeID < UInt64(Int64.max), userID >= 500,
               !app.bundleID.isEmpty, app.bundleID.count <= 255, version.count <= 128,
@@ -40,7 +42,13 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
         set -eu
         umask 077
         work=$(/usr/bin/mktemp -d /private/var/tmp/upovi-store-authorized.XXXXXX)
-        trap '/bin/rm -rf "$work"' EXIT
+        console=$(/usr/bin/stat -f %u /dev/console)
+        registry=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+        cleanup() {
+            /bin/launchctl asuser "$console" /usr/bin/sudo -u "#$console" "$registry" -u "$work/UpoviStoreInstaller.app" >/dev/null 2>&1 || true
+            /bin/rm -rf "$work"
+        }
+        trap cleanup EXIT
         /usr/bin/ditto \(q(helper.path)) "$work/UpoviStoreInstaller.app"
         /bin/cp \(q(bridge.path)) "$work/UpoviStoreBridge"
         /bin/cp \(q(plan.path)) "$work/plan.json"
@@ -51,7 +59,8 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
         /bin/chmod 600 "$work/plan.json"
         /usr/bin/codesign --verify --strict --all-architectures -R \(q(helperRequirement)) "$work/UpoviStoreInstaller.app"
         /usr/bin/codesign --verify --strict --all-architectures -R \(q(bridgeRequirement)) "$work/UpoviStoreBridge"
-        console=$(/usr/bin/stat -f %u /dev/console)
+        # TCC must resolve the exact protected temporary bundle in the console user's LaunchServices registry.
+        /bin/launchctl asuser "$console" /usr/bin/sudo -u "#$console" "$registry" -f "$work/UpoviStoreInstaller.app" >/dev/null
         /bin/launchctl asuser "$console" "$work/UpoviStoreInstaller.app/Contents/MacOS/UpoviStoreInstaller" "$work/plan.json" "$work/UpoviStoreBridge"
         """
         return command
@@ -70,7 +79,7 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
     }
     public func updateArguments(for product: StoreProduct) throws -> [String]? {
         try validate()
-        guard receiptRecovery == nil else { throw PeerError.invalid("Receipt recovery must not start a download") }
+        guard receiptRecovery == nil, permissionProbe != true else { throw PeerError.invalid("Recovery and access verification must not start a download") }
         try product.validate(for: application, storeID: storeID)
         guard VersionOrder.compare(product.version, version) != .orderedAscending else {
             throw PeerError.unavailable("The selected update is not currently available from the App Store")
@@ -89,6 +98,22 @@ public struct AppStoreUpdateReceipt: Codable, Sendable {
     public var installedApplication: InstalledApp?
     public var failure: StoreInstallationFailure?
     public init(plan: AppStoreUpdatePlan, state: String) { self.plan = plan; self.state = state; updatedAt = Date() }
+    /// AppleScript converts shell newlines to carriage returns. Accept LF, CR and CRLF frames.
+    public static func decodeAccessVerification(_ data: Data, plans: [AppStoreUpdatePlan]) throws -> [AppStoreUpdateReceipt] {
+        guard !plans.isEmpty, plans.count <= 20, data.count <= 2_000_000 else { throw PeerError.invalid("Invalid access verification response size") }
+        let results = try data.split(whereSeparator: { $0 == 0x0A || $0 == 0x0D }).map {
+            try JSONDecoder().decode(AppStoreUpdateReceipt.self, from: Data($0))
+        }
+        guard results.count == plans.count else { throw PeerError.invalid("Incomplete access verification result") }
+        for (receipt, plan) in zip(results, plans) {
+            guard plan.permissionProbe == true, receipt.plan.id == plan.id, receipt.plan.permissionProbe == true,
+                  receipt.plan.application == plan.application, receipt.plan.storeID == plan.storeID,
+                  receipt.plan.version == plan.version, receipt.plan.userID == plan.userID,
+                  receipt.failure != nil || receipt.state == "accessVerified" else { throw PeerError.invalid("Unexpected access verification outcome") }
+        }
+        return results
+    }
+
 }
 
 /// A bounded diagnostic crosses the administrator boundary with the receipt.
@@ -97,17 +122,24 @@ public struct StoreInstallationFailure: Codable, Sendable {
     public let message: String
     public let domain: String
     public let code: Int
+    public var underlyingDomain: String? = nil
+    public var underlyingCode: Int? = nil
     public init(stage: String, error: any Error, detail: String? = nil) {
         self.stage = stage
         let ns = error as NSError
         domain = ns.domain; code = ns.code
+        if let underlying = ns.userInfo[NSUnderlyingErrorKey] as? NSError {
+            underlyingDomain = [NSPOSIXErrorDomain, NSCocoaErrorDomain, NSOSStatusErrorDomain].contains(underlying.domain) ? underlying.domain : "other"
+            underlyingCode = underlying.code
+        }
         let cleaned = Self.sanitized(detail ?? "")
         if let start = cleaned.range(of: "Error:") { message = String(cleaned[start.lowerBound...]) }
         else if cleaned.contains("Error Domain=") { message = cleaned }
         else { message = Self.sanitized(error.localizedDescription) }
     }
     public var requiresAppManagement: Bool {
-        message.contains("Operation not permitted") || message.contains("NSCocoaErrorDomain Code=513") ||
+        if underlyingDomain == NSPOSIXErrorDomain, let underlyingCode, ![1, 13].contains(underlyingCode) { return false }
+        return message.contains("Operation not permitted") || message.contains("NSCocoaErrorDomain Code=513") ||
             (domain == NSCocoaErrorDomain && code == 513) || (domain == NSPOSIXErrorDomain && [1, 13].contains(code))
     }
     public func recoverableReceiptPath(application: InstalledApp) -> String? {
@@ -131,7 +163,7 @@ public struct StoreInstallationError: LocalizedError, Sendable {
     public init(_ failure: StoreInstallationFailure) { self.failure = failure }
     public var errorDescription: String? {
         if failure.requiresAppManagement {
-            return String(localized: "请在系统设置的“隐私与安全 → 应用程序管理”中允许 Upovi Installer，然后重试。应用主程序可能已更新，重试将优先完成安装收尾。")
+            return String(localized: "安装器的应用写入检查未通过。请打开权限引导并验证访问；若权限已开启，可能是安装器识别或文件访问异常。")
         }
         return String(localized: "商店更新未完成：\(failure.message)")
     }

@@ -118,6 +118,87 @@ final class InstallationTests: XCTestCase {
         XCTAssertThrowsError(try transaction.restore(receipt))
         XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: app.path))?.version, "3.0")
     }
+    func testCompletedBackupArchiveIsInertAndRestoresVerifiedOldVersion() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        let archived = try transaction.archiveRetainedCopy(receipt)
+        XCTAssertEqual(URL(fileURLWithPath: try XCTUnwrap(archived.retainedPath)).pathExtension, "zip")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: receipt.backupPath))
+        XCTAssertTrue(AppScanner.scan(roots: [root]).allSatisfy { !$0.path.contains("upovi-recovery") })
+        XCTAssertEqual(try transaction.restore(archived).state, .restored)
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: receipt.application.path))?.version, "1.0")
+    }
+    func testCorruptedArchiveCannotReplaceLiveApplication() throws {
+        let (_, transaction, receipt) = try installedFixture()
+        let archived = try transaction.archiveRetainedCopy(receipt)
+        try Data("corrupt".utf8).write(to: URL(fileURLWithPath: try XCTUnwrap(archived.retainedPath)))
+        XCTAssertThrowsError(try transaction.restore(archived))
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: receipt.application.path))?.version, "2.0")
+    }
+    func testArchiveMigrationCanResumeAfterJournalPublicationBeforeRawRemoval() throws {
+        let (_, transaction, receipt) = try installedFixture()
+        let copy = URL(fileURLWithPath: receipt.backupPath).deletingLastPathComponent().appending(path: "Saved.app")
+        try FileManager.default.copyItem(atPath: receipt.backupPath, toPath: copy.path)
+        let archived = try transaction.archiveRetainedCopy(receipt)
+        try FileManager.default.moveItem(atPath: copy.path, toPath: receipt.backupPath)
+        _ = try transaction.archiveRetainedCopy(archived)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: receipt.backupPath))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: try XCTUnwrap(archived.retainedPath)))
+    }
+    func testMaintenanceExpiresCompletedBackupsEvenAfterSignedLaterUpdate() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        _ = try fixture(root, name: "Installed", version: "3.0")
+        let report = transaction.maintain([receipt], now: receipt.date.addingTimeInterval(8 * 86400), isRunning: { _ in false }, verifyCurrent: { _ in })
+        XCTAssertEqual(report.discarded, 1); XCTAssertEqual(report.failed, 0)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: receipt.backupPath))
+        XCTAssertEqual(AppScanner.read(URL(fileURLWithPath: receipt.application.path))?.version, "3.0")
+    }
+    func testMaintenanceNeverExpiresInterruptedOrRunningRecoveryCopies() throws {
+        let (_, transaction, receipt) = try installedFixture()
+        for state in [InstallationReceipt.State.prepared, .backedUp, .failed] {
+            var interrupted = receipt; interrupted.state = state; try transaction.write(interrupted)
+            let report = transaction.maintain([interrupted], now: receipt.date.addingTimeInterval(100 * 86400), isRunning: { _ in false }, verifyCurrent: { _ in XCTFail("Interrupted copy") })
+            XCTAssertEqual(report.protected, 1)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: receipt.backupPath))
+        }
+        try transaction.write(receipt)
+        let report = transaction.maintain([receipt], now: receipt.date.addingTimeInterval(100 * 86400), isRunning: { _ in true }, verifyCurrent: { _ in XCTFail("Running copy") })
+        XCTAssertEqual(report.protected, 1)
+    }
+    func testMaintenancePreservesBackupsOnSignatureFailureAndMissingLiveApp() throws {
+        let (_, transaction, receipt) = try installedFixture()
+        let now = receipt.date.addingTimeInterval(8 * 86400)
+        var report = transaction.maintain([receipt], now: now, isRunning: { _ in false }, verifyCurrent: { _ in throw PeerError.invalid("Injected signature failure") })
+        XCTAssertEqual(report.failed, 0); XCTAssertEqual(report.protected, 1)
+        let archived = try JSONDecoder().decode(InstallationReceipt.self, from: Data(contentsOf: transaction.journalDirectory.appending(path: receipt.id + ".json")))
+        try FileManager.default.removeItem(atPath: receipt.application.path)
+        report = transaction.maintain([archived], now: now, isRunning: { _ in false }, verifyCurrent: { _ in XCTFail("Missing app") })
+        XCTAssertEqual(report.failed, 0); XCTAssertEqual(report.protected, 1)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: receipt.backupPath))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: try XCTUnwrap(archived.retainedPath)))
+    }
+    func testMaintenanceRetainsOnlyLatestCompletedBackupForOneWeek() throws {
+        let (root, transaction, first) = try installedFixture()
+        let current = try XCTUnwrap(AppScanner.read(URL(fileURLWithPath: first.application.path)))
+        let incoming = try fixture(root, name: "Third", version: "3.0")
+        let second = try transaction.commit(prepared: URL(fileURLWithPath: incoming.path), replacing: current, newVersion: "3.0", newBuild: "3.0")
+        let report = transaction.maintain([first, second], now: second.date, isRunning: { _ in false }, verifyCurrent: { _ in })
+        XCTAssertEqual(report.discarded, 1); XCTAssertEqual(report.archived, 1); XCTAssertEqual(report.failed, 0)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: first.backupPath))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: transaction.archiveURL(second, restored: false).path))
+    }
+    func testLegacyCompletedBackupMigratesWithoutChangingOriginalReceiptIdentity() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        let legacy = root.appending(path: ".upovi-backup-\(receipt.id).app")
+        try FileManager.default.moveItem(atPath: receipt.backupPath, toPath: legacy.path)
+        let migrated = InstallationReceipt(id: receipt.id, date: receipt.date, application: receipt.application, newVersion: receipt.newVersion,
+            newBuild: receipt.newBuild, backupPath: legacy.path, incomingPath: receipt.incomingPath, state: .installed)
+        try transaction.write(migrated)
+        let archived = try transaction.archiveRetainedCopy(migrated)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
+        XCTAssertEqual(archived.backupPath, legacy.path)
+        XCTAssertEqual(try transaction.restore(archived).state, .restored)
+    }
+
     func testUnsignedApplicationsCannotPassProductionVerifier() throws {
         let root = try directory(), app = try fixture(root, name: "Installed", version: "1.0")
         let update = try fixture(root, name: "Prepared", version: "2.0")
@@ -144,4 +225,44 @@ final class InstallationTests: XCTestCase {
         XCTAssertNoThrow(try BundleVerifier.verifyArchive(archive, descriptor: .init(url: URL(string: "https://example.com/a.zip")!, sha256: valid), app: app))
         XCTAssertThrowsError(try BundleVerifier.verifyArchive(archive, descriptor: .init(url: URL(string: "https://example.com/a.zip")!, sha256: String(repeating: "0", count: 64)), app: app))
     }
+    func testJournalLockAllowsParallelInstallsButExcludesMaintenanceAcrossInstances() throws {
+        let root = try directory()
+        let first = try XCTUnwrap(InstallationJournalLock.acquire(in: root, exclusive: false))
+        let second = try XCTUnwrap(InstallationJournalLock.acquire(in: root, exclusive: false))
+        XCTAssertNil(try InstallationJournalLock.acquire(in: root, exclusive: true))
+        first.unlock(); second.unlock()
+        let maintenance = try XCTUnwrap(InstallationJournalLock.acquire(in: root, exclusive: true))
+        XCTAssertNil(try InstallationJournalLock.acquire(in: root, exclusive: false))
+        XCTAssertNil(try InstallationJournalLock.acquire(in: root, exclusive: true))
+        maintenance.unlock()
+    }
+    func testJournalLockRefusesLinkedFiles() throws {
+        let root = try directory(), external = root.appending(path: "External")
+        try Data("keep".utf8).write(to: external)
+        try FileManager.default.createSymbolicLink(at: root.appending(path: "maintenance.lock"), withDestinationURL: external)
+        XCTAssertThrowsError(try InstallationJournalLock.acquire(in: root, exclusive: true))
+        XCTAssertEqual(try Data(contentsOf: external), Data("keep".utf8))
+    }
+
+    func testRecoveryArchiveRetainsContainedParentLinksWithoutRelaxingDownloads() throws {
+        let (root, transaction, receipt) = try installedFixture()
+        let backup = URL(fileURLWithPath: receipt.backupPath)
+        let directory = backup.appending(path: "Contents/Helpers")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(atPath: directory.appending(path: "InfoLink").path, withDestinationPath: "../Info.plist")
+        let archived = try transaction.archiveRetainedCopy(receipt)
+        let archive = URL(fileURLWithPath: try XCTUnwrap(archived.retainedPath))
+        XCTAssertThrowsError(try ArchiveExtractor.extractZIP(archive, to: root.appending(path: "DownloadExtraction")))
+        let restored = try transaction.restore(archived)
+        let link = URL(fileURLWithPath: restored.application.path).appending(path: "Contents/Helpers/InfoLink")
+        XCTAssertEqual(try FileManager.default.destinationOfSymbolicLink(atPath: link.path), "../Info.plist")
+    }
+    func testRecoveryArchiveRejectsLinksEscapingTheApplicationRoot() throws {
+        let (_, transaction, receipt) = try installedFixture()
+        let backup = URL(fileURLWithPath: receipt.backupPath)
+        try FileManager.default.createSymbolicLink(atPath: backup.appending(path: "Escape").path, withDestinationPath: "../External")
+        XCTAssertThrowsError(try transaction.archiveRetainedCopy(receipt))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: receipt.backupPath))
+    }
+
 }

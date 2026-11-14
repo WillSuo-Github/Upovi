@@ -317,4 +317,25 @@ extension ToolbarWorkflowTests {
         restarted.prepareInstallation(candidate, app: installed)
         XCTAssertNil(restarted.installationTask); XCTAssertFalse(restarted.installing)
     }
+    func testHistoryCountsRetainedArchiveFilesInsteadOfOnlyApplicationDirectories() async throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "Upovi-archive-size-\(UUID())")
+        addTeardownBlock { try? FileManager.default.removeItem(at: root) }
+        let journal = root.appending(path: "Journal")
+        try FileManager.default.createDirectory(at: journal, withIntermediateDirectories: true)
+        let archive = root.appending(path: "Backup.zip")
+        try Data(repeating: 7, count: 65536).write(to: archive)
+        let id = UUID().uuidString
+        let original = app(1)
+        let value: [String: Any] = ["id": id, "date": Date().timeIntervalSinceReferenceDate,
+            "application": try JSONSerialization.jsonObject(with: JSONEncoder().encode(original)),
+            "newVersion": "2.0", "newBuild": "2", "backupPath": root.appending(path: "Original.app").path,
+            "incomingPath": root.appending(path: "Incoming.app").path, "state": "installed",
+            "backupArchive": ["path": archive.path, "sha256": String(repeating: "a", count: 64), "bundleName": "Original.app"]]
+        try JSONSerialization.data(withJSONObject: value).write(to: journal.appending(path: id + ".json"))
+        let store = AppStore(preferences: try preferences(), installer: UpdateInstaller(journalDirectory: journal))
+        await store.refreshInstallations()
+        XCTAssertEqual(store.installationReceipts.count, 1)
+        XCTAssertGreaterThan(try XCTUnwrap(store.backupSizes[id]), 0)
+    }
+
 }

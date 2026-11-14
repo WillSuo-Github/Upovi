@@ -16,7 +16,7 @@ struct InstallationHistoryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                PageHeader(title: String(localized: "历史与恢复"), subtitle: String(localized: "Upovi 安装更新时会保留旧版本，可在这里恢复或清理保留副本。")) {
+                PageHeader(title: String(localized: "历史与恢复"), subtitle: String(localized: "每个应用保留最近一份备份，最多 7 天；安装中断的恢复副本不会自动清理。")) {
                     Picker("类别", selection: $store.historySection) { ForEach(HistorySection.allCases) { Text($0.title).tag($0) } }
                         .pickerStyle(.segmented).labelsHidden().fixedSize()
                 }.entrance(0)

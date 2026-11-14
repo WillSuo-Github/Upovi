@@ -91,6 +91,16 @@ struct UpoviPeer {
                     print("\(result.status.rawValue)\t\(app?.name ?? "Unknown")\t\(app?.bundleID ?? "")\t\(result.note)")
                 }
             }
+        case "backups-maintain":
+            let folder = URL(fileURLWithPath: try required("--journal-directory"))
+            let installer = UpdateInstaller(journalDirectory: folder)
+            guard args.contains("--apply") else {
+                let receipts = try await installer.receipts()
+                print("receipts=\(receipts.count) apply_required=true")
+                return
+            }
+            let report = try await installer.maintainBackups()
+            print(String(decoding: try JSONEncoder().encode(report), as: UTF8.self))
         case "install-check":
             let appPath = try required("--app")
             guard let app = AppScanner.read(URL(fileURLWithPath: appPath)),

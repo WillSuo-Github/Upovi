@@ -422,4 +422,47 @@ extension AppStoreUpdateTests {
             XCTAssertThrowsError(try StoreReceiptVerifier.validatePayload(data, application: app))
         }
     }
+    func testAccessProbeCannotStartDownloadOrRepairReceipt() throws {
+        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.store", version: "1", path: "/Applications/Fixture.app", teamID: "SYNTHETIC1", isAppStore: true)
+        var plan = AppStoreUpdatePlan(application: app, storeID: 12345, version: "1", userID: 501)
+        plan.permissionProbe = true
+        try plan.validate()
+        let data = Data("{\"adamID\":12345,\"bundleID\":\"app.synthetic.store\",\"version\":\"2\",\"minimumOSVersion\":\"14.0\",\"kind\":\"mac-software\"}".utf8)
+        let product = try JSONDecoder().decode(StoreProduct.self, from: data)
+        XCTAssertThrowsError(try plan.updateArguments(for: product))
+        let decoded = try JSONDecoder().decode(AppStoreUpdatePlan.self, from: JSONEncoder().encode(plan))
+        XCTAssertEqual(decoded.permissionProbe, true)
+    }
+    func testStoreHelperRegistrationIsInConsoleSessionAndUnregisteredBeforeRemoval() throws {
+        let script = try AppStoreUpdatePlan.authorizationCommand(helper: URL(fileURLWithPath: "/Fixture/Helper.app"), bridge: URL(fileURLWithPath: "/Fixture/Bridge"), plan: URL(fileURLWithPath: "/Fixture/Plan.json"), hostTeam: "SYNTHETIC1")
+        XCTAssertTrue(script.contains("/bin/launchctl asuser \"$console\" /usr/bin/sudo -u \"#$console\" \"$registry\" -f"))
+        XCTAssertTrue(script.contains("trap cleanup EXIT"))
+        XCTAssertTrue(script.contains("\"$registry\" -u \"$work/UpoviStoreInstaller.app\""))
+    }
+    func testPermissionFailureRetainsUnderlyingCodeWithoutRawUserInfo() throws {
+        let failure = StoreInstallationFailure(stage: "appManagement", error: NSError(domain: NSCocoaErrorDomain, code: 513, userInfo: [NSUnderlyingErrorKey: NSError(domain: NSPOSIXErrorDomain, code: 1)]))
+        XCTAssertEqual(failure.underlyingDomain, NSPOSIXErrorDomain)
+        XCTAssertEqual(failure.underlyingCode, 1)
+        let decoded = try JSONDecoder().decode(StoreInstallationFailure.self, from: JSONEncoder().encode(failure))
+        XCTAssertEqual(decoded.underlyingCode, 1)
+    }
+
+    func testMultipleAccessResultsSurviveAppleScriptCarriageReturnFraming() throws {
+        let apps = (1...2).map { InstalledApp(name: "Fixture \($0)", bundleID: "app.synthetic.store.\($0)", version: "1", path: "/Applications/Fixture\($0).app", teamID: "SYNTHETIC1", isAppStore: true) }
+        let plans = apps.enumerated().map { index, app in
+            var value = AppStoreUpdatePlan(application: app, storeID: UInt64(12345 + index), version: "1", userID: 501)
+            value.permissionProbe = true
+            return value
+        }
+        let frames = try plans.map { try JSONEncoder().encode(AppStoreUpdateReceipt(plan: $0, state: "accessVerified")) }
+        for separator in [Data([0x0A]), Data([0x0D]), Data([0x0D, 0x0A])] {
+            let output = frames[0] + separator + frames[1] + separator
+            let decoded = try AppStoreUpdateReceipt.decodeAccessVerification(output, plans: plans)
+            XCTAssertEqual(decoded.count, 2)
+            XCTAssertTrue(decoded.allSatisfy { $0.state == "accessVerified" })
+        }
+        XCTAssertThrowsError(try AppStoreUpdateReceipt.decodeAccessVerification(frames[0], plans: plans))
+        XCTAssertThrowsError(try AppStoreUpdateReceipt.decodeAccessVerification(frames[1] + Data([0x0D]) + frames[0], plans: plans))
+    }
+
 }

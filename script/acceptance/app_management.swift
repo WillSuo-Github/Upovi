@@ -37,6 +37,14 @@ final class PermissionAcceptanceDelegate: NSObject, NSApplicationDelegate {
         value.sourceResults = Dictionary(uniqueKeysWithValues: apps.map {
             ($0.id, SourceResult(appID: $0.id, candidates: [candidates[$0.id]!], note: "Offline fixture", status: .updates))
         })
+        value.appManagementAccessInventory = { apps }
+        value.appManagementAccessVerifier = { targets in
+            targets.enumerated().map { index, app in
+                var plan = AppStoreUpdatePlan(application: app, storeID: UInt64(12345 + index), version: app.version, userID: 501)
+                plan.permissionProbe = true
+                return AppStoreUpdateReceipt(plan: plan, state: "accessVerified")
+            }
+        }
         value.makeInstallationAuthorizationBatch = { InstallationAuthorizationBatch(start: { _ in }) }
         value.installStoreUpdate = { _, _, _ in
             throw StoreInstallationError(.init(stage: "appManagement", error: NSError(domain: NSCocoaErrorDomain, code: 513,

@@ -55,6 +55,8 @@ public struct AdministratorInstallAttempt: Codable, Identifiable, Sendable {
     public var installedApplication: InstalledApp?
     public var backupBytes: Int64?
     public var backupBytesIsLowerBound: Bool?
+    public var retainedAt: Date?
+    public var automaticallyDiscardedBackups: [UUID]?
     public var cleanupComplete: Bool?
     public var finalizationFailure: AdministratorFinalizationError?
     public init(plan: AdministratorInstallPlan, state: String) { self.plan = plan; self.state = state; updatedAt = Date() }

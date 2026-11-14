@@ -88,3 +88,44 @@ import UpoviCore
         if receipt.state == "current" { throw AppStoreAlreadyCurrent() }
     }
 }
+
+extension AppStoreInstallationService {
+    /// Explicit user-triggered access check. Plans cannot enter product lookup, download or receipt repair.
+    func verifyAccess(_ applications: [InstalledApp], authorize: InstallationAuthorization = .system) async throws -> [AppStoreUpdateReceipt] {
+        let operation = UpoviLogOperation("store.verifyAccess", category: .authorization, details: "applications=\(applications.count)")
+        do {
+            guard !applications.isEmpty, applications.count <= 20,
+                  let bridge = Bundle.main.url(forAuxiliaryExecutable: "UpoviStoreBridge"),
+                  let team = AdministratorAuthorization.teamID(at: Bundle.main.bundleURL) else { throw PeerError.unavailable("No signed Store installer or verification target") }
+            let helper = Bundle.main.bundleURL.appending(path: "Contents/Helpers/UpoviStoreInstaller.app")
+            let entries = try AppStoreCatalog.decode(try await AppStoreCatalog.command(bridge, arguments: ["list"]))
+            let work = directory.appending(path: "Access-" + UUID().uuidString)
+            try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+            defer { try? FileManager.default.removeItem(at: work) }
+            var plans: [AppStoreUpdatePlan] = [], commands: [String] = []
+            for app in applications {
+                let matches = entries.filter { $0.matches(app) }
+                guard matches.count == 1 else { throw PeerError.invalid("Store verification identity is ambiguous or unavailable") }
+                var plan = AppStoreUpdatePlan(application: app, storeID: matches[0].adamID, version: app.version, userID: getuid())
+                plan.permissionProbe = true; try plan.validate(); plans.append(plan)
+                let file = work.appending(path: plan.id.uuidString + ".json")
+                try JSONEncoder().encode(plan).write(to: file, options: .atomic)
+                let command = try AppStoreUpdatePlan.authorizationCommand(helper: helper, bridge: bridge, plan: file, hostTeam: team)
+                commands.append("/bin/sh -c " + AdministratorAuthorization.shellQuote(command))
+            }
+            let output = try await authorize.run("set -eu\n" + commands.joined(separator: "\n"), work.appending(path: "authorization.log"))
+            let results = try AppStoreUpdateReceipt.decodeAccessVerification(output, plans: plans)
+            for (receipt, plan) in zip(results, plans) {
+                if let failure = receipt.failure { UpoviLog.authorization.warning("event=store.accessBlocked app=\(UpoviDiagnosticContext.applicationID(plan.application.id)) \(UpoviDiagnosticContext.errorSummary(StoreInstallationError(failure)))") }
+                else { UpoviLog.authorization.info("event=store.accessVerified app=\(UpoviDiagnosticContext.applicationID(plan.application.id))") }
+            }
+            operation.finish("completed", details: "verified=\(results.filter { $0.failure == nil }.count) blocked=\(results.filter { $0.failure != nil }.count)")
+            return results
+        } catch {
+            if error.localizedDescription.contains("(-128)") {
+                operation.finish("cancelled"); throw CancellationError()
+            }
+            operation.fail(error); throw error
+        }
+    }
+}

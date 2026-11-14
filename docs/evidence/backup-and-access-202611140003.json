@@ -1,0 +1,145 @@
+{
+  "version": "0.4.10",
+  "build": "202611140003",
+  "scope": "Pre-publication Developer ID signed arm64 native acceptance and local cleanup; universal distribution acceptance is recorded separately.",
+  "sourceBaseRevision": "09c5e0ddc28e7b551d90926f7fc4ab66e1ab336d",
+  "sourceWorkingTreeDiffSHA256": "c7ac816be10199b1b1ec5e9b95ca767056d42181d54990b050bf0a06d718c596",
+  "tests": {
+    "fullSwiftBeforeFinalFramingAndNoticeRefinements": {
+      "core": 340,
+      "application": 65,
+      "failures": 0
+    },
+    "finalBackupAndArchiveRegression": {
+      "core": 69,
+      "failures": 0
+    },
+    "finalAccessFramingRegression": {
+      "core": 33,
+      "application": 6,
+      "failures": 0
+    },
+    "finalAccessNoticeWorkflowTests": 6,
+    "python": 41,
+    "finalBackupArchiveDisplayWorkflowRegression": {
+      "toolbar": 13,
+      "applicationAccess": 6,
+      "failures": 0
+    },
+    "finalFullSwiftBeforePublication": {
+      "core": 341,
+      "application": 66,
+      "failures": 0
+    }
+  },
+  "backupPolicy": {
+    "latestCompletedCopyPerApplication": 1,
+    "maximumRetentionDays": 7,
+    "completedCopiesAreNonlaunchableZIPs": true,
+    "interruptedFailedAndPendingFinalizationNeverExpire": true,
+    "missingOrUnverifiedLiveApplicationPreservesInertRecoveryCopy": true,
+    "crossProcessJournalLock": true,
+    "protectedBackupsExpireOnlyDuringAlreadyAuthorizedAdministratorOperations": true,
+    "explicitlySelectedAdministratorTransactionExcluded": true
+  },
+  "localCleanup": {
+    "legacyRunnableApplicationBackupsInitiallyObserved": 38,
+    "remainingLegacyApplicationBundles": 0,
+    "remainingLegacyLaunchServicesRegistrations": 0,
+    "spotlightLegacyBundleMatches": 0,
+    "oldUserApplicationsAcceptanceDirectoryRemoved": true,
+    "testTransactionReceiptsRetired": 2,
+    "staleRegistrationsProcessed": 10,
+    "retainedArchives": 18,
+    "allRetainedArchiveChecksumsVerified": true,
+    "soleRecoveryCopiesPreservedForMissingApplications": [
+      "Clash Verge",
+      "CodexBar"
+    ],
+    "interruptedTransactionsPresentBeforeCleanup": 0,
+    "abandonedTestCompressionWorkspacesRemoved": 1,
+    "incompleteCleanupReceipts": 0
+  },
+  "signedBackupRoundTrip": {
+    "archiveVerifiedBeforeRawRemoval": true,
+    "automaticExpiry": "passed",
+    "newVersion": "2.0.4",
+    "normalApplicationsChanged": false,
+    "oldVersion": "2.0.3",
+    "restoredDisplacedArchiveVerified": true,
+    "restoreSignatureVerified": true,
+    "signedApplication": "Rectangle"
+  },
+  "permissionDiagnosis": {
+    "systemSwitchesObservedEnabled": [
+      "Upovi",
+      "UpoviStoreInstaller"
+    ],
+    "failureStage": "appManagement",
+    "failureDomain": "NSCocoaErrorDomain",
+    "failureCode": 513,
+    "contemporaneousSystemError": "kTCCErrorDomain Code=5: failed to get bundle URL",
+    "fix": "Register the exact protected temporary signed helper bundle in the active console session, then unregister it before removing that temporary bundle.",
+    "multiTargetFraming": "Accept LF, CR and CRLF; AppleScript converts shell newlines to carriage returns."
+  },
+  "nativeInstalledAccessAcceptance": {
+    "targets": [
+      "AdBlock Pro",
+      "Developer"
+    ],
+    "bothActualWriteProbesPassed": true,
+    "separateGreenChecksObserved": true,
+    "doneDismissesGuide": true,
+    "updatesNoticeChangesToAccessVerified": true,
+    "settingsDeepLinkObserved": "App Management",
+    "returnFromSettingsInvalidatesVerificationEvidence": true,
+    "systemPrivacySwitchesChanged": false,
+    "pendingUpdatesStillRequireExplicitConfirmation": true,
+    "finalInventoryApplications": 71,
+    "acceptanceToolsInitiatedThirdPartyUpdates": 0,
+    "retainedArchiveSizeDisplayed": "4.85 GB",
+    "historyArchiveSizeNonzero": true
+  },
+  "localInstallation": {
+    "previousBuild": "202611140003",
+    "installedBuild": "202611140003",
+    "marketingVersion": "0.4.10",
+    "developerIDTeam": "NT9VR9C9HY",
+    "nestedSignature": "passed",
+    "architecture": "arm64",
+    "previousAppArchiveSHA256": "c75e0b8ea21a2c98ad938a1c384969dec4b7fb853c3529ee430d7db69dc62fda",
+    "sourceRevision": "09c5e0ddc28e7b551d90926f7fc4ab66e1ab336d-dirty",
+    "systemPrivacySettingsChanged": false,
+    "installedExecutableSHA256": "10f42197eb91aabb91931bb61cc5d5381c1ed56e1eb0096324c0f312940695e4",
+    "matchesStagedExecutable": true,
+    "unusedStagedAppRemoved": true
+  },
+  "diagnosticExport": {
+    "runtimeCoverage": {
+      "backup.maintenance": true,
+      "backup.archived": true,
+      "backup.expired": true,
+      "store.accessVerified": true,
+      "store.verifyAccess": true
+    },
+    "snapshotAndRuntimeReferencesMatch": true,
+    "sentinelSecretsAndRawPathsExcluded": true,
+    "bytes": 618978
+  },
+  "temporaryAcceptanceAppsStoppedAndRemoved": true,
+  "validationNotes": [
+    "An initial full-suite run exposed missing isolated-configuration maintenance gating and was stopped. Subsequent isolated suites passed; all retained local archives were audited after cleanup.",
+    "Protected administrator expiration was covered by policy and validation tests; no real privileged third-party installation/deletion was exercised.",
+    "Physical Intel runtime, a genuine Sparkle self-update and notarized public distribution were not exercised for this local build."
+  ],
+  "observedConcurrentApplicationUpdate": {
+    "application": "Spokenly",
+    "from": "2.35.8",
+    "to": "2.35.9",
+    "state": "installed",
+    "newBackupIsArchive": true,
+    "runnableBackupRemoved": true,
+    "supersededBackupAutomaticallyExpired": true,
+    "scope": "Observed local batch outside acceptance commands; not initiated by the acceptance tools."
+  }
+}

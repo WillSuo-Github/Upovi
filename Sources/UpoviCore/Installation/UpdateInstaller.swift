@@ -153,6 +153,8 @@ public actor UpdateInstaller {
         if requireNotRunning { try Self.requireClosed(value.application) }
         // Once the rename transaction starts it runs to completion or recovery, even if the UI task is cancelled.
         let journal = journalDirectory
+        guard let journalLock = try InstallationJournalLock.acquire(in: journal, exclusive: false) else { throw PeerError.unavailable("Backup maintenance is running; retry after it finishes") }
+        defer { journalLock.unlock() }
         let receipt = try await UpoviDiagnosticContext.detached {
             try BundleTransaction(journalDirectory: journal, validate: { url in
                 _ = try BundleVerifier.validate(url, replacing: value.application,
@@ -166,7 +168,17 @@ public actor UpdateInstaller {
                       newVersion: value.replacement.version, newBuild: value.replacement.build)
         }.value
         try? FileManager.default.removeItem(at: value.workspace); prepared[id] = nil
-        return receipt
+        // Archiving failure must not turn a verified completed installation into a failed update.
+        do {
+            return try await UpoviDiagnosticContext.detached {
+                try BundleTransaction(journalDirectory: journal, validate: { _ in }, validateOriginal: {
+                    try BundleVerifier.checkSignature($0, like: receipt.application)
+                }).archiveRetainedCopy(receipt)
+            }.value
+        } catch {
+            UpoviLog.recovery.error("event=backup.archiveDeferred receipt=\(receipt.id) \(UpoviDiagnosticContext.errorSummary(error))")
+            return receipt
+        }
     }
 
     private static func requireClosed(_ app: InstalledApp) throws {
@@ -190,14 +202,21 @@ public actor UpdateInstaller {
         guard !exclusive, activePaths.isEmpty else { throw PeerError.unavailable("An installation operation is already running") }
         exclusive = true; defer { exclusive = false }
         try await Self.quit(receipt.application)
-        try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.backupPath), like: receipt.application)
+        if receipt.backupArchive == nil { try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.backupPath), like: receipt.application) }
         if (ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil || ApplicationSourceCatalog.developerTeamMigration(for: receipt.application) != nil),
            FileManager.default.fileExists(atPath: receipt.application.path) {
             try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         }
         let journal = journalDirectory
+        guard let journalLock = try InstallationJournalLock.acquire(in: journal, exclusive: false) else { throw PeerError.unavailable("Backup maintenance is running; retry after it finishes") }
+        defer { journalLock.unlock() }
         _ = try await UpoviDiagnosticContext.detached {
-            try BundleTransaction(journalDirectory: journal, validate: { _ in }).restore(receipt)
+            let transaction = BundleTransaction(journalDirectory: journal, validate: { _ in }, validateOriginal: {
+                try BundleVerifier.checkSignature($0, like: receipt.application)
+            })
+            let restored = try transaction.restore(receipt)
+            do { return try transaction.archiveRetainedCopy(restored) }
+            catch { UpoviLog.recovery.error("event=backup.archiveDeferred receipt=\(receipt.id) \(UpoviDiagnosticContext.errorSummary(error))"); return restored }
         }.value
     }
     public static func requestApplicationQuit(_ app: InstalledApp, timeoutSeconds: Int = 10) async throws { try await quit(app, timeoutSeconds: timeoutSeconds) }
@@ -209,18 +228,48 @@ public actor UpdateInstaller {
         guard let retainedPath = receipt.retainedPath else { throw PeerError.invalid("Keep interrupted installation backups for recovery") }
         let backup = URL(fileURLWithPath: retainedPath)
         if (ApplicationSourceCatalog.legacyMigration(for: receipt.application) != nil || ApplicationSourceCatalog.developerTeamMigration(for: receipt.application) != nil) {
-            try BundleVerifier.checkSignature(backup, like: receipt.application)
+            if receipt.backupArchive == nil && receipt.displacedArchive == nil { try BundleVerifier.checkSignature(backup, like: receipt.application) }
             try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         }
+        try BundleVerifier.checkDeveloperIDSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         let running = await MainActor.run {
             NSWorkspace.shared.runningApplications.contains { $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: backup.path) } ?? false }
         }
         guard !running else { throw PeerError.invalid("Quit the backup application before moving it to Trash") }
         let journal = journalDirectory
+        guard let journalLock = try InstallationJournalLock.acquire(in: journal, exclusive: false) else { throw PeerError.unavailable("Backup maintenance is running; retry after it finishes") }
+        defer { journalLock.unlock() }
         _ = try await UpoviDiagnosticContext.detached {
-            try BundleTransaction(journalDirectory: journal, validate: { _ in }).discardBackup(receipt) { url in
+            try BundleTransaction(journalDirectory: journal, validate: { _ in }, validateOriginal: {
+                try BundleVerifier.checkSignature($0, like: receipt.application)
+            }).discardBackup(receipt, allowNewer: true) { url in
                 try FileManager.default.trashItem(at: url, resultingItemURL: nil)
             }
+        }.value
+    }
+
+    /// Called at startup, after completed batches and hourly while idle. Never downloads or installs.
+    public func maintainBackups(now: Date = Date()) async throws -> BackupMaintenanceReport {
+        guard !exclusive, activePaths.isEmpty, prepared.isEmpty else { return BackupMaintenanceReport() }
+        exclusive = true; defer { exclusive = false }
+        let journal = journalDirectory
+        guard let journalLock = try InstallationJournalLock.acquire(in: journal, exclusive: true) else {
+            UpoviLog.recovery.info("event=backup.maintenanceDeferred reason=journalBusy")
+            return BackupMaintenanceReport()
+        }
+        defer { journalLock.unlock() }
+        let receipts = try receipts()
+        let runningPaths = await MainActor.run { NSWorkspace.shared.runningApplications.compactMap { $0.bundleURL?.path } }
+        return try await UpoviDiagnosticContext.detached {
+            BundleTransaction(journalDirectory: journal, validate: { _ in }, validateOriginal: { url in
+                guard let metadata = AppScanner.read(url) else { throw PeerError.invalid("Unrecorded recovery copy") }
+                try BundleVerifier.checkSignature(url, like: metadata)
+            }).maintain(receipts, now: now, isRunning: { url in
+                runningPaths.contains { ApplicationRunningLocation.matches(URL(fileURLWithPath: $0), installedPath: url.path) }
+            }, verifyCurrent: { current in
+                guard let receipt = receipts.first(where: { $0.application.path == current.path }) else { throw PeerError.invalid("Unrecorded live application") }
+                try BundleVerifier.checkDeveloperIDSignature(URL(fileURLWithPath: current.path), like: receipt.application)
+            })
         }.value
     }
 

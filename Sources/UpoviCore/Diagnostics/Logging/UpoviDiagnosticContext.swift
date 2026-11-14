@@ -62,6 +62,9 @@ public enum UpoviDiagnosticContext {
         let detail: String
         if let store = error as? StoreInstallationError {
             extra += " storeStage=\(store.failure.stage) storeDomain=\(store.failure.domain) storeCode=\(store.failure.code) appManagementRequired=\(store.failure.requiresAppManagement)"
+            if let underlying = store.failure.underlyingDomain, let code = store.failure.underlyingCode {
+                extra += " storeUnderlyingDomain=\(underlying) storeUnderlyingCode=\(code)"
+            }
             detail = "Store installer output omitted; structured stage/domain/code retained"
         } else if error.localizedDescription.hasPrefix("Authorized installer failed:") {
             detail = "Privileged installer output omitted; see session result status"

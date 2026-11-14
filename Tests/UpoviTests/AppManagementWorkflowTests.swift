@@ -120,4 +120,39 @@ import UpoviCore
         store.presentAppManagementHelpAfterBatch()
         XCTAssertTrue(store.appManagementBlockedIDs.isEmpty); XCTAssertNil(store.appManagementGuide)
     }
+    func testAccessVerificationShowsActualResultsWithoutRetryingUpdatesOrClearingFailures() async throws {
+        let store = AppStore(preferences: try preferences())
+        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.store", version: "1.0", path: "/Applications/Fixture.app", teamID: "SYNTHETIC1", isAppStore: true)
+        store.appManagementBlockedIDs = [app.id]
+        store.appManagementAccessInventory = { [app] }
+        store.appManagementAccessVerifier = { targets in
+            XCTAssertEqual(targets, [app])
+            var plan = AppStoreUpdatePlan(application: app, storeID: 1234, version: app.version, userID: 501)
+            plan.permissionProbe = true
+            return [.init(plan: plan, state: "accessVerified")]
+        }
+        store.installStoreUpdate = { _, _, _ in XCTFail("A permission check must never install") }
+        store.verifyAppManagementAccess()
+        for _ in 0..<100 where store.appManagementAccessChecking { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertEqual(store.appManagementAccessChecks.count, 1)
+        XCTAssertTrue(store.appManagementAccessChecks.allSatisfy(\.verified))
+        XCTAssertTrue(store.appManagementBlockedAccessVerified)
+        XCTAssertEqual(store.appManagementBlockedIDs, [app.id])
+        store.appManagementSettingsOpener = { true }
+        XCTAssertTrue(store.openAppManagementSettings())
+        XCTAssertTrue(store.appManagementAccessChecks.isEmpty, "Opening Settings invalidates prior evidence")
+        XCTAssertFalse(store.appManagementBlockedAccessVerified)
+    }
+    func testCancelledAccessVerificationNeverClaimsConsent() async throws {
+        let store = AppStore(preferences: try preferences())
+        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.store", version: "1.0", path: "/Applications/Fixture.app", isAppStore: true)
+        store.appManagementAccessInventory = { [app] }
+        store.appManagementAccessVerifier = { _ in throw CancellationError() }
+        store.verifyAppManagementAccess()
+        for _ in 0..<100 where store.appManagementAccessChecking { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertTrue(store.appManagementAccessChecks.isEmpty)
+        XCTAssertNotNil(store.appManagementAccessError)
+        XCTAssertNil(store.appManagementAccessCheckedAt)
+    }
+
 }

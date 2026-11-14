@@ -26,6 +26,20 @@ static int safe_path(const char *path) {
     }
     free(copy); return valid;
 }
+/* Recovery archives may retain signed app-relative framework links, but cannot leave the app root. */
+static int contained_recovery_link(const char *name, const char *target) {
+    if (!target || !*target || *target == '/' || strlen(target) >= 4096 || strchr(target, '\\')) return 0;
+    int depth = 0;
+    for (const char *p = name; *p; p++) if (*p == '/') depth++;
+    char *copy = strdup(target), *cursor = NULL;
+    if (!copy) return 0;
+    int valid = depth >= 1;
+    for (char *part = strtok_r(copy, "/", &cursor); valid && part; part = strtok_r(NULL, "/", &cursor)) {
+        if (!strcmp(part, "..")) { if (depth <= 1) valid = 0; else depth--; }
+        else if (strcmp(part, ".")) depth++;
+    }
+    free(copy); return valid;
+}
 /* Apply an AppleDouble blob to an extracted member with copyfile(3), as ditto does. */
 static int unpack_onto(const char *target, const void *blob, size_t size) {
     char carrier[PATH_MAX];
@@ -110,7 +124,7 @@ static int parent_fd(int root, char *path, char **leaf) {
     }
     return fd;
 }
-int upovi_extract_zip(const char *source, const char *destination, char *error, size_t error_size, int (*cancelled)(void)) {
+static int extract_zip(const char *source, const char *destination, char *error, size_t error_size, int (*cancelled)(void), int recovery) {
     int root = open(destination, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
     if (root < 0) return fail(error, error_size, "Cannot open extraction directory");
     struct archive *reader = archive_read_new();
@@ -169,7 +183,7 @@ int upovi_extract_zip(const char *source, const char *destination, char *error, 
         } else if (type == AE_IFLNK) {
             const char *target = archive_entry_symlink(entry);
             // Conservative symlink support covers normal versioned frameworks; parent traversal is refused.
-            if (!safe_path(target) || symlinkat(target, parent, leaf)) result = -1;
+            if (!(recovery ? contained_recovery_link(name, target) : safe_path(target)) || symlinkat(target, parent, leaf)) result = -1;
         } else if (type == AE_IFREG) {
             if (archive_entry_size(entry) < 0 || (unsigned long long)archive_entry_size(entry) > 8000000000ULL - total) result = -1;
             int file = result ? -1 : openat(parent, leaf, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
@@ -201,4 +215,11 @@ int upovi_extract_zip(const char *source, const char *destination, char *error, 
     }
     if (!result && status != ARCHIVE_EOF) result = fail(error, error_size, archive_error_string(reader));
     archive_read_free(reader); close(root); return result;
+}
+
+int upovi_extract_zip(const char *source, const char *destination, char *error, size_t error_size, int (*cancelled)(void)) {
+    return extract_zip(source, destination, error, error_size, cancelled, 0);
+}
+int upovi_extract_recovery_zip(const char *source, const char *destination, char *error, size_t error_size, int (*cancelled)(void)) {
+    return extract_zip(source, destination, error, error_size, cancelled, 1);
 }

@@ -85,6 +85,12 @@ struct UpoviInstaller {
         guard lockFile >= 0 else { throw PeerError.unavailable("Cannot open administrator transaction lock") }
         defer { _ = flock(lockFile, LOCK_UN); close(lockFile) }
         guard flock(lockFile, LOCK_EX) == 0 else { throw PeerError.unavailable("Cannot lock administrator transactions") }
+        let indexMarker = base.appending(path: ".metadata_never_index")
+        if !files.fileExists(atPath: indexMarker.path) { try Data().write(to: indexMarker, options: .withoutOverwriting) }
+        let cleaned = AdministratorBackupCleaner.expireCompleted(in: base, excludingID: supplied.id, validateJournal: { job, receipt in
+            try requireRootOwnership(job); try requireRootOwnership(receipt)
+            guard (try files.attributesOfItem(atPath: receipt.path))[.type] as? FileAttributeType == .typeRegular else { throw PeerError.invalid("Invalid protected receipt") }
+        }, save: { try save($0, in: $1) })
         let job = base.appending(path: supplied.id.uuidString)
         diagnostics.set("recovery")
         if [.restore, .discardBackup, .inspect].contains(supplied.operation) {
@@ -94,6 +100,7 @@ struct UpoviInstaller {
             let a = try files.attributesOfItem(atPath: journal.path)
             guard a[.type] as? FileAttributeType == .typeRegular, (a[.size] as? NSNumber)?.intValue ?? Int.max <= 65536 else { throw PeerError.invalid("Invalid administrator journal") }
             var original = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: Data(contentsOf: journal))
+            original.automaticallyDiscardedBackups = cleaned
             guard AdministratorBackupCleaner.requestMatches(supplied, stored: original) else { throw PeerError.invalid("Administrator journal identity or selected-version mismatch") }
             try original.plan.validate()
             if supplied.operation == .inspect {
@@ -125,6 +132,7 @@ struct UpoviInstaller {
         diagnostics.set("storage.preflight")
         try AdministratorInstallationSpace.validate(application: target, volumePath: job)
         var attempt = AdministratorInstallAttempt(plan: supplied, state: "preparing")
+        attempt.automaticallyDiscardedBackups = cleaned
         try save(attempt, in: job)
         do {
             let backup = job.appending(path: "Original.app")
@@ -173,7 +181,7 @@ struct UpoviInstaller {
             if let usage = try? AdministratorBackupCleaner.usage(in: job) {
                 attempt.backupBytes = usage.bytes; attempt.backupBytesIsLowerBound = usage.lowerBound
             }
-            attempt.state = "installed"; attempt.updatedAt = Date(); try save(attempt, in: job)
+            attempt.state = "installed"; attempt.retainedAt = Date(); attempt.updatedAt = Date(); try save(attempt, in: job)
             return attempt
         } catch {
             if attempt.state == "finalizing", attempt.installedApplication != nil {
@@ -255,7 +263,7 @@ struct UpoviInstaller {
         }
         do { try files.moveItem(at: incoming, to: target) }
         catch { if let displaced { try? files.moveItem(at: displaced, to: target) }; throw error }
-        var result = stored; result.state = "restored"; result.updatedAt = Date()
+        var result = stored; result.state = "restored"; result.retainedAt = Date(); result.updatedAt = Date()
         if let usage = try? AdministratorBackupCleaner.usage(in: job) {
             result.backupBytes = usage.bytes; result.backupBytesIsLowerBound = usage.lowerBound
         }

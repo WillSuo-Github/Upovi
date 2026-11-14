@@ -29,6 +29,7 @@
 		0E3C370FF5AF9E6689C94245 /* SourceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6179EA13E95F294582D151 /* SourceFilter.swift */; };
 		0F6D49F4E5D8D2D96F3AA653 /* CommunityHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A1C409655B23A3C450F59C /* CommunityHistoryTests.swift */; };
 		0FE03813C5F9F5B14DD79414 /* AppStore+Community.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC4A738CB83E81317EEB73A /* AppStore+Community.swift */; };
+		B8F66E19CB2434C78406C999 /* ApplicationBackupStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F66E19CB2434C78406C998 /* ApplicationBackupStorage.swift */; };
 		104FDCF7326A4D32740E4588 /* BundleTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE772D01D3370D755016BC1 /* BundleTransaction.swift */; };
 		105EAE48F969B5095E07D70E /* libUpoviCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D00051D55B6C5AEDD8FF9883 /* libUpoviCore.a */; };
 		10A41D6D5EB93F928097732C /* AppStoreCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0E57326DC102CD55D63803 /* AppStoreCatalog.swift */; };
@@ -370,6 +371,7 @@
 		2510CA8F4CA6789AE8135FAA /* AdministratorInstallPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdministratorInstallPlan.swift; sourceTree = "<group>"; };
 		26D3A900F0572B152C5234F0 /* UpdatePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatePolicy.swift; sourceTree = "<group>"; };
 		2B791C5412D24D98FF4DBDFC /* prepare_xcode_info.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = prepare_xcode_info.sh; sourceTree = "<group>"; };
+		B8F66E19CB2434C78406C998 /* ApplicationBackupStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationBackupStorage.swift; sourceTree = "<group>"; };
 		2BE772D01D3370D755016BC1 /* BundleTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleTransaction.swift; sourceTree = "<group>"; };
 		2C4659021A24A924B74D90B9 /* test_release_metadata.cpython-315.pyc */ = {isa = PBXFileReference; path = "test_release_metadata.cpython-315.pyc"; sourceTree = "<group>"; };
 		2D504B9C32E904A8D533428C /* make_icon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = make_icon.swift; sourceTree = "<group>"; };
@@ -880,6 +882,7 @@
 				1BE233866CE636FE680C6146 /* BulkUpdate.swift */,
 				F339165D91E15A0A54B0DD04 /* BulkUpdateRecord.swift */,
 				2BE772D01D3370D755016BC1 /* BundleTransaction.swift */,
+				B8F66E19CB2434C78406C998 /* ApplicationBackupStorage.swift */,
 				D675D630F5266112A52E9DE5 /* BundleVerifier.swift */,
 				4B1ADE0B8107A0477CB48251 /* CanonicalFilePath.swift */,
 				B7DDB0A92E368C4A07F0A727 /* InstallerPackageVerifier.swift */,
@@ -1412,6 +1415,7 @@
 				FA299331624C012F2951ECA6 /* BulkUpdate.swift in Sources */,
 				5021C26811703B8C4D028156 /* BulkUpdateRecord.swift in Sources */,
 				104FDCF7326A4D32740E4588 /* BundleTransaction.swift in Sources */,
+				B8F66E19CB2434C78406C999 /* ApplicationBackupStorage.swift in Sources */,
 				7DF2A0FCAF32652C596D6478 /* BundleVerifier.swift in Sources */,
 				76F73965D1AF5E378830F160 /* CanonicalFilePath.swift in Sources */,
 				699974020127FFEFA28D9E84 /* CaskCatalog.swift in Sources */,

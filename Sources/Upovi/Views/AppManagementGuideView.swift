@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct AppManagementGuideView: View {
     let store: AppStore
@@ -6,73 +7,119 @@ struct AppManagementGuideView: View {
     let dismiss: () -> Void
     @State private var settingsOpened = false
     @State private var actionError: String?
+    private var verified: Bool { !store.appManagementAccessChecks.isEmpty && store.appManagementAccessChecks.allSatisfy(\.verified) }
+    private var blocked: Bool { store.appManagementAccessChecks.contains { !$0.verified } }
+    private var installerFound: Bool {
+        FileManager.default.fileExists(atPath: Bundle.main.bundleURL.appending(path: "Contents/Helpers/UpoviStoreInstaller.app/Contents/MacOS/UpoviStoreInstaller").path)
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 14) {
-                Image(systemName: "lock.shield").font(.system(size: 32)).foregroundStyle(Theme.accent)
+                Image(systemName: verified ? "checkmark.shield.fill" : "lock.shield").font(.system(size: 32))
+                    .foregroundStyle(verified ? .green : Theme.accent)
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(context == .permissionRequired ? "需要应用程序管理权限" : "允许 Upovi 更新应用")
-                        .font(.title2.bold())
-                    Text("授权由你决定，检查更新不需要这项权限。")
+                    Text(verified ? "应用写入访问已验证" : "设置更新权限").font(.title2.bold())
+                    Text("逐项查看状态，验证通过后再确认更新。检查更新无需授权。")
                         .font(.callout).foregroundStyle(.secondary)
                 }
             }
-            if context == .permissionRequired {
-                Label("macOS 阻止了安装器修改应用。已完成的更新会保留，受阻项可在设置权限后重新检查。", systemImage: "exclamationmark.triangle.fill")
-                    .font(.callout).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
-            } else {
-                Text("替换受保护的应用时，macOS 可能要求应用程序管理权限。现在设置可以减少更新中断，也可以稍后再设置。")
-                    .font(.callout).fixedSize(horizontal: false, vertical: true)
-            }
-            VStack(alignment: .leading, spacing: 16) {
-                step(1, title: String(localized: "打开应用程序管理"), detail: String(localized: "系统设置 → 隐私与安全 → 应用程序管理。"))
-                step(2, title: String(localized: "允许 Upovi Installer"), detail: String(localized: "商店安装器可能显示为 Upovi Installer 或 UpoviStoreInstaller。请允许对应的项目；更新其他应用时，系统也可能要求允许 Upovi。"))
-                step(3, title: String(localized: "没有看到安装器？"), detail: String(localized: "点击下方按钮在 Finder 中找到安装器，再用权限列表的“+”添加它。"))
-                Button("在 Finder 中显示安装器") {
-                    actionError = store.revealAppManagementInstaller() ? nil : String(localized: "未找到安装器，请使用完整的 Upovi 应用包。")
+            VStack(spacing: 0) {
+                accessRow(title: String(localized: "安装器组件"), detail: "Upovi Installer / UpoviStoreInstaller",
+                          symbol: installerFound ? "checkmark.circle.fill" : "exclamationmark.circle.fill",
+                          tint: installerFound ? .green : .orange,
+                          status: installerFound ? String(localized: "已找到") : String(localized: "未找到")) {
+                    Button("定位安装器") {
+                        actionError = store.revealAppManagementInstaller() ? nil : String(localized: "未找到安装器，请使用完整的 Upovi 应用包。")
+                    }.accessibilityIdentifier("app-management-reveal-installer")
                 }
-                .accessibilityIdentifier("app-management-reveal-installer")
-                .padding(.leading, 36)
+                Divider().padding(.leading, 48)
+                accessRow(title: String(localized: "应用程序管理"),
+                          detail: String(localized: "在此处允许 Upovi 和 Upovi Installer。开关已开启仍报错时，请验证实际访问。"),
+                          symbol: verified ? "checkmark.circle.fill" : (blocked ? "exclamationmark.circle.fill" : "circle.dashed"),
+                          tint: verified ? .green : (blocked ? .orange : .secondary),
+                          status: verified ? String(localized: "已验证") : (blocked ? String(localized: "仍受阻") : String(localized: "待验证"))) {
+                    Button("打开设置") { openSettings() }.accessibilityIdentifier("app-management-open-settings")
+                }
             }
-            .padding(18).background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 12))
-            Text(context == .permissionRequired
-                 ? "设置后返回 Upovi，点击“重新检查受阻项”。你确认更新后才会再次尝试安装。"
-                 : "设置后返回 Upovi 即可继续。也可以稍后从“设置 → 扫描与安装”打开权限引导。")
+            .padding(.horizontal, 16).background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 12))
+            if store.appManagementAccessChecking {
+                HStack(spacing: 10) { ProgressView().controlSize(.small); Text("正在验证安装器访问…") }.font(.callout)
+            }
+            if !store.appManagementAccessChecks.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(store.appManagementAccessChecks) { check in
+                        HStack(alignment: .top, spacing: 9) {
+                            Image(systemName: check.verified ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                                .foregroundStyle(check.verified ? .green : .orange)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(check.name).font(.callout.weight(.semibold))
+                                Text(check.verified ? String(localized: "安装器写入测试通过") : (check.failure ?? String(localized: "访问未确认")))
+                                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    Text("结果仅代表本次已测试的应用；系统权限改变后需重新验证。")
+                        .font(.caption).foregroundStyle(.secondary)
+                }.accessibilityIdentifier("app-management-access-results")
+            }
+            Text("验证会请求管理员授权，只创建并移除一个临时测试文件；不会下载、更新应用或修改购买凭据。")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if let actionError { Text(actionError).font(.callout).foregroundStyle(.red).accessibilityIdentifier("app-management-action-error") }
+            if !verified {
+                Text("系统设置 → 隐私与安全 → 应用程序管理。找不到安装器时，可定位后用“+”添加。")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            if let message = actionError ?? store.appManagementAccessError {
+                Text(message).font(.callout).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("app-management-action-error")
+            }
             Divider()
             HStack {
-                Button(settingsOpened ? "继续使用" : "稍后设置", action: dismiss).keyboardShortcut(.cancelAction)
-                    .accessibilityIdentifier("app-management-dismiss")
+                Button(verified ? "关闭" : "稍后设置", action: dismiss).keyboardShortcut(.cancelAction)
+                    .disabled(store.appManagementAccessChecking).accessibilityIdentifier("app-management-dismiss")
                 Spacer()
                 if context == .permissionRequired, store.appManagementRetryRecord != nil {
                     Button("重新检查受阻项…") { store.reviewAppManagementBlockedUpdates() }
-                        .disabled(store.operationBusy).accessibilityIdentifier("app-management-review-retry")
+                        .disabled(store.operationBusy || store.appManagementAccessChecking)
+                        .accessibilityIdentifier("app-management-review-retry")
                 }
-                Button("打开系统设置") {
-                    let opened = store.openAppManagementSettings()
-                    settingsOpened = settingsOpened || opened
-                    actionError = opened ? nil : String(localized: "无法打开系统设置，请手动前往“隐私与安全 → 应用程序管理”。")
+                if verified {
+                    Button("重新验证") { store.verifyAppManagementAccess() }
+                        .disabled(store.operationBusy || store.appManagementAccessChecking)
                 }
-                .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
-                .accessibilityIdentifier("app-management-open-settings")
+                Button(verified ? "完成" : "验证访问") {
+                    if verified { dismiss() } else { store.verifyAppManagementAccess() }
+                }
+                    .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+                    .disabled(store.operationBusy || store.appManagementAccessChecking)
+                    .accessibilityIdentifier("app-management-verify-access")
             }
         }
-        .padding(28).frame(width: 580)
-        .interactiveDismissDisabled()
+        .padding(28).frame(width: 610)
+        .interactiveDismissDisabled(store.appManagementAccessChecking)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            if settingsOpened { store.appManagementAccessChecks = []; store.appManagementAccessCheckedAt = nil; settingsOpened = false }
+        }
         .accessibilityIdentifier("app-management-guide")
     }
 
-    private func step(_ number: Int, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(number.formatted()).font(.callout.bold()).foregroundStyle(Theme.accent)
-                .frame(width: 24, height: 24).background(Theme.accent.opacity(0.12), in: Circle())
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.callout.weight(.semibold))
-                Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+    private func openSettings() {
+        let opened = store.openAppManagementSettings()
+        settingsOpened = opened
+        actionError = opened ? nil : String(localized: "无法打开系统设置，请手动前往“隐私与安全 → 应用程序管理”。")
+    }
+
+    private func accessRow<Actions: View>(title: String, detail: String, symbol: String, tint: Color, status: String,
+                                         @ViewBuilder actions: () -> Actions) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: symbol).font(.title3).foregroundStyle(tint).frame(width: 24)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack { Text(title).font(.callout.weight(.semibold)); Text(status).font(.caption).foregroundStyle(tint) }
+                Text(detail).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-        }
+            Spacer(minLength: 8)
+            actions().fixedSize()
+        }.padding(.vertical, 16)
     }
 }
 
@@ -80,14 +127,18 @@ struct AppManagementNotice: View {
     let store: AppStore
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "lock.trianglebadge.exclamationmark").foregroundStyle(.orange)
+            Image(systemName: store.appManagementBlockedAccessVerified ? "checkmark.shield.fill" : "lock.trianglebadge.exclamationmark")
+                .foregroundStyle(store.appManagementBlockedAccessVerified ? .green : .orange)
             VStack(alignment: .leading, spacing: 3) {
-                Text("部分应用需要应用程序管理权限").font(.callout.weight(.semibold))
-                Text("先允许 Upovi Installer，再重新检查受阻项。已完成的更新不受影响。")
+                Text(store.appManagementBlockedAccessVerified ? "访问已验证，可以重新检查更新" : "部分应用的安装器访问未通过").font(.callout.weight(.semibold))
+                Text(store.appManagementBlockedAccessVerified ? "此前失败的更新尚未重试。重新检查并确认后才会安装。" : "可查看权限并验证实际访问。此前失败的更新仍需重新检查和确认。")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
-            Button("设置权限…") { store.presentAppManagementHelp() }.disabled(store.installationBusy)
+            Button(store.appManagementBlockedAccessVerified ? "重新检查受阻项…" : "查看权限…") {
+                if store.appManagementBlockedAccessVerified { store.reviewAppManagementBlockedUpdates() }
+                else { store.presentAppManagementHelp() }
+            }.disabled(store.appManagementBlockedAccessVerified ? store.operationBusy : store.installationBusy)
                 .buttonStyle(PillButtonStyle()).fixedSize()
         }
         .padding(16).modifier(UpdatesSurface()).accessibilityIdentifier("app-management-notice")

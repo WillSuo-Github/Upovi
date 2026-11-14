@@ -7,17 +7,63 @@ public enum AdministratorBackupCleaner {
     public static func canRestore(_ state: String) -> Bool {
         ["preparing", "backedUp", "installing", "installed", "failed", "interruptedOrFailed", "awaitingAuthorization", "finalizing", "finalizationPending"].contains(state)
     }
-    public static func canDiscard(_ stored: AdministratorInstallAttempt, current: InstalledApp?) -> Bool {
+    public static func canDiscard(_ stored: AdministratorInstallAttempt, current: InstalledApp?, acceptsNewer: Bool = false) -> Bool {
         if stored.state == "backupDiscarded" { return stored.cleanupComplete == false }
         guard ["installed", "restored"].contains(stored.state), let current, !current.isAppStore else { return false }
         let original = stored.plan.application
         guard current.path == original.path, current.bundleID == original.bundleID,
               let team = ApplicationSourceCatalog.replacementTeam(for: original) else { return false }
-        if stored.state == "restored" { return current.teamID == original.teamID && current.version == original.version && current.build == original.build }
+        if stored.state == "restored" {
+            return current.teamID == original.teamID && ApplicationBackupStorage.matchesCurrent(current, version: original.version, build: original.build, allowNewer: acceptsNewer)
+        }
         guard current.teamID == team else { return false }
+        if acceptsNewer, ApplicationBackupStorage.matchesCurrent(current, version: stored.installedApplication?.version ?? stored.plan.version,
+            build: stored.installedApplication?.build ?? stored.plan.build, allowNewer: true) { return true }
         if let installed = stored.installedApplication { return current == installed }
         return !stored.plan.build.isEmpty && VersionOrder.compare(current.version, stored.plan.version) == .orderedSame && current.build == stored.plan.build
     }
+    public static func shouldExpire(_ stored: AdministratorInstallAttempt, newestID: UUID?, now: Date) -> Bool {
+        guard ["installed", "restored"].contains(stored.state) else { return false }
+        return now.timeIntervalSince(stored.retainedAt ?? stored.updatedAt) >= ApplicationBackupStorage.retention || newestID != stored.id
+    }
+
+    /// Opportunistic cleanup only inside an already user-authorized administrator operation.
+    /// It never prompts at startup and never touches incomplete or pending-finalization transactions.
+    public static func expireCompleted(in base: URL, now: Date = Date(), excludingID: UUID? = nil,
+                                       validateJournal: (URL, URL) throws -> Void,
+                                       save: (AdministratorInstallAttempt, URL) throws -> Void) -> [UUID] {
+        let files = FileManager.default
+        let jobs = ((try? files.contentsOfDirectory(at: base, includingPropertiesForKeys: nil)) ?? []).filter { UUID(uuidString: $0.lastPathComponent) != nil }.prefix(1000)
+        var entries: [(URL, AdministratorInstallAttempt)] = []
+        for job in jobs {
+            do {
+                let receipt = job.appending(path: "receipt.json")
+                try validateJournal(job, receipt)
+                guard try receipt.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max <= 65536 else { continue }
+                let stored = try JSONDecoder().decode(AdministratorInstallAttempt.self, from: Data(contentsOf: receipt))
+                guard stored.id.uuidString == job.lastPathComponent else { continue }
+                entries.append((job, stored))
+            } catch { continue }
+        }
+        let newest = Dictionary(grouping: entries.filter { ["installed", "restored"].contains($0.1.state) }, by: { $0.1.plan.application.path })
+            .compactMapValues { $0.max { ($0.1.retainedAt ?? $0.1.updatedAt) < ($1.1.retainedAt ?? $1.1.updatedAt) }?.1.id }
+        var cleaned: [UUID] = []
+        for (job, stored) in entries {
+            guard stored.id != excludingID else { continue }
+            guard shouldExpire(stored, newestID: newest[stored.plan.application.path], now: now)
+                    || (stored.state == "backupDiscarded" && stored.cleanupComplete == false) else { continue }
+            do {
+                let current = AppScanner.read(URL(fileURLWithPath: stored.plan.application.path))
+                guard canDiscard(stored, current: current, acceptsNewer: true) else { continue }
+                _ = try discard(stored, in: job, current: current, validateCurrent: {
+                    try BundleVerifier.checkDeveloperIDSignature(URL(fileURLWithPath: stored.plan.application.path), like: stored.plan.application)
+                }, save: { try save($0, job) })
+                cleaned.append(stored.id)
+            } catch { continue }
+        }
+        return cleaned
+    }
+
     private static func candidates(in job: URL) throws -> [URL] {
         try FileManager.default.contentsOfDirectory(at: job, includingPropertiesForKeys: nil).filter { url in
             let name = url.lastPathComponent
@@ -50,7 +96,7 @@ public enum AdministratorBackupCleaner {
                                validateCurrent: () throws -> Void, save: (AdministratorInstallAttempt) throws -> Void,
                                remove: (URL) throws -> Void = { try FileManager.default.removeItem(at: $0) }) throws -> AdministratorInstallAttempt {
         guard job.lastPathComponent == stored.id.uuidString, job.standardizedFileURL.path == job.path,
-              job.resolvingSymlinksInPath().path == job.path, canDiscard(stored, current: current) else {
+              job.resolvingSymlinksInPath().path == job.path, canDiscard(stored, current: current, acceptsNewer: true) else {
             throw PeerError.invalid("Backup cleanup requires a matching completed transaction")
         }
         if stored.state != "backupDiscarded" { try validateCurrent() }

@@ -80,7 +80,7 @@ final class AppStore {
     @ObservationIgnored var bulkTask: Task<Void, Never>?
     @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
-        installing || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
+        installing || appManagementAccessChecking || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
             || administratorRestoreConfirmation != nil || administratorCleanupConfirmation != nil || backupDeletionConfirmation != nil
             || bulkUpdating || (bulkUpdatePresented && !bulkHasRun)
     }
@@ -122,6 +122,16 @@ final class AppStore {
     var appManagementBlockedIDs: Set<String> = []
     @ObservationIgnored var appManagementIntroductionOffered = false
     @ObservationIgnored var appManagementDeniedDuringBatch = false
+    var appManagementAccessChecking = false
+    var appManagementAccessChecks: [AppManagementAccessCheck] = []
+    var appManagementAccessError: String?
+    var appManagementAccessCheckedAt: Date?
+    @ObservationIgnored var appManagementAccessInventory: @Sendable () async -> [InstalledApp] = {
+        await Task.detached { AppScanner.scan() }.value
+    }
+    @ObservationIgnored var appManagementAccessVerifier: @MainActor ([InstalledApp]) async throws -> [AppStoreUpdateReceipt] = {
+        try await AppStoreInstallationService().verifyAccess($0)
+    }
     @ObservationIgnored var appManagementSettingsOpener: () -> Bool = { AppManagementAccessService.openSettings() }
     @ObservationIgnored var appManagementInstallerRevealer: () -> Bool = { AppManagementAccessService.revealInstaller() }
     var networkStatus = String(localized: "尚未连接公网 DHT")
@@ -164,6 +174,8 @@ final class AppStore {
     @ObservationIgnored var installationTask: Task<Void, Never>?
     @ObservationIgnored var checkTask: Task<Void, Never>?
     @ObservationIgnored private var initialCheckStarted = false
+    @ObservationIgnored let automaticBackupMaintenanceEnabled: Bool
+    @ObservationIgnored var lastBackupMaintenance: Date?
     @ObservationIgnored var monitoringTask: Task<Void, Never>?
     @ObservationIgnored let pathMonitor = NWPathMonitor()
     @ObservationIgnored var previousPath: String?
@@ -173,7 +185,7 @@ final class AppStore {
     @ObservationIgnored var syncTask: Task<Void, Never>?
     @ObservationIgnored var publisherCache: [String: [String]] = [:]
 
-    init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(),
+    init(preferences: AppPreferences = .shared, installer: UpdateInstaller = UpdateInstaller(), automaticBackupMaintenanceEnabled: Bool? = nil,
          scanApplications: @escaping @Sendable ([URL]) async -> [InstalledApp] = { roots in await Task.detached { AppScanner.scan(roots: roots) }.value },
          revalidateSources: @escaping @Sendable () async -> Void = { @Sendable in
              await SourceHTTPClient.shared.revalidate(); await CaskCatalog.shared.invalidate(); await AppStoreCatalog.shared.invalidate()
@@ -181,6 +193,7 @@ final class AppStore {
          checkApplication: @escaping @Sendable (InstalledApp, SourceOverride?) async -> SourceResult = { await UpdateChecker.check($0, override: $1) }) {
         self.downloadCenter = DownloadCenterService(coordinator: installer.downloads)
         self.preferences = preferences
+        self.automaticBackupMaintenanceEnabled = automaticBackupMaintenanceEnabled ?? (preferences === AppPreferences.shared)
         appManagementBlockedIDs = Set(preferences.stringArray(forKey: Self.appManagementBlockedKey) ?? [])
         sourceResultCache = SourceResultCache(data: preferences.data(forKey: "sourceResultCacheV1"))
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)

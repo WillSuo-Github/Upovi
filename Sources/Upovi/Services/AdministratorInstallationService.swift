@@ -91,6 +91,12 @@ final class AdministratorInstallationService {
             guard result.id == plan.id, accepted else { throw PeerError.invalid("Unexpected administrator transaction result") }
             UpoviLog.installation.info("event=administrator.receipt transaction=\(result.id) state=\(result.state) installedVersion=\(result.installedApplication?.version ?? "none") cleanupComplete=\(result.cleanupComplete ?? false)")
             try save(result)
+            for id in (result.automaticallyDiscardedBackups ?? []).prefix(1000) {
+                guard id != result.id, var cached = attempts.first(where: { $0.id == id }), ["installed", "restored", "backupDiscarded"].contains(cached.state) else { continue }
+                cached.state = "backupDiscarded"; cached.cleanupComplete = true
+                cached.backupBytes = 0; cached.updatedAt = Date(); try save(cached)
+            }
+            UpoviLog.recovery.info("event=backup.administratorMaintenance cleaned=\(result.automaticallyDiscardedBackups?.count ?? 0)")
             if installing, result.state == "finalizationPending" {
                 throw result.finalizationFailure ?? AdministratorFinalizationError(PeerError.unavailable("Installation finalization did not complete"))
             }

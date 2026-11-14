@@ -97,4 +97,22 @@ final class AdministratorBackupCleanupTests: XCTestCase {
         let wrongVersion = AdministratorInstallPlan(id: stored.id, operation: .inspect, application: original, version: "3.0", build: "2")
         XCTAssertFalse(AdministratorBackupCleaner.requestMatches(wrongVersion, stored: stored))
     }
+    func testAutomaticPolicyNeverExpiresInterruptedOrFinalizationPendingData() throws {
+        let (_, original) = try fixture()
+        let now = original.updatedAt.addingTimeInterval(100 * 86400)
+        for state in ["preparing", "backedUp", "installing", "failed", "awaitingAuthorization", "finalizing", "finalizationPending", "interruptedOrFailed"] {
+            var value = original; value.state = state
+            XCTAssertFalse(AdministratorBackupCleaner.shouldExpire(value, newestID: nil, now: now))
+        }
+        XCTAssertTrue(AdministratorBackupCleaner.shouldExpire(original, newestID: original.id, now: now))
+        XCTAssertFalse(AdministratorBackupCleaner.shouldExpire(original, newestID: original.id, now: original.updatedAt))
+        XCTAssertTrue(AdministratorBackupCleaner.shouldExpire(original, newestID: UUID(), now: original.updatedAt))
+    }
+    func testAutomaticCleanupAcceptsLaterVersionOnlyWithMatchingIdentity() throws {
+        let (_, value) = try fixture()
+        XCTAssertTrue(AdministratorBackupCleaner.canDiscard(value, current: current("3.0", build: "3"), acceptsNewer: true))
+        XCTAssertFalse(AdministratorBackupCleaner.canDiscard(value, current: current("0.5"), acceptsNewer: true))
+        XCTAssertFalse(AdministratorBackupCleaner.canDiscard(value, current: current("3.0", team: "OTHERTEAM1"), acceptsNewer: true))
+    }
+
 }

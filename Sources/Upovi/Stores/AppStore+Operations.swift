@@ -8,9 +8,11 @@ extension AppStore {
         guard monitoringTask == nil else { return }
         monitoringTask = Task { [weak self] in
             guard let self else { return }
+            await maintainApplicationBackups()
             await refreshInstallations()
             while !Task.isCancelled {
                 policyClock = Date()
+                if !operationBusy { await maintainApplicationBackups() }
                 if CheckSchedule.isDue(enabled: automaticChecks && !apps.isEmpty, online: networkAvailable,
                     busy: refreshing || scanning || checking || installationBusy, lastAttempt: lastCheckAttempt,
                     intervalMinutes: checkIntervalMinutes) { beginChecking(preservingBatchResults: true) }
@@ -176,6 +178,14 @@ extension AppStore {
             } catch { recordDiagnostic(.recovery, appID: attempt.plan.application.id, error: error); errorMessage = String(localized: "主应用未恢复：\(error.localizedDescription)") }
         }
     }
+    func maintainApplicationBackups(force: Bool = false) async {
+        guard automaticBackupMaintenanceEnabled, !installationBusy, force || lastBackupMaintenance.map({ Date().timeIntervalSince($0) >= 3600 }) ?? true else { return }
+        lastBackupMaintenance = Date()
+        do {
+            let report = try await installer.maintainBackups()
+            UpoviLog.recovery.info("event=backup.hostMaintenance archived=\(report.archived) discarded=\(report.discarded) protected=\(report.protected) failed=\(report.failed)")
+        } catch { recordDiagnostic(.backupCleanup, error: error) }
+    }
     func refreshInstallations() async {
         do {
             installationReceipts = try await installer.receipts()
@@ -186,7 +196,13 @@ extension AppStore {
                     guard let path = receipt.retainedPath else { continue }
                     let root = URL(fileURLWithPath: path)
                     guard FileManager.default.fileExists(atPath: root.path),
-                          let iterator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileAllocatedSizeKey, .isSymbolicLinkKey]) else { continue }
+                          let rootValues = try? root.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileAllocatedSizeKey]),
+                          rootValues.isSymbolicLink != true else { continue }
+                    if rootValues.isRegularFile == true {
+                        sizes[receipt.id] = Int64(rootValues.fileAllocatedSize ?? 0)
+                        continue
+                    }
+                    guard let iterator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileAllocatedSizeKey, .isSymbolicLinkKey]) else { continue }
                     var bytes: Int64 = 0
                     while let file = iterator.nextObject() as? URL {
                         if let values = try? file.resourceValues(forKeys: [.fileAllocatedSizeKey, .isSymbolicLinkKey]), values.isSymbolicLink != true {

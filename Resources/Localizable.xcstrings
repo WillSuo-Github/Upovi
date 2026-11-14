@@ -1,6 +1,326 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "访问已验证，可以重新检查更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access Verified — Recheck Updates"
+          }
+        }
+      }
+    },
+    "此前失败的更新尚未重试。重新检查并确认后才会安装。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previously failed updates have not been retried. Recheck and confirm before installation."
+          }
+        }
+      }
+    },
+    "访问验证未完成。请重试；仍失败时请从设置导出诊断信息。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access verification did not finish. Try again; if it keeps failing, export diagnostics from Settings."
+          }
+        }
+      }
+    },
+    "应用写入访问已验证": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application write access verified"
+          }
+        }
+      }
+    },
+    "设置更新权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Up Update Access"
+          }
+        }
+      }
+    },
+    "逐项查看状态，验证通过后再确认更新。检查更新无需授权。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review each status, verify access, then confirm your updates. Checking for updates needs no permission."
+          }
+        }
+      }
+    },
+    "安装器组件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer Component"
+          }
+        }
+      }
+    },
+    "已找到": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Found"
+          }
+        }
+      }
+    },
+    "未找到": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Found"
+          }
+        }
+      }
+    },
+    "定位安装器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Installer"
+          }
+        }
+      }
+    },
+    "应用程序管理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Management"
+          }
+        }
+      }
+    },
+    "在此处允许 Upovi 和 Upovi Installer。开关已开启仍报错时，请验证实际访问。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Upovi and Upovi Installer here. If the switches are already on, verify actual access."
+          }
+        }
+      }
+    },
+    "已验证": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verified"
+          }
+        }
+      }
+    },
+    "仍受阻": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocked"
+          }
+        }
+      }
+    },
+    "待验证": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Verified"
+          }
+        }
+      }
+    },
+    "打开设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "正在验证安装器访问…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifying installer access…"
+          }
+        }
+      }
+    },
+    "安装器写入测试通过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer write test passed"
+          }
+        }
+      }
+    },
+    "访问未确认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access not confirmed"
+          }
+        }
+      }
+    },
+    "结果仅代表本次已测试的应用；系统权限改变后需重新验证。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Results apply only to the applications tested now. Verify again after changing system permissions."
+          }
+        }
+      }
+    },
+    "验证会请求管理员授权，只创建并移除一个临时测试文件；不会下载、更新应用或修改购买凭据。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verification requests administrator authorization and only creates and removes a temporary test file. It does not download, update apps, or modify purchase receipts."
+          }
+        }
+      }
+    },
+    "系统设置 → 隐私与安全 → 应用程序管理。找不到安装器时，可定位后用“+”添加。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Settings → Privacy & Security → App Management. If the installer is missing, reveal it and add it with “+”."
+          }
+        }
+      }
+    },
+    "重新验证": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verify Again"
+          }
+        }
+      }
+    },
+    "验证访问": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verify Access"
+          }
+        }
+      }
+    },
+    "部分应用的安装器访问未通过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer Access Failed for Some Apps"
+          }
+        }
+      }
+    },
+    "可查看权限并验证实际访问。此前失败的更新仍需重新检查和确认。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review permissions and verify actual access. Previously failed updates still need a fresh check and confirmation."
+          }
+        }
+      }
+    },
+    "查看权限…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review Access…"
+          }
+        }
+      }
+    },
+    "尚无可验证的商店应用。权限状态未确认；可先打开系统设置。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No App Store application is available to test. Access is unconfirmed; you can open System Settings."
+          }
+        }
+      }
+    },
+    "写入访问仍受阻。若系统开关已开启，请保留诊断信息，勿反复切换权限。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write access is still blocked. If the switches are already on, retain diagnostics instead of repeatedly toggling permissions."
+          }
+        }
+      }
+    },
+    "验证已取消，权限状态未确认。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verification cancelled. Access remains unconfirmed."
+          }
+        }
+      }
+    },
+    "安装器的应用写入检查未通过。请打开权限引导并验证访问；若权限已开启，可能是安装器识别或文件访问异常。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The installer write check failed. Open the access guide and verify access. If permission is already enabled, installer identification or file access may be failing."
+          }
+        }
+      }
+    },
+    "每个应用保留最近一份备份，最多 7 天；安装中断的恢复副本不会自动清理。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the latest backup per app for up to 7 days. Recovery copies from interrupted installations are never cleaned automatically."
+          }
+        }
+      }
+    },
     "需要应用程序管理权限": {
       "localizations": {
         "en": {
