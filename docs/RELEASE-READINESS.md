@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611140001
+
+App Store checks now isolate offer confirmations by Store ID. An individual network/TLS failure cannot invalidate unrelated applications, and an exact compatible catalog result without a newer public version does not depend on a redundant offer request. Mac desktop metadata may include an Apple Watch companion; mixed mobile products, incompatible system requirements and identity mismatches remain unconfirmed. Antigravity uses its reviewed architecture-specific Electron manifest instead of requesting the missing generic manifest. Store checks now retain correlated production diagnostics for completion, failure and cancellation.
+
+Product revision `240c66300a1fa8c29027c6ffc7fbea2920ed7b39` passed 323 core tests, 59 application workflow tests and 41 Python tests. An owner-authorized local installation of the signed arm64 build completed 73 real application checks with zero incomplete checks: 19 Store applications reported no newer public version, two reported updates and four required their original channel. Antigravity's Electron and Homebrew checks both confirmed 2.32.1; four global tool sources also completed. The real diagnostic ZIP export preserved application references and redaction. This native acceptance preceded the clean-source universal rebuild; it is not a real third-party update installation or genuine Sparkle self-replacement test.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611140001) is published as Latest with marketing version 0.4.10 unchanged. Apple notarization, ticket stapling, Gatekeeper, nested signatures and Sparkle feed/archive signatures passed for the final archive and fresh extractions. All five anonymously downloaded assets match the local verified bytes; the canonical latest feed and direct archive match as well. Temporary verification app copies were removed. The installed local arm64 copy was not replaced by publication. Physical Intel runtime remains untested. See [release evidence](evidence/0.4.10-build-202611140001.json) and [check diagnosis and local installation evidence](evidence/check-updates-202611140001.json).
+
+---
+
 # Upovi 0.4.10 build 202611040013
 
 Steam detection now compares a corroborated installed client build with Valve's official stable manifest; the bootstrapper's unchanged 6.1 version cannot establish that the client is current. Steam installs its own updates. The Updates page keeps incomplete check counts and individual failures visible alongside available updates. Recent official version evidence can survive a failed check as manual-only revalidation, without download or installation authority; a confirmed current version clears obsolete evidence.

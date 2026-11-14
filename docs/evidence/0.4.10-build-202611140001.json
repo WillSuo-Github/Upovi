@@ -1,0 +1,126 @@
+{
+  "build": "202611140001",
+  "marketingVersion": "0.4.10",
+  "productRevision": "240c66300a1fa8c29027c6ffc7fbea2920ed7b39",
+  "tests": {
+    "core": 323,
+    "hosted": 59,
+    "python": 41,
+    "failures": 0
+  },
+  "nativeInstalledAcceptance": {
+    "applicationChecks": 73,
+    "incompleteChecks": 0,
+    "appStore": {
+      "current": 19,
+      "updates": 2,
+      "originalChannelRequired": 4
+    },
+    "antigravity": {
+      "version": "2.32.1",
+      "electron": "checked",
+      "homebrew": "checked"
+    },
+    "globalToolSourcesCompleted": 4,
+    "artifactScope": "Owner-authorized Developer ID signed arm64 local build before clean-source universal release rebuild; same product source changes."
+  },
+  "universalBuild": "passed",
+  "signingComponentsVerified": 10,
+  "hardenedRuntime": true,
+  "getTaskAllow": false,
+  "manualInstallationPolicy": "Explicit user action required for every download/installation; checks only discover updates.",
+  "appleNotarization": {
+    "id": "724a7a84-1e05-4d5d-9633-f8c6706c4e0d",
+    "status": "Accepted",
+    "name": "Upovi-0.4.10-202611140001.zip",
+    "createdDate": "2026-11-14T08:07:59.537Z"
+  },
+  "artifactValidation": {
+    "version": "0.4.10",
+    "build": "202611140001",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "9a44a5db6c5067e4d1c6547dd340780f5d9abd8feff53b886a4dc65a8910e914",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-14T08:11:15Z",
+      "tagName": "build-202611140001",
+      "targetCommitish": "240c66300a1fa8c29027c6ffc7fbea2920ed7b39",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611140001"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202611140001.zip",
+        "size": 22688301,
+        "sha256": "9a44a5db6c5067e4d1c6547dd340780f5d9abd8feff53b886a4dc65a8910e914",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611140001.zip.sha256",
+        "size": 96,
+        "sha256": "470786f29764415accc6f752fd401e6dd4df83d806145506e3c3519d055bd979",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "e9e70e6de7e46ae4903d984609360e838e58582724087592039cb15667c7b589",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "adb16b7724a9fff70952baa054ad1dce4cf9ca9863b28868245e9b8af880495a",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 309,
+        "sha256": "4e622ff28601d29a0b89c1bc70f75c30be4e52bb387b6c23f9b059bad0b44736",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611140001",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "9a44a5db6c5067e4d1c6547dd340780f5d9abd8feff53b886a4dc65a8910e914",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerification": [
+    {
+      "name": "appcast.xml",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+      "sha256": "e9e70e6de7e46ae4903d984609360e838e58582724087592039cb15667c7b589",
+      "matchesLocal": true
+    },
+    {
+      "name": "Upovi-0.4.10-202611140001.zip",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/download/build-202611140001/Upovi-0.4.10-202611140001.zip",
+      "sha256": "9a44a5db6c5067e4d1c6547dd340780f5d9abd8feff53b886a4dc65a8910e914",
+      "matchesLocal": true
+    }
+  ],
+  "physicalIntelRuntimeTestedForThisRelease": false,
+  "genuineSelfUpdateTestedForThisRelease": false,
+  "normalInstalledUpoviReplacedByThisPublication": false,
+  "temporaryVerificationAppCopiesRemoved": true
+}
