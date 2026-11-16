@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611160001
+
+Permission verification now uses the same Store-owned protected session as Update All. Its capability accepts only write probes and cannot start installations or receipt repair. The host blocks new installation admission while startup/hourly backup maintenance is running, and denial recording preserves the latest per-application verification results. Historical access remains evidence of past writes, not a live system permission claim.
+
+The clean committed product revision `205aa4940a6aa71225a7014d0de96a228395bd1f` passed 343 core tests, 71 application workflow tests and 41 Python tests with no failures. Both architectures and all ten Developer ID signatures, hardened runtime, secure timestamps and debugger-entitlement removal were verified. Apple notarization, ticket stapling, Gatekeeper and signed Sparkle feed/archive checks passed for the final package and fresh local/public extractions.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611160001) is published as Latest, with marketing version 0.4.10 unchanged. All five anonymous public downloads match the verified local bytes; the canonical latest feed and direct archive match as well. The affected second Mac, physical Intel runtime, genuine Sparkle self-replacement and a real Store update were not exercised for this release. Publication did not change privacy switches or replace the normal installed Upovi. Uncommitted iStat mapping changes remain excluded. See [release evidence](evidence/0.4.10-build-202611160001.json) and [implementation validation](evidence/permission-session-handoff-20261116.json).
+
+---
+
 # Upovi 0.4.10 build 202611140003
 
 Completed ordinary application backups are inert, verified ZIP archives instead of hidden runnable apps in Applications. The latest completed copy per app is retained for up to seven days; incomplete recovery data is never expired. Administrator expiration runs only inside an already authorized operation. Missing or unverified live applications preserve their signed recovery archives. Exact old registrations and the stale user Applications acceptance directory were removed; local legacy bundle and registration counts are zero. History displays the archive sizes correctly.

@@ -1,0 +1,239 @@
+{
+  "build": "202611160001",
+  "marketingVersion": "0.4.10",
+  "productRevision": "205aa4940a6aa71225a7014d0de96a228395bd1f",
+  "fixRevision": "922f4c43c334939d8ef788ed3bc63d9c933d2559",
+  "scope": [
+    "Same Store-owned protected session for access verification and Update All",
+    "Probe-only capability cannot authorize installations or receipt repair",
+    "Backup maintenance participates in host installation admission",
+    "Per-application access results survive denial recording and relaunch"
+  ],
+  "tests": {
+    "core": 343,
+    "applicationWorkflow": 71,
+    "python": 41,
+    "failures": 0
+  },
+  "universalBuild": "passed",
+  "cleanCommittedSourceBuild": true,
+  "signingComponentsVerified": 10,
+  "signingVerification": [
+    {
+      "component": "Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/Frameworks/Sparkle.framework",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/MacOS/UpoviInstaller",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/MacOS/UpoviStoreInstaller",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/MacOS/UpoviStoreBridge",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": "Contents/Helpers/UpoviStoreInstaller.app",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    },
+    {
+      "component": ".",
+      "team": "NT9VR9C9HY",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "hardenedRuntime": true,
+      "secureTimestamp": true,
+      "getTaskAllow": false
+    }
+  ],
+  "appleNotarization": {
+    "id": "53c4d467-0d50-48f0-9c93-74256ff7bf5e",
+    "status": "Accepted",
+    "message": "Successfully received submission info",
+    "name": "Upovi-0.4.10-202611160001.zip",
+    "createdDate": "2026-11-16T08:03:29.098Z"
+  },
+  "artifactValidation": {
+    "version": "0.4.10",
+    "build": "202611160001",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "archiveSHA256": "3d653c1ca3eb574980160908cebab9d3e3684d4ed6030e6bf83d67a2a201c468",
+    "nestedSignature": "passed",
+    "signedFeed": "passed",
+    "archiveSignature": "passed",
+    "notarization": "passed"
+  },
+  "publicRelease": {
+    "release": {
+      "isDraft": false,
+      "isPrerelease": false,
+      "publishedAt": "2026-11-16T08:06:01Z",
+      "tagName": "build-202611160001",
+      "targetCommitish": "205aa4940a6aa71225a7014d0de96a228395bd1f",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611160001"
+    },
+    "latest": true,
+    "publicAssetBytesMatchLocal": true,
+    "downloadVerification": [
+      {
+        "name": "Upovi-0.4.10-202611160001.zip",
+        "size": 23410562,
+        "sha256": "3d653c1ca3eb574980160908cebab9d3e3684d4ed6030e6bf83d67a2a201c468",
+        "matchesLocal": true
+      },
+      {
+        "name": "Upovi-0.4.10-202611160001.zip.sha256",
+        "size": 96,
+        "sha256": "f27efe4f9e6ed20ff9c5ef79e3a1381850f53198737a46da709c3d58d1b034ef",
+        "matchesLocal": true
+      },
+      {
+        "name": "appcast.xml",
+        "size": 1222,
+        "sha256": "fe0aaf9280d7dd4403d310ef0177c43162f5b0e89ea480d3025d5da875e4ecfa",
+        "matchesLocal": true
+      },
+      {
+        "name": "source-revision.txt",
+        "size": 41,
+        "sha256": "5676f169d4f4cbd723d1be046ae0d83ff42f217c777b06e282147ca5cf336e42",
+        "matchesLocal": true
+      },
+      {
+        "name": "artifact-validation.json",
+        "size": 279,
+        "sha256": "4ef4bae0fe5556d9596b777e787fb6241ced85fc316c863ff57460264452e8c5",
+        "matchesLocal": true
+      }
+    ],
+    "extractedArtifact": {
+      "version": "0.4.10",
+      "build": "202611160001",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "archiveSHA256": "3d653c1ca3eb574980160908cebab9d3e3684d4ed6030e6bf83d67a2a201c468",
+      "nestedSignature": "passed",
+      "signedFeed": "passed",
+      "archiveSignature": "passed",
+      "notarization": "passed"
+    }
+  },
+  "canonicalLatestFeedAndDirectArchiveVerification": [
+    {
+      "name": "appcast.xml",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/latest/download/appcast.xml",
+      "sha256": "fe0aaf9280d7dd4403d310ef0177c43162f5b0e89ea480d3025d5da875e4ecfa",
+      "matchesLocal": true
+    },
+    {
+      "name": "Upovi-0.4.10-202611160001.zip",
+      "url": "https://github.com/WillSuo-Github/Upovi/releases/download/build-202611160001/Upovi-0.4.10-202611160001.zip",
+      "sha256": "3d653c1ca3eb574980160908cebab9d3e3684d4ed6030e6bf83d67a2a201c468",
+      "matchesLocal": true
+    }
+  ],
+  "runtimeLimits": {
+    "affectedSecondMacRetested": false,
+    "physicalIntelRuntimeTested": false,
+    "genuineSparkleSelfReplacementTested": false,
+    "realStoreUpdateTestedForThisRelease": false,
+    "systemPrivacySwitchesChanged": false,
+    "normalInstalledUpoviReplacedByPublication": false
+  },
+  "excludedUncommittedWork": [
+    "iStat Menus 7.50.3 build mapping",
+    "iStat source mapping diagnostics",
+    "iStat trust regression",
+    "Prior local-only validation records"
+  ],
+  "implementationEvidence": "permission-session-handoff-20261116.json"
+}
