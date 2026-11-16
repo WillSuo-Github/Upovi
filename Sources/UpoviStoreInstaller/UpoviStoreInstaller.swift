@@ -8,6 +8,10 @@ import UpoviCore
         do {
             guard geteuid() == 0 else { throw PeerError.invalid("Administrator authorization is required") }
             let args = Array(CommandLine.arguments.dropFirst())
+            if args.count == 3, args[0] == "--session" {
+                try await AdministratorInstallSession.serveProtectedManifest(URL(fileURLWithPath: args[1]), work: URL(fileURLWithPath: args[2]))
+                return
+            }
             guard args.count == 2 else { throw PeerError.invalid("Explicit protected Store plan and helper required") }
             let input = URL(fileURLWithPath: args[0]), bridge = URL(fileURLWithPath: args[1])
             let staging = input.deletingLastPathComponent()

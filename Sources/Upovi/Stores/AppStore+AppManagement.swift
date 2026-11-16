@@ -4,6 +4,7 @@ import UpoviCore
 extension AppStore {
     static let appManagementGuideSeenKey = "appManagementGuideSeenV1"
     static let appManagementBlockedKey = "appManagementBlockedApplicationsV1"
+    static let appManagementEvidenceKey = "appManagementAccessEvidenceV1"
 
     func offerAppManagementIntroduction() {
         guard !appManagementIntroductionOffered, !preferences.bool(forKey: Self.appManagementGuideSeenKey),
@@ -38,6 +39,7 @@ extension AppStore {
     func recordAppManagementBlock(appID: String?, error: any Error) {
         guard let appID, let storeError = error as? StoreInstallationError, storeError.failure.requiresAppManagement else { return }
         appManagementAccessChecks = []; appManagementAccessCheckedAt = nil
+        persistAppManagementEvidence()
         appManagementBlockedIDs.insert(appID)
         if bulkUpdating { appManagementDeniedDuringBatch = true }
         preferences.set(appManagementBlockedIDs.sorted(), forKey: Self.appManagementBlockedKey)
@@ -48,6 +50,22 @@ extension AppStore {
         guard appManagementBlockedIDs.remove(appID) != nil else { return }
         preferences.set(appManagementBlockedIDs.sorted(), forKey: Self.appManagementBlockedKey)
         UpoviLog.authorization.info("event=appManagement.resolved app=\(UpoviDiagnosticContext.applicationID(appID))")
+    }
+
+    func recordSuccessfulAppManagementAccess(_ app: InstalledApp) {
+        guard app.isAppStore else { return }
+        appManagementAccessChecks.removeAll { $0.id == app.id }
+        appManagementAccessChecks.append(.init(id: app.id, name: app.name, verified: true, failure: nil))
+        appManagementAccessChecks = Array(appManagementAccessChecks.suffix(20))
+        appManagementAccessCheckedAt = Date()
+        preferences.set(true, forKey: Self.appManagementGuideSeenKey)
+        persistAppManagementEvidence()
+        UpoviLog.authorization.info("event=appManagement.installAccessRecorded app=\(UpoviDiagnosticContext.applicationID(app.id))")
+    }
+
+    private func persistAppManagementEvidence() {
+        let evidence = AppManagementAccessEvidence(checks: appManagementAccessChecks, checkedAt: appManagementAccessCheckedAt ?? Date())
+        if let data = try? JSONEncoder().encode(evidence) { preferences.set(data, forKey: Self.appManagementEvidenceKey) }
     }
 
     /// Keep the latest recorded outcome for each blocked app. Permission retries never include
@@ -81,6 +99,7 @@ extension AppStore {
         guard !operationBusy, !appManagementAccessChecking else { return }
         appManagementAccessChecking = true; appManagementAccessError = nil
         appManagementAccessChecks = []; appManagementAccessCheckedAt = nil
+        persistAppManagementEvidence()
         Task {
             defer { appManagementAccessChecking = false }
             do {
@@ -90,15 +109,16 @@ extension AppStore {
                 let targets = Array((blocked.isEmpty ? storeApps.prefix(1).map { $0 } : blocked).prefix(20))
                 guard !targets.isEmpty else { throw PeerError.unavailable(String(localized: "尚无可验证的商店应用。权限状态未确认；可先打开系统设置。")) }
                 let results = try await appManagementAccessVerifier(targets)
+                for receipt in results {
+                    if let failure = receipt.failure { recordDiagnostic(.installation, appID: receipt.plan.application.id, error: StoreInstallationError(failure)) }
+                }
                 appManagementAccessChecks = results.map { receipt in
                     .init(id: receipt.plan.application.id, name: receipt.plan.application.name,
                           verified: receipt.failure == nil && receipt.state == "accessVerified",
                           failure: receipt.failure.map { _ in String(localized: "写入访问仍受阻。若系统开关已开启，请保留诊断信息，勿反复切换权限。") })
                 }
-                for receipt in results {
-                    if let failure = receipt.failure { recordDiagnostic(.installation, appID: receipt.plan.application.id, error: StoreInstallationError(failure)) }
-                }
                 appManagementAccessCheckedAt = Date()
+                persistAppManagementEvidence()
                 // Probe success is evidence for this target at this time, not an installation outcome.
                 // Keep pending update tasks and confirmation requirements intact.
             } catch is CancellationError { appManagementAccessError = String(localized: "验证已取消，权限状态未确认。") }
@@ -112,6 +132,7 @@ extension AppStore {
     @discardableResult func openAppManagementSettings() -> Bool {
         let operation = UpoviLogOperation("appManagement.openSettings", category: .authorization)
         appManagementAccessChecks = []; appManagementAccessCheckedAt = nil
+        persistAppManagementEvidence()
         let opened = appManagementSettingsOpener()
         operation.finish(opened ? "opened" : "failed", level: opened ? .info : .warning)
         // Visiting Settings is not evidence that consent was granted. No retry runs here.

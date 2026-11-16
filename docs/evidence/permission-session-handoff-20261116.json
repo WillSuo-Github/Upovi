@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-16",
+  "publicReleaseObserved": {
+    "build": "202611140003",
+    "commit": "ed048fcc5c2dfeccc8da5658ab4dae1b9e555e5a",
+    "publishedAt": "2026-11-14T10:34:23Z",
+    "containsStoreOwnedBatchSession": false
+  },
+  "scope": [
+    "Probe-only verification through the production batch session and Store application owner",
+    "Backup maintenance participates in host installation busy state before suspending",
+    "New denial recording no longer erases the current per-target verification results"
+  ],
+  "validation": {
+    "coreTests": 344,
+    "applicationWorkflowTests": 71,
+    "failures": 0,
+    "xcodeReleaseBuild": "passed",
+    "runtimeLogChecks": {
+      "probeSessionPurpose": true,
+      "probeCancellation": true,
+      "maintenanceStart": true,
+      "maintenanceCompletion": true,
+      "maintenanceFailure": true,
+      "denialClassification": true,
+      "sensitiveFixtureRedacted": true
+    },
+    "diagnosticRetentionRedactionAndExportRegression": "UpoviLogTests and DiagnosticTests included in full suite"
+  },
+  "limits": [
+    "No native privileged or TCC permission execution performed in this task",
+    "The affected second Mac was not accessible; its exact failure attribution still requires its diagnostic bundle",
+    "No public release, installation, signing identity change, or version allocation performed"
+  ],
+  "preservedExistingWork": [
+    "Permission guidance and historical access evidence",
+    "Store-owned batch session repair",
+    "iStat Menus build mapping and trust tests",
+    "Release metadata and prior validation evidence"
+  ]
+}

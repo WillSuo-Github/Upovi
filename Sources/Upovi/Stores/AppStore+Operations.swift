@@ -9,6 +9,7 @@ extension AppStore {
         monitoringTask = Task { [weak self] in
             guard let self else { return }
             await maintainApplicationBackups()
+            offerAppManagementIntroduction()
             await refreshInstallations()
             while !Task.isCancelled {
                 policyClock = Date()
@@ -180,11 +181,14 @@ extension AppStore {
     }
     func maintainApplicationBackups(force: Bool = false) async {
         guard automaticBackupMaintenanceEnabled, !installationBusy, force || lastBackupMaintenance.map({ Date().timeIntervalSince($0) >= 3600 }) ?? true else { return }
+        backupMaintenanceRunning = true
+        defer { backupMaintenanceRunning = false }
         lastBackupMaintenance = Date()
+        let operation = UpoviLogOperation("backup.hostMaintenance", category: .recovery)
         do {
-            let report = try await installer.maintainBackups()
-            UpoviLog.recovery.info("event=backup.hostMaintenance archived=\(report.archived) discarded=\(report.discarded) protected=\(report.protected) failed=\(report.failed)")
-        } catch { recordDiagnostic(.backupCleanup, error: error) }
+            let report = try await UpoviDiagnosticContext.$operationID.withValue(operation.id) { try await performBackupMaintenance() }
+            operation.finish(details: "archived=\(report.archived) discarded=\(report.discarded) protected=\(report.protected) failed=\(report.failed)")
+        } catch { operation.fail(error); recordDiagnostic(.backupCleanup, error: error) }
     }
     func refreshInstallations() async {
         do {

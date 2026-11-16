@@ -1,6 +1,56 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "上次应用写入访问成功": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last Application Write Access Succeeded"
+          }
+        }
+      }
+    },
+    "上次访问成功": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last Access Succeeded"
+          }
+        }
+      }
+    },
+    "这是上次访问的记录，不代表实时系统权限。正常更新无需重复验证；发生新的访问失败时再检查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These are past access results, not a live permission status. Normal updates need no repeated verification. Review access only after a new failure."
+          }
+        }
+      }
+    },
+    "此前失败的更新待重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous Updates Await Retry"
+          }
+        }
+      }
+    },
+    "历史失败不代表当前未授权。可直接重新检查并确认更新，无需重复验证权限。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Past failures do not mean permission is currently missing. Recheck and confirm the updates directly; no repeated access verification is needed."
+          }
+        }
+      }
+    },
     "访问已验证，可以重新检查更新": {
       "localizations": {
         "en": {

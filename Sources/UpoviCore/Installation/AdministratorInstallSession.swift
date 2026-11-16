@@ -10,9 +10,10 @@ public struct AdministratorInstallSession: Codable, Sendable {
     public let requestsPath: String
     public let items: [BulkUpdateItem]
     public let hostTeam: String
+    public let permissionProbe: Bool?
     public var results: URL { URL(fileURLWithPath: "/private/var/tmp/Upovi-session-\(id.uuidString)") }
 
-    public init(items: [BulkUpdateItem], requests: URL, hostTeam: String) {
+    public init(items: [BulkUpdateItem], requests: URL, hostTeam: String, permissionProbe: Bool = false) {
         id = UUID(); userID = getuid(); parentPID = getpid()
         requestsPath = (try? CanonicalFilePath.resolve(requests)) ?? requests.path
         self.items = items.map { item in
@@ -21,6 +22,7 @@ public struct AdministratorInstallSession: Codable, Sendable {
             return .init(application: item.application, candidate: candidate, manualReason: item.manualReason)
         }
         self.hostTeam = hostTeam
+        self.permissionProbe = permissionProbe ? true : nil
     }
 
     public enum Request: Codable, Sendable {
@@ -44,6 +46,11 @@ public struct AdministratorInstallSession: Codable, Sendable {
             throw PeerError.invalid("Invalid installation session")
         }
         _ = try AdministratorAuthorization.requirement(hostTeam: hostTeam)
+        if permissionProbe == true {
+            guard items.count <= 20, items.allSatisfy({ $0.application.isAppStore && $0.candidate.storeReceiptRecovery == nil && $0.candidate.version == $0.application.version }) else {
+                throw PeerError.invalid("Access verification only accepts Store permission probes")
+            }
+        }
         for item in items {
             guard item.canInstall, !item.candidate.isCommunity else { throw PeerError.invalid("Unconfirmed installation session item") }
             if item.application.isAppStore {
@@ -67,7 +74,7 @@ public struct AdministratorInstallSession: Codable, Sendable {
             let operation: AdministratorInstallPlan.Operation = candidate.download?.url.pathExtension.lowercased() == "pkg" ? .package : .application
             let incoming = InstalledApp(name: plan.application.name, bundleID: plan.application.bundleID,
                 version: plan.version, build: plan.build, path: plan.application.path, teamID: plan.application.teamID)
-            guard !item.application.isAppStore, plan.operation == operation,
+            guard permissionProbe != true, !item.application.isAppStore, plan.operation == operation,
                   BundleVerifier.matchesSelectedVersion(incoming, replacing: item.application, expectedVersion: candidate.version,
                     expectedBuild: candidate.build, buildIsAuthoritative: candidate.comparesUsingBuild, allowPrerelease: candidate.releaseChannel == .beta),
                   (plan.permitsPrerelease == true) == (candidate.releaseChannel == .beta) else {
@@ -76,6 +83,7 @@ public struct AdministratorInstallSession: Codable, Sendable {
         case .store(let plan):
             try plan.validate()
             guard item.application.isAppStore, plan.userID == userID, plan.storeID == candidate.appStoreID,
+                  (plan.permissionProbe == true) == (permissionProbe == true),
                   plan.version == candidate.version, plan.receiptRecovery == candidate.storeReceiptRecovery else {
                 throw PeerError.invalid("Store installation is outside the authorized selection")
             }
@@ -105,9 +113,46 @@ public struct AdministratorInstallSession: Codable, Sendable {
             /bin/chmod -R go-w "$work"
             /usr/bin/codesign --verify --strict --all-architectures -R \(q(try AppStoreUpdatePlan.requirement(identifier: "app.upovi.StoreInstaller", hostTeam: hostTeam))) "$work/UpoviStoreInstaller.app"
             /usr/bin/codesign --verify --strict --all-architectures -R \(q(try AppStoreUpdatePlan.requirement(identifier: "app.upovi.StoreBridge", hostTeam: hostTeam))) "$work/UpoviStoreBridge"
+            console=$(/usr/bin/stat -f %u /dev/console)
+            [ "$console" = '\(userID)' ]
+            registry=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+            cleanup() {
+                /bin/launchctl asuser "$console" /usr/bin/sudo -u "#$console" "$registry" -u "$work/UpoviStoreInstaller.app" >/dev/null 2>&1 || true
+                /bin/rm -rf "$work"
+            }
+            trap cleanup EXIT
+            /bin/chmod 755 "$work"
+            /bin/chmod -R a+rX,go-w "$work/UpoviStoreInstaller.app"
+            /bin/launchctl asuser "$console" /usr/bin/sudo -u "#$console" "$registry" -f "$work/UpoviStoreInstaller.app" >/dev/null
+            # The session owner is also TCC's responsible process. Keep the existing
+            # consented application identity instead of a bare administrator binary.
+            /bin/launchctl asuser "$console" "$work/UpoviStoreInstaller.app/Contents/MacOS/UpoviStoreInstaller" --session "$work/session.json" "$work"
             """
+            return command
         }
         return command + "\n\"$work/UpoviInstaller\" --session \"$work/session.json\" \"$work\""
+    }
+
+    /// Both entry points accept the same protected manifest and typed capability.
+    /// A user-writable or linked manifest must never reach the root session server.
+    public static func serveProtectedManifest(_ manifest: URL, work: URL) async throws {
+        guard geteuid() == 0, work.deletingLastPathComponent().path == "/private/var/tmp",
+              work.lastPathComponent.hasPrefix("upovi-authorized."),
+              manifest == work.appending(path: "session.json") else { throw PeerError.invalid("Invalid protected session location") }
+        for url in [work, manifest] {
+            let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
+            guard try CanonicalFilePath.resolve(url) == url.path,
+                  (attrs[.ownerAccountID] as? NSNumber)?.uint32Value == 0,
+                  ((attrs[.posixPermissions] as? NSNumber)?.intValue ?? 0o777) & 0o022 == 0,
+                  attrs[.type] as? FileAttributeType == (url == work ? .typeDirectory : .typeRegular) else {
+                throw PeerError.invalid("Unprotected installation session")
+            }
+        }
+        guard (try manifest.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) <= 2_000_000 else {
+            throw PeerError.invalid("Invalid session manifest size")
+        }
+        let session = try JSONDecoder().decode(Self.self, from: Data(contentsOf: manifest))
+        try await session.serve(work: work)
     }
 
     /// Read through a pinned directory descriptor; never follow user-controlled links or devices.

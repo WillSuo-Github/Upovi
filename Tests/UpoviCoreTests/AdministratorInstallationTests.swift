@@ -159,14 +159,35 @@ extension AdministratorInstallationTests {
 }
 
 extension AdministratorInstallationTests {
-    private func sessionFixture(store: Bool = false) throws -> (AdministratorInstallSession, BulkUpdateItem) {
+    private func sessionFixture(store: Bool = false, permissionProbe: Bool = false) throws -> (AdministratorInstallSession, BulkUpdateItem) {
         let directory = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appending(path: "Upovi-session-test-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
-        let candidate = UpdateCandidate(version: "2.0", build: "2", source: "Fixture", isCommunity: false, url: nil,
+        let candidate = UpdateCandidate(version: permissionProbe ? "1.0" : "2.0", build: "2", source: "Fixture", isCommunity: false, url: nil,
             download: store ? nil : .init(url: URL(string: "https://example.invalid/app.zip")!, sha256: String(repeating: "a", count: 64)), appStoreID: store ? 123 : nil)
         let item = BulkUpdateItem(application: app(appStore: store), candidate: candidate, manualReason: nil)
-        return (AdministratorInstallSession(items: [item], requests: directory, hostTeam: "SYNTHETIC1"), item)
+        return (AdministratorInstallSession(items: [item], requests: directory, hostTeam: "SYNTHETIC1", permissionProbe: permissionProbe), item)
+    }
+    func testAccessVerificationUsesStoreSessionButCannotAuthorizeInstallationsOrReceiptRepair() throws {
+        let (probe, item) = try sessionFixture(store: true, permissionProbe: true)
+        try probe.validate()
+        var plan = AppStoreUpdatePlan(application: item.application, storeID: 123, version: item.candidate.version, userID: probe.userID)
+        XCTAssertThrowsError(try probe.validate(.store(plan), index: 0), "A probe session cannot start a Store update")
+        plan.permissionProbe = true
+        XCTAssertNoThrow(try probe.validate(.store(plan), index: 0))
+        let command = try probe.bootstrap(helper: URL(fileURLWithPath: "/fixture/UpoviInstaller"),
+            storeHelper: URL(fileURLWithPath: "/fixture/UpoviStoreInstaller.app"), bridge: URL(fileURLWithPath: "/fixture/UpoviStoreBridge"))
+        XCTAssertTrue(command.hasSuffix("/bin/launchctl asuser \"$console\" \"$work/UpoviStoreInstaller.app/Contents/MacOS/UpoviStoreInstaller\" --session \"$work/session.json\" \"$work\""))
+        let (install, _) = try sessionFixture(store: true)
+        XCTAssertThrowsError(try install.validate(.store(plan), index: 0), "An installation session must not silently accept a probe result")
+        let (ordinaryProbe, _) = try sessionFixture(permissionProbe: true)
+        XCTAssertThrowsError(try ordinaryProbe.validate())
+        let recovery = StoreReceiptRecovery(transactionID: UUID(), path: "/private/var/folders/fixture/receipt")
+        var repair = AppStoreUpdatePlan(application: item.application, storeID: 123, version: item.candidate.version, userID: probe.userID, receiptRecovery: recovery)
+        repair.permissionProbe = true
+        XCTAssertThrowsError(try probe.validate(.store(repair), index: 0))
+        let decoded = try JSONDecoder().decode(AdministratorInstallSession.self, from: JSONEncoder().encode(probe))
+        XCTAssertEqual(decoded.permissionProbe, true)
     }
     func testSessionOnlyAcceptsConfirmedApplicationVersionAndInstallOperation() throws {
         let (session, item) = try sessionFixture()
@@ -196,6 +217,9 @@ extension AdministratorInstallationTests {
         XCTAssertThrowsError(try session.validate(request(userID: session.userID + 1), index: 0))
         XCTAssertThrowsError(try session.validate(request(version: "3.0"), index: 0))
         XCTAssertThrowsError(try session.validate(request(recovery: .init(transactionID: UUID(), path: "/private/var/folders/fixture/receipt")), index: 0))
+        var probe = AppStoreUpdatePlan(application: item.application, storeID: 123, version: item.candidate.version, userID: session.userID)
+        probe.permissionProbe = true
+        XCTAssertThrowsError(try session.validate(.store(probe), index: 0))
     }
     func testSessionBootstrapFreezesSelectionAndVerifiesHelpersBeforeStarting() throws {
         let (session, _) = try sessionFixture(store: true)
@@ -205,9 +229,19 @@ extension AdministratorInstallationTests {
         XCTAssertTrue(command.contains("identifier \"app.upovi.Installer\""))
         XCTAssertTrue(command.contains("identifier \"app.upovi.StoreInstaller\""))
         XCTAssertTrue(command.contains("identifier \"app.upovi.StoreBridge\""))
-        XCTAssertTrue(command.hasSuffix("\"$work/UpoviInstaller\" --session \"$work/session.json\" \"$work\""))
-        XCTAssertFalse(command.contains("sudo"))
+        XCTAssertTrue(command.hasSuffix("/bin/launchctl asuser \"$console\" \"$work/UpoviStoreInstaller.app/Contents/MacOS/UpoviStoreInstaller\" --session \"$work/session.json\" \"$work\""))
+        XCTAssertTrue(command.contains("\"$registry\" -f \"$work/UpoviStoreInstaller.app\""))
+        XCTAssertTrue(command.contains("\"$registry\" -u \"$work/UpoviStoreInstaller.app\""))
+        XCTAssertTrue(command.contains("/bin/chmod 600 \"$work/session.json\""))
+        XCTAssertFalse(command.contains("\n\"$work/UpoviInstaller\" --session"), "A bare session owner changes TCC's responsible identity")
         _ = try JSONDecoder().decode(AdministratorInstallSession.self, from: JSONEncoder().encode(session))
+    }
+    func testApplicationOnlySessionKeepsItsTypedAdministratorRoute() throws {
+        let (session, _) = try sessionFixture()
+        let command = try session.bootstrap(helper: URL(fileURLWithPath: "/fixture/UpoviInstaller"),
+            storeHelper: URL(fileURLWithPath: "/fixture/UpoviStoreInstaller.app"), bridge: URL(fileURLWithPath: "/fixture/UpoviStoreBridge"))
+        XCTAssertTrue(command.hasSuffix("\"$work/UpoviInstaller\" --session \"$work/session.json\" \"$work\""))
+        XCTAssertFalse(command.contains("lsregister"))
     }
     func testSessionRequestReaderRejectsSymlinksDevicesAndOversizedInputs() throws {
         let (session, _) = try sessionFixture()

@@ -116,7 +116,7 @@ extension AppStore {
     }
 
     private var canStartBulkUpdates: Bool {
-        bulkUpdatePresented && !bulkHasRun && !installing && !checking && !toolChecking && !scanning && !refreshing
+        bulkUpdatePresented && !bulkHasRun && !installing && !backupMaintenanceRunning && !appManagementAccessChecking && !checking && !toolChecking && !scanning && !refreshing
             && bulkInstallableCount > 0 && !SelfUpdateService.shared.sessionInProgress
     }
 
@@ -289,7 +289,10 @@ extension AppStore {
             }
             saveBulkPhase(id, phase: .init(rawValue: outcome.status.rawValue) ?? .failed, detail: outcome.detail)
             if outcome.status == .installed { sourceResults[id] = nil }
-            if outcome.status == .installed || outcome.status == .current { resolveAppManagementBlock(id) }
+            if outcome.status == .installed || outcome.status == .current {
+                resolveAppManagementBlock(id)
+                recordSuccessfulAppManagementAccess(outcome.item.application)
+            }
             if outcome.status == .current {
                 sourceResults[id] = .init(appID: id, candidates: [], note: outcome.detail, status: .current,
                     checks: outcome.item.application.isAppStore ? [.init(.appStore, .checked)] : [], appStoreID: outcome.item.candidate.appStoreID)

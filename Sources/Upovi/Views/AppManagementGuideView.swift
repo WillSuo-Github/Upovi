@@ -19,7 +19,7 @@ struct AppManagementGuideView: View {
                 Image(systemName: verified ? "checkmark.shield.fill" : "lock.shield").font(.system(size: 32))
                     .foregroundStyle(verified ? .green : Theme.accent)
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(verified ? "应用写入访问已验证" : "设置更新权限").font(.title2.bold())
+                    Text(verified ? "上次应用写入访问成功" : "设置更新权限").font(.title2.bold())
                     Text("逐项查看状态，验证通过后再确认更新。检查更新无需授权。")
                         .font(.callout).foregroundStyle(.secondary)
                 }
@@ -38,7 +38,7 @@ struct AppManagementGuideView: View {
                           detail: String(localized: "在此处允许 Upovi 和 Upovi Installer。开关已开启仍报错时，请验证实际访问。"),
                           symbol: verified ? "checkmark.circle.fill" : (blocked ? "exclamationmark.circle.fill" : "circle.dashed"),
                           tint: verified ? .green : (blocked ? .orange : .secondary),
-                          status: verified ? String(localized: "已验证") : (blocked ? String(localized: "仍受阻") : String(localized: "待验证"))) {
+                          status: verified ? String(localized: "上次访问成功") : (blocked ? String(localized: "仍受阻") : String(localized: "待验证"))) {
                     Button("打开设置") { openSettings() }.accessibilityIdentifier("app-management-open-settings")
                 }
             }
@@ -59,7 +59,7 @@ struct AppManagementGuideView: View {
                             }
                         }
                     }
-                    Text("结果仅代表本次已测试的应用；系统权限改变后需重新验证。")
+                    Text("这是上次访问的记录，不代表实时系统权限。正常更新无需重复验证；发生新的访问失败时再检查。")
                         .font(.caption).foregroundStyle(.secondary)
                 }.accessibilityIdentifier("app-management-access-results")
             }
@@ -130,15 +130,15 @@ struct AppManagementNotice: View {
             Image(systemName: store.appManagementBlockedAccessVerified ? "checkmark.shield.fill" : "lock.trianglebadge.exclamationmark")
                 .foregroundStyle(store.appManagementBlockedAccessVerified ? .green : .orange)
             VStack(alignment: .leading, spacing: 3) {
-                Text(store.appManagementBlockedAccessVerified ? "访问已验证，可以重新检查更新" : "部分应用的安装器访问未通过").font(.callout.weight(.semibold))
-                Text(store.appManagementBlockedAccessVerified ? "此前失败的更新尚未重试。重新检查并确认后才会安装。" : "可查看权限并验证实际访问。此前失败的更新仍需重新检查和确认。")
+                Text("此前失败的更新待重试").font(.callout.weight(.semibold))
+                Text("历史失败不代表当前未授权。可直接重新检查并确认更新，无需重复验证权限。")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
-            Button(store.appManagementBlockedAccessVerified ? "重新检查受阻项…" : "查看权限…") {
-                if store.appManagementBlockedAccessVerified { store.reviewAppManagementBlockedUpdates() }
-                else { store.presentAppManagementHelp() }
-            }.disabled(store.appManagementBlockedAccessVerified ? store.operationBusy : store.installationBusy)
+            Button("查看权限…") { store.presentAppManagementHelp() }
+                .disabled(store.installationBusy).buttonStyle(PillButtonStyle()).fixedSize()
+            Button("重新检查受阻项…") { store.reviewAppManagementBlockedUpdates() }
+                .disabled(store.operationBusy || store.appManagementRetryRecord == nil)
                 .buttonStyle(PillButtonStyle()).fixedSize()
         }
         .padding(16).modifier(UpdatesSurface()).accessibilityIdentifier("app-management-notice")

@@ -15,13 +15,7 @@ struct UpoviInstaller {
             if CommandLine.arguments.count == 4, CommandLine.arguments[1] == "--session" {
                 let manifest = URL(fileURLWithPath: CommandLine.arguments[2])
                 let work = URL(fileURLWithPath: CommandLine.arguments[3])
-                try requireRootOwnership(work)
-                try requireRootOwnership(manifest)
-                let attributes = try files.attributesOfItem(atPath: manifest.path)
-                guard attributes[.type] as? FileAttributeType == .typeRegular,
-                      (attributes[.size] as? NSNumber)?.intValue ?? Int.max <= 2_000_000 else { throw PeerError.invalid("Invalid session manifest") }
-                let session = try JSONDecoder().decode(AdministratorInstallSession.self, from: Data(contentsOf: manifest))
-                try await session.serve(work: work)
+                try await AdministratorInstallSession.serveProtectedManifest(manifest, work: work)
                 return
             }
             guard CommandLine.arguments.count == 2 else { throw PeerError.invalid("Administrator authorization is required") }

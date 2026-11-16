@@ -152,6 +152,7 @@ struct InstallationAuthorization: Sendable {
 /// One upfront authorization and live submissions as each unprivileged download finishes.
 @MainActor
 final class InstallationAuthorizationBatch {
+    let permissionProbe: Bool
     struct Job: Sendable {
         let item: BulkUpdateItem
         let operation: @MainActor @Sendable (InstallationAuthorization) async throws -> Void
@@ -170,13 +171,14 @@ final class InstallationAuthorizationBatch {
     private let startOverride: (@MainActor @Sendable ([BulkUpdateItem]) async throws -> Void)?
     private let submitOverride: (@MainActor @Sendable (AdministratorInstallSession.Request) async throws -> Data)?
 
-    init(start: (@MainActor @Sendable ([BulkUpdateItem]) async throws -> Void)? = nil,
+    init(permissionProbe: Bool = false, start: (@MainActor @Sendable ([BulkUpdateItem]) async throws -> Void)? = nil,
          submit: (@MainActor @Sendable (AdministratorInstallSession.Request) async throws -> Data)? = nil) {
+        self.permissionProbe = permissionProbe
         startOverride = start; submitOverride = submit
     }
 
     func start(_ items: [BulkUpdateItem]) async throws {
-        let operation = UpoviLogOperation("authorization.batch", category: .authorization, details: "items=\(items.count)")
+        let operation = UpoviLogOperation("authorization.batch", category: .authorization, details: "items=\(items.count) purpose=\(permissionProbe ? "accessVerification" : "installation")")
         try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
             do { try await startSession(items); operation.finish("ready") }
             catch { operation.fail(error); throw error }
@@ -190,10 +192,11 @@ final class InstallationAuthorizationBatch {
             throw PeerError.unavailable("Use a complete Developer ID signed Upovi bundle for administrator installation")
         }
         try FileManager.default.createDirectory(at: requests, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
-        let session = AdministratorInstallSession(items: items, requests: requests, hostTeam: team)
+        let session = AdministratorInstallSession(items: items, requests: requests, hostTeam: team, permissionProbe: permissionProbe)
         try session.validate()
         self.session = session
-        UpoviLog.authorization.info("event=session.launch session=\(session.id) selectedItems=\(session.items.count)")
+        let route = session.items.contains { $0.application.isAppStore } ? "storeApplication" : "administratorTool"
+        UpoviLog.authorization.info("event=session.launch session=\(session.id) selectedItems=\(session.items.count) route=\(route)")
         let command = try session.bootstrap(helper: helper,
             storeHelper: Bundle.main.bundleURL.appending(path: "Contents/Helpers/UpoviStoreInstaller.app"),
             bridge: Bundle.main.bundleURL.appending(path: "Contents/MacOS/UpoviStoreBridge"))

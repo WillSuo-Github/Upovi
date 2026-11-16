@@ -80,7 +80,7 @@ final class AppStore {
     @ObservationIgnored var bulkTask: Task<Void, Never>?
     @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
-        installing || appManagementAccessChecking || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
+        installing || backupMaintenanceRunning || appManagementAccessChecking || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
             || administratorRestoreConfirmation != nil || administratorCleanupConfirmation != nil || backupDeletionConfirmation != nil
             || bulkUpdating || (bulkUpdatePresented && !bulkHasRun)
     }
@@ -175,6 +175,8 @@ final class AppStore {
     @ObservationIgnored var checkTask: Task<Void, Never>?
     @ObservationIgnored private var initialCheckStarted = false
     @ObservationIgnored let automaticBackupMaintenanceEnabled: Bool
+    var backupMaintenanceRunning = false
+    @ObservationIgnored var performBackupMaintenance: @Sendable () async throws -> BackupMaintenanceReport
     @ObservationIgnored var lastBackupMaintenance: Date?
     @ObservationIgnored var monitoringTask: Task<Void, Never>?
     @ObservationIgnored let pathMonitor = NWPathMonitor()
@@ -194,7 +196,14 @@ final class AppStore {
         self.downloadCenter = DownloadCenterService(coordinator: installer.downloads)
         self.preferences = preferences
         self.automaticBackupMaintenanceEnabled = automaticBackupMaintenanceEnabled ?? (preferences === AppPreferences.shared)
+        self.performBackupMaintenance = { try await installer.maintainBackups() }
         appManagementBlockedIDs = Set(preferences.stringArray(forKey: Self.appManagementBlockedKey) ?? [])
+        if let data = preferences.data(forKey: Self.appManagementEvidenceKey), data.count <= 65536,
+           let evidence = try? JSONDecoder().decode(AppManagementAccessEvidence.self, from: data),
+           evidence.checks.count <= 20 {
+            appManagementAccessChecks = evidence.checks
+            appManagementAccessCheckedAt = evidence.checks.isEmpty ? nil : evidence.checkedAt
+        }
         sourceResultCache = SourceResultCache(data: preferences.data(forKey: "sourceResultCacheV1"))
         self.administrator = AdministratorInstallationService(downloads: installer.downloads)
         self.installer = installer; self.scanApplications = scanApplications; self.checkApplication = checkApplication
