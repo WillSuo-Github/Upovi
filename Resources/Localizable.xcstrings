@@ -1383,18 +1383,18 @@
         }
       }
     },
-    "未查到与此安装完全匹配且兼容的商店版本，可能受商店地区、下架或系统要求影响。请在 App Store 中确认；其他应用的检测结果不受影响。": {
+    "未查到此应用的匹配商店版本。请检查 App Store 当前登录的账号及其国家或地区；若曾切换，请切回下载此应用时使用的账号和地区后重试。应用下架或系统要求也可能影响查询。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No exact compatible Store release was found for this installation. Store region, availability or system requirements may be involved. Check in the App Store; other apps’ check results are unaffected."
+            "value": "No matching Store release was found for this app. Check the account currently signed in to the App Store and its country or region. If you switched accounts or regions, switch back to those used to download this app and retry. App availability or system requirements may also affect this lookup."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "未查到與此安裝完全相符且相容的商店版本，可能受商店地區、下架或系統需求影響。請在 App Store 中確認；其他應用程式的檢查結果不受影響。"
+            "value": "未查到此應用程式的相符商店版本。請檢查 App Store 目前登入的帳號及其國家或地區；若曾切換，請切回下載此應用程式時使用的帳號和地區後重試。應用程式下架或系統需求也可能影響查詢。"
           }
         }
       }

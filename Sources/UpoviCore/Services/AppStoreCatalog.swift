@@ -130,7 +130,7 @@ public actor AppStoreCatalog {
                 if let hint = ManualUpdateSource.forStoreBundle(app.bundleID, storeID: entry.adamID) {
                     return .init(appID: app.id, candidates: [], note: hint.note, status: .unsupported, manualURL: hint.url, checks: [.init(.appStore, .manual)])
                 }
-                return .init(appID: app.id, candidates: [], note: String(localized: "未查到与此安装完全匹配且兼容的商店版本，可能受商店地区、下架或系统要求影响。请在 App Store 中确认；其他应用的检测结果不受影响。"), status: .failed,
+                return .init(appID: app.id, candidates: [], note: String(localized: "未查到此应用的匹配商店版本。请检查 App Store 当前登录的账号及其国家或地区；若曾切换，请切回下载此应用时使用的账号和地区后重试。应用下架或系统要求也可能影响查询。"), status: .failed,
                              checks: [.init(.appStore, .failed, error: PeerError.unavailable("No exact compatible Store release was confirmed"))])
             }
             let newer = VersionOrder.isNewer(version: target, than: app)
