@@ -15,3 +15,7 @@ Historical successful writes are retained as internal diagnostic evidence, not d
 The probe-only protocol remains available for internal isolated diagnostics and its safety tests. It is not reachable from the normal app UI. It accepts only typed write probes, cannot install or repair receipts, and is never launched automatically.
 
 Earlier releases and acceptance records describe the previous setup/verification interface. They remain historical evidence, not the current user flow. See [build 202611160001 release evidence](evidence/0.4.10-build-202611160001.json) for that published artifact; this interface correction is a subsequent change.
+
+## Publication
+
+The [signed universal build 202611160002](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611160002) publishes this on-demand access-help flow as Latest. Marketing version 0.4.10 is unchanged. Notarization, Gatekeeper, signed feed/archive, component signatures and public downloaded bytes passed verification. See [release evidence](evidence/0.4.10-build-202611160002.json).

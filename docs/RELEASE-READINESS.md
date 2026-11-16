@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611160002
+
+Upovi no longer presents a permission setup sheet at launch or after failed updates, and the independent Verify Access action has been removed. Users confirm Update or Update All directly. Optional Access Help provides Settings/Finder links after a denied write without claiming that the system permission switch is off. Historical probe-only errors do not produce retry reminders, and revisiting Settings does not run a probe or start an installation.
+
+The clean committed product revision `38db72d90c8a5103337d936960e122f5b37a104d` passed 343 core tests, 68 application workflow tests and 41 Python tests with no failures. An isolated native fixture covered startup without a sheet, optional help without verification controls, synthetic write denials without a modal, explicit retry confirmation/cancellation and successful 2/2 retry with reminder cleanup. That fixture did not install a real Store update or change TCC permissions, and predates the final universal artifact rebuild.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611160002) is published as Latest with marketing version 0.4.10 unchanged. Both architectures, all ten Developer ID signatures, hardened runtime, secure timestamps, debugger-entitlement removal, Apple notarization, ticket stapling, Gatekeeper and signed Sparkle feed/archive verification passed. All five anonymous public downloads match the local verified bytes; fresh local/public extractions and the canonical latest feed/direct archive passed as well. Publication did not replace the normal installed Upovi or include uncommitted iStat changes. The affected second Mac, physical Intel runtime, genuine Sparkle self-replacement and real Store updates remain untested for this release. See [release evidence](evidence/0.4.10-build-202611160002.json) and [implementation/native validation](evidence/app-access-help-on-demand-20261116.json).
+
+---
+
 # Upovi 0.4.10 build 202611160001
 
 Permission verification now uses the same Store-owned protected session as Update All. Its capability accepts only write probes and cannot start installations or receipt repair. The host blocks new installation admission while startup/hourly backup maintenance is running, and denial recording preserves the latest per-application verification results. Historical access remains evidence of past writes, not a live system permission claim.
