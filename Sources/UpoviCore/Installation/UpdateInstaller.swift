@@ -100,7 +100,7 @@ public actor UpdateInstaller {
                 if let executable = Bundle(url: staged)?.executableURL { try MachOCompatibility.validate(executable) }
                 else { throw PeerError.invalid("Update has no application executable") }
                 // Downloads remain quarantined. A confirmed installation completes this state only
-                // after a fresh Developer ID and Gatekeeper check in ApplicationInstallation.
+                // after fresh signature and distribution trust checks in ApplicationInstallation.
                 let quarantine = "0081;\(String(Int(Date().timeIntervalSince1970), radix: 16));Upovi;\(UUID().uuidString)"
                 let status = quarantine.withCString { pointer in
                     setxattr(staged.path, "com.apple.quarantine", pointer, strlen(pointer), 0, 0)
@@ -231,7 +231,7 @@ public actor UpdateInstaller {
             if receipt.backupArchive == nil && receipt.displacedArchive == nil { try BundleVerifier.checkSignature(backup, like: receipt.application) }
             try BundleVerifier.checkSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         }
-        try BundleVerifier.checkDeveloperIDSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
+        try BundleVerifier.checkInstallationSignature(URL(fileURLWithPath: receipt.application.path), like: receipt.application)
         let running = await MainActor.run {
             NSWorkspace.shared.runningApplications.contains { $0.bundleURL.map { ApplicationRunningLocation.matches($0, installedPath: backup.path) } ?? false }
         }
@@ -268,7 +268,7 @@ public actor UpdateInstaller {
                 runningPaths.contains { ApplicationRunningLocation.matches(URL(fileURLWithPath: $0), installedPath: url.path) }
             }, verifyCurrent: { current in
                 guard let receipt = receipts.first(where: { $0.application.path == current.path }) else { throw PeerError.invalid("Unrecorded live application") }
-                try BundleVerifier.checkDeveloperIDSignature(URL(fileURLWithPath: current.path), like: receipt.application)
+                try BundleVerifier.checkInstallationSignature(URL(fileURLWithPath: current.path), like: receipt.application)
             })
         }.value
     }

@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 
-/// Completes a user-requested installation only after identity and Gatekeeper approval.
+/// Completes a user-requested installation only after identity and distribution trust checks.
 public enum ApplicationInstallation {
     public static func finalize(_ bundle: URL, matching expected: InstalledApp) async throws {
         try await finalize(bundle, validate: { url in
@@ -10,7 +10,7 @@ public enum ApplicationInstallation {
                   app.version == expected.version, app.build == expected.build else {
                 throw PeerError.invalid("Application changed before installation finalization")
             }
-            try BundleVerifier.checkDeveloperIDSignature(url, like: expected)
+            try BundleVerifier.checkInstallationSignature(url, like: expected)
         }, assess: { url in
             try await assess(url)
         })
@@ -24,16 +24,34 @@ public enum ApplicationInstallation {
         defer { try? FileManager.default.removeItem(at: workspace) }
         let output = workspace.appending(path: "assessment.txt")
         do {
+            try Task.checkCancellation()
             let data = try await ProcessCommand().run("/usr/sbin/spctl", ["--assess", "--type", "execute", "--verbose=2", bundle.path],
-                outputFile: output, maximumOutputBytes: 16384)
+                outputFile: output, environment: ProcessInfo.processInfo.environment.merging(["LC_ALL": "C"]) { _, value in value }, maximumOutputBytes: 16384)
             operation.finish("approved", details: "verdict=\(assessmentClassification(data))")
         } catch is CancellationError { operation.finish("cancelled"); throw CancellationError() }
         catch {
             let size = (try? output.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? Int.max
             let data = size <= 16384 ? ((try? Data(contentsOf: output)) ?? Data()) : Data()
+            // Only this exact tool result can use the independently reviewed Apple route.
+            // A revoked, unnotarized, unknown or otherwise rejected assessment still fails.
+            if isNotAppAssessmentFailure(error, data: data, bundle: bundle) {
+                do {
+                    if try ReviewedAppleSoftware.verifyIfReviewed(bundle) {
+                        operation.finish("reviewedAppleVerified", details: "verdict=notAppLike trust=reviewedAppleSoftware")
+                        return
+                    }
+                } catch {
+                    operation.fail(error)
+                    throw error
+                }
+            }
             operation.finish("rejected", details: "verdict=\(assessmentClassification(data)) \(UpoviDiagnosticContext.errorSummary(error))", level: .error)
             throw PeerError.invalid(String(localized: "macOS 安全检查未批准此更新。请使用官方更新器；若当前离线，请联网后重试。"))
         }
+    }
+    static func isNotAppAssessmentFailure(_ error: Error, data: Data, bundle: URL) -> Bool {
+        guard case PeerError.unavailable("System tool failed: spctl (3)") = error else { return false }
+        return data == Data("\(bundle.path): rejected (the code is valid but does not seem to be an app)\n".utf8)
     }
     /// Project fixed classifications only; never export raw assessment output or paths.
     static func assessmentClassification(_ data: Data) -> String {

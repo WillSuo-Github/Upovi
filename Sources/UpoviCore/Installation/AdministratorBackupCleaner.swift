@@ -56,7 +56,7 @@ public enum AdministratorBackupCleaner {
                 let current = AppScanner.read(URL(fileURLWithPath: stored.plan.application.path))
                 guard canDiscard(stored, current: current, acceptsNewer: true) else { continue }
                 _ = try discard(stored, in: job, current: current, validateCurrent: {
-                    try BundleVerifier.checkDeveloperIDSignature(URL(fileURLWithPath: stored.plan.application.path), like: stored.plan.application)
+                    try BundleVerifier.checkInstallationSignature(URL(fileURLWithPath: stored.plan.application.path), like: stored.plan.application)
                 }, save: { try save($0, job) })
                 cleaned.append(stored.id)
             } catch { continue }

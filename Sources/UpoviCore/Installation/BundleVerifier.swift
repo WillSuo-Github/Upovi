@@ -22,7 +22,7 @@ public enum BundleVerifier {
             } else { order = version }
         }
         guard order == .orderedSame || order == .orderedDescending else { return false }
-        try checkDeveloperIDSignature(target, like: app)
+        try checkInstallationSignature(target, like: app)
         guard let verified = AppScanner.read(target) else { return false }
         return verified.bundleID == current.bundleID && verified.teamID == current.teamID && !verified.isAppStore
             && verified.version == current.version && verified.build == current.build
@@ -31,6 +31,16 @@ public enum BundleVerifier {
     public static func checkDeveloperIDSignature(_ url: URL, like app: InstalledApp) throws {
         guard let team = ApplicationSourceCatalog.replacementTeam(for: app) else { throw PeerError.invalid("Invalid developer identity") }
         try checkDeveloperIDSignature(url, bundleID: app.bundleID, team: team)
+    }
+    /// Keep signature-only downloads on Developer ID; installation additionally supports
+    /// exact, independently reviewed Apple Software Signing releases.
+    public static func checkInstallationSignature(_ url: URL, like app: InstalledApp) throws {
+        guard let actual = AppScanner.read(url), !actual.isAppStore, !app.isAppStore,
+              actual.bundleID == app.bundleID, actual.teamID == ApplicationSourceCatalog.replacementTeam(for: app) else {
+            throw PeerError.invalid("Application installation signature identity mismatch")
+        }
+        if try ReviewedAppleSoftware.verifyIfReviewed(url) { return }
+        try checkDeveloperIDSignature(url, like: app)
     }
     private static func checkDeveloperIDSignature(_ url: URL, bundleID: String, team: String) throws {
         guard team.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil,

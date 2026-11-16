@@ -69,13 +69,17 @@ struct SourceInstallationAcceptance {
             evidence["archiveIntegrityVerified"] = prepared.archiveIntegrityVerified
             evidence["preparedVersion"] = prepared.replacement.version
             evidence["preparedBuild"] = prepared.replacement.build
-            evidence["gatekeeperPassed"] = true
+            evidence["distributionTrustPassed"] = true
             let receipt = try await installer.install(prepared.id)
             guard let installed = AppScanner.read(path), installed.version == prepared.replacement.version,
                   installed.build == prepared.replacement.build else { throw PeerError.invalid("Installed version mismatch") }
-            try BundleVerifier.checkDeveloperIDSignature(path, like: app)
+            try BundleVerifier.checkInstallationSignature(path, like: app)
             evidence["installedVersion"] = installed.version; evidence["installedBuild"] = installed.build
-            evidence["developerIDPassed"] = true; evidence["backupRetained"] = FileManager.default.fileExists(atPath: receipt.backupPath)
+            evidence["installationSignaturePassed"] = true
+            evidence["backupRetained"] = FileManager.default.fileExists(atPath: receipt.backupArchive?.path ?? receipt.backupPath)
+            try ApplicationInstallation.verifyFinalized(path)
+            evidence["installedQuarantineAbsent"] = true
+            evidence["selectedUpdateRecognizedAsInstalled"] = try BundleVerifier.selectedUpdateIsInstalled(app, candidate: item.candidate)
             evidence["installationPassed"] = true
             let records = await center.snapshot()
             evidence["downloadVerified"] = records.first?.state == .verified

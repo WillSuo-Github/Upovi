@@ -45,6 +45,8 @@ Internal access-verification diagnostics use that same session bootstrap and Sto
 
 Host backup maintenance participates in the installation-busy state before its first suspension, preventing startup/hourly cleanup from overlapping a newly confirmed update. `operation=backup.hostMaintenance` records paired start and completion/failure/cancellation events and passes its correlation context to the installer. The busy state is released on all terminal paths; maintenance never starts downloads or installations.
 
+For the exact reviewed Apple Software Signing releases documented in `INSTALLATION-FINALIZATION.md`, `gatekeeper.assess event=reviewedAppleVerified verdict=notAppLike trust=reviewedAppleSoftware` records successful independent signature/hash validation after the bounded not-app tool result. It does not claim Gatekeeper approval. Rejection, signature/hash failures and cancellation retain their separate terminal events; raw assessment output and paths remain excluded.
+
 ## Privacy and future instrumentation
 
 Use `UpoviLog.<category>.<level>` for state transitions and `UpoviLogOperation` for paired asynchronous work. `UpoviDiagnosticContext.operationID` links child work; detached installer verification uses the context-preserving helper. Correlate `request`/`parent`, batch/download/transaction IDs and `app=` rather than dumping objects. Source identities exclude URL credentials/query/fragment before hashing, and origin families avoid exporting private server hosts or repository paths.

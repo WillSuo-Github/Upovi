@@ -1,0 +1,106 @@
+{
+  "checkedAt": "2026-11-16T09:59:25.350283+00:00",
+  "sourceRevisionBeforeChange": "387a442c4afe288ca0f2f2f5fd49ffdc7190fda8",
+  "status": "local fix validation before release preparation",
+  "hostSystem": "27.2.1",
+  "hostBuild": "26B131",
+  "reportedRemoteSystem": "27.2.1 (26B131); not directly accessed",
+  "artifacts": [
+    {
+      "url": "https://devimages-cdn.apple.com/design/resources/download/Icon-Composer-1.1.dmg",
+      "version": "1.1",
+      "build": "59",
+      "archiveSHA256": "7c60d4fdedc1e9c7af26f583a3a311bf9dba2ffbb9a2af957cbb6aff499164af",
+      "executableSHA256": "99e1891f62bbcaf0363b79e0ff468de5ebe0bde7c30b6d08e2392b8591ffb1ac"
+    },
+    {
+      "url": "https://devimages-cdn.apple.com/design/resources/download/Icon-Composer-1.2.dmg",
+      "version": "1.2",
+      "build": "76",
+      "archiveSHA256": "dce4d78a615e543832fb2cdca3b28a31355cf21d57b6b4ab96f5b278ed7d5af6",
+      "executableSHA256": "56c80b894211187f131420d0d463dca0300964d5ed10447a491ce080f8cb146f",
+      "archiveMatchesLiveHomebrewSHA256": true
+    }
+  ],
+  "identity": {
+    "bundleID": "com.apple.IconComposer",
+    "teamID": "59GAB85EFG",
+    "anchor": "Apple Software Signing",
+    "minimumMacOS": "15.3",
+    "CFBundlePackageType": "absent"
+  },
+  "assessment": {
+    "officialBundles": "exit 3: code is valid but does not seem to be an app",
+    "systemGatekeeperApproval": false,
+    "compatibilityPolicy": "Exact reviewed release and executable hash plus strict Apple anchor signature, all architectures, nested code, sealed resources and enforced revocation checks; only the exact not-app tool result permits this independent route"
+  },
+  "acceptance": {
+    "archiveIntegrityVerified": true,
+    "backupRetained": true,
+    "bundleID": "com.apple.IconComposer",
+    "distributionTrustPassed": true,
+    "downloadVerified": true,
+    "installationPassed": true,
+    "installationSignaturePassed": true,
+    "installedBuild": "76",
+    "installedQuarantineAbsent": true,
+    "installedVersion": "1.2",
+    "isolatedCopiesOnly": true,
+    "legacyOfficialIdentityVerified": false,
+    "originalBuild": "59",
+    "originalTeamID": "59GAB85EFG",
+    "originalVersion": "1.1",
+    "postInstallSourceStatus": "current",
+    "postInstallUpdateCount": 0,
+    "preparedBuild": "76",
+    "preparedVersion": "1.2",
+    "restoredBuild": "59",
+    "restoredVersion": "1.1",
+    "restorePassed": true,
+    "selectedUpdateRecognizedAsInstalled": true,
+    "sourceStatus": "updates",
+    "systemComponentsTested": false
+  },
+  "validation": {
+    "fullSwiftTests": {
+      "passed": 350,
+      "failed": 0
+    },
+    "finalFocusedTests": {
+      "passed": 6,
+      "failed": 0
+    },
+    "xcodeReleaseBuild": "passed; ad hoc signed local build only",
+    "official12Finalization": "passed",
+    "restored11InstallationSignature": "passed",
+    "backupMaintenanceBeforeAndAfterRestore": "passed",
+    "negativeTests": [
+      "mutated sealed resources rejected in direct verification, assessment and finalization",
+      "replaced executable with ad hoc signature rejected",
+      "other versions, builds, identifiers, teams and Store apps excluded from review",
+      "nonexact/revoked-output/cancelled/oversized tool results excluded from alternate route",
+      "cancelled assessment preserves quarantine",
+      "Developer ID-only download signature requirement not broadened"
+    ],
+    "diagnosticExport": {
+      "successFailureCancellation": "passed",
+      "retentionRedactionTests": "passed",
+      "exportedRawToolOutput": false,
+      "exportedLocalPaths": false,
+      "snapshotLogReferenceCorrelation": "passed",
+      "reviewedTrustMislabelledGatekeeperApproval": false
+    }
+  },
+  "limits": [
+    "Affected remote Mac not accessed",
+    "Actual administrator/PKG installation and Intel runtime not exercised",
+    "No user application, preference, privacy switch or system security policy modified",
+    "No new release allocated, notarized, pushed or published at validation time",
+    "Separate Soda Music App Store matching issue is not resolved by this change"
+  ],
+  "localEvidenceDirectory": ".local/apple-trust-fix-20261116",
+  "references": [
+    "https://developer.apple.com/documentation/security/errseccsnotapplike",
+    "https://developer.apple.com/icon-composer/"
+  ]
+}
