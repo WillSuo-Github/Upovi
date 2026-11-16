@@ -90,11 +90,13 @@ public enum ApplicationSourceCatalog {
     }
 
     /// Official iStat Menus ZIPs name patch releases that the signed app reports only through its build:
-    /// 7.50.1 contains 7.50 / 2356 and 7.50.2 contains 7.50 / 2394. Keep these exact reviewed packaging
+    /// 7.50.1 contains 7.50 / 2356, 7.50.2 contains 7.50 / 2394, and 7.50.3 contains 7.50 / 2395.
+    /// Keep these exact reviewed packaging
     /// exceptions instead of accepting arbitrary version mismatches or altering scanned versions.
     static let reviewedBundleReleases: [String: (version: String, build: String)] = [
         "7.50.1": ("7.50", "2356"),
-        "7.50.2": ("7.50", "2394")
+        "7.50.2": ("7.50", "2394"),
+        "7.50.3": ("7.50", "2395")
     ]
     public static func bundleRelease(for app: InstalledApp, sourceVersion: String, download: URL?) -> (version: String, build: String)? {
         // Reviewed 2026-11-04: the official stable v26.10.0-0 arm64 DMG reports

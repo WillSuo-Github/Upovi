@@ -134,7 +134,7 @@ final class DownloadTrustTests: XCTestCase {
         XCTAssertEqual(refreshed.status, .current)
         XCTAssertTrue(refreshed.candidates.isEmpty)
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.2", download: official))
-        XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.3", download: URL(string: "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.3.zip")))
+        XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.4", download: URL(string: "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.4.zip")))
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: app(team: "OTHERTEAM1"), sourceVersion: "7.50.1", download: official))
         XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: old, sourceVersion: "7.50.1", download: URL(string: "https://example.com/Other.zip")))
     }
@@ -153,6 +153,38 @@ final class DownloadTrustTests: XCTestCase {
         let refreshed = await UpdateChecker.check(downloaded, fetch: { _, _ in payload }, catalog: { _ in nil })
         XCTAssertEqual(refreshed.status, .current)
         XCTAssertTrue(refreshed.candidates.isEmpty)
+    }
+    func testReviewed7503PackagingUpgrades2394AndStopsOfferingItAfter2395() async throws {
+        let source = URL(string: "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.3.zip")!
+        let payload = Data(#"{"token":"istat-menus","version":"7.50.3","url":"https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.3.zip","sha256":"no_check","artifacts":[{"app":["iStat Menus.app"]}]}"#.utf8)
+        let base = app()
+        func installed(_ build: String) -> InstalledApp {
+            .init(name: base.name, bundleID: base.bundleID, version: "7.50", build: build, path: base.path, teamID: base.teamID)
+        }
+        let previous = installed("2394")
+        let result = await UpdateChecker.check(previous, fetch: { _, _ in payload }, catalog: { _ in nil })
+        let target = try XCTUnwrap(result.candidates.first)
+        XCTAssertEqual(target.version, "7.50")
+        XCTAssertEqual(target.build, "2395")
+        XCTAssertEqual(target.download?.url, source)
+        XCTAssertTrue(target.releaseNotes?.contains("7.50.3") == true)
+        XCTAssertTrue(BundleVerifier.matchesSelectedVersion(installed("2395"), replacing: previous,
+            expectedVersion: target.version, expectedBuild: target.build, buildIsAuthoritative: target.comparesUsingBuild))
+        for wrongBuild in ["2394", "2396"] {
+            XCTAssertFalse(BundleVerifier.matchesSelectedVersion(installed(wrongBuild), replacing: previous,
+                expectedVersion: target.version, expectedBuild: target.build, buildIsAuthoritative: target.comparesUsingBuild))
+        }
+        for current in [installed("2395"), installed("2396")] {
+            let refreshed = await UpdateChecker.check(current, fetch: { _, _ in payload }, catalog: { _ in nil })
+            XCTAssertEqual(refreshed.status, .current)
+            XCTAssertTrue(refreshed.candidates.isEmpty, "A source alias must not cause repeated updates or downgrades")
+        }
+        XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: app(team: "OTHERTEAM1"), sourceVersion: "7.50.3", download: source))
+        XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: app(bundle: "com.lookalike"), sourceVersion: "7.50.3", download: source))
+        for invalid in [source.absoluteString + "?redirect=other", source.absoluteString.replacingOccurrences(of: "https:", with: "http:"),
+                        source.absoluteString.replacingOccurrences(of: "cdn.istatmenus.app", with: "example.invalid")] {
+            XCTAssertNil(ApplicationSourceCatalog.bundleRelease(for: previous, sourceVersion: "7.50.3", download: URL(string: invalid)))
+        }
     }
     func testVersionMismatchMessageNamesPackageAndOmitsEmptyBuild() {
         let base = app()

@@ -113,6 +113,9 @@ public enum UpdateChecker {
                 let sourceVersion = SourceVersion.normalize(pieces.first ?? "")
                 let download = metadata.download(for: app)
                 let identity = ApplicationSourceCatalog.bundleRelease(for: app, sourceVersion: sourceVersion, download: download?.url)
+                if let identity {
+                    UpoviLog.sources.info("event=source.bundleReleaseMapped \(UpoviDiagnosticContext.application(app)) sourceVersion=\(sourceVersion) bundleVersion=\(identity.version) bundleBuild=\(identity.build)")
+                }
                 let declaredBuild = pieces.count > 1 ? pieces[1] : ""
                 let numericBuild = declaredBuild.range(of: #"^\d+(?:\.\d+)*$"#, options: .regularExpression) != nil
                 // Some casks declare "short,full" while the signed app uses full for both version keys.

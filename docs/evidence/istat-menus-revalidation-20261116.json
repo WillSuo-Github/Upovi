@@ -1,0 +1,72 @@
+{
+  "validatedAt": "2026-11-16T09:08:27.043270+00:00",
+  "baseUpoviBuild": "202611160002",
+  "liveSource": {
+    "token": "istat-menus",
+    "version": "7.50.3",
+    "url": "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.3.zip",
+    "sha256": "no_check"
+  },
+  "freshOfficialPackageChecks": [
+    {
+      "sourceVersion": "7.50.2",
+      "bundleVersion": "7.50",
+      "bundleBuild": "2394",
+      "bundleID": "com.bjango.istatmenus",
+      "teamID": "Y93TK974AT",
+      "developerIDSignature": "passed",
+      "gatekeeper": "passed",
+      "archiveSHA256": "8c633ede51c431e0e9dcba864a2ac3499e9dc1c2ff5d849450b2b1e09c7d3d92",
+      "executableSHA256": "195bde023280391e2b692844350b77c558aa4c2e7ea419576c34d99df9986f24"
+    },
+    {
+      "sourceVersion": "7.50.3",
+      "bundleVersion": "7.50",
+      "bundleBuild": "2395",
+      "bundleID": "com.bjango.istatmenus",
+      "teamID": "Y93TK974AT",
+      "developerIDSignature": "passed",
+      "gatekeeper": "passed",
+      "archiveSHA256": "e477dc76606a6181697652ead6f3ce977e716b878165ac1aa945cc470b9ce25d",
+      "executableSHA256": "f015244efa0e7b9656cf949a75a800f321b6024a620cf1688a6fed40d69900b3"
+    }
+  ],
+  "roundtrip": {
+    "upgrade": "2394 -> 2395",
+    "livePostInstallStatus": "current",
+    "remainingUpdates": 0,
+    "restore": "2395 -> 2394",
+    "restoredExecutableMatchesOfficialOldVersion": true,
+    "archives": [
+      {
+        "kind": "backupArchive",
+        "sha256": "c311f7df830e590aea1dca7d72393bb029144cd4ecfea6bae6ade76c3e7e32c2",
+        "crc": "passed",
+        "noIndexDirectory": true
+      },
+      {
+        "kind": "displacedArchive",
+        "sha256": "83e93b265cc9696c39c4855fb208150ec1c2e9179555857fb829f5ec7b1398f3",
+        "crc": "passed",
+        "noIndexDirectory": true
+      }
+    ],
+    "mappedReleaseDiagnostic": "passed",
+    "rawAcceptancePathRedaction": "passed"
+  },
+  "focusedTests": {
+    "core": 102,
+    "failures": 0
+  },
+  "scope": [
+    "Exact reviewed source label 7.50.3 maps to signed bundle 7.50 build 2395",
+    "Existing official-URL, bundle-ID, Team-ID and Developer ID/Gatekeeper checks remain required",
+    "Real UpdateChecker, download coordinator, UpdateInstaller and recovery run against isolated official copies"
+  ],
+  "limits": [
+    "No daily iStat application, helper, preferences or license data changed",
+    "No iStat process was launched",
+    "Physical Intel runtime and vendor system components were not exercised",
+    "This validation precedes the final committed universal release build"
+  ]
+}

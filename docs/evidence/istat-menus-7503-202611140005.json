@@ -1,0 +1,72 @@
+{
+  "validatedAt": "2026-11-14T11:12:34.371800+00:00",
+  "installedUpovi": {
+    "build": "202611140005",
+    "version": "0.4.10",
+    "sourceRevision": "55c388792c965fb6e1bef2a495fd6867dd704b02-dirty",
+    "previousSourceRevision": "55c388792c965fb6e1bef2a495fd6867dd704b02-dirty",
+    "nestedSignature": "passed",
+    "signingIdentity": "Developer ID Application: yanke li (NT9VR9C9HY)",
+    "distribution": "local repair, unpublished",
+    "installedExecutableSHA256": "3d6cce2f01f6e3ac9372d07b40615e7f4d4e21fa3271bcfe74217c5b58667ef8"
+  },
+  "verifiedOfficialPackage": {
+    "sourceURL": "https://cdn.istatmenus.app/files/istatmenus7/versions/iStatMenus7.50.3.zip",
+    "sourceVersion": "7.50.3",
+    "bundleID": "com.bjango.istatmenus",
+    "bundleVersion": "7.50",
+    "bundleBuild": "2395",
+    "teamID": "Y93TK974AT",
+    "developerIDSignature": "passed",
+    "gatekeeper": "passed",
+    "archiveSHA256": "e477dc76606a6181697652ead6f3ce977e716b878165ac1aa945cc470b9ce25d"
+  },
+  "before": {
+    "bundleID": "com.bjango.istatmenus",
+    "version": "7.50",
+    "build": "2394",
+    "executableSHA256": "195bde023280391e2b692844350b77c558aa4c2e7ea419576c34d99df9986f24"
+  },
+  "after": {
+    "bundleID": "com.bjango.istatmenus",
+    "version": "7.50",
+    "build": "2395",
+    "teamID": "Y93TK974AT",
+    "developerIDSignature": "passed",
+    "gatekeeper": "passed",
+    "executableSHA256": "f015244efa0e7b9656cf949a75a800f321b6024a620cf1688a6fed40d69900b3",
+    "matchesOfficialExecutable": true
+  },
+  "actualInstallation": {
+    "initiatedThrough": "Upovi Update button and verified-package confirmation",
+    "application": "iStat Menus",
+    "state": "installed",
+    "transaction": "855E6202-7D2D-4DAB-A48C-1E83B2C8BF0A",
+    "newVersion": "7.50",
+    "newBuild": "2395",
+    "additionalPrivilegeOrPrivacyConsent": false
+  },
+  "postInstallCheck": {
+    "triggeredThrough": "Upovi Refresh and Check",
+    "status": "current",
+    "homebrew": "checked",
+    "candidates": [],
+    "request": "A3357DB2-B899-4756-A497-2E5B0A91B159"
+  },
+  "recovery": {
+    "state": "installed",
+    "previousVersion": "7.50",
+    "previousBuild": "2394",
+    "archiveSHA256": "passed",
+    "archiveCRC": "passed",
+    "inNoIndexDirectory": true,
+    "rawBackupApplicationRemoved": true
+  },
+  "verification": {
+    "focusedSwiftTests": 85,
+    "pythonTests": 41,
+    "failures": 0,
+    "signatureAndGatekeeper": "passed"
+  },
+  "distribution": "Local signed repair installed; no commit, push, notarization or publication in this task."
+}
