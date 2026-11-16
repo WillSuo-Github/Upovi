@@ -116,7 +116,7 @@ extension AppStore {
     }
 
     private var canStartBulkUpdates: Bool {
-        bulkUpdatePresented && !bulkHasRun && !installing && !backupMaintenanceRunning && !appManagementAccessChecking && !checking && !toolChecking && !scanning && !refreshing
+        bulkUpdatePresented && !bulkHasRun && !installing && !backupMaintenanceRunning && !checking && !toolChecking && !scanning && !refreshing
             && bulkInstallableCount > 0 && !SelfUpdateService.shared.sessionInProgress
     }
 
@@ -131,7 +131,6 @@ extension AppStore {
             bulkRecordID = record.id
         } else { bulkRecordID = nil }
         bulkPersistenceFailed = false
-        appManagementDeniedDuringBatch = false
         bulkHasRun = true; bulkUpdating = true; installing = true; bulkStopRequested = false
         for item in bulkItems where item.canInstall { transfers[item.id] = TransferProgress() }
         // Progress now lives on the Updates page rows instead of the confirmation sheet.
@@ -186,7 +185,6 @@ extension AppStore {
             installing = false; bulkUpdating = false
             await maintainApplicationBackups(force: true)
             await refreshInstallations()
-            presentAppManagementHelpAfterBatch()
             if bulkItems.isEmpty, toolBatchItems.count == 1, bulkFailedCount == 0, hasUnselectedUpdates { dismissBulkSummary() }
             if networkEnabled { p2pBatchOffset = 0; restartP2P() }
         }
@@ -291,7 +289,7 @@ extension AppStore {
             if outcome.status == .installed { sourceResults[id] = nil }
             if outcome.status == .installed || outcome.status == .current {
                 resolveAppManagementBlock(id)
-                recordSuccessfulAppManagementAccess(outcome.item.application)
+                if outcome.status == .installed { recordSuccessfulAppManagementAccess(outcome.item.application) }
             }
             if outcome.status == .current {
                 sourceResults[id] = .init(appID: id, candidates: [], note: outcome.detail, status: .current,

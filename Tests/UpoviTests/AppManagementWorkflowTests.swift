@@ -23,43 +23,45 @@ import UpoviCore
             userInfo: [NSLocalizedDescriptionKey: "token=PERMISSION_SECRET /Users/PRIVATE_OWNER/Private.app"])))
     }
 
-    func testFirstLaunchCanBeSkippedAndDoesNotRequestAccessOrStartAnInstallation() throws {
-        let prefs = try preferences(), store = AppStore(preferences: prefs)
+    func testFreshLaunchAndLegacyFailureHistoryNeverPresentPermissionSetup() async throws {
+        let prefs = try preferences()
+        prefs.set(false, forKey: "appManagementGuideSeenV1")
+        prefs.set(["/Applications/Old Failure.app"], forKey: AppStore.appManagementBlockedKey)
+        let store = AppStore(preferences: prefs, scanApplications: { _ in [] }, revalidateSources: {})
         var settingsOpens = 0
         store.appManagementSettingsOpener = { settingsOpens += 1; return true }
-        store.offerAppManagementIntroduction()
-        XCTAssertEqual(store.appManagementGuide, .firstLaunch)
-        store.dismissAppManagementGuide()
-        store.offerAppManagementIntroduction()
+        store.startInitialCheck(); await store.checkTask?.value
         XCTAssertNil(store.appManagementGuide)
-        let restarted = AppStore(preferences: prefs)
-        restarted.offerAppManagementIntroduction()
-        XCTAssertNil(restarted.appManagementGuide)
-        XCTAssertEqual(settingsOpens, 0)
+        XCTAssertNil(store.appManagementRetryRecord, "Old probe denials without failed updates cannot produce a retry banner")
         XCTAssertNil(store.bulkTask); XCTAssertNil(store.installationTask)
-        XCTAssertTrue(store.appManagementBlockedIDs.isEmpty)
-        restarted.presentAppManagementHelp()
-        XCTAssertEqual(restarted.appManagementGuide, .settings)
+        XCTAssertEqual(settingsOpens, 0)
+        let restarted = AppStore(preferences: prefs, scanApplications: { _ in [] }, revalidateSources: {})
+        restarted.startInitialCheck(); await restarted.checkTask?.value
+        XCTAssertNil(restarted.appManagementGuide)
+        store.presentAppManagementHelp()
+        XCTAssertEqual(store.appManagementGuide, .settings, "Only the explicit help action opens the sheet")
     }
 
-    func testOpeningSettingsDoesNotClearDenialClaimConsentOrRetryAndFailureRemainsActionable() throws {
-        let store = AppStore(preferences: try preferences())
+    func testOpeningSettingsDoesNotClaimConsentClearHistoryOrStartWork() throws {
+        let prefs = try preferences(), store = AppStore(preferences: prefs)
         store.recordDiagnostic(.batchInstallation, appID: "/synthetic/private.app", error: denied())
+        XCTAssertNil(store.appManagementGuide)
+        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.store", version: "1",
+            path: "/Applications/Fixture.app", isAppStore: true)
+        store.recordSuccessfulAppManagementAccess(app)
         store.appManagementSettingsOpener = { false }
         XCTAssertFalse(store.openAppManagementSettings())
         store.appManagementSettingsOpener = { true }
         XCTAssertTrue(store.openAppManagementSettings())
         XCTAssertEqual(store.appManagementBlockedIDs, ["/synthetic/private.app"])
+        XCTAssertEqual(AppStore(preferences: prefs).appManagementAccessChecks.map(\.id), [app.id], "Opening Settings does not erase factual write history")
         XCTAssertNil(store.retryTask); XCTAssertNil(store.bulkTask); XCTAssertNil(store.installationTask)
         store.appManagementInstallerRevealer = { false }
         XCTAssertFalse(store.revealAppManagementInstaller())
         store.presentAppManagementHelp()
-        XCTAssertEqual(store.appManagementGuide, .permissionRequired)
+        XCTAssertEqual(store.appManagementGuide, .settings)
         store.dismissAppManagementGuide()
-        store.presentAppManagementHelpAfterBatch()
-        XCTAssertNil(store.appManagementGuide, "An unrelated batch must not repeat a previously dismissed permission sheet")
-        store.presentAppManagementHelp()
-        XCTAssertEqual(store.appManagementGuide, .permissionRequired, "Skipping guidance must not suppress future permission failures")
+        XCTAssertNil(store.appManagementGuide)
     }
 
     func testBatchAggregatesDenialsThenExplicitRetryRechecksOnlyBlockedAppsAndRequiresReview() async throws {
@@ -89,7 +91,9 @@ import UpoviCore
         store.reviewAllUpdates(); store.startAllUpdates(); await store.bulkTask?.value
         XCTAssertEqual(store.bulkFailedCount, 2); XCTAssertEqual(store.bulkCompletedCount, 1)
         XCTAssertEqual(store.appManagementBlockedIDs, Set(apps.prefix(2).map(\.id)))
-        XCTAssertEqual(store.appManagementGuide, .permissionRequired)
+        XCTAssertNil(store.appManagementGuide, "A write denial is not proof that a privacy switch is off and must not open a setup modal")
+        store.presentAppManagementHelp()
+        XCTAssertEqual(store.appManagementGuide, .accessDenied)
         XCTAssertEqual(store.diagnosticEvents.first?.issue.kind, .permissionDenied)
         let restart = AppStore(preferences: prefs)
         XCTAssertEqual(restart.appManagementBlockedIDs, store.appManagementBlockedIDs)
@@ -113,7 +117,6 @@ import UpoviCore
         XCTAssertTrue(Set(relaunched.appManagementAccessChecks.map(\.id)).isSuperset(of: Set(apps.prefix(2).map(\.id))),
                       "Both successfully retried targets must retain access evidence regardless of earlier concurrent denial order")
         XCTAssertTrue(relaunched.appManagementAccessChecks.allSatisfy(\.verified))
-        relaunched.offerAppManagementIntroduction()
         XCTAssertNil(relaunched.appManagementGuide)
         XCTAssertNil(relaunched.bulkTask, "Restoring past access must not authorize or install updates")
         let snapshot = String(decoding: try store.diagnosticSnapshot().report(), as: UTF8.self)
@@ -126,37 +129,9 @@ import UpoviCore
         store.recordDiagnostic(.batchInstallation, appID: "/synthetic/Full.app",
             error: StoreInstallationError(.init(stage: "appManagement", error: NSError(domain: NSCocoaErrorDomain, code: 640))))
         store.recordDiagnostic(.batchInstallation, appID: "/synthetic/Cancelled.app", error: CancellationError())
-        store.presentAppManagementHelpAfterBatch()
         XCTAssertTrue(store.appManagementBlockedIDs.isEmpty); XCTAssertNil(store.appManagementGuide)
     }
-    func testAccessVerificationShowsActualResultsWithoutRetryingUpdatesOrClearingFailures() async throws {
-        let prefs = try preferences(), store = AppStore(preferences: prefs)
-        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.store", version: "1.0", path: "/Applications/Fixture.app", teamID: "SYNTHETIC1", isAppStore: true)
-        store.appManagementBlockedIDs = [app.id]
-        store.appManagementAccessInventory = { [app] }
-        store.appManagementAccessVerifier = { targets in
-            XCTAssertEqual(targets, [app])
-            var plan = AppStoreUpdatePlan(application: app, storeID: 1234, version: app.version, userID: 501)
-            plan.permissionProbe = true
-            return [.init(plan: plan, state: "accessVerified")]
-        }
-        store.installStoreUpdate = { _, _, _ in XCTFail("A permission check must never install") }
-        store.verifyAppManagementAccess()
-        for _ in 0..<100 where store.appManagementAccessChecking { try await Task.sleep(for: .milliseconds(10)) }
-        XCTAssertEqual(store.appManagementAccessChecks.count, 1)
-        XCTAssertTrue(store.appManagementAccessChecks.allSatisfy(\.verified))
-        XCTAssertTrue(store.appManagementBlockedAccessVerified)
-        XCTAssertEqual(store.appManagementBlockedIDs, [app.id])
-        let restarted = AppStore(preferences: prefs)
-        XCTAssertEqual(restarted.appManagementAccessChecks.map(\.id), [app.id])
-        XCTAssertNotNil(restarted.appManagementAccessCheckedAt)
-        XCTAssertNil(restarted.bulkTask)
-        store.appManagementSettingsOpener = { true }
-        XCTAssertTrue(store.openAppManagementSettings())
-        XCTAssertTrue(store.appManagementAccessChecks.isEmpty, "Opening Settings invalidates prior evidence")
-        XCTAssertFalse(store.appManagementBlockedAccessVerified)
-        XCTAssertTrue(AppStore(preferences: prefs).appManagementAccessChecks.isEmpty)
-    }
+
     func testNewDenialInvalidatesPersistedSuccessWithoutClaimingPermissionRevocation() throws {
         let prefs = try preferences(), store = AppStore(preferences: prefs)
         let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.store", version: "1", path: "/Applications/Fixture.app", isAppStore: true)
@@ -167,17 +142,6 @@ import UpoviCore
         XCTAssertTrue(restarted.appManagementAccessChecks.isEmpty)
         XCTAssertEqual(restarted.appManagementBlockedIDs, [app.id])
         XCTAssertNil(restarted.appManagementAccessCheckedAt)
-    }
-    func testCancelledAccessVerificationNeverClaimsConsent() async throws {
-        let store = AppStore(preferences: try preferences())
-        let app = InstalledApp(name: "Fixture", bundleID: "app.synthetic.store", version: "1.0", path: "/Applications/Fixture.app", isAppStore: true)
-        store.appManagementAccessInventory = { [app] }
-        store.appManagementAccessVerifier = { _ in throw CancellationError() }
-        store.verifyAppManagementAccess()
-        for _ in 0..<100 where store.appManagementAccessChecking { try await Task.sleep(for: .milliseconds(10)) }
-        XCTAssertTrue(store.appManagementAccessChecks.isEmpty)
-        XCTAssertNotNil(store.appManagementAccessError)
-        XCTAssertNil(store.appManagementAccessCheckedAt)
     }
 
     func testStartupBackupMaintenanceBlocksUpdateAdmissionAndReleasesAfterCompletionOrFailure() async throws {
@@ -205,8 +169,6 @@ import UpoviCore
         XCTAssertTrue(store.installationBusy)
         store.reviewAllUpdates()
         XCTAssertFalse(store.bulkUpdatePresented)
-        store.verifyAppManagementAccess()
-        XCTAssertFalse(store.appManagementAccessChecking)
         store.prepareInstallation(candidate, app: app)
         XCTAssertNil(store.installationTask)
         await store.maintainApplicationBackups(force: true)
@@ -282,30 +244,5 @@ import UpoviCore
         XCTAssertEqual(submissions, 1)
     }
 
-    func testFailedVerificationRetainsPerTargetResultsAndDoesNotRestoreStaleSuccess() async throws {
-        let prefs = try preferences(), store = AppStore(preferences: prefs)
-        let apps = (1...2).map { index in
-            InstalledApp(name: "Fixture \(index)", bundleID: "app.synthetic.result.\(index)", version: "1",
-                path: "/Applications/Upovi Result Fixture \(index).app", teamID: "SYNTHETIC1", isAppStore: true)
-        }
-        store.appManagementBlockedIDs = Set(apps.map(\.id))
-        store.appManagementAccessInventory = { apps }
-        store.appManagementAccessVerifier = { targets in
-            targets.enumerated().map { index, app in
-                var plan = AppStoreUpdatePlan(application: app, storeID: UInt64(12345 + index), version: app.version, userID: 501)
-                plan.permissionProbe = true
-                var receipt = AppStoreUpdateReceipt(plan: plan, state: index == 0 ? "accessVerified" : "failedOrUnconfirmed")
-                if index == 1 { receipt.failure = self.denied().failure }
-                return receipt
-            }
-        }
-        store.verifyAppManagementAccess()
-        for _ in 0..<100 where store.appManagementAccessChecking { try await Task.sleep(for: .milliseconds(10)) }
-        XCTAssertEqual(store.appManagementAccessChecks.map(\.verified), [true, false])
-        XCTAssertFalse(store.appManagementBlockedAccessVerified)
-        XCTAssertEqual(AppStore(preferences: prefs).appManagementAccessChecks.map(\.verified), [true, false])
-        XCTAssertEqual(store.appManagementBlockedIDs, Set(apps.map(\.id)))
-        XCTAssertNil(store.bulkTask); XCTAssertNil(store.installationTask)
-    }
 
 }

@@ -9,7 +9,6 @@ extension AppStore {
         monitoringTask = Task { [weak self] in
             guard let self else { return }
             await maintainApplicationBackups()
-            offerAppManagementIntroduction()
             await refreshInstallations()
             while !Task.isCancelled {
                 policyClock = Date()

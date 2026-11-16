@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-16",
+  "baseBuild": "202611160001",
+  "scope": "Remove user-facing permission verification and automatic setup presentation",
+  "cause": [
+    "Startup displayed a guide based on local seen/history flags rather than current system consent",
+    "Missing or invalidated write-test evidence rendered as Not Verified",
+    "Opening Settings invalidated evidence despite the system switch remaining enabled"
+  ],
+  "behavior": [
+    "No startup permission sheet",
+    "No Not Verified status or Verify Access button",
+    "No automatic help modal after write errors",
+    "Historical probe-only failures do not produce retry reminders",
+    "Direct updates and explicit retry confirmation remain available",
+    "Settings actions neither test writes nor install updates"
+  ],
+  "tests": {
+    "core": 343,
+    "applicationWorkflow": 68,
+    "failures": 0
+  },
+  "releaseBuild": "passed",
+  "nativeAcceptance": {
+    "kind": "Synthetic offline applications through real SwiftUI views",
+    "startupWithoutSheet": true,
+    "optionalHelpWithoutVerificationControl": true,
+    "deniedBatchStayedOnUpdatesWithoutSheet": true,
+    "settingsActionDidNotVerifyOrInstall": true,
+    "recheckOnlyOpenedUpdateConfirmation": true,
+    "cancelDidNotInstall": true,
+    "successfulExplicitRetry": "2/2",
+    "reminderClearedAfterSuccess": true,
+    "runtimeEventsAndRedaction": "passed"
+  },
+  "limits": [
+    "System permission switches unchanged",
+    "No real Store install or write probe performed",
+    "Affected second Mac not retested",
+    "Implementation validation predates commit and distribution; see the separate release evidence."
+  ],
+  "appleReference": "https://developer.apple.com/forums/thread/678819"
+}

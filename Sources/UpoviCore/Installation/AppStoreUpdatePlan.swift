@@ -137,6 +137,7 @@ public struct StoreInstallationFailure: Codable, Sendable {
         else if cleaned.contains("Error Domain=") { message = cleaned }
         else { message = Self.sanitized(error.localizedDescription) }
     }
+    /// Classifies a denied write, not the state or cause of the system privacy switch.
     public var requiresAppManagement: Bool {
         if underlyingDomain == NSPOSIXErrorDomain, let underlyingCode, ![1, 13].contains(underlyingCode) { return false }
         return message.contains("Operation not permitted") || message.contains("NSCocoaErrorDomain Code=513") ||
@@ -163,7 +164,7 @@ public struct StoreInstallationError: LocalizedError, Sendable {
     public init(_ failure: StoreInstallationFailure) { self.failure = failure }
     public var errorDescription: String? {
         if failure.requiresAppManagement {
-            return String(localized: "安装器的应用写入检查未通过。请打开权限引导并验证访问；若权限已开启，可能是安装器识别或文件访问异常。")
+            return String(localized: "系统拒绝了安装器对应用的写入。请查看访问帮助；若应用程序管理开关已开启，无需反复切换，请导出诊断信息排查。")
         }
         return String(localized: "商店更新未完成：\(failure.message)")
     }

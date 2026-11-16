@@ -1,6 +1,106 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "应用访问帮助": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Access Help"
+          }
+        }
+      }
+    },
+    "直接确认更新即可，无需单独验证权限。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm your updates directly. No separate permission verification is needed."
+          }
+        }
+      }
+    },
+    "最近一次更新被系统拒绝写入。这是失败记录，不代表当前权限未开启。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The system denied a write during the last update. This is a failure record, not the current permission status."
+          }
+        }
+      }
+    },
+    "仅在更新提示访问被拒绝时检查此设置。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review this setting only if an update reports denied access."
+          }
+        }
+      }
+    },
+    "系统开关已开启时，无需反复切换。仍然失败可从设置导出诊断信息。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the switch is already on, leave it enabled. If updates still fail, export a diagnostic report from Settings."
+          }
+        }
+      }
+    },
+    "可直接重新检查并确认更新，无需单独验证权限。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recheck and confirm the updates directly. No separate access verification is needed."
+          }
+        }
+      }
+    },
+    "访问帮助…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access Help…"
+          }
+        }
+      }
+    },
+    "打开访问帮助…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Access Help…"
+          }
+        }
+      }
+    },
+    "无需单独验证权限。更新遇到访问拒绝时，可在此查看系统设置入口。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No separate access verification is needed. If an update is denied access, open the matching system settings from here."
+          }
+        }
+      }
+    },
+    "系统拒绝了安装器对应用的写入。请查看访问帮助；若应用程序管理开关已开启，无需反复切换，请导出诊断信息排查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The system denied the installer's write to the application. Open Access Help. If App Management is already enabled, leave it on and export diagnostics so the failure can be investigated."
+          }
+        }
+      }
+    },
     "上次应用写入访问成功": {
       "localizations": {
         "en": {

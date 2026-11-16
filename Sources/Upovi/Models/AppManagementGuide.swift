@@ -1,7 +1,7 @@
 import Foundation
 
 enum AppManagementGuide: String, Identifiable {
-    case firstLaunch, permissionRequired, settings
+    case accessDenied, settings
     var id: String { rawValue }
 }
 

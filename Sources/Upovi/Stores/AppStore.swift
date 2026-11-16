@@ -80,7 +80,7 @@ final class AppStore {
     @ObservationIgnored var bulkTask: Task<Void, Never>?
     @ObservationIgnored var retryTask: Task<Void, Never>?
     var installationBusy: Bool {
-        installing || backupMaintenanceRunning || appManagementAccessChecking || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
+        installing || backupMaintenanceRunning || preparedUpdate != nil || preparedPackage != nil || restoreConfirmation != nil
             || administratorRestoreConfirmation != nil || administratorCleanupConfirmation != nil || backupDeletionConfirmation != nil
             || bulkUpdating || (bulkUpdatePresented && !bulkHasRun)
     }
@@ -120,18 +120,9 @@ final class AppStore {
     var errorMessage: String?
     var appManagementGuide: AppManagementGuide?
     var appManagementBlockedIDs: Set<String> = []
-    @ObservationIgnored var appManagementIntroductionOffered = false
-    @ObservationIgnored var appManagementDeniedDuringBatch = false
-    var appManagementAccessChecking = false
+    /// Historical write outcomes are diagnostic evidence, never a live permission status.
     var appManagementAccessChecks: [AppManagementAccessCheck] = []
-    var appManagementAccessError: String?
     var appManagementAccessCheckedAt: Date?
-    @ObservationIgnored var appManagementAccessInventory: @Sendable () async -> [InstalledApp] = {
-        await Task.detached { AppScanner.scan() }.value
-    }
-    @ObservationIgnored var appManagementAccessVerifier: @MainActor ([InstalledApp]) async throws -> [AppStoreUpdateReceipt] = {
-        try await AppStoreInstallationService().verifyAccess($0)
-    }
     @ObservationIgnored var appManagementSettingsOpener: () -> Bool = { AppManagementAccessService.openSettings() }
     @ObservationIgnored var appManagementInstallerRevealer: () -> Bool = { AppManagementAccessService.revealInstaller() }
     var networkStatus = String(localized: "尚未连接公网 DHT")

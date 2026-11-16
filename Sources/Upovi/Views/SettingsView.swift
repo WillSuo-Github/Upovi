@@ -100,10 +100,10 @@ private struct ScanSettings: View {
     var body: some View {
         Form {
             Section {
-                Button("打开权限引导…") { appManagementHelpPresented = true }
+                Button("打开访问帮助…") { appManagementHelpPresented = true }
                     .accessibilityIdentifier("settings-app-management-guide")
             } header: { Text("应用程序管理权限") } footer: {
-                Text("允许 Upovi Installer 修改商店应用；未设置权限仍可检查更新。")
+                Text("无需单独验证权限。更新遇到访问拒绝时，可在此查看系统设置入口。")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section {

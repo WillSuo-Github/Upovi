@@ -31,7 +31,7 @@ struct UpdatesView: View {
                 UpdatesOverview(store: store, total: plan.count + store.toolUpdateCount,
                                 installable: plan.filter(\.canInstall).count + store.toolUpdateCount)
                     .entrance(0)
-                if !store.appManagementBlockedIDs.isEmpty { AppManagementNotice(store: store) }
+                if store.appManagementRetryRecord != nil { AppManagementNotice(store: store) }
                 if store.incompleteCheckCount > 0 { checkIssuesSummary }
                 if !entries.isEmpty { updateList(entries, batchIDs: batchIDs).entrance(1) }
                 if !manual.isEmpty {

@@ -37,32 +37,26 @@ final class PermissionAcceptanceDelegate: NSObject, NSApplicationDelegate {
         value.sourceResults = Dictionary(uniqueKeysWithValues: apps.map {
             ($0.id, SourceResult(appID: $0.id, candidates: [candidates[$0.id]!], note: "Offline fixture", status: .updates))
         })
-        value.appManagementAccessInventory = { apps }
-        value.appManagementAccessVerifier = { targets in
-            targets.enumerated().map { index, app in
-                var plan = AppStoreUpdatePlan(application: app, storeID: UInt64(12345 + index), version: app.version, userID: 501)
-                plan.permissionProbe = true
-                return AppStoreUpdateReceipt(plan: plan, state: "accessVerified")
-            }
-        }
         value.makeInstallationAuthorizationBatch = { InstallationAuthorizationBatch(start: { _ in }) }
         value.installStoreUpdate = { _, _, _ in
             throw StoreInstallationError(.init(stage: "appManagement", error: NSError(domain: NSCocoaErrorDomain, code: 513,
                 userInfo: [NSLocalizedDescriptionKey: "token=PERMISSION_NATIVE_SECRET /Users/PRIVATE_OWNER/App.app"])))
         }
+        value.appManagementSettingsOpener = { true }
         _store = State(initialValue: value)
     }
 
     var body: some Scene {
-        WindowGroup("Upovi isolated permission acceptance", id: "main") {
+        WindowGroup("Upovi isolated access help acceptance", id: "main") {
             ContentView(store: store)
                 .safeAreaInset(edge: .bottom) {
                     HStack {
                         Text("Offline permission fixture — no installed apps are changed").font(.caption)
                         Spacer()
-                        Button("Open Permission Guide") { store.presentAppManagementHelp() }
-                        Button("Simulate Permission Failures") { store.reviewAllUpdates() }
+                        Button("Open Access Help") { store.presentAppManagementHelp() }
+                        Button("Simulate Denied Updates") { store.reviewAllUpdates() }
                             .disabled(store.operationBusy)
+                        Button("Allow Next Updates") { store.installStoreUpdate = { _, _, _ in } }
                     }.padding(10)
                 }
         }.defaultSize(width: 1240, height: 780)

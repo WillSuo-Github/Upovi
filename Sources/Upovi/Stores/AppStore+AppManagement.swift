@@ -2,38 +2,21 @@ import Foundation
 import UpoviCore
 
 extension AppStore {
-    static let appManagementGuideSeenKey = "appManagementGuideSeenV1"
     static let appManagementBlockedKey = "appManagementBlockedApplicationsV1"
     static let appManagementEvidenceKey = "appManagementAccessEvidenceV1"
-
-    func offerAppManagementIntroduction() {
-        guard !appManagementIntroductionOffered, !preferences.bool(forKey: Self.appManagementGuideSeenKey),
-              !installationBusy, !bulkUpdatePresented, diagnosticsPresentation == nil, errorMessage == nil else { return }
-        appManagementIntroductionOffered = true
-        appManagementGuide = appManagementBlockedIDs.isEmpty ? .firstLaunch : .permissionRequired
-        UpoviLog.authorization.info("event=appManagement.guidePresented context=firstLaunch blocked=\(appManagementBlockedIDs.count)")
-    }
 
     func dismissAppManagementGuide() {
         let context = appManagementGuide
         appManagementGuide = nil
-        if context == .firstLaunch || context == .permissionRequired {
-            preferences.set(true, forKey: Self.appManagementGuideSeenKey)
-        }
         UpoviLog.authorization.info("event=appManagement.guideDismissed context=\(context?.rawValue ?? "none")")
     }
 
+    /// Access help is always opened by the user. Neither missing probe history nor
+    /// a past write failure establishes the current system permission setting.
     func presentAppManagementHelp() {
         guard !installationBusy, !bulkUpdatePresented, diagnosticsPresentation == nil else { return }
-        appManagementGuide = appManagementBlockedIDs.isEmpty ? .settings : .permissionRequired
-        UpoviLog.authorization.info("event=appManagement.guidePresented context=\(appManagementGuide?.rawValue ?? "none") blocked=\(appManagementBlockedIDs.count)")
-    }
-
-    func presentAppManagementHelpAfterBatch() {
-        guard appManagementDeniedDuringBatch else { return }
-        appManagementDeniedDuringBatch = false
-        guard !appManagementBlockedIDs.isEmpty, appManagementGuide == nil else { return }
-        presentAppManagementHelp()
+        appManagementGuide = appManagementRetryRecord == nil ? .settings : .accessDenied
+        UpoviLog.authorization.info("event=appManagement.guidePresented context=\(appManagementGuide?.rawValue ?? "none") blocked=\(appManagementBlockedIDs.count) trigger=user")
     }
 
     func recordAppManagementBlock(appID: String?, error: any Error) {
@@ -41,7 +24,6 @@ extension AppStore {
         appManagementAccessChecks = []; appManagementAccessCheckedAt = nil
         persistAppManagementEvidence()
         appManagementBlockedIDs.insert(appID)
-        if bulkUpdating { appManagementDeniedDuringBatch = true }
         preferences.set(appManagementBlockedIDs.sorted(), forKey: Self.appManagementBlockedKey)
         UpoviLog.authorization.warning("event=appManagement.blocked app=\(UpoviDiagnosticContext.applicationID(appID)) code=\(storeError.failure.code)")
     }
@@ -58,7 +40,6 @@ extension AppStore {
         appManagementAccessChecks.append(.init(id: app.id, name: app.name, verified: true, failure: nil))
         appManagementAccessChecks = Array(appManagementAccessChecks.suffix(20))
         appManagementAccessCheckedAt = Date()
-        preferences.set(true, forKey: Self.appManagementGuideSeenKey)
         persistAppManagementEvidence()
         UpoviLog.authorization.info("event=appManagement.installAccessRecorded app=\(UpoviDiagnosticContext.applicationID(app.id))")
     }
@@ -91,48 +72,8 @@ extension AppStore {
         retryBatch(record)
     }
 
-    var appManagementBlockedAccessVerified: Bool {
-        !appManagementBlockedIDs.isEmpty && Set(appManagementAccessChecks.filter(\.verified).map(\.id)).isSuperset(of: appManagementBlockedIDs)
-    }
-
-    func verifyAppManagementAccess() {
-        guard !operationBusy, !appManagementAccessChecking else { return }
-        appManagementAccessChecking = true; appManagementAccessError = nil
-        appManagementAccessChecks = []; appManagementAccessCheckedAt = nil
-        persistAppManagementEvidence()
-        Task {
-            defer { appManagementAccessChecking = false }
-            do {
-                let inventory = await appManagementAccessInventory()
-                let storeApps = inventory.filter { $0.isAppStore && URL(fileURLWithPath: $0.path).deletingLastPathComponent().path == "/Applications" }
-                let blocked = storeApps.filter { appManagementBlockedIDs.contains($0.id) }
-                let targets = Array((blocked.isEmpty ? storeApps.prefix(1).map { $0 } : blocked).prefix(20))
-                guard !targets.isEmpty else { throw PeerError.unavailable(String(localized: "尚无可验证的商店应用。权限状态未确认；可先打开系统设置。")) }
-                let results = try await appManagementAccessVerifier(targets)
-                for receipt in results {
-                    if let failure = receipt.failure { recordDiagnostic(.installation, appID: receipt.plan.application.id, error: StoreInstallationError(failure)) }
-                }
-                appManagementAccessChecks = results.map { receipt in
-                    .init(id: receipt.plan.application.id, name: receipt.plan.application.name,
-                          verified: receipt.failure == nil && receipt.state == "accessVerified",
-                          failure: receipt.failure.map { _ in String(localized: "写入访问仍受阻。若系统开关已开启，请保留诊断信息，勿反复切换权限。") })
-                }
-                appManagementAccessCheckedAt = Date()
-                persistAppManagementEvidence()
-                // Probe success is evidence for this target at this time, not an installation outcome.
-                // Keep pending update tasks and confirmation requirements intact.
-            } catch is CancellationError { appManagementAccessError = String(localized: "验证已取消，权限状态未确认。") }
-            catch {
-                recordDiagnostic(.installation, error: error)
-                appManagementAccessError = String(localized: "访问验证未完成。请重试；仍失败时请从设置导出诊断信息。")
-            }
-        }
-    }
-
     @discardableResult func openAppManagementSettings() -> Bool {
         let operation = UpoviLogOperation("appManagement.openSettings", category: .authorization)
-        appManagementAccessChecks = []; appManagementAccessCheckedAt = nil
-        persistAppManagementEvidence()
         let opened = appManagementSettingsOpener()
         operation.finish(opened ? "opened" : "failed", level: opened ? .info : .warning)
         // Visiting Settings is not evidence that consent was granted. No retry runs here.

@@ -23,7 +23,7 @@ struct ContentView: View {
                     .accessibilityIdentifier("refresh-all-apps")
             }
         }
-        .task { store.offerAppManagementIntroduction(); store.startInitialCheck() }
+        .task { store.startInitialCheck() }
         .onChange(of: store.visibleApps.map(\.id)) { _, ids in
             if store.section == .all || store.section == .ignored, !ids.contains(store.selection ?? "") { store.selection = ids.first }
         }
