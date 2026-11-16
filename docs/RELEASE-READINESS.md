@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611160003
+
+This release adds the exact reviewed iStat Menus 7.50.3 packaging alias: the official ZIP embeds signed version 7.50, build 2395. Upovi can upgrade build 2394 and stops offering that update once 2395 or later is installed. Existing exact URL, bundle ID, Team ID, signature and Gatekeeper checks remain unchanged. Reviewed mappings now emit a bounded info-level diagnostic with source/bundle version and build. The earlier on-demand access-help flow remains included.
+
+Fresh official 7.50.2 and 7.50.3 downloads were verified as builds 2394 and 2395, with valid Developer ID signatures and Gatekeeper acceptance. Live Homebrew metadata still points to that 7.50.3 archive. A real isolated copy completed download/preparation/installation from 2394 to 2395, online recheck reported current with zero candidates, and recovery restored the exact official 2394 executable. Both retained noindex archives passed SHA-256 and CRC checks. Production mapping events and path redaction were verified. This acceptance did not modify or launch the daily iStat app or its system components. See [fresh iStat validation](evidence/istat-menus-revalidation-20261116.json) and [earlier local acceptance](evidence/istat-menus-7503-202611140005.json).
+
+Clean committed product revision `c8560431b006823c43ddc72498fe780d2142e613` passed 344 core tests, 68 application workflow tests and 41 Python tests with no failures. The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611160003) is published as Latest, with marketing version 0.4.10 unchanged. Both architectures, all ten component signatures, hardened runtime, secure timestamps, debugger-entitlement removal, Apple notarization, ticket stapling, Gatekeeper and Sparkle feed/archive signatures passed. All five anonymous public downloads match the local verified bytes; fresh local/public extractions and the canonical latest feed/direct archive also passed. Physical Intel runtime, vendor integration/runtime and genuine Sparkle self-replacement were not exercised. Publication did not replace the normal installed Upovi. See [release evidence](evidence/0.4.10-build-202611160003.json).
+
+---
+
 # Upovi 0.4.10 build 202611160002
 
 Upovi no longer presents a permission setup sheet at launch or after failed updates, and the independent Verify Access action has been removed. Users confirm Update or Update All directly. Optional Access Help provides Settings/Finder links after a denied write without claiming that the system permission switch is off. Historical probe-only errors do not produce retry reminders, and revisiting Settings does not run a probe or start an installation.
