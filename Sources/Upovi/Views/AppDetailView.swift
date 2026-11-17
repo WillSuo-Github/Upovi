@@ -24,7 +24,8 @@ struct AppDetailView: View {
                     if !app.isAppStore { updateOptions(app) }
                     actions(app)
                 }
-                .padding(22).frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 22).padding(.vertical, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .id(app.id)
             } else {
                 ContentUnavailableView("选择一个应用", systemImage: "app.dashed", description: Text("在左侧列表中选择应用，查看版本、来源与更新操作。"))

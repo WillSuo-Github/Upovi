@@ -8,10 +8,12 @@ struct LibraryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header.entrance(0).padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 14)
+            header.entrance(0).padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 12)
             AppTable(store: store).entrance(1)
         }
-        .frame(minWidth: 460)
+        // Leave room for the widest sidebar and inspector in the 1,000-point minimum window.
+        // The table owns horizontal scrolling when its columns need more space.
+        .frame(minWidth: 300)
         .navigationTitle("全部应用")
         .inspector(isPresented: $store.libraryInspectorPresented) {
             AppDetailView(store: store).inspectorColumnWidth(min: 300, ideal: 340, max: 420)
@@ -29,17 +31,27 @@ struct LibraryView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            PageHeader(title: String(localized: "全部应用"), subtitle: String(localized: "\(store.apps.count) 个本机应用 · 来自 /Applications、~/Applications 与自定义目录")) {
-                Text(store.visibleApps.count.formatted()).font(Theme.display(26, weight: .semibold)).monospacedDigit().foregroundStyle(.tertiary)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("\(store.apps.count) 个本机应用")
+                .font(.callout).foregroundStyle(.secondary)
+                .help(String(localized: "\(store.apps.count) 个本机应用 · 来自 /Applications、~/Applications 与自定义目录"))
+            // Long localized segments must fit the column before using the segmented control.
+            ViewThatFits(in: .horizontal) {
+                sourcePicker.pickerStyle(.segmented).labelsHidden().fixedSize(horizontal: true, vertical: false)
+                sourcePicker.pickerStyle(.menu)
             }
-            Picker("筛选", selection: $store.sourceFilter) {
-                ForEach(SourceFilter.allCases) { filter in
-                    Text(count(filter).map { "\(filter.title) \($0)" } ?? filter.title).tag(filter)
-                }
-            }
-            .pickerStyle(.segmented).labelsHidden().fixedSize()
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier("library-header")
+    }
+
+    private var sourcePicker: some View {
+        Picker("筛选", selection: $store.sourceFilter) {
+            ForEach(SourceFilter.allCases) { filter in
+                Text(count(filter).map { "\(filter.title) \($0)" } ?? filter.title).tag(filter)
+            }
+        }
+        .accessibilityIdentifier("library-source-filter")
     }
 
     private func count(_ filter: SourceFilter) -> Int? {
