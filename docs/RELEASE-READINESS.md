@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611170001
+
+This release compacts the All Apps header, removes its duplicate large title and aligns the library and inspector top spacing. The source filter becomes a menu when localized segments do not fit. The main column can shrink beside the widest sidebar and inspector within the minimum window width; the table scrolls horizontally when its columns need more space.
+
+Committed product revision `4405ae3ce69c327fbe09d6ca4d30c5f2f6e91e71` passed the final 350 core tests, 68 application workflow tests and 41 Python tests without failures or skips. An additional English Xcode run passed 68 application tests. The initially skipped four optional real-artifact regressions were included in the final complete run using a fresh checksum-verified official fixture. Native development-build validation covered window resizing, widest side columns, filter menu selection, inspector visibility and horizontal scrolling.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611170001) is published as Latest with marketing version 0.4.10 unchanged. Both architectures, all ten component signatures, hardened runtime, secure timestamps, debugger-entitlement removal, Apple notarization, stapling, Gatekeeper and Sparkle feed/archive signatures passed. All five anonymous public downloads match the verified local bytes; fresh local/public extractions and the canonical latest feed/direct archive passed. Signed Release visual rendering, physical Intel runtime and genuine Sparkle self-replacement were not exercised. Publication did not replace the normal installed Upovi. See [release evidence](evidence/0.4.10-build-202611170001.json).
+
+---
+
 # Upovi 0.4.10 build 202611160005
 
 This release clarifies the message shown when no matching Store release can be confirmed. It asks users to check the account currently signed in to the App Store and its country or region, and to retry with the original download account/region after a switch. Availability and system requirements remain possible causes; the text does not claim an account or region mismatch was proven. Simplified Chinese, Traditional Chinese and English are updated. Store matching and installation behavior are unchanged. Earlier Icon Composer, iStat Menus and access-help fixes remain included.
