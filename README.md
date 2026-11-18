@@ -67,7 +67,7 @@ Actual application screenshots. The apps and available updates will vary on your
 
 Detection and installation are separate: an app may have a known newer version but still need its official installer or built-in updater. Upovi shows unsupported sources and failed checks separately; an empty update list does not guarantee every app is current.
 
-Source maintenance and current coverage limits are described in [source coverage](docs/SOURCE-COVERAGE.md). App Store checks use the bundled mas tool’s ordinary read-only detection. Upovi validates matching installed identities and compatible Mac products before offering updates. Public metadata can be delayed; Apple confirms availability and account eligibility during installation.
+Source maintenance and current coverage limits are described in [source coverage](docs/SOURCE-COVERAGE.md). App Store checks use the bundled mas tool’s ordinary read-only detection. Upovi validates matching installed identities and compatible Mac products before offering updates. Store updates use a 30-minute inactivity timeout while the selected product’s download package is monitored for progress. Public metadata can be delayed; Apple confirms availability and account eligibility during installation.
 
 ## Install
 

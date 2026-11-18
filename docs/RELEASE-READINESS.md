@@ -1,3 +1,13 @@
+# Upovi 0.4.10 build 202611180001
+
+This release incorporates upstream revision `fe579cc` to keep App Store updates alive while the selected product's package size or allocated blocks continue to advance. Store updates use a 30-minute inactivity timeout, keep the host/helper sessions alive during downloads, show an indeterminate updating state and classify timeout failures accurately. The previous adaptive library layout remains included.
+
+Committed product revision `c6c5f8a0414facd222303a01262ab4d338a24407` passed 352 core tests, 68 application workflow tests and 41 Python tests without failures or skips. An additional English Xcode run passed 68 application tests. The complete run included the real-artifact regressions using a checksum-verified official Icon Composer fixture. GitHub Actions were not used.
+
+The [signed universal release](https://github.com/WillSuo-Github/Upovi/releases/tag/build-202611180001) is published as Latest with marketing version 0.4.10 unchanged. Both architectures, all ten component signatures, hardened runtime, secure timestamps, debugger-entitlement removal, Apple notarization, stapling, Gatekeeper and Sparkle feed/archive signatures passed. All five anonymous public downloads match the verified local bytes; fresh local/public extractions and the canonical latest feed/direct archive passed. A real long-running Store update, signed Release visual rendering, physical Intel runtime and genuine Sparkle self-replacement were not exercised. Publication did not replace the normal installed Upovi. See [release evidence](evidence/0.4.10-build-202611180001.json).
+
+---
+
 # Upovi 0.4.10 build 202611170001
 
 This release compacts the All Apps header, removes its duplicate large title and aligns the library and inspector top spacing. The source filter becomes a menu when localized segments do not fit. The main column can shrink beside the widest sidebar and inspector within the minimum window width; the table scrolls horizontally when its columns need more space.
