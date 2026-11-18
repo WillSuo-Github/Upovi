@@ -3,7 +3,7 @@ import Foundation
 /// Per-application download and installation progress shown on its row.
 struct TransferProgress: Equatable {
     enum Phase: Equatable {
-        case queued, authorizing, downloading, verifying, awaitingConfirmation, waitingForAuthorization, installing, installed, failed, cancelled
+        case queued, authorizing, downloading, verifying, awaitingConfirmation, waitingForAuthorization, updatingFromAppStore, installing, installed, failed, cancelled
     }
     var startedAt = Date()
     var phase: Phase = .queued
@@ -22,7 +22,7 @@ struct TransferProgress: Equatable {
     var fraction: Double {
         if let settled { return settled }
         switch phase {
-        case .queued: return 0
+        case .queued, .updatingFromAppStore: return 0
         case .authorizing: return 0.02
         case .downloading: return (downloadFraction ?? 0) * 0.8
         case .verifying: return 0.84
@@ -32,9 +32,9 @@ struct TransferProgress: Equatable {
         case .installed, .failed, .cancelled: return 1
         }
     }
-    var isActive: Bool { [.authorizing, .downloading, .verifying, .waitingForAuthorization, .installing].contains(phase) }
+    var isActive: Bool { [.authorizing, .downloading, .verifying, .waitingForAuthorization, .updatingFromAppStore, .installing].contains(phase) }
     var isFinished: Bool { [.installed, .failed, .cancelled].contains(phase) }
-    var indeterminate: Bool { phase == .downloading && downloadFraction == nil }
+    var indeterminate: Bool { phase == .updatingFromAppStore || (phase == .downloading && downloadFraction == nil) }
     var canCancel: Bool { [.queued, .downloading, .verifying].contains(phase) }
 
     mutating func finish(_ phase: Phase) {
@@ -49,6 +49,7 @@ struct TransferProgress: Equatable {
         case .verifying: return String(localized: "正在校验签名与完整性")
         case .awaitingConfirmation: return String(localized: "已验证，等待确认安装")
         case .authorizing, .waitingForAuthorization: return String(localized: "等待授权")
+        case .updatingFromAppStore: return String(localized: "正在通过 App Store 更新")
         case .installing: return String(localized: "正在安装")
         case .installed: return String(localized: "已完成")
         case .failed: return String(localized: "失败")

@@ -58,7 +58,10 @@ import UpoviCore
         guard fd >= 0 else { throw PeerError.unavailable("Cannot lock Store update") }
         defer { _ = flock(fd, LOCK_UN); close(fd) }
         var a = stat()
-        guard fstat(fd, &a) == 0, a.st_uid == 0, a.st_nlink == 1, a.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG), flock(fd, LOCK_EX) == 0 else { throw PeerError.invalid("Unsafe transaction lock") }
+        guard fstat(fd, &a) == 0, a.st_uid == 0, a.st_nlink == 1, a.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw PeerError.invalid("Unsafe transaction lock") }
+        // Download requests delegate their deadline to the bridge, so never block that route before the bridge starts.
+        let lockMode = plan.mayDownload ? LOCK_EX | LOCK_NB : LOCK_EX
+        guard flock(fd, lockMode) == 0 else { throw PeerError.unavailable("Unable to acquire the administrator installation lock") }
         let directory = base.appending(path: "StoreUpdates"); try ensureDirectory(directory)
         let job = directory.appending(path: plan.id.uuidString)
         try fm.createDirectory(at: job, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
@@ -103,8 +106,7 @@ import UpoviCore
             stage = "store"
             var operationError: (any Error)?
             do {
-                _ = try await ProcessCommand().run("/bin/launchctl", ["asuser",String(plan.userID),bridge.path] + arguments,
-                    timeoutSeconds:1800, outputFile:job.appending(path:"store.log"), environment:environment, maximumOutputBytes:2_000_000)
+                try await runStoreUpdate(plan, bridge: bridge, arguments: arguments, job: job, environment: environment)
             } catch { operationError = error }
             stage = operationError == nil ? "verification" : "store"
             guard let installed = AppScanner.read(target) else { throw PeerError.unavailable("Store update outcome is unconfirmed; recheck sources before retrying") }
@@ -119,6 +121,33 @@ import UpoviCore
             result.failure = .init(stage: stage, error: error, detail: detail)
             try save()
             return result
+        }
+    }
+
+    private static func runStoreUpdate(_ plan: AppStoreUpdatePlan, bridge: URL, arguments: [String], job: URL, environment: [String: String]) async throws {
+        let operation = UpoviLogOperation("store.bridge", category: .installation,
+            details: UpoviDiagnosticContext.application(plan.application) + " transaction=\(plan.id) targetVersion=\(plan.version)")
+        try await UpoviDiagnosticContext.$operationID.withValue(operation.id) {
+            do {
+                let activity = try await downloadActivity(plan)
+                operation.event("downloadObservation", details: "available=\(activity != nil)")
+                _ = try await ProcessCommand().run("/bin/launchctl", ["asuser", String(plan.userID), bridge.path] + arguments,
+                    timeoutSeconds: 30 * 60, outputFile: job.appending(path: "store.log"), environment: environment,
+                    maximumOutputBytes: 2_000_000, timeoutActivity: { activity?.hasAdvanced() == true })
+                operation.finish()
+            } catch { operation.fail(error); throw error }
+        }
+    }
+
+    private static func downloadActivity(_ plan: AppStoreUpdatePlan) async throws -> AppStoreDownloadActivity? {
+        do {
+            let data = try await ProcessCommand().run("/usr/bin/sudo", ["-n", "-u", "#\(plan.userID)", "--", "/usr/bin/getconf", "DARWIN_USER_CACHE_DIR"],
+                timeoutSeconds: 15, maximumOutputBytes: 4096)
+            let path = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .newlines)
+            return AppStoreDownloadActivity(darwinUserCacheDirectory: path, storeID: plan.storeID, userID: plan.userID)
+        } catch {
+            try Task.checkCancellation()
+            return nil
         }
     }
 

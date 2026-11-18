@@ -9,6 +9,7 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
     public let userID: UInt32
     public let receiptRecovery: StoreReceiptRecovery?
     public var permissionProbe: Bool? = nil
+    public var mayDownload: Bool { permissionProbe != true && receiptRecovery == nil }
     public init(id: UUID = UUID(), application: InstalledApp, storeID: UInt64, version: String, userID: UInt32, receiptRecovery: StoreReceiptRecovery? = nil) {
         self.id = id; self.application = application; self.storeID = storeID; self.version = version; self.userID = userID; self.receiptRecovery = receiptRecovery
     }
@@ -79,7 +80,7 @@ public struct AppStoreUpdatePlan: Codable, Sendable {
     }
     public func updateArguments(for product: StoreProduct) throws -> [String]? {
         try validate()
-        guard receiptRecovery == nil, permissionProbe != true else { throw PeerError.invalid("Recovery and access verification must not start a download") }
+        guard mayDownload else { throw PeerError.invalid("Recovery and access verification must not start a download") }
         try product.validate(for: application, storeID: storeID)
         guard VersionOrder.compare(product.version, version) != .orderedAscending else {
             throw PeerError.unavailable("The selected update is not currently available from the App Store")
@@ -139,10 +140,12 @@ public struct StoreInstallationFailure: Codable, Sendable {
     }
     /// Classifies a denied write, not the state or cause of the system privacy switch.
     public var requiresAppManagement: Bool {
+        guard !timedOut else { return false }
         if underlyingDomain == NSPOSIXErrorDomain, let underlyingCode, ![1, 13].contains(underlyingCode) { return false }
         return message.contains("Operation not permitted") || message.contains("NSCocoaErrorDomain Code=513") ||
             (domain == NSCocoaErrorDomain && code == 513) || (domain == NSPOSIXErrorDomain && [1, 13].contains(code))
     }
+    public var timedOut: Bool { stage == "store" && domain == NSURLErrorDomain && code == NSURLErrorTimedOut }
     public func recoverableReceiptPath(application: InstalledApp) -> String? {
         let pattern = #"Failed to copy receipt[^\n]* from '([^']+)' to '([^']+)'"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
@@ -163,6 +166,9 @@ public struct StoreInstallationError: LocalizedError, Sendable {
     public let failure: StoreInstallationFailure
     public init(_ failure: StoreInstallationFailure) { self.failure = failure }
     public var errorDescription: String? {
+        if failure.timedOut {
+            return String(localized: "等待 App Store 更新进展超时。请先在 App Store 查看状态，再决定是否重试。")
+        }
         if failure.requiresAppManagement {
             return String(localized: "系统拒绝了安装器对应用的写入。请查看访问帮助；若应用程序管理开关已开启，无需反复切换，请导出诊断信息排查。")
         }

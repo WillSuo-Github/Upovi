@@ -299,6 +299,60 @@ final class AppStoreUpdateTests: XCTestCase, @unchecked Sendable {
         let command = ProcessCommand(); command.cancel()
         do { _ = try await command.run("/usr/bin/true",[]); XCTFail("Cancelled command cannot launch") } catch { XCTAssertTrue(error is CancellationError) }
     }
+
+    func testStoreDownloadActivityOnlyObservesGrowthOfSelectedRegularPackages() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = root.appending(path: "com.apple.appstore")
+        let selected = store.appending(path: "12345")
+        let other = store.appending(path: "67890")
+        for directory in [selected, other] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+        let package = selected.appending(path: "update.pkg")
+        try Data([0]).write(to: package)
+        let activity = AppStoreDownloadActivity(cacheRoot: root.path, storeID: 12345, userID: getuid())
+        XCTAssertFalse(activity.hasAdvanced(), "An existing partial download is the baseline")
+
+        let unrelated = other.appending(path: "update.pkg")
+        try Data([0, 1]).write(to: unrelated)
+        try FileManager.default.createSymbolicLink(at: selected.appending(path: "linked.pkg"), withDestinationURL: unrelated)
+        try Data([0, 1]).write(to: selected.appending(path: "receipt"))
+        XCTAssertFalse(activity.hasAdvanced())
+
+        try Data([0, 1]).write(to: package)
+        XCTAssertTrue(activity.hasAdvanced())
+        XCTAssertFalse(activity.hasAdvanced(), "An unchanged partial package cannot renew the deadline")
+        try Data().write(to: package)
+        XCTAssertFalse(activity.hasAdvanced(), "Truncation is not progress")
+        try Data([0]).write(to: package)
+        XCTAssertTrue(activity.hasAdvanced(), "A restarted download can make progress from a lower size")
+
+        try FileManager.default.removeItem(at: selected)
+        try FileManager.default.createSymbolicLink(at: selected, withDestinationURL: other)
+        XCTAssertFalse(activity.hasAdvanced(), "Store product directory symlinks are ignored")
+    }
+
+    func testStoreProcessKeepsDownloadingPastOriginalDeadlineAndTimesOutAfterGrowthStops() async throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let product = root.appending(path: "com.apple.appstore/12345")
+        try FileManager.default.createDirectory(at: product, withIntermediateDirectories: true)
+        let activity = AppStoreDownloadActivity(cacheRoot: root.path, storeID: 12345, userID: getuid())
+        let package = product.appending(path: "update.pkg")
+        let finishedWriting = product.appending(path: "finished-writing")
+        let producer = "for i in 1 2 3 4 5 6 7 8; do printf x >> \"$1\"; /bin/sleep 0.2; done; : > \"$2\"; exec /bin/sleep 15"
+        do {
+            _ = try await ProcessCommand().run("/bin/sh", ["-c", producer, "store-fixture", package.path, finishedWriting.path],
+                timeoutSeconds: 1, timeoutActivity: { activity.hasAdvanced() })
+            XCTFail("The idle download should time out")
+        } catch {
+            XCTAssertEqual((error as? URLError)?.code, .timedOut)
+            XCTAssertEqual(DiagnosticIssue(StoreInstallationError(.init(stage: "store", error: error))).kind, .timeout)
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: finishedWriting.path), "Live progress must survive the original wall-clock deadline")
+        XCTAssertEqual(try Data(contentsOf: package).count, 8)
+    }
 }
 
 private actor StoreReplies {

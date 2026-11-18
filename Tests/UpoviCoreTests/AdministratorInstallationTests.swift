@@ -171,10 +171,12 @@ extension AdministratorInstallationTests {
     func testAccessVerificationUsesStoreSessionButCannotAuthorizeInstallationsOrReceiptRepair() throws {
         let (probe, item) = try sessionFixture(store: true, permissionProbe: true)
         try probe.validate()
+        XCTAssertFalse(probe.allowsStoreDownloads)
         var plan = AppStoreUpdatePlan(application: item.application, storeID: 123, version: item.candidate.version, userID: probe.userID)
         XCTAssertThrowsError(try probe.validate(.store(plan), index: 0), "A probe session cannot start a Store update")
         plan.permissionProbe = true
         XCTAssertNoThrow(try probe.validate(.store(plan), index: 0))
+        XCTAssertFalse(AdministratorInstallSession.Request.store(plan).mayDownloadFromAppStore)
         let command = try probe.bootstrap(helper: URL(fileURLWithPath: "/fixture/UpoviInstaller"),
             storeHelper: URL(fileURLWithPath: "/fixture/UpoviStoreInstaller.app"), bridge: URL(fileURLWithPath: "/fixture/UpoviStoreBridge"))
         XCTAssertTrue(command.hasSuffix("/bin/launchctl asuser \"$console\" \"$work/UpoviStoreInstaller.app/Contents/MacOS/UpoviStoreInstaller\" --session \"$work/session.json\" \"$work\""))
@@ -209,10 +211,13 @@ extension AdministratorInstallationTests {
     func testStoreSessionPinsStoreIDUserAndReceiptRecovery() throws {
         let (session, item) = try sessionFixture(store: true)
         try session.validate()
+        XCTAssertTrue(session.allowsStoreDownloads)
         func request(storeID: UInt64 = 123, userID: UInt32? = nil, version: String = "2.0", recovery: StoreReceiptRecovery? = nil) -> AdministratorInstallSession.Request {
             .store(.init(application: item.application, storeID: storeID, version: version, userID: userID ?? session.userID, receiptRecovery: recovery))
         }
         XCTAssertNoThrow(try session.validate(request(), index: 0))
+        XCTAssertTrue(request().mayDownloadFromAppStore)
+        XCTAssertFalse(request(recovery: .init(transactionID: UUID(), path: "/private/var/folders/fixture/receipt")).mayDownloadFromAppStore)
         XCTAssertThrowsError(try session.validate(request(storeID: 456), index: 0))
         XCTAssertThrowsError(try session.validate(request(userID: session.userID + 1), index: 0))
         XCTAssertThrowsError(try session.validate(request(version: "3.0"), index: 0))
@@ -238,6 +243,7 @@ extension AdministratorInstallationTests {
     }
     func testApplicationOnlySessionKeepsItsTypedAdministratorRoute() throws {
         let (session, _) = try sessionFixture()
+        XCTAssertFalse(session.allowsStoreDownloads)
         let command = try session.bootstrap(helper: URL(fileURLWithPath: "/fixture/UpoviInstaller"),
             storeHelper: URL(fileURLWithPath: "/fixture/UpoviStoreInstaller.app"), bridge: URL(fileURLWithPath: "/fixture/UpoviStoreBridge"))
         XCTAssertTrue(command.hasSuffix("\"$work/UpoviInstaller\" --session \"$work/session.json\" \"$work\""))

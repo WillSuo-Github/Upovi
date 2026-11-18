@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "等待 App Store 更新进展超时。请先在 App Store 查看状态，再决定是否重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timed out waiting for App Store progress. Check the status in the App Store before retrying."
+          }
+        }
+      }
+    },
+    "正在通过 App Store 更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updating via App Store"
+          }
+        }
+      }
+    },
     "应用访问帮助": {
       "localizations": {
         "en": {

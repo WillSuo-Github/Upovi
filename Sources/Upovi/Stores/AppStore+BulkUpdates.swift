@@ -346,9 +346,9 @@ extension AppStore {
                 try Task.checkCancellation()
                 guard saveBulkPhase(id, phase: .installing, detail: candidate.storeReceiptRecovery == nil ? String(localized: "等待商店下载和管理员认证") : String(localized: "正在完成商店安装收尾")) else { throw PeerError.unavailable("Batch history could not be saved") }
                 stage = .batchInstallation
-                setTransferPhase(id, .installing)
+                setTransferPhase(id, .queued)
                 enqueueAuthorizedBulkItem(item, batch: authorization) { [self] authorize in
-                    setTransferPhase(id, .installing)
+                    setTransferPhase(id, candidate.storeReceiptRecovery == nil ? .updatingFromAppStore : .installing)
                     try await installStoreUpdate(candidate, app, authorize)
                 }
             } else if candidate.download?.url.pathExtension.lowercased() == "pkg" {

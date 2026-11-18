@@ -14,7 +14,17 @@ import UpoviCore
         let candidate = UpdateCandidate(version:"2",source:"App Store",isCommunity:false,url:nil,appStoreID:12345)
         var invoked = false
         store.makeInstallationAuthorizationBatch = { InstallationAuthorizationBatch(start: { _ in }) }
-        store.installStoreUpdate = { value,target,_ in invoked = true; XCTAssertEqual(value.appStoreID,12345); XCTAssertEqual(target,app); XCTAssertFalse(store.canCancelInstallation) }
+        store.installStoreUpdate = { value, target, _ in
+            invoked = true
+            XCTAssertEqual(value.appStoreID, 12345)
+            XCTAssertEqual(target, app)
+            XCTAssertFalse(store.canCancelInstallation)
+            let transfer = store.transfers[app.id]
+            XCTAssertEqual(transfer?.phase, .updatingFromAppStore)
+            XCTAssertEqual(transfer?.indeterminate, true)
+            XCTAssertEqual(transfer?.canCancel, false)
+            XCTAssertEqual(transfer?.liveBytesPerSecond(at: Date()), 0)
+        }
         store.reviewStoreUpdate(app,candidate:candidate)
         XCTAssertTrue(store.bulkUpdatePresented); XCTAssertEqual(store.bulkInstallableCount,1)
         store.startAllUpdates(); await store.bulkTask?.value

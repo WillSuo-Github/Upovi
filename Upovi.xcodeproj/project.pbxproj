@@ -70,6 +70,7 @@
 		5021C26811703B8C4D028156 /* BulkUpdateRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F339165D91E15A0A54B0DD04 /* BulkUpdateRecord.swift */; };
 		524159DE03DF7ACFDFAD67C6 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0C817831AA40DF2B8DEA2E /* DesignSystem.swift */; };
 		542EFF4EE0FD0B68DEDDCB48 /* AppStoreUpdatePlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9912FDEA4B8914CA1B3013DD /* AppStoreUpdatePlan.swift */; };
+		B36E9B572FC941BB8EF1255A /* AppStoreDownloadActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39683F954FB842DFB1E573FA /* AppStoreDownloadActivity.swift */; };
 		55D3C1F4B3DDC1C978DCF51F /* UpoviApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8595E8ED2B0246333DBC0C9 /* UpoviApp.swift */; };
 		56464E37DDB2C911A570464E /* AdministratorInstallPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CA8F4CA6789AE8135FAA /* AdministratorInstallPlan.swift */; };
 		570586CEAE217989959EBB4A /* AppMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAA551604B781EEEBFD1297 /* AppMetadata.swift */; };
@@ -459,6 +460,7 @@
 		97EDD6E02F519B093F242370 /* embed_sparkle.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = embed_sparkle.py; sourceTree = "<group>"; };
 		97F27BB60A1ACB9A22805311 /* AppStoreWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreWorkflowTests.swift; sourceTree = "<group>"; };
 		9912FDEA4B8914CA1B3013DD /* AppStoreUpdatePlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreUpdatePlan.swift; sourceTree = "<group>"; };
+		39683F954FB842DFB1E573FA /* AppStoreDownloadActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreDownloadActivity.swift; sourceTree = "<group>"; };
 		9AAA551604B781EEEBFD1297 /* AppMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMetadata.swift; sourceTree = "<group>"; };
 		9ABD141C086C1CA02015C7ED /* TransferViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferViews.swift; sourceTree = "<group>"; };
 		9D54348A624F4C6167D6B407 /* PeerIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerIdentity.swift; sourceTree = "<group>"; };
@@ -883,6 +885,7 @@
 				4C1E468DD160E5D67318305E /* ReviewedAppleSoftware.swift */,
 				59BB73D7E96807ABBFE3745A /* ApplicationRunningLocation.swift */,
 				9912FDEA4B8914CA1B3013DD /* AppStoreUpdatePlan.swift */,
+				39683F954FB842DFB1E573FA /* AppStoreDownloadActivity.swift */,
 				AA8B7398E052985DA7B6DFAC /* ArchiveExtractor.swift */,
 				1BE233866CE636FE680C6146 /* BulkUpdate.swift */,
 				F339165D91E15A0A54B0DD04 /* BulkUpdateRecord.swift */,
@@ -1411,6 +1414,7 @@
 				B95BFAC11ACD5DBD34B5CA66 /* AppScanner.swift in Sources */,
 				10A41D6D5EB93F928097732C /* AppStoreCatalog.swift in Sources */,
 				542EFF4EE0FD0B68DEDDCB48 /* AppStoreUpdatePlan.swift in Sources */,
+				B36E9B572FC941BB8EF1255A /* AppStoreDownloadActivity.swift in Sources */,
 				19807E6ECF8A45DF490B5BB8 /* AppcastReader.swift in Sources */,
 				693772F63B71C029A4E1F227 /* ApplicationInstallation.swift in Sources */,
 				49D0E460B629F8E32773C344 /* ReviewedAppleSoftware.swift in Sources */,

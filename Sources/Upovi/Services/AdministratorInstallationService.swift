@@ -112,14 +112,14 @@ final class AdministratorInstallationService {
 
 /// An authorization boundary shared by direct and App Store installations.
 struct InstallationAuthorization: Sendable {
-    let run: @MainActor @Sendable (String, URL?) async throws -> Data
+    private let run: @MainActor @Sendable (String, URL?, TimeInterval?) async throws -> Data
     private let submit: (@MainActor @Sendable (AdministratorInstallSession.Request, URL?) async throws -> Data)?
-    init(run: @escaping @MainActor @Sendable (String, URL?) async throws -> Data) {
+    private init(run: @escaping @MainActor @Sendable (String, URL?, TimeInterval?) async throws -> Data) {
         self.run = run; submit = nil
     }
     init(submit: @escaping @MainActor @Sendable (AdministratorInstallSession.Request, URL?) async throws -> Data) {
         self.submit = submit
-        run = { _, _ in throw PeerError.invalid("A batch authorization accepts only typed installation plans") }
+        run = { _, _, _ in throw PeerError.invalid("A batch authorization accepts only typed installation plans") }
     }
     func perform(_ request: AdministratorInstallSession.Request, command: String, log: URL?) async throws -> Data {
         let operation = UpoviLogOperation("authorization.request", category: .authorization,
@@ -128,7 +128,7 @@ struct InstallationAuthorization: Sendable {
             do {
                 let data: Data
                 if let submit { data = try await submit(request, log) }
-                else { data = try await run(command, log) }
+                else { data = try await run(command, log, request.mayDownloadFromAppStore ? nil : 2100) }
                 operation.finish(details: "resultBytes=\(data.count)")
                 return data
             } catch {
@@ -143,9 +143,9 @@ struct InstallationAuthorization: Sendable {
             }
         }
     }
-    static let system = Self(run: { command, log in
+    static let system = Self(run: { command, log, timeout in
         try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
-            timeoutSeconds: 2100, outputFile: log)
+            timeoutSeconds: timeout, outputFile: log)
     })
 }
 
@@ -196,14 +196,15 @@ final class InstallationAuthorizationBatch {
         try session.validate()
         self.session = session
         let route = session.items.contains { $0.application.isAppStore } ? "storeApplication" : "administratorTool"
-        UpoviLog.authorization.info("event=session.launch session=\(session.id) selectedItems=\(session.items.count) route=\(route)")
+        UpoviLog.authorization.info("event=session.launch session=\(session.id) selectedItems=\(session.items.count) route=\(route) storeInactivityTimeout=\(session.allowsStoreDownloads)")
         let command = try session.bootstrap(helper: helper,
             storeHelper: Bundle.main.bundleURL.appending(path: "Contents/Helpers/UpoviStoreInstaller.app"),
             bridge: Bundle.main.bundleURL.appending(path: "Contents/MacOS/UpoviStoreBridge"))
         execution = Task { [self] in
             do {
                 _ = try await ProcessCommand().run("/usr/bin/osascript", ["-e", AdministratorAuthorization.script(command: command)],
-                    timeoutSeconds: 6 * 3600 + 2100, outputFile: requests.appending(path: "session.log"), maximumOutputBytes: 65536)
+                    timeoutSeconds: session.allowsStoreDownloads ? nil : 6 * 3600 + 2100,
+                    outputFile: requests.appending(path: "session.log"), maximumOutputBytes: 65536)
             } catch {
                 let log = (try? String(contentsOf: requests.appending(path: "session.log"), encoding: .utf8)) ?? ""
                 executionError = log.contains("(-128)") ? CancellationError() : error

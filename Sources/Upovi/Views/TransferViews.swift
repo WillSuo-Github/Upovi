@@ -56,7 +56,9 @@ struct TransferRing: View {
         .font(.system(size: size - 2))
         .frame(width: size, height: size)
         .animation(.easeOut(duration: 0.2), value: transfer.phase)
-        .accessibilityValue(Text(transfer.fraction, format: .percent.precision(.fractionLength(0))))
+        .accessibilityValue(transfer.phase == .updatingFromAppStore
+                            ? Text(transfer.label)
+                            : Text(transfer.fraction, format: .percent.precision(.fractionLength(0))))
         .accessibilityIdentifier("transfer-meter")
     }
 

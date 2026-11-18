@@ -12,6 +12,9 @@ public struct AdministratorInstallSession: Codable, Sendable {
     public let hostTeam: String
     public let permissionProbe: Bool?
     public var results: URL { URL(fileURLWithPath: "/private/var/tmp/Upovi-session-\(id.uuidString)") }
+    public var allowsStoreDownloads: Bool {
+        permissionProbe != true && items.contains { $0.application.isAppStore && $0.candidate.storeReceiptRecovery == nil }
+    }
 
     public init(items: [BulkUpdateItem], requests: URL, hostTeam: String, permissionProbe: Bool = false) {
         id = UUID(); userID = getuid(); parentPID = getpid()
@@ -30,6 +33,10 @@ public struct AdministratorInstallSession: Codable, Sendable {
         case store(AppStoreUpdatePlan)
         public var application: InstalledApp {
             switch self { case .application(let p): p.application; case .store(let p): p.application }
+        }
+        public var mayDownloadFromAppStore: Bool {
+            if case .store(let plan) = self { return plan.mayDownload }
+            return false
         }
     }
     public struct Result: Codable, Sendable {
@@ -189,7 +196,8 @@ public struct AdministratorInstallSession: Codable, Sendable {
         try publish(Data(), name: "ready")
         var handled = Set<Int>()
         let deadline = Date().addingTimeInterval(6 * 3600)
-        while Date() < deadline, kill(parentPID, 0) == 0 {
+        var resultDeadline = deadline
+        while Date() < resultDeadline, kill(parentPID, 0) == 0 {
             if try Self.readRequest(directory: directory, name: "finish", owner: userID) != nil { return }
             let stopped = try Self.readRequest(directory: directory, name: "stop", owner: userID) != nil
             for index in items.indices where !handled.contains(index) {
@@ -197,6 +205,7 @@ public struct AdministratorInstallSession: Codable, Sendable {
                 handled.insert(index)
                 let result: Result
                 if stopped { result = .init(status: -1, output: Data()) }
+                else if Date() >= deadline { result = .init(status: 1, output: Data("Installation authorization session expired".utf8)) }
                 else {
                     do {
                         let request = try JSONDecoder().decode(Request.self, from: data)
@@ -212,7 +221,12 @@ public struct AdministratorInstallSession: Codable, Sendable {
                             command = try AppStoreUpdatePlan.authorizationCommand(helper: work.appending(path: "UpoviStoreInstaller.app"),
                                 bridge: work.appending(path: "UpoviStoreBridge"), plan: planFile, hostTeam: hostTeam)
                         }
-                        let output = try await ProcessCommand().run("/bin/sh", ["-c", command], timeoutSeconds: 2100,
+                        // The Store bridge enforces inactivity. An outer wall-clock deadline would abort live downloads.
+                        let waitsForStore = request.mayDownloadFromAppStore
+                        defer {
+                            if waitsForStore, Date() >= deadline { resultDeadline = Date().addingTimeInterval(60) }
+                        }
+                        let output = try await ProcessCommand().run("/bin/sh", ["-c", command], timeoutSeconds: waitsForStore ? nil : 2100,
                             outputFile: work.appending(path: "installer.log"), maximumOutputBytes: 65536)
                         result = .init(status: 0, output: output)
                     } catch {
